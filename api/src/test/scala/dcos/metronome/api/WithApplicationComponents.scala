@@ -1,8 +1,8 @@
-package dcos.jobs.api
+package dcos.metronome.api
 
 import controllers.Assets
-import dcos.jobs.api.v1.controllers.GreeterController
-import dcos.jobs.greeting.{GreetingService, GreetingConf}
+import dcos.metronome.api.v1.controllers.GreeterController
+import dcos.metronome.greeting.{GreetingService, GreetingConf}
 import mesosphere.marathon.core.plugin.{PluginDefinitions, PluginManager}
 import org.scalatest.{Suite, TestData}
 import org.scalatestplus.play.{OneAppPerSuite, OneAppPerTest, OneServerPerSuite, OneServerPerTest}

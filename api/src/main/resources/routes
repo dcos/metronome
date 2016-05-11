@@ -1,5 +1,5 @@
 
-GET        /                             dcos.jobs.api.v1.controllers.GreeterController.index
-GET        /greetings                    dcos.jobs.api.v1.controllers.GreeterController.greetings
+GET        /                             dcos.metronome.api.v1.controllers.GreeterController.index
+GET        /greetings                    dcos.metronome.api.v1.controllers.GreeterController.greetings
 
 GET        /assets/*file                 controllers.Assets.at(path="/public", file)

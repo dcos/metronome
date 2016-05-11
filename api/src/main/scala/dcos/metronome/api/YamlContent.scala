@@ -1,4 +1,4 @@
-package dcos.jobs.api
+package dcos.metronome.api
 
 import net.jcazevedo.moultingyaml.{ YamlValue, _ }
 import play.api.http.{ ContentTypeOf, MimeTypes, Writeable }

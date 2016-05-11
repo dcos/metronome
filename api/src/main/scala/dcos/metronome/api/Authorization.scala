@@ -1,4 +1,4 @@
-package dcos.jobs.api
+package dcos.metronome.api
 
 import mesosphere.marathon.plugin.auth.{ Authenticator, AuthorizedAction, Authorizer, Identity }
 import mesosphere.marathon.plugin.http.HttpRequest

@@ -1,4 +1,4 @@
-package dcos.jobs.api
+package dcos.metronome.api
 
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{ Millis, Second, Span }

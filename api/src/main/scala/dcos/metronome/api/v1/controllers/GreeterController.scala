@@ -1,14 +1,14 @@
-package dcos.jobs.api.v1.controllers
+package dcos.metronome.api.v1.controllers
 
-import dcos.jobs.api.{ Authorization, YamlContent }
-import dcos.jobs.greeting.{ Greeting, GreetingService }
+import dcos.metronome.api.{ Authorization, YamlContent }
+import dcos.metronome.greeting.{ Greeting, GreetingService }
 import mesosphere.marathon.plugin.auth._
 import net.jcazevedo.moultingyaml.DefaultYamlProtocol._
 import net.jcazevedo.moultingyaml._
 import play.api.libs.json.Json
 import play.api.mvc.{ Action, Controller }
 import play.twirl.api.Html
-import dcos.jobs.api.v1.models._
+import dcos.metronome.api.v1.models._
 
 class GreeterController(
     greetingService: GreetingService,

@@ -1,6 +1,6 @@
-package dcos.jobs.greeting.impl
+package dcos.metronome.greeting.impl
 
-import dcos.jobs.greeting.{ GreetingConf, GreetingService }
+import dcos.metronome.greeting.{ GreetingConf, GreetingService }
 
 class GreetingServiceImpl(conf: GreetingConf) extends GreetingService {
 

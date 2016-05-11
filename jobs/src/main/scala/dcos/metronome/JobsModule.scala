@@ -1,6 +1,6 @@
-package dcos.jobs
+package dcos.metronome
 
-import dcos.jobs.greeting.{ GreetingService, GreetingModule }
+import dcos.metronome.greeting.{ GreetingService, GreetingModule }
 import mesosphere.marathon.core.plugin.{ PluginManager, PluginModule }
 import com.softwaremill.macwire._
 

@@ -1,8 +1,8 @@
-package dcos.jobs.api
+package dcos.metronome.api
 
 import controllers.Assets
-import dcos.jobs.api.v1.controllers.GreeterController
-import dcos.jobs.greeting.GreetingService
+import dcos.metronome.api.v1.controllers.GreeterController
+import dcos.metronome.greeting.GreetingService
 import mesosphere.marathon.core.auth.AuthModule
 import mesosphere.marathon.core.plugin.PluginManager
 import play.api.http.HttpErrorHandler

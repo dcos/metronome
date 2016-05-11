@@ -1,6 +1,6 @@
-package dcos.jobs
+package dcos.metronome
 
-import dcos.jobs.greeting.GreetingConf
+import dcos.metronome.greeting.GreetingConf
 import mesosphere.marathon.AllConf
 
 trait JobsConfig extends GreetingConf {

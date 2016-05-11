@@ -1,4 +1,4 @@
-package dcos.jobs.greeting
+package dcos.metronome.greeting
 
 trait GreetingService {
 

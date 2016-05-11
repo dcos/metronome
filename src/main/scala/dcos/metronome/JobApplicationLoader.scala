@@ -1,9 +1,9 @@
-package dcos.jobs
+package dcos.metronome
 
 import com.softwaremill.macwire._
 import controllers.Assets
-import dcos.jobs.api.ApiModule
-import dcos.jobs.greeting.GreetingConf
+import dcos.metronome.api.ApiModule
+import dcos.metronome.greeting.GreetingConf
 import mesosphere.marathon.AllConf
 import play.api.ApplicationLoader.Context
 import play.api._

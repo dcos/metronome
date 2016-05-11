@@ -1,6 +1,6 @@
-package dcos.jobs.api.v1
+package dcos.metronome.api.v1
 
-import dcos.jobs.greeting.Greeting
+import dcos.metronome.greeting.Greeting
 import net.jcazevedo.moultingyaml._
 import play.api.libs.json.Json
 
