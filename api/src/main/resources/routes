@@ -1,5 +1,18 @@
 
-GET        /                             dcos.metronome.api.v1.controllers.GreeterController.index
-GET        /greetings                    dcos.metronome.api.v1.controllers.GreeterController.greetings
 
-GET        /assets/*file                 controllers.Assets.at(path="/public", file)
+
+GET /jobs dcos.metronome.api.v1.controllers.JobsController.listJobs
+POST /jobs dcos.metronome.api.v1.controllers.JobsController.createJob
+
+GET /jobs/*id dcos.metronome.api.v1.controllers.JobsController.getJob(id)
+PUT /jobs/*id dcos.metronome.api.v1.controllers.JobsController.updateJob(id)
+DELETE /jobs/*id dcos.metronome.api.v1.controllers.JobsController.deleteJob(id)
+POST /jobs/*id dcos.metronome.api.v1.controllers.JobsController.triggerJob(id)
+
+
+GET /job-runs/*id dcos.metronome.api.v1.controllers.JobRunsController.getJobRun(id)
+POST /job-runs/*id dcos.metronome.api.v1.controllers.JobRunsController.changeJobRun(id)
+
+
+
+# GET        /assets/*file                 controllers.Assets.at(path="/public", file)

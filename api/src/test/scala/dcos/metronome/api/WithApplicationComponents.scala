@@ -1,7 +1,6 @@
 package dcos.metronome.api
 
 import controllers.Assets
-import dcos.metronome.api.v1.controllers.GreeterController
 import dcos.metronome.greeting.{GreetingService, GreetingConf}
 import mesosphere.marathon.core.plugin.{PluginDefinitions, PluginManager}
 import org.scalatest.{Suite, TestData}
@@ -110,8 +109,6 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
   lazy val assets: Assets = wire[Assets]
 
   lazy val apiModule: ApiModule = new ApiModule(greetingService, pluginManager, httpErrorHandler, assets)
-
-  lazy val greeterController: GreeterController = apiModule.greeterController
 
   lazy val config = new GreetingConf {
     override lazy val greetingMessage: String = configuration.getString("test.foo").getOrElse("default")

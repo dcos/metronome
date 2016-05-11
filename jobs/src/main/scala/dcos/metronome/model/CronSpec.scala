@@ -1,14 +1,14 @@
 package dcos.metronome.model
 
-import com.cronutils.model.definition.{CronDefinition, CronDefinitionBuilder}
+import com.cronutils.model.definition.{ CronDefinition, CronDefinitionBuilder }
 import com.cronutils.model.time.ExecutionTime
-import com.cronutils.model.{Cron => UCron}
+import com.cronutils.model.Cron
 import com.cronutils.parser.CronParser
 import org.joda.time.DateTime
 
 import scala.util.control.NonFatal
 
-class Cron(val cron: UCron) {
+class CronSpec(val cron: Cron) {
 
   private[this] lazy val executionTime: ExecutionTime = ExecutionTime.forCron(cron)
 
@@ -19,14 +19,14 @@ class Cron(val cron: UCron) {
   override def hashCode(): Int = cron.hashCode()
 
   override def equals(obj: scala.Any): Boolean = obj match {
-    case other: Cron => other.cron.asString() == cron.asString()
-    case _           => false
+    case other: CronSpec => other.cron.asString() == cron.asString()
+    case _               => false
   }
 
   override def toString: String = cron.asString()
 }
 
-object Cron {
+object CronSpec {
   val cronDefinition: CronDefinition =
     CronDefinitionBuilder.defineCron()
       .withSeconds().and()
@@ -42,11 +42,11 @@ object Cron {
       .lastFieldOptional()
       .instance()
 
-  def isValid(cronString: String): Boolean = apply(cronString).isDefined
+  def isValid(cronString: String): Boolean = unapply(cronString).isDefined
 
-  def apply(cronString: String): Option[Cron] = {
+  def unapply(cronString: String): Option[CronSpec] = {
     try {
-      Some(new Cron(new CronParser(cronDefinition).parse(cronString)))
+      Some(new CronSpec(new CronParser(cronDefinition).parse(cronString)))
     } catch {
       case NonFatal(_) => None
     }
