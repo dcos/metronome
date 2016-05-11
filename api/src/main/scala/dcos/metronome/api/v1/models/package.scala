@@ -1,6 +1,6 @@
 package dcos.metronome.api.v1
 
-import dcos.metronome.api.ErrorDetail
+import dcos.metronome.api.{UnknownJob, ErrorDetail}
 import dcos.metronome.model._
 import mesosphere.marathon.state._
 import org.joda.time.DateTimeZone
@@ -55,6 +55,7 @@ package object models {
   }
 
   implicit val errorFormat: Format[ErrorDetail] = Json.format[ErrorDetail]
+  implicit val unknownJobsFormat: Format[UnknownJob] = Json.format[UnknownJob]
 
   implicit lazy val ArtifactFormat: Format[Artifact] = (
       (__ \ "url").format[String] ~

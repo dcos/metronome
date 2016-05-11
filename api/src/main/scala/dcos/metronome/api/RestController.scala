@@ -6,10 +6,8 @@ import play.api.mvc.{Controller, RequestHeader, Codec}
 
 class RestController extends Controller {
 
-  implicit def jsonWritable[T <: Any](implicit w:Writes[T], codec: Codec, request:RequestHeader) : Writeable[T] = {
+  implicit def jsonWritable[T <: Any](implicit w: Writes[T], codec: Codec, request: RequestHeader): Writeable[T] = {
     implicit val contentType = ContentTypeOf[T](Some(ContentTypes.JSON))
-    def jsonAsString(js:JsValue) = Json.stringify(js)
-    Writeable(t => codec.encode(jsonAsString(w.writes(t))))
+    Writeable(t => codec.encode(Json.stringify(w.writes(t))))
   }
-
 }

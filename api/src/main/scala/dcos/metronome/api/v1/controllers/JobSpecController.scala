@@ -1,13 +1,13 @@
 package dcos.metronome.api.v1.controllers
 
-import dcos.metronome.api.{ ErrorDetail, Authorization }
+import dcos.metronome.api.{ UnknownJob, ErrorDetail, Authorization }
 import dcos.metronome.api.v1.models._
 import dcos.metronome.model.JobSpec
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
 import mesosphere.marathon.state.PathId
 import PathId._
 
-class JobsController(val authenticator: Authenticator, val authorizer: Authorizer) extends Authorization {
+class JobSpecController(val authenticator: Authenticator, val authorizer: Authorizer) extends Authorization {
 
   var jobs = Map.empty[PathId, JobSpec]
 
@@ -24,7 +24,7 @@ class JobsController(val authenticator: Authenticator, val authorizer: Authorize
   def getJob(id: String) = AuthorizedAction { implicit request =>
     jobs.get(id.toRootPath) match {
       case Some(job) => Ok(job)
-      case None      => NotFound(ErrorDetail(s"No job with this id: $id"))
+      case None      => NotFound(UnknownJob(id))
     }
   }
 
@@ -33,7 +33,7 @@ class JobsController(val authenticator: Authenticator, val authorizer: Authorize
       case Some(job) =>
         jobs += job.id -> job
         Ok(job)
-      case None => NotFound(ErrorDetail(s"No job with this id: $id"))
+      case None => NotFound(UnknownJob(id))
     }
   }
 
@@ -42,7 +42,7 @@ class JobsController(val authenticator: Authenticator, val authorizer: Authorize
       case Some(job) =>
         jobs -= job.id
         Ok(job)
-      case None => NotFound(ErrorDetail(s"No job with this id: $id"))
+      case None => NotFound(UnknownJob(id))
     }
   }
 
@@ -50,7 +50,7 @@ class JobsController(val authenticator: Authenticator, val authorizer: Authorize
     jobs.get(id.toRootPath) match {
       case Some(job) =>
         Ok("triggered")
-      case None => NotFound(ErrorDetail(s"No job with this id: $id"))
+      case None => NotFound(UnknownJob(id))
     }
   }
 }

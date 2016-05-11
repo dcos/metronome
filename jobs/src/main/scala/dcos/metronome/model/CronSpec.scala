@@ -29,7 +29,6 @@ class CronSpec(val cron: Cron) {
 object CronSpec {
   val cronDefinition: CronDefinition =
     CronDefinitionBuilder.defineCron()
-      .withSeconds().and()
       .withMinutes().and()
       .withHours().and()
       .withDayOfMonth()

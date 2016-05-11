@@ -1,18 +1,18 @@
 
 
 
-GET /jobs dcos.metronome.api.v1.controllers.JobsController.listJobs
-POST /jobs dcos.metronome.api.v1.controllers.JobsController.createJob
+GET /jobs dcos.metronome.api.v1.controllers.JobSpecController.listJobs
+POST /jobs dcos.metronome.api.v1.controllers.JobSpecController.createJob
 
-GET /jobs/*id dcos.metronome.api.v1.controllers.JobsController.getJob(id)
-PUT /jobs/*id dcos.metronome.api.v1.controllers.JobsController.updateJob(id)
-DELETE /jobs/*id dcos.metronome.api.v1.controllers.JobsController.deleteJob(id)
-POST /jobs/*id dcos.metronome.api.v1.controllers.JobsController.triggerJob(id)
+GET /jobs/*id dcos.metronome.api.v1.controllers.JobSpecController.getJob(id)
+PUT /jobs/*id dcos.metronome.api.v1.controllers.JobSpecController.updateJob(id)
+DELETE /jobs/*id dcos.metronome.api.v1.controllers.JobSpecController.deleteJob(id)
+POST /jobs/*id dcos.metronome.api.v1.controllers.JobSpecController.triggerJob(id)
 
 
-GET /job-runs/*id dcos.metronome.api.v1.controllers.JobRunsController.getJobRun(id)
-POST /job-runs/*id dcos.metronome.api.v1.controllers.JobRunsController.changeJobRun(id)
-
+GET /job-runs dcos.metronome.api.v1.controllers.JobRunController.getAllJobRuns
+GET /job-runs/*id dcos.metronome.api.v1.controllers.JobRunController.getJobRun(id)
+POST /job-runs/*id dcos.metronome.api.v1.controllers.JobRunController.changeJobRun(id)
 
 
 # GET        /assets/*file                 controllers.Assets.at(path="/public", file)
