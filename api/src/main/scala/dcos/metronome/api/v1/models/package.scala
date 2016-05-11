@@ -13,8 +13,6 @@ import scala.collection.JavaConverters._
 import org.apache.mesos.{ Protos => mesos }
 import play.api.libs.json.Reads._
 
-import scala.concurrent.duration.FiniteDuration
-
 package object models {
 
   implicit class ReadsWithDefault[A](val reads: Reads[Option[A]]) extends AnyVal {
@@ -23,18 +21,6 @@ package object models {
 
   implicit class FormatWithDefault[A](val m: OFormat[Option[A]]) extends AnyVal {
     def withDefault(a: A): OFormat[A] = m.inmap(_.getOrElse(a), Some(_))
-  }
-
-  implicit class ReadsAsSeconds(val reads: Reads[Long]) extends AnyVal {
-    def asSeconds: Reads[FiniteDuration] = reads.map(_.seconds)
-  }
-
-  implicit class FormatAsSeconds(val format: OFormat[Long]) extends AnyVal {
-    def asSeconds: OFormat[FiniteDuration] =
-      format.inmap(
-        _.seconds,
-        _.toSeconds
-      )
   }
 
   def enumFormat[A <: java.lang.Enum[A]](read: String => A, errorMsg: String => String): Format[A] = {
