@@ -7,8 +7,8 @@ import scalariform.formatter.preferences._
 
 object Build extends sbt.Build {
 
-  lazy val main = Project(
-    id = "main",
+  lazy val metronome = Project(
+    id = "metronome",
     base = file("."),
     dependencies = Seq(api, jobs),
     settings = baseSettings ++ formatSettings ++ Seq(
@@ -32,6 +32,7 @@ object Build extends sbt.Build {
         Dependency.macWireUtil,
         Dependency.macWireProxy,
         Dependency.yaml,
+        Dependency.cronUtils,
         Dependency.Test.scalatest,
         Dependency.Test.scalatestPlay
       )
@@ -47,7 +48,8 @@ object Build extends sbt.Build {
         Dependency.marathon,
         Dependency.macWireMacros,
         Dependency.macWireUtil,
-        Dependency.macWireProxy
+        Dependency.macWireProxy,
+        Dependency.cronUtils
       )
     )
   )
@@ -103,6 +105,8 @@ object Build extends sbt.Build {
       val MacWire = "2.2.2"
       val Marathon = "1.2.0-SNAPSHOT"
       val Play = "2.5.3"
+      val CronUtils = "3.1.6"
+      val WixAccord = "0.5"
     }
 
     val playJson = "com.typesafe.play" %% "play-json" % V.Play
@@ -112,6 +116,8 @@ object Build extends sbt.Build {
     val macWireProxy = "com.softwaremill.macwire" %% "proxy" % V.MacWire
     val marathon = "mesosphere.marathon" %% "marathon" % V.Marathon exclude("com.typesafe.play", "play-json") exclude("mesosphere.marathon", "ui") exclude("mesosphere.marathon", "ui") exclude("mesosphere", "chaos") exclude("org.apache.hadoop", "hadoop-hdfs") exclude("org.apache.hadoop", "hadoop-common") exclude("org.eclipse.jetty", "jetty-servlets")
     val marathonPlugin = "mesosphere.marathon" %% "plugin-interface" % V.Marathon
+    val cronUtils = "com.cronutils" % "cron-utils" % V.CronUtils
+    val wixAccord = "com.wix" %% "accord-core" % V.WixAccord
 
     object Test {
       val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"
