@@ -40,6 +40,11 @@ package object models {
     Format(reads, writes)
   }
 
+  def failFormat[A](message: String): Format[A] = new Format[A] {
+    override def writes(o: A): JsValue = JsNull
+    override def reads(json: JsValue): JsResult[A] = JsError(message)
+  }
+
   implicit val errorFormat: Format[ErrorDetail] = Json.format[ErrorDetail]
   implicit val unknownJobsFormat: Format[UnknownJob] = Json.format[UnknownJob]
 
@@ -118,14 +123,23 @@ package object models {
   implicit lazy val ModeFormat: Format[mesos.Volume.Mode] =
     enumFormat(mesos.Volume.Mode.valueOf, str => s"$str is not a valid mde")
 
+  /* Commented out as long as we do not support persistent volumes
   implicit lazy val PersistentVolumeInfoFormat: Format[PersistentVolumeInfo] = Json.format[PersistentVolumeInfo]
+    */
+  implicit lazy val PersistentVolumeInfoFormat: Format[PersistentVolumeInfo] =
+    failFormat[PersistentVolumeInfo]("Persistent volumes are not supported")
 
-  implicit lazy val ExternalVolumeInfoFormat: Format[ExternalVolumeInfo] = (
+
+  /* Commented out as long as we do not support external volumes
+   implicit lazy val ExternalVolumeInfoFormat: Format[ExternalVolumeInfo] = (
       (__ \ "size").formatNullable[Long] ~
       (__ \ "name").format[String] ~
       (__ \ "provider").format[String] ~
       (__ \ "options").formatNullable[Map[String, String]].withDefault(Map.empty[String, String])
     )(ExternalVolumeInfo.apply, unlift(ExternalVolumeInfo.unapply))
+    */
+  implicit lazy val ExternalVolumeInfoFormat: Format[ExternalVolumeInfo] =
+    failFormat[ExternalVolumeInfo]("External volumes are not supported")
 
   implicit lazy val VolumeFormat: Format[Volume] = (
       (__ \ "containerPath").format[String] ~
