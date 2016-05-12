@@ -2,12 +2,16 @@ package dcos.metronome.model
 
 sealed trait ConcurrencyPolicy
 object ConcurrencyPolicy {
+
+  val names: Set[String] = Set("allow", "forbid", "replace")
+
   def unapply(name: String): Option[ConcurrencyPolicy] = name match {
     case "allow"   => Some(AllowConcurrentRuns)
     case "forbid"  => Some(ForbidConcurrentRuns)
     case "replace" => Some(ReplaceConcurrentRuns)
     case _         => None
   }
+
   def name(policy: ConcurrencyPolicy): String = policy match {
     case AllowConcurrentRuns   => "allow"
     case ForbidConcurrentRuns  => "forbid"

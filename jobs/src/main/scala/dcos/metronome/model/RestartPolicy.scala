@@ -4,11 +4,14 @@ sealed trait RestartPolicy
 
 object RestartPolicy {
 
+  val names: Set[String] = Set("never", "onFailure")
+
   def unapply(name: String): Option[RestartPolicy] = name match {
     case "never"     => Some(RestartNever)
     case "onFailure" => Some(RestartOnFailure)
     case _           => None
   }
+
   def name(policy: RestartPolicy): String = policy match {
     case RestartNever     => "never"
     case RestartOnFailure => "onFailure"

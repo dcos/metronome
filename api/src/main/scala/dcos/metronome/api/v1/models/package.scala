@@ -1,43 +1,22 @@
 package dcos.metronome.api.v1
 
-import dcos.metronome.api.{ UnknownJob, ErrorDetail }
+import dcos.metronome.api.{ ErrorDetail, UnknownJob }
 import dcos.metronome.model._
 import mesosphere.marathon.state._
+import org.apache.mesos.Protos.ContainerInfo.DockerInfo
+import org.apache.mesos.{ Protos => mesos }
 import org.joda.time.DateTimeZone
 import play.api.data.validation.ValidationError
-import play.api.libs.json.{ OFormat, Reads, Json }
 import play.api.libs.functional.syntax._
-import play.api.libs.json._
-import scala.concurrent.duration._
-import scala.collection.JavaConverters._
-import org.apache.mesos.{ Protos => mesos }
 import play.api.libs.json.Reads._
+import play.api.libs.json.{ Json, _ }
+
+import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 
 package object models {
 
-  implicit class ReadsWithDefault[A](val reads: Reads[Option[A]]) extends AnyVal {
-    def withDefault(a: A): Reads[A] = reads.map(_.getOrElse(a))
-  }
-
-  implicit class FormatWithDefault[A](val m: OFormat[Option[A]]) extends AnyVal {
-    def withDefault(a: A): OFormat[A] = m.inmap(_.getOrElse(a), Some(_))
-  }
-
-  def enumFormat[A <: java.lang.Enum[A]](read: String => A, errorMsg: String => String): Format[A] = {
-    val reads = Reads[A] {
-      case JsString(str) =>
-        try {
-          JsSuccess(read(str))
-        } catch {
-          case _: IllegalArgumentException => JsError(errorMsg(str))
-        }
-      case x: JsValue => JsError(s"expected string, got $x")
-    }
-
-    val writes = Writes[A] { a: A => JsString(a.name) }
-
-    Format(reads, writes)
-  }
+  import mesosphere.marathon.api.v2.json.Formats.{ FormatWithDefault, PathIdFormat, enumFormat }
 
   def failFormat[A](message: String): Format[A] = new Format[A] {
     override def writes(o: A): JsValue = JsNull
@@ -82,7 +61,7 @@ package object models {
     override def writes(o: ConcurrencyPolicy): JsValue = JsString(ConcurrencyPolicy.name(o))
     override def reads(json: JsValue): JsResult[ConcurrencyPolicy] = json match {
       case JsString(ConcurrencyPolicy(value)) => JsSuccess(value)
-      case invalid                            => JsError(s"Can not read concurrency policy $invalid")
+      case invalid                            => JsError(s"'$invalid' is not a valid concurrency policy. Allowed values: ${ConcurrencyPolicy.names}")
     }
   }
 
@@ -90,7 +69,7 @@ package object models {
     override def writes(o: RestartPolicy): JsValue = JsString(RestartPolicy.name(o))
     override def reads(json: JsValue): JsResult[RestartPolicy] = json match {
       case JsString(RestartPolicy(value)) => JsSuccess(value)
-      case invalid                        => JsError(s"Can not read restart policy $invalid")
+      case invalid                        => JsError(s"'$invalid' is not a valid restart policy. Allowed values: ${RestartPolicy.names}")
     }
   }
 
@@ -104,29 +83,18 @@ package object models {
 
   implicit lazy val ConstraintSpecFormat: Format[ConstraintSpec] = (
     (__ \ "attr").format[String] ~
-    (__ \ "op").format[String](filter[String](ValidationError("Invalid Operator"))(ConstraintSpec.isValidOperation)) ~
+    (__ \ "op").format[String](filter[String](ValidationError(s"Invalid Operator. Allowed values: ${ConstraintSpec.AvailableOperations}"))(ConstraintSpec.isValidOperation)) ~
     (__ \ "value").formatNullable[String]
   )(ConstraintSpec.apply, unlift(ConstraintSpec.unapply))
 
   implicit lazy val PlacementSpecFormat: Format[PlacementSpec] = Json.format[PlacementSpec]
 
   implicit lazy val ModeFormat: Format[mesos.Volume.Mode] =
-    enumFormat(mesos.Volume.Mode.valueOf, str => s"$str is not a valid mde")
+    enumFormat(mesos.Volume.Mode.valueOf, str => s"$str is not a valid mode")
 
-  /* Commented out as long as we do not support persistent volumes
-  implicit lazy val PersistentVolumeInfoFormat: Format[PersistentVolumeInfo] = Json.format[PersistentVolumeInfo]
-    */
   implicit lazy val PersistentVolumeInfoFormat: Format[PersistentVolumeInfo] =
     failFormat[PersistentVolumeInfo]("Persistent volumes are not supported")
 
-  /* Commented out as long as we do not support external volumes
-   implicit lazy val ExternalVolumeInfoFormat: Format[ExternalVolumeInfo] = (
-      (__ \ "size").formatNullable[Long] ~
-      (__ \ "name").format[String] ~
-      (__ \ "provider").format[String] ~
-      (__ \ "options").formatNullable[Map[String, String]].withDefault(Map.empty[String, String])
-    )(ExternalVolumeInfo.apply, unlift(ExternalVolumeInfo.unapply))
-    */
   implicit lazy val ExternalVolumeInfoFormat: Format[ExternalVolumeInfo] =
     failFormat[ExternalVolumeInfo]("External volumes are not supported")
 
@@ -142,6 +110,9 @@ package object models {
     (__ \ "key").format[String] ~
     (__ \ "value").format[String]
   )(Parameter(_, _), unlift(Parameter.unapply))
+
+  implicit lazy val DockerNetworkFormat: Format[DockerInfo.Network] =
+    enumFormat(DockerInfo.Network.valueOf, str => s"$str is not a valid network type")
 
   implicit lazy val DockerSpecFormat: Format[DockerSpec] = (
     (__ \ "image").format[String] ~
@@ -171,11 +142,6 @@ package object models {
     (__ \ "volumes").formatNullable[Seq[Volume]].withDefault(RunSpec.DefaultVolumes) ~
     (__ \ "restart").formatNullable[RestartSpec].withDefault(RunSpec.DefaultRestartSpec)
   )(RunSpec.apply, unlift(RunSpec.unapply))
-
-  implicit lazy val PathIdFormat: Format[PathId] = Format(
-    Reads.of[String](Reads.minLength[String](1)).map(PathId(_)).filterNot(_.isRoot),
-    Writes[PathId] { id => JsString(id.toString) }
-  )
 
   implicit lazy val JobSpecFormat: Format[JobSpec] = (
     (__ \ "id").format[PathId] ~
