@@ -1,6 +1,7 @@
 package dcos.metronome.model
 
 import scala.concurrent.duration._
+import scala.collection.immutable._
 
 case class Artifact(uri: String, extract: Boolean = true, executable: Boolean = false, cache: Boolean = false)
 

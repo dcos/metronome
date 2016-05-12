@@ -1,11 +1,12 @@
 package dcos.metronome.jobrun.impl
 
 import akka.actor.ActorRef
-import dcos.metronome.jobrun.{ JobRunConfig, StartedJobRun, JobRunService }
+import dcos.metronome.jobrun.{ JobRunConfig, JobRunService, StartedJobRun }
 import dcos.metronome.model.{ JobRun, JobRunId, JobSpec }
+import mesosphere.marathon.core.task.bus.TaskChangeObservables.TaskChanged
 import mesosphere.marathon.state.PathId
 
-import scala.concurrent.{ Promise, Future }
+import scala.concurrent.{ Future, Promise }
 
 private[jobrun] class JobRunServiceDelegate(
     config:   JobRunConfig,
@@ -41,6 +42,12 @@ private[jobrun] class JobRunServiceDelegate(
   override def startJobRun(jobSpec: JobSpec): Future[StartedJobRun] = {
     val promise = Promise[StartedJobRun]
     actorRef ! TriggerJobRun(jobSpec, promise)
+    promise.future
+  }
+
+  override def notifyOfTaskUpdate(taskChanged: TaskChanged): Future[Unit] = {
+    val promise = Promise[Unit]
+    actorRef ! NotifyOfUpdate(taskChanged, promise)
     promise.future
   }
 }
