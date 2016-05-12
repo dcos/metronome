@@ -1,7 +1,8 @@
 package dcos.metronome.model
 
 case class PlacementSpec(
-  constraints: Seq[ConstraintSpec] = PlacementSpec.DefaultConstraints)
+  constraints: Seq[ConstraintSpec] = PlacementSpec.DefaultConstraints
+)
 object PlacementSpec {
   val DefaultConstraints = Seq.empty[ConstraintSpec]
 }

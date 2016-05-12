@@ -1,6 +1,6 @@
 package dcos.metronome.api.v1.controllers
 
-import dcos.metronome.api.{ UnknownJob, ErrorDetail, Authorization }
+import dcos.metronome.api.{ UnknownJob, Authorization }
 import dcos.metronome.api.v1.models._
 import dcos.metronome.model.JobSpec
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }

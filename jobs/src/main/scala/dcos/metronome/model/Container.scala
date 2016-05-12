@@ -5,11 +5,12 @@ import mesosphere.marathon.state.Parameter
 trait Container
 
 case class DockerSpec(
-  image: String,
-  network: String = DockerSpec.DefaultNetwork,
-  privileged: Boolean = DockerSpec.DefaultPrivileged,
-  parameters: Seq[Parameter] = DockerSpec.DefaultParameter,
-  forcePullImage: Boolean = DockerSpec.DefaultForcePullImage) extends Container
+  image:          String,
+  network:        String         = DockerSpec.DefaultNetwork,
+  privileged:     Boolean        = DockerSpec.DefaultPrivileged,
+  parameters:     Seq[Parameter] = DockerSpec.DefaultParameter,
+  forcePullImage: Boolean        = DockerSpec.DefaultForcePullImage
+) extends Container
 
 object DockerSpec {
 

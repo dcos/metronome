@@ -1,6 +1,6 @@
 package dcos.metronome.api.v1
 
-import dcos.metronome.api.{UnknownJob, ErrorDetail}
+import dcos.metronome.api.{ UnknownJob, ErrorDetail }
 import dcos.metronome.model._
 import mesosphere.marathon.state._
 import org.joda.time.DateTimeZone
@@ -28,8 +28,7 @@ package object models {
       case JsString(str) =>
         try {
           JsSuccess(read(str))
-        }
-        catch {
+        } catch {
           case _: IllegalArgumentException => JsError(errorMsg(str))
         }
       case x: JsValue => JsError(s"expected string, got $x")
@@ -49,17 +48,17 @@ package object models {
   implicit val unknownJobsFormat: Format[UnknownJob] = Json.format[UnknownJob]
 
   implicit lazy val ArtifactFormat: Format[Artifact] = (
-      (__ \ "url").format[String] ~
-      (__ \ "extract").formatNullable[Boolean].withDefault(true) ~
-      (__ \ "executable").formatNullable[Boolean].withDefault(false) ~
-      (__ \ "cache").formatNullable[Boolean].withDefault(false)
-    )(Artifact.apply, unlift(Artifact.unapply))
+    (__ \ "url").format[String] ~
+    (__ \ "extract").formatNullable[Boolean].withDefault(true) ~
+    (__ \ "executable").formatNullable[Boolean].withDefault(false) ~
+    (__ \ "cache").formatNullable[Boolean].withDefault(false)
+  )(Artifact.apply, unlift(Artifact.unapply))
 
   implicit lazy val CronFormat: Format[CronSpec] = new Format[CronSpec] {
     override def writes(o: CronSpec): JsValue = JsString(o.toString)
     override def reads(json: JsValue): JsResult[CronSpec] = json match {
       case JsString(CronSpec(value)) => JsSuccess(value)
-      case invalid               => JsError(s"Can not read cron expression $invalid")
+      case invalid                   => JsError(s"Can not read cron expression $invalid")
     }
   }
 
@@ -91,32 +90,23 @@ package object models {
     override def writes(o: RestartPolicy): JsValue = JsString(RestartPolicy.name(o))
     override def reads(json: JsValue): JsResult[RestartPolicy] = json match {
       case JsString(RestartPolicy(value)) => JsSuccess(value)
-      case invalid                            => JsError(s"Can not read restart policy $invalid")
+      case invalid                        => JsError(s"Can not read restart policy $invalid")
     }
   }
 
   implicit lazy val ScheduleSpecFormat: Format[ScheduleSpec] = (
-      (__ \ "schedule").format[CronSpec] ~
-      (__ \ "timezone").formatNullable[DateTimeZone].withDefault(ScheduleSpec.DefaultTimeZone) ~
-      (__ \ "startingDeadlineSeconds").formatNullable[Duration].withDefault(ScheduleSpec.DefaultStartingDeadline)  ~
-      (__ \ "concurrencyPolicy").formatNullable[ConcurrencyPolicy].withDefault(ScheduleSpec.DefaultConcurrencyPolicy) ~
-      (__ \ "enabled").formatNullable[Boolean].withDefault(ScheduleSpec.DefaultEnabled)
-    )(ScheduleSpec.apply, unlift(ScheduleSpec.unapply))
-
-  implicit lazy val PortSpecFormat: Format[PortSpec] = (
-      (__ \ "protocol").format[String] ~
-      (__ \ "name").format[String] ~
-      (__ \ "hostPort").formatNullable[Int] ~
-      (__ \ "containerPort").formatNullable[Int] ~
-      (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty)
-    )(PortSpec.apply, unlift(PortSpec.unapply))
-
+    (__ \ "schedule").format[CronSpec] ~
+    (__ \ "timezone").formatNullable[DateTimeZone].withDefault(ScheduleSpec.DefaultTimeZone) ~
+    (__ \ "startingDeadlineSeconds").formatNullable[Duration].withDefault(ScheduleSpec.DefaultStartingDeadline) ~
+    (__ \ "concurrencyPolicy").formatNullable[ConcurrencyPolicy].withDefault(ScheduleSpec.DefaultConcurrencyPolicy) ~
+    (__ \ "enabled").formatNullable[Boolean].withDefault(ScheduleSpec.DefaultEnabled)
+  )(ScheduleSpec.apply, unlift(ScheduleSpec.unapply))
 
   implicit lazy val ConstraintSpecFormat: Format[ConstraintSpec] = (
-      (__ \ "attr").format[String] ~
-      (__ \ "op").format[String](filter[String](ValidationError("Invalid Operator"))(ConstraintSpec.isValidOperation)) ~
-      (__ \ "value").formatNullable[String]
-    )(ConstraintSpec.apply, unlift(ConstraintSpec.unapply))
+    (__ \ "attr").format[String] ~
+    (__ \ "op").format[String](filter[String](ValidationError("Invalid Operator"))(ConstraintSpec.isValidOperation)) ~
+    (__ \ "value").formatNullable[String]
+  )(ConstraintSpec.apply, unlift(ConstraintSpec.unapply))
 
   implicit lazy val PlacementSpecFormat: Format[PlacementSpec] = Json.format[PlacementSpec]
 
@@ -128,7 +118,6 @@ package object models {
     */
   implicit lazy val PersistentVolumeInfoFormat: Format[PersistentVolumeInfo] =
     failFormat[PersistentVolumeInfo]("Persistent volumes are not supported")
-
 
   /* Commented out as long as we do not support external volumes
    implicit lazy val ExternalVolumeInfoFormat: Format[ExternalVolumeInfo] = (
@@ -142,44 +131,46 @@ package object models {
     failFormat[ExternalVolumeInfo]("External volumes are not supported")
 
   implicit lazy val VolumeFormat: Format[Volume] = (
-      (__ \ "containerPath").format[String] ~
-      (__ \ "hostPath").formatNullable[String] ~
-      (__ \ "mode").format[mesos.Volume.Mode] ~
-      (__ \ "persistent").formatNullable[PersistentVolumeInfo] ~
-      (__ \ "external").formatNullable[ExternalVolumeInfo]
-    )(Volume.apply, unlift(Volume.unapply))
+    (__ \ "containerPath").format[String] ~
+    (__ \ "hostPath").formatNullable[String] ~
+    (__ \ "mode").format[mesos.Volume.Mode] ~
+    (__ \ "persistent").formatNullable[PersistentVolumeInfo] ~
+    (__ \ "external").formatNullable[ExternalVolumeInfo]
+  )(Volume.apply, unlift(Volume.unapply))
 
   implicit lazy val ParameterFormat: Format[Parameter] = (
-      (__ \ "key").format[String] ~
-      (__ \ "value").format[String]
-    )(Parameter(_, _), unlift(Parameter.unapply))
+    (__ \ "key").format[String] ~
+    (__ \ "value").format[String]
+  )(Parameter(_, _), unlift(Parameter.unapply))
 
   implicit lazy val DockerSpecFormat: Format[DockerSpec] = (
-      (__ \ "image").format[String] ~
-      (__ \ "network").formatNullable[String].withDefault(DockerSpec.DefaultNetwork) ~
-      (__ \ "privileged").formatNullable[Boolean].withDefault(DockerSpec.DefaultPrivileged) ~
-      (__ \ "parameters").formatNullable[Seq[Parameter]].withDefault(DockerSpec.DefaultParameter) ~
-      (__ \ "forcePullImage").formatNullable[Boolean].withDefault(DockerSpec.DefaultForcePullImage)
-    ) (DockerSpec.apply, unlift(DockerSpec.unapply))
+    (__ \ "image").format[String] ~
+    (__ \ "network").formatNullable[String].withDefault(DockerSpec.DefaultNetwork) ~
+    (__ \ "privileged").formatNullable[Boolean].withDefault(DockerSpec.DefaultPrivileged) ~
+    (__ \ "parameters").formatNullable[Seq[Parameter]].withDefault(DockerSpec.DefaultParameter) ~
+    (__ \ "forcePullImage").formatNullable[Boolean].withDefault(DockerSpec.DefaultForcePullImage)
+  ) (DockerSpec.apply, unlift(DockerSpec.unapply))
+
+  implicit lazy val RestartSpecFormat: Format[RestartSpec] = (
+    (__ \ "restartPolicy").formatNullable[RestartPolicy].withDefault(RestartSpec.DefaultRestartPolicy) ~
+    (__ \ "activeDeadlineSeconds").formatNullable[Duration]
+  ) (RestartSpec.apply, unlift(RestartSpec.unapply))
 
   implicit lazy val RunSpecFormat: Format[RunSpec] = (
-      (__ \ "cpus").formatNullable[Double].withDefault(RunSpec.DefaultCpus) ~
-      (__ \ "mem").formatNullable[Double].withDefault(RunSpec.DefaultMem) ~
-      (__ \ "disk").formatNullable[Double].withDefault(RunSpec.DefaultDisk) ~
-      (__ \ "cmd").formatNullable[String] ~
-      (__ \ "args").formatNullable[Seq[String]] ~
-      (__ \ "user").formatNullable[String] ~
-      (__ \ "env").formatNullable[Map[String, String]].withDefault(RunSpec.DefaultEnv) ~
-      (__ \ "placement").formatNullable[PlacementSpec].withDefault(RunSpec.DefaultPlacement) ~
-      (__ \ "artifacts").formatNullable[Seq[Artifact]].withDefault(RunSpec.DefaultArtifacts) ~
-      (__ \ "maxLaunchDelay").formatNullable[Duration].withDefault(RunSpec.DefaultMaxLaunchDelay) ~
-      (__ \ "docker").formatNullable[DockerSpec] ~
-      (__ \ "ports").formatNullable[Seq[PortSpec]].withDefault(RunSpec.DefaultPorts) ~
-      (__ \ "volumes").formatNullable[Seq[Volume]].withDefault(RunSpec.DefaultVolumes) ~
-      (__ \ "restartPolicy").formatNullable[RestartPolicy].withDefault(RunSpec.DefaultRestartPolicy) ~
-      (__ \ "activeDeadlineSeconds").formatNullable[Duration].withDefault(RunSpec.DefaultActiveDeadline)
-    )(RunSpec.apply, unlift(RunSpec.unapply))
-
+    (__ \ "cpus").formatNullable[Double].withDefault(RunSpec.DefaultCpus) ~
+    (__ \ "mem").formatNullable[Double].withDefault(RunSpec.DefaultMem) ~
+    (__ \ "disk").formatNullable[Double].withDefault(RunSpec.DefaultDisk) ~
+    (__ \ "cmd").formatNullable[String] ~
+    (__ \ "args").formatNullable[Seq[String]] ~
+    (__ \ "user").formatNullable[String] ~
+    (__ \ "env").formatNullable[Map[String, String]].withDefault(RunSpec.DefaultEnv) ~
+    (__ \ "placement").formatNullable[PlacementSpec].withDefault(RunSpec.DefaultPlacement) ~
+    (__ \ "artifacts").formatNullable[Seq[Artifact]].withDefault(RunSpec.DefaultArtifacts) ~
+    (__ \ "maxLaunchDelay").formatNullable[Duration].withDefault(RunSpec.DefaultMaxLaunchDelay) ~
+    (__ \ "docker").formatNullable[DockerSpec] ~
+    (__ \ "volumes").formatNullable[Seq[Volume]].withDefault(RunSpec.DefaultVolumes) ~
+    (__ \ "restart").formatNullable[RestartSpec].withDefault(RunSpec.DefaultRestartSpec)
+  )(RunSpec.apply, unlift(RunSpec.unapply))
 
   implicit lazy val PathIdFormat: Format[PathId] = Format(
     Reads.of[String](Reads.minLength[String](1)).map(PathId(_)).filterNot(_.isRoot),
@@ -187,9 +178,10 @@ package object models {
   )
 
   implicit lazy val JobSpecFormat: Format[JobSpec] = (
-      (__ \ "id").format[PathId] ~
-      (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty) ~
-      (__ \ "schedule").formatNullable[ScheduleSpec] ~
-      (__ \ "run").format[RunSpec]
-    )(JobSpec.apply, unlift(JobSpec.unapply))
+    (__ \ "id").format[PathId] ~
+    (__ \ "description").format[String] ~
+    (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty) ~
+    (__ \ "schedule").formatNullable[ScheduleSpec] ~
+    (__ \ "run").format[RunSpec]
+  )(JobSpec.apply, unlift(JobSpec.unapply))
 }

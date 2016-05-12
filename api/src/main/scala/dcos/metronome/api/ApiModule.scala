@@ -13,10 +13,11 @@ import router.Routes
 import com.softwaremill.macwire._
 
 class ApiModule(
-    greetingService: GreetingService,
-    pluginManager: PluginManager,
+    greetingService:  GreetingService,
+    pluginManager:    PluginManager,
     httpErrorHandler: HttpErrorHandler,
-    assets: Assets) {
+    assets:           Assets
+) {
 
   lazy val jobsController = wire[JobSpecController]
 

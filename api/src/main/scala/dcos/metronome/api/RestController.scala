@@ -1,8 +1,8 @@
 package dcos.metronome.api
 
-import play.api.http.{ContentTypes, ContentTypeOf, Writeable}
-import play.api.libs.json.{Json, JsValue, Writes}
-import play.api.mvc.{Controller, RequestHeader, Codec}
+import play.api.http.{ ContentTypes, ContentTypeOf, Writeable }
+import play.api.libs.json.{ Json, JsValue, Writes }
+import play.api.mvc.{ Controller, RequestHeader, Codec }
 
 class RestController extends Controller {
 
