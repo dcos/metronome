@@ -2,13 +2,14 @@ package dcos.metronome.api
 
 import mesosphere.marathon.plugin.auth.{ Authenticator, AuthorizedAction, Authorizer, Identity }
 import mesosphere.marathon.plugin.http.HttpRequest
+import dcos.metronome.api.v1.models._
 import play.api.mvc._
 
 import scala.concurrent.Future
 
 /**
-  * A request that adds the User for the current call
-  */
+ * A request that adds the User for the current call
+ */
 case class AuthorizedRequest[A](identity: Identity, request: Request[A], authorizer: Authorizer) extends WrappedRequest(request) with Results {
   def withAuthorized[R](action: AuthorizedAction[R], resource: R)(block: R => Future[Result]): Future[Result] = {
     if (authorizer.isAuthorized(identity, action, resource)) block(resource)
@@ -16,7 +17,7 @@ case class AuthorizedRequest[A](identity: Identity, request: Request[A], authori
   }
 }
 
-trait Authorization { self: Controller =>
+trait Authorization extends RestController {
 
   def authenticator: Authenticator
   def authorizer: Authorizer
@@ -25,8 +26,8 @@ trait Authorization { self: Controller =>
   import play.api.libs.concurrent.Execution.Implicits._
 
   /**
-    * Use this object to create an authorized action.
-    */
+   * Use this object to create an authorized action.
+   */
   object AuthorizedAction extends AuthorizedActionBuilder {
     def apply() = new AuthorizedActionBuilder(None)
     def apply(identity: Identity) = new AuthorizedActionBuilder(Some(identity))
@@ -42,9 +43,9 @@ trait Authorization { self: Controller =>
       }
     }
 
-    private def handleNotAuthenticated(implicit request: RequestHeader): Future[Result] = {
+    private def handleNotAuthenticated(implicit codec: Codec, request: RequestHeader): Future[Result] = {
       //logger.debug(s"Unauthenticated user trying to access '${request.uri}'")
-      Future.successful(Unauthorized("Not authenticated"))
+      Future.successful(Unauthorized(ErrorDetail("Not authenticated")))
     }
 
     class PluginRequest(request: RequestHeader) extends HttpRequest {
