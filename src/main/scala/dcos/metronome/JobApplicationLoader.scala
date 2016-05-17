@@ -4,11 +4,16 @@ import com.softwaremill.macwire._
 import controllers.Assets
 import dcos.metronome.api.ApiModule
 import dcos.metronome.greeting.GreetingConf
+import dcos.metronome.ticking.{ BackPressure, TickingConf }
 import mesosphere.marathon.AllConf
+import org.joda.time.DateTime
 import play.api.ApplicationLoader.Context
 import play.api._
 import play.api.i18n._
+import play.api.libs.json.{ JsObject, Json }
 import play.api.routing.Router
+
+import scala.concurrent.duration._
 
 /**
   * Application loader that wires up the application dependencies using Macwire
@@ -28,6 +33,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
   private[this] lazy val apiModule: ApiModule = new ApiModule(
     jobsModule.greetingService,
+    jobsModule.tickingService,
     jobsModule.pluginManger,
     httpErrorHandler,
     assets
@@ -35,8 +41,15 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
   override def router: Router = apiModule.router
 
-  lazy val config = new Object with GreetingConf with JobsConfig {
+  lazy val config = new Object with GreetingConf with TickingConf with JobsConfig {
     override lazy val greetingMessage: String = configuration.getString("test.foo").getOrElse("default")
+
+    override val initialDelay: FiniteDuration = 1.second
+    override val interval: FiniteDuration = 1.second
+    override def tick(): Any = DateTime.now
+    override val backPressure: BackPressure = new BackPressure {
+      override val limit: Long = 100L
+    }
 
     lazy val master: String = "localhost:5050"
     lazy val pluginDir: Option[String] = configuration.getString("app.plugin.dir")
