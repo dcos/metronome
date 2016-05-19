@@ -30,7 +30,8 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     jobsModule.greetingService,
     jobsModule.pluginManger,
     httpErrorHandler,
-    assets
+    assets,
+    actorSystem
   )
 
   override def router: Router = apiModule.router
