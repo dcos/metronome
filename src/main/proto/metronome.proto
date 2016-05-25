@@ -1,0 +1,144 @@
+package dcos.metronome;
+
+option java_package = "dcos.metronome";
+option java_outer_classname = "Protos";
+
+/**
+ * Key, value pair used to store free form user-data.
+ */
+message Label {
+  optional string key = 1;
+  optional string value = 2;
+}
+
+message JobStatus {
+  // TODO (gkleiman): do we want an id here or is the node name enough?
+  optional int64 success_count = 1;
+  optional int64 failure_count = 2;
+  optional int64 last_success_at = 3;
+  optional int64 last_failure_at = 4;
+}
+
+message JobSpec {
+  optional string id = 1;
+  optional string description = 2;
+  repeated Label labels = 3;
+
+  message ScheduleSpec {
+    optional string schedule = 1;
+    optional string tz = 2;
+    optional int64 startingDeadline = 3;
+
+    enum ConcurrencyPolicy {
+      ALLOW = 1;
+    }
+    optional ConcurrencyPolicy concurrency_policy = 4;
+
+    optional bool enabled = 5;
+  }
+  optional ScheduleSpec schedule = 5;
+
+  message RunSpec {
+    optional double cpus = 1;
+    optional double mem = 2;
+    optional double disk = 3;
+    optional string cmd = 4;
+    repeated string arguments = 5;
+    optional string user = 6;
+
+    /**
+     * Key, value pair used to store environment variables.
+     */
+    message EnvironmentVariable {
+      optional string key = 1;
+      optional string value = 2;
+    }
+    repeated EnvironmentVariable environment = 7;
+
+    message PlacementSpec {
+      message Constraint {
+        optional string field = 1;
+
+        enum Operator {
+          // Field must match the regex given by value.
+          LIKE = 1;
+          // Field must not match the regex given by value.
+          UNLIKE = 2;
+          // Tasks will be clustered, i.e. all tasks need to have the same value. If value is not set, any value will be
+          // accepted for the first task, and subsequent tasks must use that same value.
+          EQ = 3;
+        }
+        optional Operator operator = 2;
+        optional string value = 3;
+      }
+
+      repeated Constraint constraints = 1;
+    }
+    optional PlacementSpec placement = 8;
+
+    message Artifact {
+      optional string uri = 1; // TODO (gkleiman): URI or URL?
+      optional bool extract = 2;
+      optional bool executable = 3;
+      optional bool cache = 4;
+    }
+    repeated Artifact artifacts = 9;
+
+    optional int64 max_launch_delay = 10;
+
+    message DockerSpec {
+      optional string image = 1;
+
+      enum Network {
+        HOST = 1;
+        BRIDGE = 2;
+        NONE = 3;
+      }
+      optional Network network = 2;
+
+      optional bool privileged = 3;
+
+      /**
+        * Key, value pair used to store Docker parameters.
+        */
+      message Parameter {
+        optional string key = 1;
+        optional string value = 2;
+      }
+      repeated Parameter parameters = 4;
+
+      optional bool forcePullImage = 5;
+    }
+    optional DockerSpec docker = 11;
+
+    message Volume {
+     // Path pointing to a directory or file in the container. If the
+     // path is a relative path, it is relative to the container work
+     // directory. If the path is an absolute path, that path must
+     // already exist.
+     optional string container_path = 1;
+
+     // Absolute path pointing to a directory or file on the host or a
+     // path relative to the container work directory.
+     optional string host_path = 2;
+
+     enum Mode {
+       RW = 1; // read-write.
+       RO = 2; // read-only.
+     }
+     optional Mode mode = 3;
+    }
+    repeated Volume volumes = 12;
+
+    message RestartSpec {
+      enum RestartPolicy {
+        NEVER = 1;
+        ON_FAILURE = 2;
+      }
+      optional RestartSpec policy = 1;
+      optional int64 activeDeadline = 2;
+    }
+    optional RestartSpec restart = 13;
+  }
+  optional RunSpec run = 6;
+}
