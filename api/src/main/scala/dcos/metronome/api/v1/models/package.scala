@@ -94,9 +94,6 @@ package object models {
     (__ \ "value").format[String]
   )(Parameter(_, _), unlift(Parameter.unapply))
 
-  implicit lazy val DockerNetworkFormat: Format[DockerInfo.Network] =
-    enumFormat(DockerInfo.Network.valueOf, str => s"$str is not a valid network type")
-
   implicit lazy val DockerSpecFormat: Format[DockerSpec] = Json.format[DockerSpec]
 
   implicit lazy val RestartSpecFormat: Format[RestartSpec] = (
