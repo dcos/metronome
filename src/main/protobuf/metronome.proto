@@ -61,13 +61,13 @@ message JobSpec {
 
         enum Operator {
           UNKNOWN = 1;
-          // Field must match the regex given by value.
-          LIKE = 2;
-          // Field must not match the regex given by value.
-          UNLIKE = 3;
           // Tasks will be clustered, i.e. all tasks need to have the same value. If value is not set, any value will be
           // accepted for the first task, and subsequent tasks must use that same value.
-          EQ = 4;
+          EQ = 2;
+          // Field must match the regex given by value.
+          LIKE = 3;
+          // Field must not match the regex given by value.
+          UNLIKE = 4;
         }
         optional Operator operator = 2;
         optional string value = 3;
@@ -105,8 +105,8 @@ message JobSpec {
 
      enum Mode {
        UNKNOWN = 1;
-       RW = 2; // read-write.
-       RO = 3; // read-only.
+       RO = 2; // read-only.
+       RW = 3; // read-write.
      }
      optional Mode mode = 3;
     }
