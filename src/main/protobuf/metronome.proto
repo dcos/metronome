@@ -12,11 +12,11 @@ message Label {
 }
 
 message JobStatus {
-  // TODO (gkleiman): do we want an id here or is the node name enough?
-  optional int64 success_count = 1;
-  optional int64 failure_count = 2;
-  optional int64 last_success_at = 3;
-  optional int64 last_failure_at = 4;
+  optional string job_id = 1;
+  optional int64 success_count = 2;
+  optional int64 failure_count = 3;
+  optional int64 last_success_at = 4;
+  optional int64 last_failure_at = 5;
 }
 
 message JobSpec {
@@ -77,7 +77,7 @@ message JobSpec {
     optional PlacementSpec placement = 8;
 
     message Artifact {
-      optional string uri = 1; // TODO (gkleiman): URI or URL?
+      optional string uri = 1;
       optional bool extract = 2;
       optional bool executable = 3;
       optional bool cache = 4;
@@ -88,26 +88,6 @@ message JobSpec {
 
     message DockerSpec {
       optional string image = 1;
-
-      enum Network {
-        HOST = 1;
-        BRIDGE = 2;
-        NONE = 3;
-      }
-      optional Network network = 2;
-
-      optional bool privileged = 3;
-
-      /**
-        * Key, value pair used to store Docker parameters.
-        */
-      message Parameter {
-        optional string key = 1;
-        optional string value = 2;
-      }
-      repeated Parameter parameters = 4;
-
-      optional bool forcePullImage = 5;
     }
     optional DockerSpec docker = 11;
 
