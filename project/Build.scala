@@ -80,21 +80,12 @@ object Build extends sbt.Build {
 
   lazy val formatSettings = scalariformSettings ++ Seq(
     ScalariformKeys.preferences := FormattingPreferences()
-      .setPreference(IndentWithTabs, false)
-      .setPreference(IndentSpaces, 2)
       .setPreference(AlignParameters, true)
       .setPreference(DoubleIndentClassDeclaration, true)
-      .setPreference(MultilineScaladocCommentsStartOnFirstLine, false)
-      .setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, true)
-      .setPreference(PreserveDanglingCloseParenthesis, true)
-      .setPreference(CompactControlReadability, false)
       .setPreference(AlignSingleLineCaseStatements, true)
       .setPreference(PreserveSpaceBeforeArguments, true)
-      .setPreference(SpaceBeforeColon, false)
-      .setPreference(SpaceInsideBrackets, false)
-      .setPreference(SpaceInsideParentheses, false)
-      .setPreference(SpacesWithinPatternBinders, true)
-      .setPreference(FormatXml, true)
+      .setPreference(SpacesAroundMultiImports, true)
+      .setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, true)
   )
 
 

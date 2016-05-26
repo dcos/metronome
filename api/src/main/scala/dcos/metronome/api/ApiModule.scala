@@ -1,7 +1,7 @@
 package dcos.metronome.api
 
 import controllers.Assets
-import dcos.metronome.api.v1.controllers.GreeterController
+import dcos.metronome.api.v1.controllers.{ JobRunController, JobSpecController }
 import dcos.metronome.greeting.GreetingService
 import mesosphere.marathon.core.auth.AuthModule
 import mesosphere.marathon.core.plugin.PluginManager
@@ -13,12 +13,15 @@ import router.Routes
 import com.softwaremill.macwire._
 
 class ApiModule(
-    greetingService: GreetingService,
-    pluginManager: PluginManager,
+    greetingService:  GreetingService,
+    pluginManager:    PluginManager,
     httpErrorHandler: HttpErrorHandler,
-    assets: Assets) {
+    assets:           Assets
+) {
 
-  lazy val greeterController = wire[GreeterController]
+  lazy val jobsController = wire[JobSpecController]
+
+  lazy val jobRunsController = wire[JobRunController]
 
   lazy val authModule: AuthModule = wire[AuthModule]
 
