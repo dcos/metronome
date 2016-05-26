@@ -114,13 +114,10 @@ package object models {
   implicit lazy val DockerNetworkFormat: Format[DockerInfo.Network] =
     enumFormat(DockerInfo.Network.valueOf, str => s"$str is not a valid network type")
 
-  implicit lazy val DockerSpecFormat: Format[DockerSpec] = (
-    (__ \ "image").format[String] ~
-    (__ \ "network").formatNullable[String].withDefault(DockerSpec.DefaultNetwork) ~
-    (__ \ "privileged").formatNullable[Boolean].withDefault(DockerSpec.DefaultPrivileged) ~
-    (__ \ "parameters").formatNullable[Seq[Parameter]].withDefault(DockerSpec.DefaultParameter) ~
-    (__ \ "forcePullImage").formatNullable[Boolean].withDefault(DockerSpec.DefaultForcePullImage)
-  ) (DockerSpec.apply, unlift(DockerSpec.unapply))
+  implicit lazy val DockerSpecFormat: Format[DockerSpec] = Format (
+    Reads.of[String].map(DockerSpec),
+    Writes[DockerSpec] { spec => JsString(spec.toString) }
+  )
 
   implicit lazy val RestartSpecFormat: Format[RestartSpec] = (
     (__ \ "restartPolicy").formatNullable[RestartPolicy].withDefault(RestartSpec.DefaultRestartPolicy) ~
