@@ -89,11 +89,6 @@ package object models {
 
   implicit lazy val VolumeFormat: Format[Volume] = Json.format[Volume]
 
-  implicit lazy val ParameterFormat: Format[Parameter] = (
-    (__ \ "key").format[String] ~
-    (__ \ "value").format[String]
-  )(Parameter(_, _), unlift(Parameter.unapply))
-
   implicit lazy val DockerSpecFormat: Format[DockerSpec] = Json.format[DockerSpec]
 
   implicit lazy val RestartSpecFormat: Format[RestartSpec] = (
