@@ -60,13 +60,14 @@ message JobSpec {
         optional string field = 1;
 
         enum Operator {
+          UNKNOWN = 1;
           // Field must match the regex given by value.
-          LIKE = 1;
+          LIKE = 2;
           // Field must not match the regex given by value.
-          UNLIKE = 2;
+          UNLIKE = 3;
           // Tasks will be clustered, i.e. all tasks need to have the same value. If value is not set, any value will be
           // accepted for the first task, and subsequent tasks must use that same value.
-          EQ = 3;
+          EQ = 4;
         }
         optional Operator operator = 2;
         optional string value = 3;
@@ -103,8 +104,9 @@ message JobSpec {
      optional string host_path = 2;
 
      enum Mode {
-       RW = 1; // read-write.
-       RO = 2; // read-only.
+       UNKNOWN = 1;
+       RW = 2; // read-write.
+       RO = 3; // read-only.
      }
      optional Mode mode = 3;
     }
@@ -112,8 +114,9 @@ message JobSpec {
 
     message RestartSpec {
       enum RestartPolicy {
-        NEVER = 1;
-        ON_FAILURE = 2;
+        UNKNOWN = 1;
+        NEVER = 2;
+        ON_FAILURE = 3;
       }
       optional RestartSpec policy = 1;
       optional int64 activeDeadline = 2;
