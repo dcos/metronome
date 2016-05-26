@@ -1,6 +1,7 @@
-import play.sbt.{PlayLayoutPlugin, PlayScala}
+import play.sbt.{ PlayLayoutPlugin, PlayScala }
 import sbt.Keys._
 import sbt._
+import sbtprotobuf.{ ProtobufPlugin => PB }
 import com.typesafe.sbt.SbtScalariform._
 import scalariform.formatter.preferences._
 
@@ -17,7 +18,7 @@ object Build extends sbt.Build {
         Dependency.macWireUtil,
         Dependency.macWireProxy
       )
-    )
+    ) ++ PB.protobufSettings
   ).aggregate(api, jobs).enablePlugins(PlayScala).disablePlugins(PlayLayoutPlugin)
 
   lazy val api = Project(
