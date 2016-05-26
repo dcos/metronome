@@ -11,8 +11,8 @@ import play.api.i18n._
 import play.api.routing.Router
 
 /**
- * Application loader that wires up the application dependencies using Macwire
- */
+  * Application loader that wires up the application dependencies using Macwire
+  */
 class JobApplicationLoader extends ApplicationLoader {
   def load(context: Context): Application = new JobComponents(context).application
 }

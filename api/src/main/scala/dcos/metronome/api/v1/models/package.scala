@@ -2,7 +2,7 @@ package dcos.metronome.api.v1
 
 import dcos.metronome.api.{ ErrorDetail, UnknownJob }
 import dcos.metronome.model._
-import mesosphere.marathon.state._
+import mesosphere.marathon.state.{ Volume => _, _ }
 import org.apache.mesos.Protos.ContainerInfo.DockerInfo
 import org.apache.mesos.{ Protos => mesos }
 import org.joda.time.DateTimeZone
@@ -17,11 +17,6 @@ import scala.concurrent.duration._
 package object models {
 
   import mesosphere.marathon.api.v2.json.Formats.{ FormatWithDefault, PathIdFormat, enumFormat }
-
-  def failFormat[A](message: String): Format[A] = new Format[A] {
-    override def writes(o: A): JsValue = JsNull
-    override def reads(json: JsValue): JsResult[A] = JsError(message)
-  }
 
   implicit val errorFormat: Format[ErrorDetail] = Json.format[ErrorDetail]
   implicit val unknownJobsFormat: Format[UnknownJob] = Json.format[UnknownJob]
@@ -92,19 +87,7 @@ package object models {
   implicit lazy val ModeFormat: Format[mesos.Volume.Mode] =
     enumFormat(mesos.Volume.Mode.valueOf, str => s"$str is not a valid mode")
 
-  implicit lazy val PersistentVolumeInfoFormat: Format[PersistentVolumeInfo] =
-    failFormat[PersistentVolumeInfo]("Persistent volumes are not supported")
-
-  implicit lazy val ExternalVolumeInfoFormat: Format[ExternalVolumeInfo] =
-    failFormat[ExternalVolumeInfo]("External volumes are not supported")
-
-  implicit lazy val VolumeFormat: Format[Volume] = (
-    (__ \ "containerPath").format[String] ~
-    (__ \ "hostPath").formatNullable[String] ~
-    (__ \ "mode").format[mesos.Volume.Mode] ~
-    (__ \ "persistent").formatNullable[PersistentVolumeInfo] ~
-    (__ \ "external").formatNullable[ExternalVolumeInfo]
-  )(Volume.apply, unlift(Volume.unapply))
+  implicit lazy val VolumeFormat: Format[Volume] = Json.format[Volume]
 
   implicit lazy val ParameterFormat: Format[Parameter] = (
     (__ \ "key").format[String] ~
@@ -114,13 +97,7 @@ package object models {
   implicit lazy val DockerNetworkFormat: Format[DockerInfo.Network] =
     enumFormat(DockerInfo.Network.valueOf, str => s"$str is not a valid network type")
 
-  implicit lazy val DockerSpecFormat: Format[DockerSpec] = (
-    (__ \ "image").format[String] ~
-    (__ \ "network").formatNullable[String].withDefault(DockerSpec.DefaultNetwork) ~
-    (__ \ "privileged").formatNullable[Boolean].withDefault(DockerSpec.DefaultPrivileged) ~
-    (__ \ "parameters").formatNullable[Seq[Parameter]].withDefault(DockerSpec.DefaultParameter) ~
-    (__ \ "forcePullImage").formatNullable[Boolean].withDefault(DockerSpec.DefaultForcePullImage)
-  ) (DockerSpec.apply, unlift(DockerSpec.unapply))
+  implicit lazy val DockerSpecFormat: Format[DockerSpec] = Json.format[DockerSpec]
 
   implicit lazy val RestartSpecFormat: Format[RestartSpec] = (
     (__ \ "restartPolicy").formatNullable[RestartPolicy].withDefault(RestartSpec.DefaultRestartPolicy) ~

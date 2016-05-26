@@ -1,7 +1,5 @@
 package dcos.metronome.model
 
-import mesosphere.marathon.state.Volume
-
 import scala.concurrent.duration._
 
 case class Artifact(uri: String, extract: Boolean = true, executable: Boolean = false, cache: Boolean = false)

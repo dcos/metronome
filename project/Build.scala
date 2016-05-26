@@ -85,6 +85,7 @@ object Build extends sbt.Build {
       .setPreference(AlignSingleLineCaseStatements, true)
       .setPreference(PreserveSpaceBeforeArguments, true)
       .setPreference(SpacesAroundMultiImports, true)
+      .setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, true)
   )
 
 
