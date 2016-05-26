@@ -103,7 +103,7 @@ object Build extends sbt.Build {
       // Test deps versions
       val ScalaTest = "2.1.7"
       val MacWire = "2.2.2"
-      val Marathon = "1.2.0-SNAPSHOT"
+      val Marathon = "2.0.0-SNAPSHOT"
       val Play = "2.5.3"
       val CronUtils = "3.1.6"
       val WixAccord = "0.5"
@@ -114,8 +114,8 @@ object Build extends sbt.Build {
     val macWireMacros = "com.softwaremill.macwire" %% "macros" % V.MacWire % "provided"
     val macWireUtil = "com.softwaremill.macwire" %% "util" % V.MacWire
     val macWireProxy = "com.softwaremill.macwire" %% "proxy" % V.MacWire
-    val marathon = "mesosphere.marathon" %% "marathon" % V.Marathon exclude("com.typesafe.play", "play-json") exclude("mesosphere.marathon", "ui") exclude("mesosphere.marathon", "ui") exclude("mesosphere", "chaos") exclude("org.apache.hadoop", "hadoop-hdfs") exclude("org.apache.hadoop", "hadoop-common") exclude("org.eclipse.jetty", "jetty-servlets")
-    val marathonPlugin = "mesosphere.marathon" %% "plugin-interface" % V.Marathon
+    val marathon = "dcos.marathon" %% "marathon" % V.Marathon exclude("com.typesafe.play", "play-json") exclude("mesosphere.marathon", "ui") exclude("mesosphere.marathon", "ui") exclude("mesosphere", "chaos") exclude("org.apache.hadoop", "hadoop-hdfs") exclude("org.apache.hadoop", "hadoop-common") exclude("org.eclipse.jetty", "jetty-servlets")
+    val marathonPlugin = "dcos.marathon" %% "plugin-interface" % V.Marathon
     val cronUtils = "com.cronutils" % "cron-utils" % V.CronUtils
     val wixAccord = "com.wix" %% "accord-core" % V.WixAccord
 
