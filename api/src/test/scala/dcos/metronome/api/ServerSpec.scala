@@ -21,8 +21,9 @@ class ServerSpec extends PlaySpec
       implicit val ec = app.materializer.executionContext
       val wsClient = components.wsClient
 
-      whenReady(wsUrl("/")(portNumber, wsClient).get) { response =>
+      whenReady(wsUrl("/ping")(portNumber, wsClient).get) { response =>
         response.status mustBe OK
+        response.body mustBe "pong"
       }
     }
   }

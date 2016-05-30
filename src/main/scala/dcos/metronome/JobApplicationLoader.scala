@@ -3,8 +3,9 @@ package dcos.metronome
 import com.softwaremill.macwire._
 import controllers.Assets
 import dcos.metronome.api.ApiModule
-import dcos.metronome.greeting.GreetingConf
+import dcos.metronome.utils.time.{ SystemClock, Clock }
 import mesosphere.marathon.AllConf
+import org.joda.time.DateTimeZone
 import play.api.ApplicationLoader.Context
 import play.api._
 import play.api.i18n._
@@ -24,10 +25,12 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
   }
   lazy val assets: Assets = wire[Assets]
 
-  private[this] lazy val jobsModule: JobsModule = new JobsModule(config)
+  lazy val clock: Clock = new SystemClock(DateTimeZone.UTC)
+
+  private[this] lazy val jobsModule: JobsModule = wire[JobsModule]
 
   private[this] lazy val apiModule: ApiModule = new ApiModule(
-    jobsModule.greetingService,
+    jobsModule.jobSpecService,
     jobsModule.pluginManger,
     httpErrorHandler,
     assets
@@ -35,8 +38,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
   override def router: Router = apiModule.router
 
-  lazy val config = new Object with GreetingConf with JobsConfig {
-    override lazy val greetingMessage: String = configuration.getString("test.foo").getOrElse("default")
+  lazy val config = new Object with JobsConfig {
 
     lazy val master: String = "localhost:5050"
     lazy val pluginDir: Option[String] = configuration.getString("app.plugin.dir")

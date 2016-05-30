@@ -13,7 +13,6 @@ import play.api.libs.json.{ Json, _ }
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
-
 package object models {
 
   import mesosphere.marathon.api.v2.json.Formats.{ FormatWithDefault, PathIdFormat, enumFormat }
@@ -69,7 +68,7 @@ package object models {
   }
 
   implicit lazy val ScheduleSpecFormat: Format[ScheduleSpec] = (
-    (__ \ "schedule").format[CronSpec] ~
+    (__ \ "cron").format[CronSpec] ~
     (__ \ "timezone").formatNullable[DateTimeZone].withDefault(ScheduleSpec.DefaultTimeZone) ~
     (__ \ "startingDeadlineSeconds").formatNullable[Duration].withDefault(ScheduleSpec.DefaultStartingDeadline) ~
     (__ \ "concurrencyPolicy").formatNullable[ConcurrencyPolicy].withDefault(ScheduleSpec.DefaultConcurrencyPolicy) ~
