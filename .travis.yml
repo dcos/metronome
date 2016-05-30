@@ -8,3 +8,7 @@ cache:
   directories:
     - $HOME/.sbt
     - $HOME/.ivy2
+    - $HOME/protobuf
+before_install:
+  - bash bin/install-protobuf.sh
+  - export PATH=$PATH:$HOME/protobuf/bin
