@@ -35,7 +35,7 @@ trait JobRunService {
   /**
     * Start a job by the given job specification.
     * Note: The future returns when the job run was started successfully, not when the job is finished!
-    * In order to register a on complete hook, you can use the complete future in StartedJobRun.
+    * In order to register an on complete hook, you can use the complete future in StartedJobRun.
     *
     * @param jobSpec the specification to run.
     * @return the started job run

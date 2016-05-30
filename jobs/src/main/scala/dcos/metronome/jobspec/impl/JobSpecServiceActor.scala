@@ -3,7 +3,7 @@ package dcos.metronome.jobspec.impl
 import akka.actor._
 import dcos.metronome.model.JobSpec
 import dcos.metronome.repository.Repository
-import dcos.metronome.{ JobSpecChangeInFlight, JobSpecDoesNotExist }
+import dcos.metronome.{ JobSpecAlreadyExists, JobSpecChangeInFlight, JobSpecDoesNotExist }
 import mesosphere.marathon.state.PathId
 
 import scala.collection.concurrent.TrieMap
@@ -14,20 +14,20 @@ import scala.concurrent.Promise
   */
 //noinspection AccessorLikeMethodIsUnit
 class JobSpecServiceActor(
-  val repo:                Repository[PathId, JobSpec],
-  persistenceActorFactory: PathId => Props,
-  schedulerActorFactory:   JobSpec => Props
+    val repo:                Repository[PathId, JobSpec],
+    persistenceActorFactory: PathId => Props,
+    schedulerActorFactory:   JobSpec => Props
 ) extends LoadContentOnStartup[PathId, JobSpec] {
   import JobSpecPersistenceActor._
   import JobSpecServiceActor._
 
-  private val allJobs = TrieMap.empty[PathId, JobSpec]
-  private val inFlightChanges = TrieMap.empty[PathId, JobSpec]
-  private val scheduleActors = TrieMap.empty[PathId, ActorRef]
-  private val persistenceActors = TrieMap.empty[PathId, ActorRef]
+  private[impl] val allJobs = TrieMap.empty[PathId, JobSpec]
+  private[impl] var inFlightChanges = Set.empty[PathId]
+  private[impl] val scheduleActors = TrieMap.empty[PathId, ActorRef]
+  private[impl] val persistenceActors = TrieMap.empty[PathId, ActorRef]
 
   override def receive: Receive = {
-    //crud messages
+    // crud messages
     case CreateJobSpec(jobSpec, promise)    => createJobSpec(jobSpec, promise)
     case UpdateJobSpec(id, change, promise) => updateJobSpec(id, change, promise)
     case DeleteJobSpec(id, promise)         => deleteJobSpec(id, promise)
@@ -35,19 +35,16 @@ class JobSpecServiceActor(
     case ListJobSpecs(filter, promise)      => listJobSpecs(filter, promise)
 
     // persistence ack messages
-    case Created(jobSpec, promise)          => jobSpecCreated(jobSpec, promise)
-    case Updated(jobSpec, promise)          => jobSpecUpdated(jobSpec, promise)
-    case Deleted(jobSpec, promise)          => jobSpecDeleted(jobSpec, promise)
-    case PersistFailed(id, ex, promise)     => jobChangeFailed(id, ex, promise)
+    case Created(_, jobSpec, promise)       => jobSpecCreated(jobSpec, promise)
+    case Updated(_, jobSpec, promise)       => jobSpecUpdated(jobSpec, promise)
+    case Deleted(_, jobSpec, promise)       => jobSpecDeleted(jobSpec, promise)
+    case PersistFailed(_, id, ex, promise)  => jobChangeFailed(id, ex, promise)
 
-    //lifetime messages
+    // lifetime messages
     case Terminated(ref)                    => handleTerminated(ref)
   }
 
   def getJobSpec(id: PathId, promise: Promise[Option[JobSpec]]): Unit = {
-    println(s"All jobs: $allJobs")
-    println(s"All persistence actors: $persistenceActors")
-    println(s"All scheduler actors: $scheduleActors")
     promise.success(allJobs.get(id))
   }
 
@@ -56,8 +53,8 @@ class JobSpecServiceActor(
   }
 
   def createJobSpec(jobSpec: JobSpec, promise: Promise[JobSpec]): Unit = {
-    noChangeInFlight(jobSpec, promise) {
-      noSpecWithId(jobSpec, promise) {
+    noSpecWithId(jobSpec, promise) {
+      noChangeInFlight(jobSpec, promise) {
         persistenceActor(jobSpec.id) ! JobSpecPersistenceActor.Create(jobSpec, promise)
       }
     }
@@ -86,14 +83,14 @@ class JobSpecServiceActor(
   }
 
   def noSpecWithId(jobSpec: JobSpec, promise: Promise[JobSpec])(change: => Unit): Unit = {
-    if (allJobs.contains(jobSpec.id)) promise.failure(JobSpecChangeInFlight(jobSpec.id)) else {
+    if (allJobs.contains(jobSpec.id)) promise.failure(JobSpecAlreadyExists(jobSpec.id)) else {
       change
     }
   }
 
   def noChangeInFlight[T](jobSpec: JobSpec, promise: Promise[T])(change: => Unit): Unit = {
     if (inFlightChanges.contains(jobSpec.id)) promise.failure(JobSpecChangeInFlight(jobSpec.id)) else {
-      inFlightChanges += jobSpec.id -> jobSpec
+      inFlightChanges += jobSpec.id
       change
     }
   }
@@ -113,13 +110,13 @@ class JobSpecServiceActor(
     allJobs += jobSpec.id -> jobSpec
     inFlightChanges -= jobSpec.id
     scheduleActor(jobSpec).foreach { scheduler =>
-      if (jobSpec.schedule.isDefined) {
-        scheduler ! JobSpecSchedulerActor.UpdateJobSpec(jobSpec)
-      } else {
-        //the updated spec does not have a schedule
-        context.unwatch(scheduler)
-        context.stop(scheduler)
-        scheduleActors -= jobSpec.id
+      jobSpec.schedule match {
+        case Some(schedule) if schedule.enabled => scheduler ! JobSpecSchedulerActor.UpdateJobSpec(jobSpec)
+        case _ =>
+          //the updated spec does not have an enabled schedule
+          context.unwatch(scheduler)
+          context.stop(scheduler)
+          scheduleActors -= jobSpec.id
       }
     }
     promise.success(jobSpec)

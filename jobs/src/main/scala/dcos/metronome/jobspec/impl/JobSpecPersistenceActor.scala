@@ -1,6 +1,6 @@
 package dcos.metronome.jobspec.impl
 
-import akka.actor.{ Stash, Props, ActorLogging, Actor }
+import akka.actor._
 import dcos.metronome.model.JobSpec
 import dcos.metronome.repository.Repository
 import mesosphere.marathon.state.PathId
@@ -36,13 +36,14 @@ class JobSpecPersistenceActor(id: PathId, repo: Repository[PathId, JobSpec]) ext
   def repoChange(
     change:    Future[JobSpec],
     promise:   Promise[JobSpec],
-    onSuccess: (JobSpec, Promise[JobSpec]) => Result
+    onSuccess: (ActorRef, JobSpec, Promise[JobSpec]) => Result
   ): Unit = {
     context.become(waitForPersisted)
     val actor = self
+    val from = sender()
     change.onComplete {
-      case Success(result) => actor ! onSuccess(result, promise)
-      case Failure(ex)     => actor ! PersistFailed(id, ex, promise)
+      case Success(result) => actor ! onSuccess(from, result, promise)
+      case Failure(ex)     => actor ! PersistFailed(from, id, ex, promise)
     }
   }
 
@@ -50,12 +51,12 @@ class JobSpecPersistenceActor(id: PathId, repo: Repository[PathId, JobSpec]) ext
     case event: PersistFailed =>
       log.error(event.ex, "Repository change failed")
       context.become(receive)
-      context.parent ! event
+      event.sender ! event
       unstashAll()
     case event: Result =>
-      log.debug(s"Repository change on ${event.jobSpec.id} successful")
+      log.info(s"Repository change on ${event.jobSpec.id} successful")
       context.become(receive)
-      context.parent ! event
+      event.sender ! event
       unstashAll()
     case _ => stash()
   }
@@ -69,13 +70,14 @@ object JobSpecPersistenceActor {
 
   //ack messages
   sealed trait Result {
+    def sender: ActorRef
     def jobSpec: JobSpec
   }
-  case class Created(jobSpec: JobSpec, promise: Promise[JobSpec]) extends Result
-  case class Updated(jobSpec: JobSpec, promise: Promise[JobSpec]) extends Result
-  case class Deleted(jobSpec: JobSpec, promise: Promise[JobSpec]) extends Result
+  case class Created(sender: ActorRef, jobSpec: JobSpec, promise: Promise[JobSpec]) extends Result
+  case class Updated(sender: ActorRef, jobSpec: JobSpec, promise: Promise[JobSpec]) extends Result
+  case class Deleted(sender: ActorRef, jobSpec: JobSpec, promise: Promise[JobSpec]) extends Result
 
-  case class PersistFailed(id: PathId, ex: Throwable, promise: Promise[JobSpec])
+  case class PersistFailed(sender: ActorRef, id: PathId, ex: Throwable, promise: Promise[JobSpec])
 
   def props(id: PathId, repository: Repository[PathId, JobSpec]): Props = {
     Props(new JobSpecPersistenceActor(id, repository))

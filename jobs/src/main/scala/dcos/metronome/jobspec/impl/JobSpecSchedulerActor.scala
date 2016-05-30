@@ -19,9 +19,9 @@ class JobSpecSchedulerActor(
   import JobSpecSchedulerActor._
   import context.dispatcher
 
-  private[this] var spec = initSpec
-  private[this] var nextSchedule: Option[Cancellable] = None
-  private[this] var scheduledAt: Option[DateTime] = None
+  private[impl] var spec = initSpec
+  private[impl] var nextSchedule: Option[Cancellable] = None
+  private[impl] var scheduledAt: Option[DateTime] = None
 
   override def preStart(): Unit = {
     scheduleNextRun()
