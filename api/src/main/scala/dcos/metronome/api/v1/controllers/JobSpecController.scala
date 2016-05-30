@@ -2,55 +2,47 @@ package dcos.metronome.api.v1.controllers
 
 import dcos.metronome.api.{ UnknownJob, Authorization }
 import dcos.metronome.api.v1.models._
+import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.JobSpec
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
 import mesosphere.marathon.state.PathId
 import PathId._
+import play.api.mvc.Action
 
-class JobSpecController(val authenticator: Authenticator, val authorizer: Authorizer) extends Authorization {
+import scala.concurrent.Future
 
-  var jobs = Map.empty[PathId, JobSpec]
+class JobSpecController(
+    jobSpecService:    JobSpecService,
+    val authenticator: Authenticator,
+    val authorizer:    Authorizer
+) extends Authorization {
 
-  def createJob = AuthorizedAction(parse.json[JobSpec]) { implicit request =>
-    val job = request.body
-    jobs += job.id -> job
-    Created(request.body)
+  import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
+  def createJob = AuthorizedAction.async(parse.json[JobSpec]) { implicit request =>
+    jobSpecService.createJobSpec(request.body).map(Created(_))
   }
 
-  def listJobs = AuthorizedAction { implicit request =>
-    Ok(jobs.values)
+  def listJobs = AuthorizedAction.async { implicit request =>
+    jobSpecService.listJobSpecs(_ => true).map(Ok(_))
   }
 
-  def getJob(id: String) = AuthorizedAction { implicit request =>
-    jobs.get(id.toRootPath) match {
+  def getJob(id: String) = AuthorizedAction.async { implicit request =>
+    jobSpecService.getJobSpec(id.toRootPath).map {
       case Some(job) => Ok(job)
       case None      => NotFound(UnknownJob(id))
     }
   }
 
-  def updateJob(id: String) = AuthorizedAction { implicit request =>
-    jobs.get(id.toRootPath) match {
-      case Some(job) =>
-        jobs += job.id -> job
-        Ok(job)
-      case None => NotFound(UnknownJob(id))
-    }
+  def updateJob(id: String) = AuthorizedAction.async(parse.json[JobSpec]) { implicit request =>
+    jobSpecService.updateJobSpec(id.toRootPath, _ => request.body).map(Ok(_))
   }
 
-  def deleteJob(id: String) = AuthorizedAction { implicit request =>
-    jobs.get(id.toRootPath) match {
-      case Some(job) =>
-        jobs -= job.id
-        Ok(job)
-      case None => NotFound(UnknownJob(id))
-    }
+  def deleteJob(id: String) = AuthorizedAction.async { implicit request =>
+    jobSpecService.deleteJobSpec(id.toRootPath).map(Ok(_))
   }
 
   def triggerJob(id: String) = AuthorizedAction { implicit request =>
-    jobs.get(id.toRootPath) match {
-      case Some(job) =>
-        Ok("triggered")
-      case None => NotFound(UnknownJob(id))
-    }
+    Ok
   }
 }

@@ -1,5 +1,5 @@
 
-
+GET /ping dcos.metronome.api.v1.controllers.ApplicationController.ping
 
 GET /jobs dcos.metronome.api.v1.controllers.JobSpecController.listJobs
 POST /jobs dcos.metronome.api.v1.controllers.JobSpecController.createJob

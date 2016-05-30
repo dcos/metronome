@@ -1,15 +1,20 @@
 package dcos.metronome
 
-import dcos.metronome.greeting.{ GreetingService, GreetingModule }
+import akka.actor.ActorSystem
+import dcos.metronome.jobspec.JobSpecModule
+import dcos.metronome.repository.RepositoryModule
+import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.core.plugin.{ PluginManager, PluginModule }
-import com.softwaremill.macwire._
 
-class JobsModule(config: JobsConfig) {
+class JobsModule(config: JobsConfig, actorSystem: ActorSystem, clock: Clock) {
 
   private[this] lazy val pluginModule = new PluginModule(config.scallopConf)
-  lazy val pluginManger: PluginManager = pluginModule.pluginManager
+  def pluginManger: PluginManager = pluginModule.pluginManager
 
-  private[this] lazy val greetingModule: GreetingModule = wire[GreetingModule]
-  lazy val greetingService: GreetingService = greetingModule.greetingService
+  lazy val repositoryModule = new RepositoryModule()
+
+  lazy val jobSpecModule = new JobSpecModule(config, actorSystem, clock, repositoryModule.jobSpecRepository)
+  def jobSpecService = jobSpecModule.jobSpecService
+
 }
 

@@ -12,9 +12,9 @@ class CronSpec(val cron: Cron) {
 
   private[this] lazy val executionTime: ExecutionTime = ExecutionTime.forCron(cron)
 
-  def nextExecution(now: DateTime = DateTime.now()): DateTime = executionTime.nextExecution(now)
+  def nextExecution(from: DateTime): DateTime = executionTime.nextExecution(from)
 
-  def lastExecution(now: DateTime = DateTime.now()): DateTime = executionTime.lastExecution(now)
+  def lastExecution(from: DateTime): DateTime = executionTime.lastExecution(from)
 
   override def hashCode(): Int = cron.hashCode()
 

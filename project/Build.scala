@@ -50,7 +50,10 @@ object Build extends sbt.Build {
         Dependency.macWireMacros,
         Dependency.macWireUtil,
         Dependency.macWireProxy,
-        Dependency.cronUtils
+        Dependency.cronUtils,
+        Dependency.akka,
+        Dependency.Test.akkaTestKit,
+        Dependency.Test.mockito
       )
     )
   )
@@ -99,6 +102,8 @@ object Build extends sbt.Build {
       val Play = "2.5.3"
       val CronUtils = "3.1.6"
       val WixAccord = "0.5"
+      val Akka = "2.3.9"
+      val Mockito = "2.0.54-beta"
     }
 
     val playJson = "com.typesafe.play" %% "play-json" % V.Play
@@ -110,10 +115,13 @@ object Build extends sbt.Build {
     val marathonPlugin = "dcos.marathon" %% "plugin-interface" % V.Marathon
     val cronUtils = "com.cronutils" % "cron-utils" % V.CronUtils
     val wixAccord = "com.wix" %% "accord-core" % V.WixAccord
+    val akka = "com.typesafe.akka" %%  "akka-actor" % V.Akka
 
     object Test {
       val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"
       val scalatestPlay = "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % "test"
+      val akkaTestKit = "com.typesafe.akka" %%  "akka-testkit" % V.Akka % "test"
+      val mockito = "org.mockito" % "mockito-core" % V.Mockito % "test"
     }
   }
 }

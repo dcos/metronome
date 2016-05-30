@@ -5,12 +5,14 @@ import mesosphere.marathon.state.PathId
 case class JobSpec(
   id:          PathId,
   description: String,
-  labels:      Map[String, String],
-  schedule:    Option[ScheduleSpec],
-  run:         RunSpec
+  labels:      Map[String, String]  = JobSpec.DefaultLabels,
+  schedule:    Option[ScheduleSpec] = JobSpec.DefaultSchedule,
+  run:         RunSpec              = JobSpec.DefaultRunSpec
 )
 
 object JobSpec {
-  val DefaultLabels = Map.empty
+  val DefaultLabels = Map.empty[String, String]
+  val DefaultSchedule = None
+  val DefaultRunSpec = RunSpec()
 }
 

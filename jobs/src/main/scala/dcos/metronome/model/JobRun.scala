@@ -4,7 +4,7 @@ import mesosphere.marathon.state.PathId
 import org.joda.time.DateTime
 
 case class JobRun(
-  id:         String,
+  id:         JobRunId,
   jobId:      PathId,
   status:     JobRunStatus,
   createdAt:  DateTime,

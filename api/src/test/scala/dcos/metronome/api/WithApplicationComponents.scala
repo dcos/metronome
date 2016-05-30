@@ -1,8 +1,11 @@
 package dcos.metronome.api
 
 import controllers.Assets
-import dcos.metronome.greeting.{ GreetingService, GreetingConf }
+import dcos.metronome.JobSpecDoesNotExist
+import dcos.metronome.jobspec.JobSpecService
+import dcos.metronome.model.JobSpec
 import mesosphere.marathon.core.plugin.{ PluginDefinitions, PluginManager }
+import mesosphere.marathon.state.PathId
 import org.scalatest.{ Suite, TestData }
 import org.scalatestplus.play.{ OneAppPerSuite, OneAppPerTest, OneServerPerSuite, OneServerPerTest }
 import play.api.ApplicationLoader.Context
@@ -11,47 +14,49 @@ import play.api.routing.Router
 import play.api.{ BuiltInComponents, _ }
 import router.Routes
 
+import scala.collection.concurrent.TrieMap
+import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 /**
- * A trait that provides a components in scope and creates new components when newApplication is called
- *
- * This class has several methods that can be used to customize the behavior in specific ways.
- *
- * @tparam C the type of the fully-built components class
- */
+  * A trait that provides a components in scope and creates new components when newApplication is called
+  *
+  * This class has several methods that can be used to customize the behavior in specific ways.
+  *
+  * @tparam C the type of the fully-built components class
+  */
 trait WithApplicationComponents[C <: BuiltInComponents] {
   private var _components: C = _
 
   /**
-   * @return The current components
-   */
+    * @return The current components
+    */
   final def components: C = _components
 
   /**
-   * @return the components to be used by the application
-   */
+    * @return the components to be used by the application
+    */
   def createComponents(context: Context): C
 
   /**
-   * @return new application instance and set the components. This must be called for components to be properly set up.
-   */
+    * @return new application instance and set the components. This must be called for components to be properly set up.
+    */
   final def newApplication: Application = {
     _components = createComponents(context)
     initialize(_components)
   }
 
   /**
-   * Initialize the application from the components. This can be used to do eager instantiation or otherwise
-   * set up things.
-   *
-   * @return the application that will be used for testing
-   */
+    * Initialize the application from the components. This can be used to do eager instantiation or otherwise
+    * set up things.
+    *
+    * @return the application that will be used for testing
+    */
   def initialize(components: C): Application = _components.application
 
   /**
-   * @return a context to use to create the application.
-   */
+    * @return a context to use to create the application.
+    */
   def context: ApplicationLoader.Context = {
     val classLoader = ApplicationLoader.getClass.getClassLoader
     val env = new Environment(new java.io.File("."), classLoader, Mode.Test)
@@ -97,23 +102,49 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
     _.configure(context.environment)
   }
 
-  lazy val greetingService: GreetingService = new GreetingService {
-    override def greetingMessage(language: String): String = "hello"
-  }
-
   lazy val pluginManager: PluginManager = new PluginManager {
     override def definitions: PluginDefinitions = new PluginDefinitions(Seq.empty)
     override def plugins[T](implicit ct: ClassTag[T]): Seq[T] = Seq.empty
   }
 
-  lazy val assets: Assets = wire[Assets]
+  lazy val jobSpecService: JobSpecService = new JobSpecService {
+    val specs = TrieMap.empty[PathId, JobSpec]
+    import Future._
+    override def getJobSpec(id: PathId): Future[Option[JobSpec]] = successful(specs.get(id))
 
-  lazy val apiModule: ApiModule = new ApiModule(greetingService, pluginManager, httpErrorHandler, assets)
+    override def createJobSpec(jobSpec: JobSpec): Future[JobSpec] = {
+      specs += jobSpec.id -> jobSpec
+      successful(jobSpec)
+    }
 
-  lazy val config = new GreetingConf {
-    override lazy val greetingMessage: String = configuration.getString("test.foo").getOrElse("default")
+    override def updateJobSpec(id: PathId, update: (JobSpec) => JobSpec): Future[JobSpec] = {
+      specs.get(id) match {
+        case Some(spec) =>
+          val changed = update(spec)
+          specs.update(id, changed)
+          successful(changed)
+        case None => failed(JobSpecDoesNotExist(id))
+      }
+    }
+
+    override def listJobSpecs(filter: (JobSpec) => Boolean): Future[Iterable[JobSpec]] = {
+      successful(specs.values.filter(filter))
+    }
+
+    override def deleteJobSpec(id: PathId): Future[JobSpec] = {
+      specs.get(id) match {
+        case Some(spec) =>
+          specs -= id
+          successful(spec)
+        case None => failed(JobSpecDoesNotExist(id))
+      }
+    }
   }
 
-  override def router: Router = wire[Routes]
+  lazy val assets: Assets = wire[Assets]
+
+  lazy val apiModule: ApiModule = new ApiModule(jobSpecService, pluginManager, httpErrorHandler, assets)
+
+  override def router: Router = apiModule.router
 }
 
