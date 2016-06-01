@@ -1,12 +1,12 @@
-package dcos.metronome.repository.impl
+package dcos.metronome.repository.impl.kv
 
 import dcos.metronome.PersistenceFailed
-import dcos.metronome.repository.{ Repository, EntityMarshaller, PathResolver }
+import dcos.metronome.repository.Repository
 import mesosphere.util.state.{ PersistentEntity, PersistentStore }
 
-import scala.concurrent.{ Future, ExecutionContext }
+import scala.concurrent.{ ExecutionContext, Future }
 
-abstract class BaseRepository[Id, Model](
+abstract class KeyValueRepository[Id, Model](
     pathResolver:    PathResolver[Id],
     serializer:      EntityMarshaller[Model],
     store:           PersistentStore,

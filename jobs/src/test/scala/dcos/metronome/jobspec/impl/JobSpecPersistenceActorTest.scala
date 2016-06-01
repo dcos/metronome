@@ -81,7 +81,7 @@ class JobSpecPersistenceActorTest extends TestKit(ActorSystem("test")) with FunS
     val f = new Fixture
     val actor = f.persistenceActor
     val promise = Promise[JobSpec]
-    val changed = f.jobSpec.copy(description = "changed")
+    val changed = f.jobSpec.copy(description = Some("changed"))
     f.repository.update(any, any) returns Future.successful(changed)
 
     When("A update message is sent")
@@ -142,7 +142,7 @@ class JobSpecPersistenceActorTest extends TestKit(ActorSystem("test")) with FunS
   class Fixture {
     val repository = mock[Repository[PathId, JobSpec]]
     val id = PathId("/test")
-    val jobSpec = JobSpec(id, "test")
+    val jobSpec = JobSpec(id)
     def persistenceActor = system.actorOf(JobSpecPersistenceActor.props(id, repository))
   }
 }

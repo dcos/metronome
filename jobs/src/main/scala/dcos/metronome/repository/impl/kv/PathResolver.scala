@@ -1,4 +1,4 @@
-package dcos.metronome.repository
+package dcos.metronome.repository.impl.kv
 
 /**
   * PathResolver can translate a model specific Id into a path in the store.

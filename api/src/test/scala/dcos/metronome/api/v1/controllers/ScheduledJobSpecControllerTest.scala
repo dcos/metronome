@@ -12,6 +12,8 @@ import play.api.libs.json._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
+import scala.collection.immutable._
+
 class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with GivenWhenThen with ScalaFutures {
 
   import ScheduledJobSpecController._
@@ -102,9 +104,9 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
   val CronSpec(cron) = "* * * * *"
   val schedule1 = ScheduleSpec("id1", cron)
   val schedule2 = ScheduleSpec("id2", cron)
-  val jobSpec1 = JobSpec(PathId("spec1"), "spec1", schedules = Seq(schedule1))
+  val jobSpec1 = JobSpec(PathId("spec1"), schedules = Seq(schedule1))
   val jobSpec1Json = Json.toJson(jobSpec1)
-  val jobSpec2 = JobSpec(PathId("spec2"), "spec2", schedules = Seq(schedule1))
+  val jobSpec2 = JobSpec(PathId("spec2"), schedules = Seq(schedule1))
   val jobSpec2Json = Json.toJson(jobSpec2)
 
   override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context)

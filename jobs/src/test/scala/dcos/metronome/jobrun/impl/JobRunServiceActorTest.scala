@@ -165,7 +165,7 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
 
   class Fixture {
     val id = PathId("/test")
-    val jobSpec = JobSpec(id, "test")
+    val jobSpec = JobSpec(id)
     val clock = new FixedClock(DateTime.parse("2016-06-01T08:50:12.000Z"))
 
     def run() = {

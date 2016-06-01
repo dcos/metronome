@@ -43,6 +43,10 @@ object CronSpec {
 
   def isValid(cronString: String): Boolean = unapply(cronString).isDefined
 
+  def apply(cronString: String): CronSpec = {
+    new CronSpec(new CronParser(cronDefinition).parse(cronString))
+  }
+
   def unapply(cronString: String): Option[CronSpec] = {
     try {
       Some(new CronSpec(new CronParser(cronDefinition).parse(cronString)))
