@@ -18,7 +18,7 @@ object Build extends sbt.Build {
         Dependency.macWireUtil,
         Dependency.macWireProxy
       )
-    ) ++ PB.protobufSettings
+    )
   ).aggregate(api, jobs).enablePlugins(PlayScala).disablePlugins(PlayLayoutPlugin)
 
   lazy val api = Project(
@@ -43,7 +43,7 @@ object Build extends sbt.Build {
   lazy val jobs = Project(
     id = "jobs",
     base = file("jobs"),
-    settings = baseSettings ++ formatSettings ++ Seq(
+    settings = baseSettings ++ formatSettings ++ PB.protobufSettings ++ Seq(
       libraryDependencies ++= Seq(
         Dependency.playJson,
         Dependency.marathon,
