@@ -47,6 +47,7 @@ class JobRunServiceActor(
   def triggerJobRun(spec: JobSpec, promise: Promise[StartedJobRun]): Unit = {
     log.info(s"Trigger new JobRun for JobSpec: $spec")
     val noConcurrentRunOrAllowed = runsForSpec(spec.id).isEmpty ||
+      //TODO: question: should we make this property part of run and not part of schedule?
       spec.schedule.map(_.concurrencyPolicy == ConcurrencyPolicy.Allow).getOrElse(true)
     if (noConcurrentRunOrAllowed) {
       val jobRun = new JobRun(JobRunId(spec), spec, JobRunStatus.Starting, clock.now(), None, Seq.empty)

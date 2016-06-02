@@ -12,6 +12,7 @@ POST /jobs/*id dcos.metronome.api.v1.controllers.JobSpecController.triggerJob(id
 # TODO: nice functionality, but need more thought what object to provide
 # POST /job-runs dcos.metronome.api.v1.controllers.JobRunController.runJob(wait:Boolean ?= false)
 
+POST /job-runs dcos.metronome.api.v1.controllers.JobRunController.runJob(wait:Boolean ?= false)
 GET /job-runs dcos.metronome.api.v1.controllers.JobRunController.getAllJobRuns
 GET /job-runs/*id dcos.metronome.api.v1.controllers.JobRunController.getJobRun(id)
 POST /job-runs/*id dcos.metronome.api.v1.controllers.JobRunController.changeJobRun(id, action)
