@@ -7,9 +7,6 @@ import dcos.metronome.model.JobSpec
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
 import mesosphere.marathon.state.PathId
 import PathId._
-import play.api.mvc.Action
-
-import scala.concurrent.Future
 
 class JobSpecController(
     jobSpecService:    JobSpecService,

@@ -15,14 +15,14 @@ trait JobRunService {
     *
     * @return all active job runs.
     */
-  def listRuns(filter: JobRun => Boolean): Future[Seq[StartedJobRun]]
+  def listRuns(filter: JobRun => Boolean): Future[Iterable[StartedJobRun]]
 
   /**
     * Get all active job runs for the given job spec.
     *
     * @return all active job runs.
     */
-  def activeRuns(jobSpecId: PathId): Future[Seq[StartedJobRun]]
+  def activeRuns(jobSpecId: PathId): Future[Iterable[StartedJobRun]]
 
   /**
     * Get a specific job run by its id.
@@ -48,7 +48,7 @@ trait JobRunService {
     * In order to register a on complete hook, you can use the complete future in StartedJobRun.
     *
     * @param jobRunId the id of the related job run.
-    * @return the job run that was killed, otherwise none.
+    * @return the job run that was killed
     */
-  def killJobRun(jobRunId: JobRunId): Future[Option[StartedJobRun]]
+  def killJobRun(jobRunId: JobRunId): Future[StartedJobRun]
 }

@@ -2,7 +2,7 @@ package dcos.metronome.jobspec.impl
 
 import akka.actor._
 import dcos.metronome.model.JobSpec
-import dcos.metronome.repository.Repository
+import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
 import dcos.metronome.{ JobSpecAlreadyExists, JobSpecChangeInFlight, JobSpecDoesNotExist }
 import mesosphere.marathon.state.PathId
 

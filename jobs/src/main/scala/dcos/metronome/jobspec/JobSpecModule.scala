@@ -1,6 +1,7 @@
 package dcos.metronome.jobspec
 
 import akka.actor.ActorSystem
+import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.impl.{ JobSpecSchedulerActor, JobSpecPersistenceActor, JobSpecServiceDelegate, JobSpecServiceActor }
 import dcos.metronome.model.JobSpec
 import dcos.metronome.repository.{ Repository, RepositoryModule }
@@ -11,11 +12,12 @@ class JobSpecModule(
     config:            JobSpecConfig,
     actorSystem:       ActorSystem,
     clock:             Clock,
-    jobSpecRepository: Repository[PathId, JobSpec]
+    jobSpecRepository: Repository[PathId, JobSpec],
+    runService:        JobRunService
 ) {
 
   private[this] def persistenceActor(id: PathId) = JobSpecPersistenceActor.props(id, jobSpecRepository)
-  private[this] def scheduleActor(jobSpec: JobSpec) = JobSpecSchedulerActor.props(jobSpec, clock)
+  private[this] def scheduleActor(jobSpec: JobSpec) = JobSpecSchedulerActor.props(jobSpec, clock, runService)
   //TODO: start when we get elected
   val serviceActor = actorSystem.actorOf(JobSpecServiceActor.props(jobSpecRepository, persistenceActor, scheduleActor))
 

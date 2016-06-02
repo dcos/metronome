@@ -1,7 +1,6 @@
-package dcos.metronome.jobspec.impl
+package dcos.metronome.repository
 
-import akka.actor.{ ActorLogging, Stash, Actor }
-import dcos.metronome.repository.Repository
+import akka.actor.{ Actor, ActorLogging, Stash }
 
 import scala.concurrent.Future
 import scala.util.{ Failure, Success }

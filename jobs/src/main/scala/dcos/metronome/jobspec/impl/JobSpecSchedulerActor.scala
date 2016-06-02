@@ -1,6 +1,7 @@
 package dcos.metronome.jobspec.impl
 
 import akka.actor._
+import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.model.JobSpec
 import dcos.metronome.utils.time.Clock
 import org.joda.time.{ DateTime, Seconds }
@@ -12,8 +13,9 @@ import scala.concurrent.duration._
   * If the JobSpec has a schedule, the schedule is triggered in this actor.
   */
 class JobSpecSchedulerActor(
-    initSpec: JobSpec,
-    clock:    Clock
+    initSpec:   JobSpec,
+    clock:      Clock,
+    runService: JobRunService
 ) extends Actor with Stash with ActorLogging {
 
   import JobSpecSchedulerActor._
@@ -45,7 +47,7 @@ class JobSpecSchedulerActor(
 
   def runJob(): Unit = {
     log.info(s"Start next run of job ${spec.id}, which was scheduled for $scheduledAt")
-    //TODO
+    runService.startJobRun(spec)
     scheduleNextRun()
   }
 
@@ -75,7 +77,7 @@ object JobSpecSchedulerActor {
   case object StartJob
   case class UpdateJobSpec(newSpec: JobSpec)
 
-  def props(spec: JobSpec, clock: Clock): Props = {
-    Props(new JobSpecSchedulerActor(spec, clock))
+  def props(spec: JobSpec, clock: Clock, runService: JobRunService): Props = {
+    Props(new JobSpecSchedulerActor(spec, clock, runService))
   }
 }

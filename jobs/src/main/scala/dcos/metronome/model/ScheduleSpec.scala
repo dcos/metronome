@@ -22,7 +22,7 @@ case class ScheduleSpec(
 object ScheduleSpec {
   val DefaultTimeZone = DateTimeZone.UTC
   val DefaultStartingDeadline = 15.minutes
-  val DefaultConcurrencyPolicy = ForbidConcurrentRuns
+  val DefaultConcurrencyPolicy = ConcurrencyPolicy.Forbid
   val DefaultEnabled = false
 }
 

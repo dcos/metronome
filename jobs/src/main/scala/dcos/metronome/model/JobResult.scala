@@ -1,4 +1,4 @@
 package dcos.metronome.model
 
-case class JobResult(jobStatus: JobStatus)
+case class JobResult(jobRun: JobRun)
 
