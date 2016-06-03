@@ -1,5 +1,7 @@
 package dcos.metronome.model
 
+import com.wix.accord.Validator
+import com.wix.accord.dsl._
 import org.joda.time.{ DateTime, DateTimeZone }
 
 import scala.concurrent.duration._
@@ -24,5 +26,9 @@ object ScheduleSpec {
   val DefaultStartingDeadline = 15.minutes
   val DefaultConcurrencyPolicy = ConcurrencyPolicy.Forbid
   val DefaultEnabled = false
+
+  lazy val validScheduleSpec: Validator[ScheduleSpec] = validator[ScheduleSpec] { spec =>
+    spec.startingDeadline >= 1.minute
+  }
 }
 
