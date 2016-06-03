@@ -2,12 +2,13 @@ package dcos.metronome
 
 import com.softwaremill.macwire._
 import controllers.Assets
-import dcos.metronome.api.ApiModule
-import dcos.metronome.utils.time.{ SystemClock, Clock }
+import dcos.metronome.api.{ ApiModule, ErrorHandler }
+import dcos.metronome.utils.time.{ Clock, SystemClock }
 import mesosphere.marathon.AllConf
 import org.joda.time.DateTimeZone
 import play.api.ApplicationLoader.Context
 import play.api._
+import play.api.http.DefaultHttpErrorHandler
 import play.api.i18n._
 import play.api.routing.Router
 
@@ -26,6 +27,8 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
   lazy val assets: Assets = wire[Assets]
 
   lazy val clock: Clock = new SystemClock(DateTimeZone.UTC)
+
+  override lazy val httpErrorHandler = new ErrorHandler
 
   private[this] lazy val jobsModule: JobsModule = wire[JobsModule]
 
