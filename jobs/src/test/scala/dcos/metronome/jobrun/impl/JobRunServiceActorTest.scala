@@ -2,10 +2,10 @@ package dcos.metronome.jobrun.impl
 
 import java.util.concurrent.LinkedBlockingDeque
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ ActorSystem, Props }
 import akka.testkit._
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.jobrun.impl.JobRunExecutorActor.{JobRunAborted, JobRunFinished}
+import dcos.metronome.jobrun.impl.JobRunExecutorActor.{ JobRunAborted, JobRunFinished }
 import dcos.metronome.jobrun.impl.JobRunServiceActor._
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.InMemoryRepository
@@ -14,9 +14,9 @@ import dcos.metronome.utils.time.FixedClock
 import mesosphere.marathon.state.PathId
 import org.joda.time.DateTime
 import org.scalatest._
-import org.scalatest.concurrent.{Eventually, ScalaFutures}
+import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ Future, Promise }
 
 class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteLike with BeforeAndAfterAll with GivenWhenThen with ScalaFutures with Matchers with Eventually with ImplicitSender with Mockito {
 
