@@ -43,7 +43,7 @@ object JobRunPersistenceActor {
   //ack messages
   trait JobRunChange extends Change {
     def jobRun: JobRun
-    override def id: String = jobRun.id.value
+    override def id: String = jobRun.id.toString
   }
   case class JobRunCreated(sender: ActorRef, jobRun: JobRun, nothing: Unit) extends JobRunChange
   case class JobRunUpdated(sender: ActorRef, jobRun: JobRun, nothing: Unit) extends JobRunChange

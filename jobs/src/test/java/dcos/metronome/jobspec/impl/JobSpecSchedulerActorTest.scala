@@ -4,7 +4,6 @@ import akka.actor.ActorSystem
 import akka.testkit.{ TestActorRef, ImplicitSender, TestKit }
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.model._
-import dcos.metronome.repository.impl.InMemoryRepository
 import dcos.metronome.utils.test.Mockito
 import dcos.metronome.utils.time.FixedClock
 import mesosphere.marathon.state.PathId
@@ -34,7 +33,7 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
     Given("A job scheduling actor")
     val f = new Fixture
     val actor = f.scheduleActor
-    val update = f.jobSpec.copy(schedule = Some(ScheduleSpec(cron = f.everyHourHalfPast)))
+    val update = f.jobSpec.copy(schedules = Seq(ScheduleSpec("everyHour", cron = f.everyHourHalfPast)))
     eventually(actor.underlyingActor.nextSchedule should be(defined))
     val cancelable = actor.underlyingActor.nextSchedule.get
     val nextRun = DateTime.parse("2016-06-01T09:30:00.000Z")
@@ -73,7 +72,7 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
     val CronSpec(everyMinute) = "* * * * *"
     val CronSpec(everyHourHalfPast) = "30 * * * *"
     val id = PathId("/test")
-    val jobSpec = JobSpec(id, "test").copy(schedule = Some(ScheduleSpec(cron = everyMinute)))
+    val jobSpec = JobSpec(id, "test").copy(schedules = Seq(ScheduleSpec("every_minute", cron = everyMinute)))
     val clock = new FixedClock(DateTime.parse("2016-06-01T08:50:12.000Z"))
     val jobRunService = mock[JobRunService]
     def scheduleActor = TestActorRef[JobSpecSchedulerActor](JobSpecSchedulerActor.props(jobSpec, clock, jobRunService))

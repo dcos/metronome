@@ -1,14 +1,17 @@
 package dcos.metronome.api.v1.controllers
 
-import dcos.metronome.api.Authorization
-import dcos.metronome.jobrun.JobRunService
-import dcos.metronome.model.{ JobSpec, JobRunId }
-import mesosphere.marathon.plugin.auth.{ Authorizer, Authenticator }
 import dcos.metronome.api.v1.models._
+import dcos.metronome.api.{ Authorization, UnknownJob, UnknownJobRun }
+import dcos.metronome.jobrun.JobRunService
+import dcos.metronome.jobspec.JobSpecService
+import dcos.metronome.model.JobRunId
+import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
+import mesosphere.marathon.state.PathId
 
 import scala.concurrent.Future
 
 class JobRunController(
+    jobSpecService:    JobSpecService,
     jobRunService:     JobRunService,
     val authenticator: Authenticator,
     val authorizer:    Authorizer
@@ -20,26 +23,25 @@ class JobRunController(
     jobRunService.listRuns(_ => true).map(Ok(_))
   }
 
-  def getJobRun(id: String) = AuthorizedAction.async { implicit request =>
-    jobRunService.getJobRun(JobRunId(id)).map {
+  def getJobRuns(id: PathId) = AuthorizedAction.async { implicit request =>
+    jobRunService.listRuns(_ => true).map(Ok(_))
+  }
+
+  def getJobRun(id: PathId, runId: String) = AuthorizedAction.async { implicit request =>
+    jobRunService.getJobRun(JobRunId(id, runId)).map {
       case Some(run) => Ok(run)
-      case None      => NotFound
+      case None      => NotFound(UnknownJobRun(id, runId))
     }
   }
 
-  def changeJobRun(id: String, action: String) = AuthorizedAction.async { implicit request =>
-    action match {
-      case "stop" => jobRunService.killJobRun(JobRunId(id)).map(Ok(_))
-      case _      => Future.successful(BadRequest(s"Action unknown: $action"))
-    }
+  def killJobRun(id: PathId, runId: String) = AuthorizedAction.async { implicit request =>
+    jobRunService.killJobRun(JobRunId(id, runId)).map(Ok(_))
   }
 
-  def runJob(wait: Boolean) = AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
-    // TODO: question: should we parse only a runspec here?
-    // Problem: do we need the PathId for authorization?
-    // Problem: should we make JobSpec.labels part of RunSpec?
-    jobRunService.startJobRun(request.body).flatMap { result =>
-      if (wait) result.complete.map(Ok(_)) else Future.successful(Ok(result))
+  def triggerJob(id: PathId) = AuthorizedAction.async { implicit request =>
+    jobSpecService.getJobSpec(id).flatMap {
+      case Some(spec) => jobRunService.startJobRun(spec).map(Ok(_))
+      case None       => Future.successful(NotFound(UnknownJob(id)))
     }
   }
 }

@@ -1,6 +1,8 @@
 package dcos.metronome.api
 
 import controllers.Assets
+import dcos.metronome.jobinfo.JobInfoService
+import dcos.metronome.jobinfo.impl.JobInfoServiceImpl
 import dcos.metronome.{ ConcurrentJobRunNotAllowed, JobRunDoesNotExist, JobSpecDoesNotExist }
 import dcos.metronome.jobrun.{ StartedJobRun, JobRunService }
 import dcos.metronome.jobspec.JobSpecService
@@ -149,9 +151,11 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
     override def startJobRun(jobSpec: JobSpec): Future[StartedJobRun] = Future.failed(ConcurrentJobRunNotAllowed(jobSpec))
   }
 
+  lazy val jobInfoService: JobInfoService = new JobInfoServiceImpl(jobSpecService, jobRunService)
+
   lazy val assets: Assets = wire[Assets]
 
-  lazy val apiModule: ApiModule = new ApiModule(jobSpecService, jobRunService, pluginManager, httpErrorHandler, assets)
+  lazy val apiModule: ApiModule = wire[ApiModule]
 
   override def router: Router = apiModule.router
 }
