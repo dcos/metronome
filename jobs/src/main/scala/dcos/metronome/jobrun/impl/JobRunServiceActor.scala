@@ -1,7 +1,7 @@
 package dcos.metronome.jobrun.impl
 
 import akka.actor.{ Actor, ActorRef, Props, Stash }
-import dcos.metronome.{ ConcurrentJobRunNotAllowed, JobRunDoesNotExist }
+import dcos.metronome.JobRunDoesNotExist
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
@@ -45,18 +45,9 @@ class JobRunServiceActor(
   def runsForSpec(specId: PathId): Iterable[StartedJobRun] = allJobRuns.values.filter(_.jobRun.jobSpec.id == specId)
 
   def triggerJobRun(spec: JobSpec, promise: Promise[StartedJobRun]): Unit = {
-    log.info(s"Trigger new JobRun for JobSpec: $spec")
-    val noConcurrentRunOrAllowed = runsForSpec(spec.id).isEmpty ||
-      //TODO: question: should we make this property part of run and not part of schedule?
-      spec.schedule.map(_.concurrencyPolicy == ConcurrencyPolicy.Allow).getOrElse(true)
-    if (noConcurrentRunOrAllowed) {
-      val jobRun = new JobRun(JobRunId(spec), spec, JobRunStatus.Starting, clock.now(), None, Seq.empty)
-      val startedJobRun = startJobRun(jobRun)
-      promise.success(startedJobRun)
-    } else {
-      log.warning(s"Starting a new JobRun for JobSpec: ${spec.id} not allowed for defined concurrency policy.")
-      promise.failure(ConcurrentJobRunNotAllowed(spec))
-    }
+    val jobRun = new JobRun(JobRunId(spec), spec, JobRunStatus.Starting, clock.now(), None, Seq.empty)
+    val startedJobRun = startJobRun(jobRun)
+    promise.success(startedJobRun)
   }
 
   def startJobRun(jobRun: JobRun): StartedJobRun = {
@@ -64,7 +55,7 @@ class JobRunServiceActor(
     val resultPromise = Promise[JobResult]()
 
     // create new executor and store reference
-    val executor = context.actorOf(executorFactory(jobRun, resultPromise), s"executor:${jobRun.id.value}")
+    val executor = context.actorOf(executorFactory(jobRun, resultPromise), s"executor:${jobRun.id}")
     context.watch(executor)
     allRunExecutors += jobRun.id -> executor
 
