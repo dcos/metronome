@@ -16,6 +16,7 @@ class JobRunModule(
 ) {
 
   private[this] def executorFactory(jobRun: JobRun, promise: Promise[JobResult]): Props = {
+    //TODO: remove repo, but add a repo actor factory
     JobRunExecutorActor.props(jobRun, promise, jobRunRepository)
   }
 

@@ -12,6 +12,7 @@ case class JobSpecAlreadyExists(id: PathId) extends ApplicationException(s"JobSp
 case class JobSpecChangeInFlight(id: PathId) extends ApplicationException(s"JobSpec change in flight: $id")
 
 case class JobRunDoesNotExist(id: JobRunId) extends ApplicationException(s"JobRun does not exist: $id")
+//TODO: add reason of fail
 case class JobRunFailed(result: JobResult) extends ApplicationException(s"JobRun execution failed ${result.jobRun.id}")
 case class ConcurrentJobRunNotAllowed(spec: JobSpec) extends ApplicationException(s"Concurrent JobRun not allowed ${spec.id}")
 

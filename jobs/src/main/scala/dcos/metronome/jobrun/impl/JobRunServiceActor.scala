@@ -17,7 +17,7 @@ import scala.concurrent.Promise
 class JobRunServiceActor(
     clock:           Clock,
     executorFactory: (JobRun, Promise[JobResult]) => Props,
-    val repo:        Repository[JobRunId, JobRun]
+    val repo:        Repository[JobRunId, JobRun] //TODO: remove the repo
 ) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash {
 
   import JobRunExecutorActor._

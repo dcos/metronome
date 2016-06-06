@@ -26,11 +26,13 @@ trait NoConcurrentRepoChange[Id, Model, Data] extends Actor with ActorLogging wi
   def waitForPersisted: Receive = {
     case event: Failed =>
       log.error(event.ex, "Repository change failed")
+      //TODO: use become/unbecome
       context.become(receive)
       event.sender ! event
       unstashAll()
     case event: Change =>
       log.debug(s"Repository change on ${event.id} successful")
+      //TODO: use become/unbecome
       context.become(receive)
       event.sender ! event
       unstashAll()
