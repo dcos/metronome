@@ -34,7 +34,7 @@ class JobRunController(
     }
   }
 
-  def runJob(wait: Boolean) = AuthorizedAction.async(parse.json[JobSpec]) { implicit request =>
+  def runJob(wait: Boolean) = AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
     // TODO: question: should we parse only a runspec here?
     // Problem: do we need the PathId for authorization?
     // Problem: should we make JobSpec.labels part of RunSpec?
