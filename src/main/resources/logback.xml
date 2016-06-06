@@ -27,6 +27,7 @@
   <logger name="play" level="INFO" />
   <logger name="dcos" level="DEBUG" />
   <logger name="mesosphere" level="DEBUG" />
+  <logger name="akka" level="INFO" />
 
   <!-- Off these ones as they are annoying, and anyway we manage configuration ourselves -->
   <logger name="com.avaje.ebean.config.PropertyMapLoader" level="OFF" />

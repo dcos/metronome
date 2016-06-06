@@ -1,18 +1,20 @@
 package dcos.metronome.model
 
-import java.util.UUID
-
 import mesosphere.marathon.state.PathId
+import org.joda.time.format.DateTimeFormat
+import org.joda.time.{ DateTimeZone, DateTime }
 
-case class JobRunId(value: String) {
-  lazy val jobSpecId: PathId = PathId.fromSafePath(value).parent
-  override def toString: String = value
+case class JobRunId(jobSpecId: PathId, value: String) {
+  override def toString: String = s"${jobSpecId.path.mkString(".")}.$value"
 }
 
 object JobRunId {
+  val idFormat = DateTimeFormat.forPattern("yyyyMMddHHmmss")
+
   def apply(spec: JobSpec): JobRunId = {
-    val runId = spec.id / UUID.randomUUID.toString
-    JobRunId(runId.safePath)
+    val date = DateTime.now(DateTimeZone.UTC).toString(idFormat)
+    val random = scala.util.Random.alphanumeric.take(5).mkString
+    JobRunId(spec.id, s"$date$random")
   }
 }
 

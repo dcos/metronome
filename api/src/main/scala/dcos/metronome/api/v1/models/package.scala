@@ -1,6 +1,7 @@
 package dcos.metronome.api.v1
 
-import dcos.metronome.api.{ ErrorDetail, UnknownJob }
+import dcos.metronome.api.{ UnknownJobRun, UnknownSchedule, ErrorDetail, UnknownJob }
+import dcos.metronome.jobinfo.JobInfo
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import mesosphere.marathon.state.PathId
@@ -15,10 +16,18 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 package object models {
 
-  import mesosphere.marathon.api.v2.json.Formats.{ FormatWithDefault, PathIdFormat, enumFormat }
+  import mesosphere.marathon.api.v2.json.Formats.{ FormatWithDefault, enumFormat }
 
   implicit val errorFormat: Format[ErrorDetail] = Json.format[ErrorDetail]
   implicit val unknownJobsFormat: Format[UnknownJob] = Json.format[UnknownJob]
+  implicit val unknownScheduleFormat: Format[UnknownSchedule] = Json.format[UnknownSchedule]
+  implicit val unknownJobRunFormat: Format[UnknownJobRun] = Json.format[UnknownJobRun]
+
+  implicit lazy val PathIdFormat: Format[PathId] = Format(
+    //TODO: make this functionality available in Marathon
+    Reads.of[String](Reads.minLength[String](1)).map(s => PathId(s.split("[.]").toList, absolute = true)),
+    Writes[PathId] { id => JsString(id.path.mkString(".")) }
+  )
 
   implicit val DateTimeFormat: Format[DateTime] = Format (
     Reads.jodaDateReads("yyyy-MM-dd'T'HH:mm:ss.SSSZ"),
@@ -73,6 +82,7 @@ package object models {
   }
 
   implicit lazy val ScheduleSpecFormat: Format[ScheduleSpec] = (
+    (__ \ "id").format[String] ~
     (__ \ "cron").format[CronSpec] ~
     (__ \ "timezone").formatNullable[DateTimeZone].withDefault(ScheduleSpec.DefaultTimeZone) ~
     (__ \ "startingDeadlineSeconds").formatNullable[Duration].withDefault(ScheduleSpec.DefaultStartingDeadline) ~
@@ -120,16 +130,12 @@ package object models {
     (__ \ "id").format[PathId] ~
     (__ \ "description").format[String] ~
     (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty) ~
-    (__ \ "schedule").formatNullable[ScheduleSpec] ~
     (__ \ "run").format[RunSpec]
-  )(JobSpec.apply, unlift(JobSpec.unapply))
+  )(JobSpec.apply(_, _, _, Seq.empty, _), s => (s.id, s.description, s.labels, s.run))
 
   implicit lazy val JobRunTaskFormat: Format[JobRunTask] = Json.format[JobRunTask]
 
-  implicit lazy val JobRunIdFormat: Format[JobRunId] = Format (
-    Reads.of[String].map(JobRunId(_)),
-    Writes[JobRunId] { id => JsString(id.value) }
-  )
+  implicit lazy val JobRunIdFormat: Writes[JobRunId] = Writes[JobRunId] { id => JsString(id.value) }
 
   implicit lazy val JobRunStatusFormat: Format[JobRunStatus] = new Format[JobRunStatus] {
     override def writes(o: JobRunStatus): JsValue = JsString(JobRunStatus.name(o))
@@ -142,7 +148,7 @@ package object models {
   implicit lazy val JobRunWrites: Writes[JobRun] = new Writes[JobRun] {
     override def writes(run: JobRun): JsValue = Json.obj(
       "id" -> run.id,
-      "jobSpecId" -> run.jobSpec.id,
+      "jobId" -> run.jobSpec.id,
       "status" -> run.status,
       "createdAt" -> run.createdAt,
       "finishedAt" -> run.finishedAt,
@@ -155,4 +161,6 @@ package object models {
   }
 
   implicit lazy val JobResultWrites: Writes[JobResult] = Json.writes[JobResult]
+
+  implicit lazy val JobInfoWrites: Writes[JobInfo] = Json.writes[JobInfo]
 }
