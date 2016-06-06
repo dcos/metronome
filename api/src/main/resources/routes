@@ -10,9 +10,10 @@ DELETE /jobs/*id dcos.metronome.api.v1.controllers.JobSpecController.deleteJob(i
 POST /jobs/*id dcos.metronome.api.v1.controllers.JobSpecController.triggerJob(id)
 
 
+POST /job-runs dcos.metronome.api.v1.controllers.JobRunController.runJob(wait:Boolean ?= false)
 GET /job-runs dcos.metronome.api.v1.controllers.JobRunController.getAllJobRuns
 GET /job-runs/*id dcos.metronome.api.v1.controllers.JobRunController.getJobRun(id)
-POST /job-runs/*id dcos.metronome.api.v1.controllers.JobRunController.changeJobRun(id)
+POST /job-runs/*id dcos.metronome.api.v1.controllers.JobRunController.changeJobRun(id, action)
 
 
 # GET        /assets/*file                 controllers.Assets.at(path="/public", file)

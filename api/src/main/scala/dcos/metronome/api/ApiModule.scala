@@ -2,6 +2,7 @@ package dcos.metronome.api
 
 import controllers.Assets
 import dcos.metronome.api.v1.controllers.{ ApplicationController, JobRunController, JobSpecController }
+import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
 import mesosphere.marathon.core.auth.AuthModule
 import mesosphere.marathon.core.plugin.PluginManager
@@ -14,6 +15,7 @@ import com.softwaremill.macwire._
 
 class ApiModule(
     jobSpecService:   JobSpecService,
+    jobRunService:    JobRunService,
     pluginManager:    PluginManager,
     httpErrorHandler: HttpErrorHandler,
     assets:           Assets

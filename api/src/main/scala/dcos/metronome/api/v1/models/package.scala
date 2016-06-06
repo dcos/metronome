@@ -1,11 +1,11 @@
 package dcos.metronome.api.v1
 
 import dcos.metronome.api.{ ErrorDetail, UnknownJob }
+import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import mesosphere.marathon.state.{ Volume => _, _ }
-import org.apache.mesos.Protos.ContainerInfo.DockerInfo
 import org.apache.mesos.{ Protos => mesos }
-import org.joda.time.DateTimeZone
+import org.joda.time.{ DateTime, DateTimeZone }
 import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
@@ -19,6 +19,11 @@ package object models {
 
   implicit val errorFormat: Format[ErrorDetail] = Json.format[ErrorDetail]
   implicit val unknownJobsFormat: Format[UnknownJob] = Json.format[UnknownJob]
+
+  implicit val DateTimeFormat: Format[DateTime] = Format (
+    Reads.jodaDateReads("yyyy-MM-dd'T'HH:mm:ss.SSSZ"),
+    Writes.jodaDateWrites("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+  )
 
   implicit lazy val ArtifactFormat: Format[Artifact] = (
     (__ \ "url").format[String] ~
@@ -118,4 +123,36 @@ package object models {
     (__ \ "schedule").formatNullable[ScheduleSpec] ~
     (__ \ "run").format[RunSpec]
   )(JobSpec.apply, unlift(JobSpec.unapply))
+
+  implicit lazy val JobRunTaskFormat: Format[JobRunTask] = Json.format[JobRunTask]
+
+  implicit lazy val JobRunIdFormat: Format[JobRunId] = Format (
+    Reads.of[String].map(JobRunId(_)),
+    Writes[JobRunId] { id => JsString(id.value) }
+  )
+
+  implicit lazy val JobRunStatusFormat: Format[JobRunStatus] = new Format[JobRunStatus] {
+    override def writes(o: JobRunStatus): JsValue = JsString(JobRunStatus.name(o))
+    override def reads(json: JsValue): JsResult[JobRunStatus] = json match {
+      case JsString(JobRunStatus(value)) => JsSuccess(value)
+      case invalid                       => JsError(s"'$invalid' is not a valid restart policy. Allowed values: ${JobRunStatus.names.keySet}")
+    }
+  }
+
+  implicit lazy val JobRunWrites: Writes[JobRun] = new Writes[JobRun] {
+    override def writes(run: JobRun): JsValue = Json.obj(
+      "id" -> run.id,
+      "jobSpecId" -> run.jobSpec.id,
+      "status" -> run.status,
+      "createdAt" -> run.createdAt,
+      "finishedAt" -> run.finishedAt,
+      "tasks" -> run.tasks
+    )
+  }
+
+  implicit lazy val StartedJobRunWrites: Writes[StartedJobRun] = new Writes[StartedJobRun] {
+    override def writes(o: StartedJobRun): JsValue = JobRunWrites.writes(o.jobRun)
+  }
+
+  implicit lazy val JobResultWrites: Writes[JobResult] = Json.writes[JobResult]
 }

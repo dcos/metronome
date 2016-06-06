@@ -255,7 +255,6 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
 
   class Fixture {
     val repository = new InMemoryRepository[PathId, JobSpec]
-    val dummy = TestActors.echoActorProps
     val dummyQueue = new LinkedBlockingDeque[TestActor.Message]()
     val dummyProp = Props(new TestActor(dummyQueue))
     val jobSpec = JobSpec(PathId("/test"), "test")

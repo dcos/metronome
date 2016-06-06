@@ -2,7 +2,9 @@ package dcos.metronome.jobspec.impl
 
 import akka.actor.ActorSystem
 import akka.testkit.{ TestActorRef, ImplicitSender, TestKit }
-import dcos.metronome.model.{ CronSpec, ScheduleSpec, JobSpec }
+import dcos.metronome.jobrun.JobRunService
+import dcos.metronome.model._
+import dcos.metronome.repository.impl.InMemoryRepository
 import dcos.metronome.utils.test.Mockito
 import dcos.metronome.utils.time.FixedClock
 import mesosphere.marathon.state.PathId
@@ -73,6 +75,7 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
     val id = PathId("/test")
     val jobSpec = JobSpec(id, "test").copy(schedule = Some(ScheduleSpec(cron = everyMinute)))
     val clock = new FixedClock(DateTime.parse("2016-06-01T08:50:12.000Z"))
-    def scheduleActor = TestActorRef[JobSpecSchedulerActor](JobSpecSchedulerActor.props(jobSpec, clock))
+    val jobRunService = mock[JobRunService]
+    def scheduleActor = TestActorRef[JobSpecSchedulerActor](JobSpecSchedulerActor.props(jobSpec, clock, jobRunService))
   }
 }

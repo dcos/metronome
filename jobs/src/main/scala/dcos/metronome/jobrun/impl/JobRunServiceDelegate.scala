@@ -1,25 +1,46 @@
 package dcos.metronome.jobrun.impl
 
 import akka.actor.ActorRef
-import com.softwaremill.tagging.@@
 import dcos.metronome.jobrun.{ JobRunConfig, StartedJobRun, JobRunService }
 import dcos.metronome.model.{ JobRun, JobRunId, JobSpec }
 import mesosphere.marathon.state.PathId
 
-import scala.concurrent.Future
+import scala.concurrent.{ Promise, Future }
 
 private[jobrun] class JobRunServiceDelegate(
     config:   JobRunConfig,
-    actorRef: ActorRef @@ JobRunService
+    actorRef: ActorRef
 ) extends JobRunService {
 
-  override def listRuns(filter: JobRun => Boolean): Future[Seq[StartedJobRun]] = ???
+  import JobRunServiceActor._
 
-  override def getJobRun(jobRunId: JobRunId): Future[Option[StartedJobRun]] = ???
+  override def listRuns(filter: JobRun => Boolean): Future[Iterable[StartedJobRun]] = {
+    val promise = Promise[Iterable[StartedJobRun]]
+    actorRef ! ListRuns(promise)
+    promise.future
+  }
 
-  override def killJobRun(jobRunId: JobRunId): Future[Option[StartedJobRun]] = ???
+  override def getJobRun(jobRunId: JobRunId): Future[Option[StartedJobRun]] = {
+    val promise = Promise[Option[StartedJobRun]]
+    actorRef ! GetJobRun(jobRunId, promise)
+    promise.future
+  }
 
-  override def activeRuns(jobId: PathId): Future[Seq[StartedJobRun]] = ???
+  override def killJobRun(jobRunId: JobRunId): Future[StartedJobRun] = {
+    val promise = Promise[StartedJobRun]
+    actorRef ! KillJobRun(jobRunId, promise)
+    promise.future
+  }
 
-  override def startJobRun(jobSpec: JobSpec): Future[StartedJobRun] = ???
+  override def activeRuns(jobId: PathId): Future[Iterable[StartedJobRun]] = {
+    val promise = Promise[Iterable[StartedJobRun]]
+    actorRef ! GetActiveJobRuns(jobId, promise)
+    promise.future
+  }
+
+  override def startJobRun(jobSpec: JobSpec): Future[StartedJobRun] = {
+    val promise = Promise[StartedJobRun]
+    actorRef ! TriggerJobRun(jobSpec, promise)
+    promise.future
+  }
 }

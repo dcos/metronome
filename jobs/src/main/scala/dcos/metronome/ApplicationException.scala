@@ -1,5 +1,6 @@
 package dcos.metronome
 
+import dcos.metronome.model.{ JobSpec, JobResult, JobRunId }
 import mesosphere.marathon.state.PathId
 
 class ApplicationException(message: String, cause: Throwable) extends RuntimeException(message, cause) {
@@ -9,5 +10,10 @@ class ApplicationException(message: String, cause: Throwable) extends RuntimeExc
 case class JobSpecDoesNotExist(id: PathId) extends ApplicationException(s"JobSpec does not exist: $id")
 case class JobSpecAlreadyExists(id: PathId) extends ApplicationException(s"JobSpec already exists: $id")
 case class JobSpecChangeInFlight(id: PathId) extends ApplicationException(s"JobSpec change in flight: $id")
+
+case class JobRunDoesNotExist(id: JobRunId) extends ApplicationException(s"JobRun does not exist: $id")
+//TODO: add reason of fail
+case class JobRunFailed(result: JobResult) extends ApplicationException(s"JobRun execution failed ${result.jobRun.id}")
+case class ConcurrentJobRunNotAllowed(spec: JobSpec) extends ApplicationException(s"Concurrent JobRun not allowed ${spec.id}")
 
 case class PersistenceFailed(id: String, reason: String) extends ApplicationException(s"Persistence Failed for: $id Reason: $reason")

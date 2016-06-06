@@ -1,9 +1,10 @@
 package dcos.metronome.api
 
 import controllers.Assets
-import dcos.metronome.JobSpecDoesNotExist
+import dcos.metronome.{ ConcurrentJobRunNotAllowed, JobRunDoesNotExist, JobSpecDoesNotExist }
+import dcos.metronome.jobrun.{ StartedJobRun, JobRunService }
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.model.JobSpec
+import dcos.metronome.model.{ JobRunId, JobRun, JobSpec }
 import mesosphere.marathon.core.plugin.{ PluginDefinitions, PluginManager }
 import mesosphere.marathon.state.PathId
 import org.scalatest.{ Suite, TestData }
@@ -12,7 +13,6 @@ import play.api.ApplicationLoader.Context
 import play.api.i18n.I18nComponents
 import play.api.routing.Router
 import play.api.{ BuiltInComponents, _ }
-import router.Routes
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.Future
@@ -141,9 +141,17 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
     }
   }
 
+  lazy val jobRunService: JobRunService = new JobRunService {
+    override def getJobRun(jobRunId: JobRunId): Future[Option[StartedJobRun]] = Future.successful(None)
+    override def killJobRun(jobRunId: JobRunId): Future[StartedJobRun] = Future.failed(JobRunDoesNotExist(jobRunId))
+    override def activeRuns(jobSpecId: PathId): Future[Iterable[StartedJobRun]] = Future.successful(Iterable.empty)
+    override def listRuns(filter: (JobRun) => Boolean): Future[Iterable[StartedJobRun]] = Future.successful(Iterable.empty)
+    override def startJobRun(jobSpec: JobSpec): Future[StartedJobRun] = Future.failed(ConcurrentJobRunNotAllowed(jobSpec))
+  }
+
   lazy val assets: Assets = wire[Assets]
 
-  lazy val apiModule: ApiModule = new ApiModule(jobSpecService, pluginManager, httpErrorHandler, assets)
+  lazy val apiModule: ApiModule = new ApiModule(jobSpecService, jobRunService, pluginManager, httpErrorHandler, assets)
 
   override def router: Router = apiModule.router
 }
