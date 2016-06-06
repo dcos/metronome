@@ -1,6 +1,7 @@
 package dcos.metronome
 
 import akka.actor.ActorSystem
+import dcos.metronome.jobinfo.JobInfoModule
 import dcos.metronome.jobrun.JobRunModule
 import dcos.metronome.jobspec.JobSpecModule
 import dcos.metronome.repository.RepositoryModule
@@ -18,5 +19,6 @@ class JobsModule(config: JobsConfig, actorSystem: ActorSystem, clock: Clock) {
 
   lazy val jobSpecModule = new JobSpecModule(config, actorSystem, clock, repositoryModule.jobSpecRepository, jobRunModule.jobRunService)
 
+  lazy val jobInfoModule = new JobInfoModule(jobSpecModule.jobSpecService, jobRunModule.jobRunService)
 }
 
