@@ -3,22 +3,16 @@ package dcos.metronome.api
 import controllers.Assets
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobinfo.impl.JobInfoServiceImpl
-import dcos.metronome.{ ConcurrentJobRunNotAllowed, JobRunDoesNotExist, JobSpecDoesNotExist }
-import dcos.metronome.jobrun.{ StartedJobRun, JobRunService }
+import dcos.metronome.jobrun.{JobRunService, JobRunServiceFixture}
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.model.{ JobRunId, JobRun, JobSpec }
-import mesosphere.marathon.core.plugin.{ PluginDefinitions, PluginManager }
-import mesosphere.marathon.state.PathId
-import org.scalatest.{ Suite, TestData }
-import org.scalatestplus.play.{ OneAppPerSuite, OneAppPerTest, OneServerPerSuite, OneServerPerTest }
+import dcos.metronome.jobspec.impl.JobSpecServiceFixture
+import mesosphere.marathon.core.plugin.PluginManager
+import org.scalatest.{Suite, TestData}
+import org.scalatestplus.play.{OneAppPerSuite, OneAppPerTest, OneServerPerSuite, OneServerPerTest}
 import play.api.ApplicationLoader.Context
 import play.api.i18n.I18nComponents
 import play.api.routing.Router
-import play.api.{ BuiltInComponents, _ }
-
-import scala.collection.concurrent.TrieMap
-import scala.concurrent.Future
-import scala.reflect.ClassTag
+import play.api.{BuiltInComponents, _}
 
 /**
   * A trait that provides a components in scope and creates new components when newApplication is called
@@ -104,52 +98,11 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
     _.configure(context.environment)
   }
 
-  lazy val pluginManager: PluginManager = new PluginManager {
-    override def definitions: PluginDefinitions = new PluginDefinitions(Seq.empty)
-    override def plugins[T](implicit ct: ClassTag[T]): Seq[T] = Seq.empty
-  }
+  lazy val pluginManager: PluginManager = PluginManager.None
 
-  lazy val jobSpecService: JobSpecService = new JobSpecService {
-    val specs = TrieMap.empty[PathId, JobSpec]
-    import Future._
-    override def getJobSpec(id: PathId): Future[Option[JobSpec]] = successful(specs.get(id))
+  lazy val jobSpecService: JobSpecService = JobSpecServiceFixture.simpleJobSpecService()
 
-    override def createJobSpec(jobSpec: JobSpec): Future[JobSpec] = {
-      specs += jobSpec.id -> jobSpec
-      successful(jobSpec)
-    }
-
-    override def updateJobSpec(id: PathId, update: (JobSpec) => JobSpec): Future[JobSpec] = {
-      specs.get(id) match {
-        case Some(spec) =>
-          val changed = update(spec)
-          specs.update(id, changed)
-          successful(changed)
-        case None => failed(JobSpecDoesNotExist(id))
-      }
-    }
-
-    override def listJobSpecs(filter: (JobSpec) => Boolean): Future[Iterable[JobSpec]] = {
-      successful(specs.values.filter(filter))
-    }
-
-    override def deleteJobSpec(id: PathId): Future[JobSpec] = {
-      specs.get(id) match {
-        case Some(spec) =>
-          specs -= id
-          successful(spec)
-        case None => failed(JobSpecDoesNotExist(id))
-      }
-    }
-  }
-
-  lazy val jobRunService: JobRunService = new JobRunService {
-    override def getJobRun(jobRunId: JobRunId): Future[Option[StartedJobRun]] = Future.successful(None)
-    override def killJobRun(jobRunId: JobRunId): Future[StartedJobRun] = Future.failed(JobRunDoesNotExist(jobRunId))
-    override def activeRuns(jobSpecId: PathId): Future[Iterable[StartedJobRun]] = Future.successful(Iterable.empty)
-    override def listRuns(filter: (JobRun) => Boolean): Future[Iterable[StartedJobRun]] = Future.successful(Iterable.empty)
-    override def startJobRun(jobSpec: JobSpec): Future[StartedJobRun] = Future.failed(ConcurrentJobRunNotAllowed(jobSpec))
-  }
+  lazy val jobRunService: JobRunService = JobRunServiceFixture.simpleJobRunService()
 
   lazy val jobInfoService: JobInfoService = new JobInfoServiceImpl(jobSpecService, jobRunService)
 
