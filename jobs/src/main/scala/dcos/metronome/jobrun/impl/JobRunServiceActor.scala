@@ -37,7 +37,7 @@ class JobRunServiceActor(
     case TriggerJobRun(spec, promise)      => triggerJobRun(spec, promise)
 
     // executor messages
-    case JobRunUpdate(started)             => allJobRuns += started.jobRun.id -> started
+    case JobRunUpdate(started)             => updateJobRun(started)
     case JobRunFinished(result)            => jobRunFinished(result)
     case JobRunAborted(result)             => jobRunAborted(result)
   }
@@ -70,7 +70,13 @@ class JobRunServiceActor(
     // create new started job run and store reference
     val startedJobRun = StartedJobRun(jobRun, resultPromise.future)
     allJobRuns += jobRun.id -> startedJobRun
+    context.system.eventStream.publish(Event.JobRunStarted(jobRun))
     startedJobRun
+  }
+
+  def updateJobRun(started: StartedJobRun): Unit = {
+    context.system.eventStream.publish(Event.JobRunUpdate(started.jobRun))
+    allJobRuns += started.jobRun.id -> started
   }
 
   def killJobRun(id: JobRunId, promise: Promise[StartedJobRun]): Unit = {
@@ -81,8 +87,16 @@ class JobRunServiceActor(
     }
   }
 
-  def jobRunFinished(result: JobResult): Unit = wipeJobRun(result.jobRun.id)
-  def jobRunAborted(result: JobResult): Unit = wipeJobRun(result.jobRun.id)
+  def jobRunFinished(result: JobResult): Unit = {
+    context.system.eventStream.publish(Event.JobRunFinished(result.jobRun))
+    wipeJobRun(result.jobRun.id)
+  }
+
+  def jobRunAborted(result: JobResult): Unit = {
+    context.system.eventStream.publish(Event.JobRunFailed(result.jobRun))
+    wipeJobRun(result.jobRun.id)
+  }
+
   def wipeJobRun(id: JobRunId): Unit = {
     allJobRuns -= id
     allRunExecutors.get(id).foreach { executor =>
