@@ -1,5 +1,6 @@
 package dcos.metronome.api.v1.controllers
 
+import dcos.metronome.JobSpecDoesNotExist
 import dcos.metronome.api.v1.models._
 import dcos.metronome.api.{ ErrorDetail, Authorization, UnknownJob }
 import dcos.metronome.jobinfo.JobInfo.Embed
@@ -40,7 +41,9 @@ class JobSpecController(
 
   def updateJob(id: PathId) = AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
     def updateJob(job: JobSpec): JobSpec = request.body.copy(schedules = job.schedules)
-    jobSpecService.updateJobSpec(id, updateJob).map(Ok(_))
+    jobSpecService.updateJobSpec(id, updateJob).map(Ok(_)).recover {
+      case ex: JobSpecDoesNotExist => NotFound(UnknownJob(id))
+    }
   }
 
   def deleteJob(id: PathId, stopCurrentJobRuns: Boolean) = AuthorizedAction.async { implicit request =>
@@ -48,10 +51,12 @@ class JobSpecController(
       if (runs.nonEmpty && !stopCurrentJobRuns) {
         Future.successful(Conflict(ErrorDetail("There are active job runs. Override with stopCurrentJobRuns=true")))
       } else {
-        for {
+        (for {
           killed <- Future.sequence(runs.map(run => jobRunService.killJobRun(run.jobRun.id)))
           deleted <- jobSpecService.deleteJobSpec(id)
-        } yield Ok(deleted)
+        } yield Ok(deleted)).recover {
+          case ex: JobSpecDoesNotExist => NotFound(UnknownJob(id))
+        }
       }
     }
   }

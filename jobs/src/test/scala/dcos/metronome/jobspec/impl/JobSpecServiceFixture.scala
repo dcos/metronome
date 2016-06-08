@@ -7,6 +7,7 @@ import mesosphere.marathon.state.PathId
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 object JobSpecServiceFixture {
 
@@ -23,9 +24,13 @@ object JobSpecServiceFixture {
     override def updateJobSpec(id: PathId, update: (JobSpec) => JobSpec): Future[JobSpec] = {
       specs.get(id) match {
         case Some(spec) =>
-          val changed = update(spec)
-          specs.update(id, changed)
-          successful(changed)
+          try {
+            val changed = update(spec)
+            specs.update(id, changed)
+            successful(changed)
+          } catch {
+            case NonFatal(ex) => failed(ex)
+          }
         case None => failed(JobSpecDoesNotExist(id))
       }
     }

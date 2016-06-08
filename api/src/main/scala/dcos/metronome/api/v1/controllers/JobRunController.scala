@@ -1,5 +1,6 @@
 package dcos.metronome.api.v1.controllers
 
+import dcos.metronome.JobRunDoesNotExist
 import dcos.metronome.api.v1.models._
 import dcos.metronome.api.{ Authorization, UnknownJob, UnknownJobRun }
 import dcos.metronome.jobrun.JobRunService
@@ -35,12 +36,14 @@ class JobRunController(
   }
 
   def killJobRun(id: PathId, runId: String) = AuthorizedAction.async { implicit request =>
-    jobRunService.killJobRun(JobRunId(id, runId)).map(Ok(_))
+    jobRunService.killJobRun(JobRunId(id, runId)).map(Ok(_)).recover {
+      case JobRunDoesNotExist(_) => NotFound(UnknownJobRun(id, runId))
+    }
   }
 
   def triggerJob(id: PathId) = AuthorizedAction.async { implicit request =>
     jobSpecService.getJobSpec(id).flatMap {
-      case Some(spec) => jobRunService.startJobRun(spec).map(Ok(_))
+      case Some(spec) => jobRunService.startJobRun(spec).map(Created(_))
       case None       => Future.successful(NotFound(UnknownJob(id)))
     }
   }

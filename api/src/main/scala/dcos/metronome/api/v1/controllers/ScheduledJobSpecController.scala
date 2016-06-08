@@ -1,6 +1,7 @@
 package dcos.metronome.api.v1.controllers
 
-import dcos.metronome.api.Authorization
+import dcos.metronome.JobSpecDoesNotExist
+import dcos.metronome.api.{ UnknownJob, Authorization }
 import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobSpec, RunSpec, ScheduleSpec }
@@ -17,7 +18,20 @@ class ScheduledJobSpecController(
 ) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
+  import ScheduledJobSpecController.JobSpecWithScheduleFormat
 
+  def createJob = AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
+    jobSpecService.createJobSpec(request.body).map(Created(_))
+  }
+
+  def updateJob(id: PathId) = AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
+    jobSpecService.updateJobSpec(id, _ => request.body).map(Ok(_)).recover {
+      case ex: JobSpecDoesNotExist => NotFound(UnknownJob(id))
+    }
+  }
+}
+
+object ScheduledJobSpecController {
   implicit lazy val JobSpecWithScheduleFormat: Format[JobSpec] = (
     (__ \ "id").format[PathId] ~
     (__ \ "description").format[String] ~
@@ -25,12 +39,4 @@ class ScheduledJobSpecController(
     (__ \ "schedules").formatNullable[Seq[ScheduleSpec]].withDefault(Seq.empty) ~
     (__ \ "run").format[RunSpec]
   )(JobSpec.apply, unlift(JobSpec.unapply))
-
-  def createJob = AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
-    jobSpecService.createJobSpec(request.body).map(Created(_))
-  }
-
-  def updateJob(id: PathId) = AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
-    jobSpecService.updateJobSpec(id, _ => request.body).map(Ok(_))
-  }
 }

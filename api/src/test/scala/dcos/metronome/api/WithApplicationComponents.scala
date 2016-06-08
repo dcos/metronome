@@ -3,16 +3,16 @@ package dcos.metronome.api
 import controllers.Assets
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobinfo.impl.JobInfoServiceImpl
-import dcos.metronome.jobrun.{JobRunService, JobRunServiceFixture}
+import dcos.metronome.jobrun.{ JobRunService, JobRunServiceFixture }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import mesosphere.marathon.core.plugin.PluginManager
-import org.scalatest.{Suite, TestData}
-import org.scalatestplus.play.{OneAppPerSuite, OneAppPerTest, OneServerPerSuite, OneServerPerTest}
+import org.scalatest.{ Suite, TestData }
+import org.scalatestplus.play.{ OneAppPerSuite, OneAppPerTest, OneServerPerSuite, OneServerPerTest }
 import play.api.ApplicationLoader.Context
 import play.api.i18n.I18nComponents
 import play.api.routing.Router
-import play.api.{BuiltInComponents, _}
+import play.api.{ BuiltInComponents, _ }
 
 /**
   * A trait that provides a components in scope and creates new components when newApplication is called
@@ -97,6 +97,8 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
   LoggerConfigurator(context.environment.classLoader).foreach {
     _.configure(context.environment)
   }
+
+  override lazy val httpErrorHandler = new ErrorHandler
 
   lazy val pluginManager: PluginManager = PluginManager.None
 

@@ -1,6 +1,7 @@
 package dcos.metronome.api.v1.controllers
 
-import dcos.metronome.api.{ UnknownSchedule, UnknownJob, Authorization }
+import dcos.metronome.JobSpecDoesNotExist
+import dcos.metronome.api.{ ErrorDetail, UnknownSchedule, UnknownJob, Authorization }
 import dcos.metronome.api.v1.models._
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ ScheduleSpec, JobSpec }
@@ -16,14 +17,14 @@ class JobScheduleController(
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-  def getSchedules(id: PathId) = AuthorizedAction.async(validate.json[ScheduleSpec]) { implicit request =>
+  def getSchedules(id: PathId) = AuthorizedAction.async { implicit request =>
     jobSpecService.getJobSpec(id).map {
       case Some(job) => Ok(job.schedules)
       case None      => NotFound(UnknownJob(id))
     }
   }
 
-  def getSchedule(id: PathId, scheduleId: String) = AuthorizedAction.async(validate.json[ScheduleSpec]) { implicit request =>
+  def getSchedule(id: PathId, scheduleId: String) = AuthorizedAction.async { implicit request =>
     jobSpecService.getJobSpec(id).map {
       case Some(job) if job.schedule(scheduleId).isDefined => Ok(job.schedule(scheduleId))
       case Some(job) => NotFound(UnknownSchedule(scheduleId))
@@ -37,7 +38,12 @@ class JobScheduleController(
       require(jobSpec.schedules.count(_.id == scheduleId) == 0, "Can only create a non existing schedule")
       jobSpec.copy(schedules = request.body +: jobSpec.schedules)
     }
-    jobSpecService.updateJobSpec(id, addSchedule).map(Ok(_))
+    jobSpecService.updateJobSpec(id, addSchedule)
+      .map(job => Created(job.schedule(request.body.id)))
+      .recover{
+        case JobSpecDoesNotExist(_)       => NotFound(UnknownJob(id))
+        case ex: IllegalArgumentException => BadRequest(ErrorDetail(ex.getMessage))
+      }
   }
 
   def updateSchedule(id: PathId, scheduleId: String) = AuthorizedAction.async(validate.json[ScheduleSpec]) { implicit request =>
@@ -45,7 +51,12 @@ class JobScheduleController(
       require(jobSpec.schedules.count(_.id == scheduleId) == 1, "Can only update an existing schedule")
       jobSpec.copy(schedules = request.body +: jobSpec.schedules.filterNot(_.id == scheduleId))
     }
-    jobSpecService.updateJobSpec(id, changeSchedule).map(Ok(_))
+    jobSpecService.updateJobSpec(id, changeSchedule)
+      .map(job => Ok(job.schedule(scheduleId)))
+      .recover{
+        case JobSpecDoesNotExist(_)       => NotFound(UnknownJob(id))
+        case ex: IllegalArgumentException => NotFound(UnknownSchedule(scheduleId))
+      }
   }
 
   def deleteSchedule(id: PathId, scheduleId: String) = AuthorizedAction.async { implicit request =>
@@ -53,7 +64,12 @@ class JobScheduleController(
       require(jobSpec.schedules.count(_.id == scheduleId) == 1, "Can only delete an existing schedule")
       jobSpec.copy(schedules = jobSpec.schedules.filterNot(_.id == scheduleId))
     }
-    jobSpecService.updateJobSpec(id, deleteSchedule).map(Ok(_))
+    jobSpecService.updateJobSpec(id, deleteSchedule)
+      .map(_ => Ok)
+      .recover{
+        case JobSpecDoesNotExist(_)       => NotFound(UnknownJob(id))
+        case ex: IllegalArgumentException => NotFound(UnknownSchedule(scheduleId))
+      }
   }
 }
 
