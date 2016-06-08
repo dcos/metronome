@@ -3,7 +3,7 @@ package dcos.metronome.api.v1
 import dcos.metronome.api.{ ErrorDetail, UnknownJob }
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
-import mesosphere.marathon.state.{ Volume => _, _ }
+import mesosphere.marathon.state.PathId
 import org.apache.mesos.{ Protos => mesos }
 import org.joda.time.{ DateTime, DateTimeZone }
 import play.api.data.validation.ValidationError

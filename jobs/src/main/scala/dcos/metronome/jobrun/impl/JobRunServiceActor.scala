@@ -75,7 +75,7 @@ class JobRunServiceActor(
   }
 
   def updateJobRun(started: StartedJobRun): Unit = {
-    context.system.eventStream.publish(Event.JobRunFinished(started.jobRun))
+    context.system.eventStream.publish(Event.JobRunUpdate(started.jobRun))
     allJobRuns += started.jobRun.id -> started
   }
 
