@@ -1,4 +1,3 @@
-
 GET /ping dcos.metronome.api.v1.controllers.ApplicationController.ping
 
 GET /jobs dcos.metronome.api.v1.controllers.JobSpecController.listJobs
@@ -16,5 +15,5 @@ GET /job-runs dcos.metronome.api.v1.controllers.JobRunController.getAllJobRuns
 GET /job-runs/*id dcos.metronome.api.v1.controllers.JobRunController.getJobRun(id)
 POST /job-runs/*id dcos.metronome.api.v1.controllers.JobRunController.changeJobRun(id, action)
 
-
+GET /events dcos.metronome.api.v1.controllers.EventStreamController.connect
 # GET        /assets/*file                 controllers.Assets.at(path="/public", file)

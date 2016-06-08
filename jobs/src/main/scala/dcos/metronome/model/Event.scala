@@ -2,6 +2,7 @@ package dcos.metronome.model
 
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
+import play.api.libs.json.{ JsValue, Json, Writes }
 
 trait Event {
   val eventType: String
@@ -9,6 +10,12 @@ trait Event {
 }
 
 object Event {
+  implicit lazy val EventWrites: Writes[Event] = new Writes[Event] {
+    override def writes(event: Event): JsValue = Json.obj(
+      "eventType" -> event.eventType,
+      "timestamp" -> event.timestamp
+    )
+  }
 
   trait JobSpecEvent extends Event
   case class JobSpecCreated(

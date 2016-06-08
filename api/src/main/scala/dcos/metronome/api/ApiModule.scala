@@ -1,7 +1,8 @@
 package dcos.metronome.api
 
+import akka.actor.ActorSystem
 import controllers.Assets
-import dcos.metronome.api.v1.controllers.{ ApplicationController, JobRunController, JobSpecController }
+import dcos.metronome.api.v1.controllers.{ ApplicationController, EventStreamController, JobRunController, JobSpecController }
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
 import mesosphere.marathon.core.auth.AuthModule
@@ -10,7 +11,6 @@ import play.api.http.HttpErrorHandler
 import play.api.routing.Router
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
 import router.Routes
-
 import com.softwaremill.macwire._
 
 class ApiModule(
@@ -18,7 +18,8 @@ class ApiModule(
     jobRunService:    JobRunService,
     pluginManager:    PluginManager,
     httpErrorHandler: HttpErrorHandler,
-    assets:           Assets
+    assets:           Assets,
+    actorSystem:      ActorSystem
 ) {
 
   lazy val applicationController = wire[ApplicationController]
@@ -26,6 +27,8 @@ class ApiModule(
   lazy val jobsSpecController = wire[JobSpecController]
 
   lazy val jobRunsController = wire[JobRunController]
+
+  lazy val eventStreamController = wire[EventStreamController]
 
   lazy val authModule: AuthModule = wire[AuthModule]
 
