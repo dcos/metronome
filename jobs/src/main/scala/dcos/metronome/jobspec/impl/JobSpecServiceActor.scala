@@ -1,7 +1,7 @@
 package dcos.metronome.jobspec.impl
 
 import akka.actor._
-import dcos.metronome.model.JobSpec
+import dcos.metronome.model.{ Event, JobSpec }
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
 import dcos.metronome.{ JobSpecAlreadyExists, JobSpecChangeInFlight, JobSpecDoesNotExist }
 import mesosphere.marathon.state.PathId
@@ -103,6 +103,7 @@ class JobSpecServiceActor(
 
   def jobSpecCreated(jobSpec: JobSpec, promise: Promise[JobSpec]): Unit = {
     addJobSpec(jobSpec)
+    context.system.eventStream.publish(Event.JobSpecCreated(jobSpec))
     promise.success(jobSpec)
   }
 
@@ -119,6 +120,7 @@ class JobSpecServiceActor(
           scheduleActors -= jobSpec.id
       }
     }
+    context.system.eventStream.publish(Event.JobSpecUpdated(jobSpec))
     promise.success(jobSpec)
   }
 
@@ -131,6 +133,7 @@ class JobSpecServiceActor(
     inFlightChanges -= jobSpec.id
     removeFrom(persistenceActors)
     removeFrom(scheduleActors)
+    context.system.eventStream.publish(Event.JobSpecDeleted(jobSpec))
     promise.success(jobSpec)
   }
 

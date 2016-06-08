@@ -47,6 +47,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     lazy val master: String = "localhost:5050"
     lazy val pluginDir: Option[String] = configuration.getString("app.plugin.dir")
     lazy val pluginConf: Option[String] = configuration.getString("app.plugin.conf")
+    lazy val runHistoryCount: Int = configuration.getInt("app.history.count").getOrElse(10)
 
     lazy val scallopConf: AllConf = {
       val options = Map[String, Option[String]](
