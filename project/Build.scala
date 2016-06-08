@@ -25,7 +25,7 @@ object Build extends sbt.Build {
   lazy val api = Project(
     id = "api",
     base = file("api"),
-    dependencies = Seq(jobs),
+    dependencies = Seq(jobs % "compile->compile;test->test"),
     settings = baseSettings ++ formatSettings ++ Seq(
       RoutesKeys.routesImport ++= Seq("dcos.metronome.api.Binders._"),
       libraryDependencies ++= Seq(
