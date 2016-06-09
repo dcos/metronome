@@ -2,7 +2,7 @@ package dcos.metronome.jobrun
 
 import dcos.metronome.JobRunDoesNotExist
 import dcos.metronome.model._
-import mesosphere.marathon.core.task.bus.TaskChangeObservables.TaskChanged
+import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.state.PathId
 import org.joda.time.DateTime
 
@@ -32,7 +32,7 @@ object JobRunServiceFixture {
       Future.successful(specs.values.filter(r => filter(r.jobRun)))
     }
     override def startJobRun(jobSpec: JobSpec): Future[StartedJobRun] = {
-      val run = JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Active, DateTime.now, None, Seq.empty)
+      val run = JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Active, DateTime.now, None, Map.empty[Task.Id, JobRunTask])
       val startedRun = StartedJobRun(run, Promise[JobResult].future)
       specs += run.id -> startedRun
       Future.successful(startedRun)

@@ -11,6 +11,7 @@ import mesosphere.marathon.event.MesosStatusUpdateEvent
 import mesosphere.marathon.state.PathId
 
 import scala.collection.concurrent.TrieMap
+import scala.collection.immutable.Seq
 import scala.concurrent.Promise
 
 /**
@@ -51,8 +52,8 @@ class JobRunServiceActor(
 
     // executor messages
     case JobRunUpdate(started)             => updateJobRun(started)
-    case JobRunFinished(result)            => jobRunFinished(result)
-    case JobRunAborted(result)             => jobRunAborted(result)
+    case Finished(result)                  => jobRunFinished(result)
+    case Aborted(result)                   => jobRunAborted(result)
 
     //event stream events
     case update: MesosStatusUpdateEvent    => forwardStatusUpdate(update)
@@ -62,7 +63,7 @@ class JobRunServiceActor(
 
   def triggerJobRun(spec: JobSpec, promise: Promise[StartedJobRun]): Unit = {
     log.info(s"Trigger new JobRun for JobSpec: $spec")
-    val jobRun = new JobRun(JobRunId(spec), spec, JobRunStatus.Starting, clock.now(), None, Seq.empty)
+    val jobRun = new JobRun(JobRunId(spec), spec, JobRunStatus.Starting, clock.now(), None, Map.empty)
     val startedJobRun = startJobRun(jobRun)
     promise.success(startedJobRun)
   }
@@ -97,6 +98,7 @@ class JobRunServiceActor(
   }
 
   def jobRunFinished(result: JobResult): Unit = {
+    log.info("JobRunFinished")
     context.system.eventStream.publish(Event.JobRunFinished(result.jobRun))
     wipeJobRun(result.jobRun.id)
   }
