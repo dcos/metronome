@@ -37,7 +37,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       When("A schedule is added to a non existing job")
       val response = route(app, FakeRequest(POST, s"/v1/jobs/notexistent/schedules").withJsonBody(schedule1Json)).get
 
-      Then("A 404 is send")
+      Then("A 404 is sent")
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownJob(PathId("notexistent")))
@@ -47,7 +47,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       Given("A job")
       route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
 
-      When("Invalid schedule is send")
+      When("Invalid schedule is sent")
       val invalid = schedule2Json.as[JsObject] ++ Json.obj("cron" -> "wrong cron")
       val response = route(app, FakeRequest(POST, s"/v1/jobs/$specId/schedules").withJsonBody(invalid)).get
 
@@ -96,7 +96,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       When("A non existent schedule is queried")
       val response = route(app, FakeRequest(GET, s"/v1/jobs/$specId/schedules/notexistent")).get
 
-      Then("A 404 is send")
+      Then("A 404 is sent")
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownSchedule("notexistent"))
@@ -127,7 +127,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       When("A non existing job us")
       val response = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/notexistent").withJsonBody(schedule1Json)).get
 
-      Then("A 404 is send")
+      Then("A 404 is sent")
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownSchedule("notexistent"))
@@ -169,7 +169,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       When("A non existent schedule is deleted")
       val response = route(app, FakeRequest(DELETE, s"/v1/jobs/$specId/schedules/notexistent")).get
 
-      Then("A 404 is send")
+      Then("A 404 is sent")
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownSchedule("notexistent"))

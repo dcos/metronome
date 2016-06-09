@@ -49,7 +49,7 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
       When("A job with invalid json is created")
       val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(invalid)).get
 
-      Then("A validation problem is send")
+      Then("A validation problem is sent")
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))

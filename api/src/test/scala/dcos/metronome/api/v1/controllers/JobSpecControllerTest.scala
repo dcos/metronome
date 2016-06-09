@@ -30,7 +30,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
     "ignore given schedules when sending a valid job spec with schedules" in {
       Given("No job")
 
-      When("A job spec with schedules is send")
+      When("A job spec with schedules is sent")
       val jobSpecWithSchedule = Json.toJson(jobSpec2.copy(schedules = Seq(schedule1)))
 
       Then("The schedules get ignored")
@@ -43,7 +43,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
     "indicate a problem when sending invalid json" in {
       Given("No job")
 
-      When("An invalid json is send")
+      When("An invalid json is sent")
       val invalid = jobSpec1Json.as[JsObject] ++ Json.obj("id" -> "/not/valid")
       val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(invalid)).get
 
@@ -60,7 +60,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       When("An existing job is created")
       val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec1Json)).get
 
-      Then("A conflict is send")
+      Then("A conflict is sent")
       status(response) mustBe CONFLICT
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) \ "message" mustBe JsDefined(JsString("Job with this id already exists"))
@@ -103,7 +103,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       When("A non existing job is queried")
       val response = route(app, FakeRequest(GET, s"/v1/jobs/notexistent")).get
 
-      Then("A 404 is send")
+      Then("A 404 is sent")
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownJob(PathId("notexistent")))
@@ -132,7 +132,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       When("A non existing job is updated")
       val response = route(app, FakeRequest(PUT, s"/v1/jobs/notexistent").withJsonBody(jobSpec1Json)).get
 
-      Then("A 404 is send")
+      Then("A 404 is sent")
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownJob(PathId("notexistent")))
@@ -142,7 +142,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       Given("A job spec")
       route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec1Json)).get.futureValue
 
-      When("An invalid json is send")
+      When("An invalid json is sent")
       val invalid = jobSpec1Json.as[JsObject] ++ Json.obj("id" -> "/not/valid")
       val response = route(app, FakeRequest(PUT, s"/v1/jobs/${jobSpec1.id}").withJsonBody(invalid)).get
 
@@ -173,7 +173,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       When("A non existent job is deleted")
       val response = route(app, FakeRequest(DELETE, s"/v1/jobs/notexistent")).get
 
-      Then("A 404 is send")
+      Then("A 404 is sent")
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownJob(PathId("notexistent")))

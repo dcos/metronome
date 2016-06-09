@@ -19,7 +19,7 @@ class JobRunControllerTest extends PlaySpec with OneAppPerTestWithComponents[Moc
       Given("An existing app")
       route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
 
-      When("The request is send")
+      When("The request is sent")
       val response = route(app, FakeRequest(POST, s"/v1/jobs/$specId/runs")).get
 
       Then("The job run is created")
@@ -34,7 +34,7 @@ class JobRunControllerTest extends PlaySpec with OneAppPerTestWithComponents[Moc
       When("A non existent job run is queried")
       val response = route(app, FakeRequest(POST, s"/v1/jobs/notexistent/runs")).get
 
-      Then("A 404 is send")
+      Then("A 404 is sent")
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownJob(PathId("notexistent")))
@@ -80,7 +80,7 @@ class JobRunControllerTest extends PlaySpec with OneAppPerTestWithComponents[Moc
       When("A non existing run is queried")
       val response = route(app, FakeRequest(GET, s"/v1/jobs/$specId/runs/notexistent")).get
 
-      Then("A 404 is send")
+      Then("A 404 is sent")
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownJobRun(specId, "notexistent"))
@@ -108,7 +108,7 @@ class JobRunControllerTest extends PlaySpec with OneAppPerTestWithComponents[Moc
       When("A non existing job is deleted")
       val response = route(app, FakeRequest(POST, s"/v1/jobs/$specId/runs/notexistent/actions/stop")).get
 
-      Then("A 404 is send")
+      Then("A 404 is sent")
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownJobRun(specId, "notexistent"))
