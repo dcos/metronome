@@ -151,7 +151,7 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
 
   lazy val assets: Assets = wire[Assets]
 
-  lazy val apiModule: ApiModule = new ApiModule(jobSpecService, jobRunService, pluginManager, httpErrorHandler, assets)
+  lazy val apiModule: ApiModule = new ApiModule(jobSpecService, jobRunService, pluginManager, httpErrorHandler, assets, actorSystem)
 
   override def router: Router = apiModule.router
 }

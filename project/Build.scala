@@ -28,6 +28,7 @@ object Build extends sbt.Build {
     settings = baseSettings ++ formatSettings ++ Seq(
       libraryDependencies ++= Seq(
         Dependency.playJson,
+        Dependency.playWs,
         Dependency.marathonPlugin,
         Dependency.macWireMacros,
         Dependency.macWireUtil,
@@ -107,6 +108,7 @@ object Build extends sbt.Build {
     }
 
     val playJson = "com.typesafe.play" %% "play-json" % V.Play
+    val playWs = "com.typesafe.play" %% "play-ws" % V.Play
     val yaml = "net.jcazevedo" %% "moultingyaml" % "0.2"
     val macWireMacros = "com.softwaremill.macwire" %% "macros" % V.MacWire % "provided"
     val macWireUtil = "com.softwaremill.macwire" %% "util" % V.MacWire

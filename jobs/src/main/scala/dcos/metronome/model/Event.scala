@@ -2,6 +2,7 @@ package dcos.metronome.model
 
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
+import play.api.libs.json.{ JsValue, Json, Writes }
 
 trait Event {
   val eventType: String
