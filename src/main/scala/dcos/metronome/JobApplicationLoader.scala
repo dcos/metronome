@@ -13,6 +13,7 @@ import play.api.i18n._
 import play.api.routing.Router
 
 import scala.concurrent.Future
+import scala.concurrent.duration.FiniteDuration
 
 /**
   * Application loader that wires up the application dependencies using Macwire
@@ -22,7 +23,7 @@ class JobApplicationLoader extends ApplicationLoader {
     val jobComponents = new JobComponents(context)
 
     Future {
-      jobComponents.schedulerModule.schedulerService.run()
+      jobComponents.schedulerService.run()
     }(scala.concurrent.ExecutionContext.global)
 
     jobComponents.application
@@ -40,12 +41,10 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
   override lazy val httpErrorHandler = new ErrorHandler
 
-  private[metronome] lazy val schedulerModule: SchedulerModule = wire[SchedulerModule]
   private[this] lazy val jobsModule: JobsModule = new JobsModule(
     config,
     actorSystem,
-    clock,
-    schedulerModule.launchQueueModule.launchQueue
+    clock
   )
 
   private[this] lazy val apiModule: ApiModule = new ApiModule(
@@ -55,6 +54,8 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     httpErrorHandler,
     assets
   )
+
+  def schedulerService = jobsModule.schedulerModule.schedulerService
 
   override def router: Router = apiModule.router
 
@@ -77,5 +78,12 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
         .flatMap { case (name, value) => Seq(name, value) }
       new AllConf(options.toSeq)
     }
+
+    lazy val disableHttp: Boolean = scallopConf.disableHttp()
+    lazy val httpPort: Int = scallopConf.httpPort()
+    lazy val httpsPort: Int = scallopConf.httpsPort()
+    lazy val hostname: String = scallopConf.hostname()
+    lazy val zkTimeoutDuration: FiniteDuration = scallopConf.zkTimeoutDuration
+    lazy val mesosLeaderUiUrl: Option[String] = scallopConf.mesosLeaderUiUrl.get
   }
 }

@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.impl.{ JobSpecSchedulerActor, JobSpecPersistenceActor, JobSpecServiceDelegate, JobSpecServiceActor }
 import dcos.metronome.model.JobSpec
-import dcos.metronome.repository.{ Repository, RepositoryModule }
+import dcos.metronome.repository.Repository
 import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.state.PathId
 

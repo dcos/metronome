@@ -38,9 +38,9 @@ class JobRunServiceActor(
     case TriggerJobRun(spec, promise)         => triggerJobRun(spec, promise)
 
     // executor messages
-    case JobRunUpdate(started)             => updateJobRun(started)
-    case JobRunFinished(result)            => jobRunFinished(result)
-    case JobRunAborted(result)             => jobRunAborted(result)
+    case JobRunUpdate(started)                => updateJobRun(started)
+    case JobRunFinished(result)               => jobRunFinished(result)
+    case JobRunAborted(result)                => jobRunAborted(result)
 
     // Core messages
     case NotifyOfUpdate(taskChanged, promise) => forwardUpdate(taskChanged, promise)

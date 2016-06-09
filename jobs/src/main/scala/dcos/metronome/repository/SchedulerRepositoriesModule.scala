@@ -1,4 +1,4 @@
-package dcos.metronome.persistence
+package dcos.metronome.repository
 
 import java.net.InetSocketAddress
 import java.util.UUID
@@ -7,11 +7,10 @@ import com.twitter.common.quantity.{ Amount, Time }
 import com.twitter.common.zookeeper.ZooKeeperClient
 import com.twitter.util.JavaTimer
 import com.twitter.zk.{ AuthInfo, NativeConnector, ZkClient }
+import dcos.metronome.{ JobsConfig, MetricsModule }
 import dcos.metronome.migration.Migration
 import dcos.metronome.migration.impl.MigrationImpl
-import mesosphere.marathon.AllConf
 import mesosphere.marathon.Protos.MarathonTask
-import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.state.{ AppDefinition, AppRepository, EntityStoreCache, Group, GroupRepository, MarathonStore, MarathonTaskState, TaskRepository }
 import mesosphere.util.state.zk.{ CompressionConf, ZKStore }
 import mesosphere.util.state.{ FrameworkId, PersistentStore }
@@ -22,9 +21,13 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ Await, Future }
 
 // FIXME: use a dedicated conf object
-class PersistenceModule(conf: AllConf, metrics: Metrics) {
-  import PersistenceModule._
+class SchedulerRepositoriesModule(config: JobsConfig) {
+  import SchedulerRepositoriesModule._
 
+  private[this] lazy val metricsModule = new MetricsModule()
+  private[this] lazy val metrics = metricsModule.metrics
+
+  private[this] val conf = config.scallopConf
   lazy val zk: ZooKeeperClient = {
     require(
       conf.zooKeeperSessionTimeout() < Integer.MAX_VALUE,
@@ -106,7 +109,7 @@ class PersistenceModule(conf: AllConf, metrics: Metrics) {
   lazy val migration: Migration = new MigrationImpl(persistentStore)
 }
 
-object PersistenceModule {
+object SchedulerRepositoriesModule {
   val log = LoggerFactory.getLogger(getClass)
 
   class ZooKeeperLeaderElectionClient(
