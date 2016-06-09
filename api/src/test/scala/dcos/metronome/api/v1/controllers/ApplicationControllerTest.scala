@@ -1,6 +1,6 @@
 package dcos.metronome.api.v1.controllers
 
-import dcos.metronome.api.{MockApiComponents, OneAppPerTestWithComponents}
+import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents }
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context
 import play.api.test.FakeRequest

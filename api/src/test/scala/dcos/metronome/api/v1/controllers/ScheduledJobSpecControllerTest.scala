@@ -1,8 +1,8 @@
 package dcos.metronome.api.v1.controllers
 
-import dcos.metronome.api.v1.models.{JobSpecFormat => _, _}
-import dcos.metronome.api.{MockApiComponents, OneAppPerTestWithComponents, UnknownJob}
-import dcos.metronome.model.{CronSpec, JobSpec, ScheduleSpec}
+import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
+import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents, UnknownJob }
+import dcos.metronome.model.{ CronSpec, JobSpec, ScheduleSpec }
 import mesosphere.marathon.state.PathId
 import org.scalatest.GivenWhenThen
 import org.scalatest.concurrent.ScalaFutures
@@ -13,6 +13,8 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
 class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with GivenWhenThen with ScalaFutures {
+
+  import ScheduledJobSpecController._
 
   "POST /scheduled-jobs" should {
     "creates a job when sending a valid job spec" in {

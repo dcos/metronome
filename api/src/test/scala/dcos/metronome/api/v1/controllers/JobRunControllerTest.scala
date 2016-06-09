@@ -2,7 +2,7 @@ package dcos.metronome.api.v1.controllers
 
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
-import dcos.metronome.model.{JobRunStatus, JobSpec}
+import dcos.metronome.model.{ JobRunStatus, JobSpec }
 import mesosphere.marathon.state.PathId
 import org.scalatest.GivenWhenThen
 import org.scalatest.concurrent.ScalaFutures

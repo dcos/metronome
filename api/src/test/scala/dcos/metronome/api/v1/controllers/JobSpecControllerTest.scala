@@ -1,8 +1,8 @@
 package dcos.metronome.api.v1.controllers
 
 import dcos.metronome.api.v1.models._
-import dcos.metronome.api.{MockApiComponents, OneAppPerTestWithComponents, UnknownJob}
-import dcos.metronome.model.{CronSpec, JobSpec, ScheduleSpec}
+import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents, UnknownJob }
+import dcos.metronome.model.{ CronSpec, JobSpec, ScheduleSpec }
 import mesosphere.marathon.state.PathId
 import org.scalatest.GivenWhenThen
 import org.scalatest.concurrent.ScalaFutures
