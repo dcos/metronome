@@ -55,6 +55,9 @@ trait Authorization extends RestController {
       override def header(name: String): Seq[String] = request.headers.getAll(name)
       override def cookie(name: String): Option[String] = request.cookies.get(name).map(_.value)
       override def queryParam(name: String): Seq[String] = request.getQueryString(name).toSeq
+      override def remotePort: Int = ???
+      override def localPort: Int = ???
+      override def localAddr: String = ???
     }
 
   }
