@@ -44,10 +44,4 @@ private[jobrun] class JobRunServiceDelegate(
     actorRef ! TriggerJobRun(jobSpec, promise)
     promise.future
   }
-
-  override def notifyOfTaskUpdate(taskChanged: TaskChanged): Future[Unit] = {
-    val promise = Promise[Unit]
-    actorRef ! NotifyOfUpdate(taskChanged, promise)
-    promise.future
-  }
 }

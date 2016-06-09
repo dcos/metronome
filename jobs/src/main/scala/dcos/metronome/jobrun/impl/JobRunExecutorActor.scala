@@ -6,13 +6,12 @@ import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus }
 import dcos.metronome.repository.Repository
 import mesosphere.marathon.core.launchqueue.LaunchQueue
-import mesosphere.marathon.core.task.TaskStateOp
-import mesosphere.marathon.core.task.bus.MarathonTaskStatus
-import mesosphere.marathon.core.task.bus.TaskChangeObservables.TaskChanged
+import mesosphere.marathon.event.MesosStatusUpdateEvent
 import mesosphere.marathon.state.RunSpec
 import org.apache.mesos
 
 import scala.concurrent.Promise
+import scala.util.Try
 
 /**
   * Handles one job run from start until the job either completes successful or failed.
@@ -49,13 +48,13 @@ class JobRunExecutorActor(
   }
 
   override def receive: Receive = {
-    case KillCurrentJobRun                             => killCurrentRun()
-    case JobRunCreated(_, persisted, _)                => startJob(persisted)
-    case JobRunUpdated(_, persisted, _)                => log.debug(s"JobRun ${persisted.id} has been persisted")
-    case JobRunDeleted(_, persisted, _)                => jobRunFinished()
-    case PersistFailed(_, id, ex, _)                   => jobRunAborted()
+    case KillCurrentJobRun              => killCurrentRun()
+    case JobRunCreated(_, persisted, _) => startJob(persisted)
+    case JobRunUpdated(_, persisted, _) => log.debug(s"JobRun ${persisted.id} has been persisted")
+    case JobRunDeleted(_, persisted, _) => jobRunFinished()
+    case PersistFailed(_, id, ex, _)    => jobRunAborted()
 
-    case TaskChangedUpdate(taskChanged, updatePromise) => receiveTaskUpdate(taskChanged, updatePromise)
+    case ForwardStatusUpdate(update)    => taskChanged(update)
   }
 
   def createJob(): Unit = {
@@ -112,47 +111,33 @@ class JobRunExecutorActor(
     }
   }
 
-  def receiveTaskUpdate(taskChanged: TaskChanged, updatePromise: Promise[Unit]): Unit = {
+  def taskChanged(update: MesosStatusUpdateEvent): Unit = {
     // for now this is a simple and naive implementation
-    import TaskStateOp.MesosUpdate
-    import mesosphere.marathon.core.task.bus.MarathonTaskStatus._
+    import TaskStates._
+    log.debug("processing {}", update)
 
-    val stateOp = taskChanged.stateOp
-    stateOp match {
-      case MesosUpdate(_, Active(_), _) if jobRun.status != JobRunStatus.Active =>
+    Try { mesos.Protos.TaskState.valueOf(update.taskStatus) } foreach {
+      case state: mesos.Protos.TaskState if active(state) && jobRun.status != JobRunStatus.Active =>
         log.info("Run is now active: {}", run.id)
         updateJob(jobRun.copy(status = JobRunStatus.Active))
 
-      case MesosUpdate(_, Finished(_), _) =>
+      case state: mesos.Protos.TaskState if finished(state) =>
         log.info("Run finished: {}", run.id)
         cleanup()
 
-      case MesosUpdate(_, Terminal(_), _) =>
+      case state: mesos.Protos.TaskState if failed(state) =>
         log.info("Run failed: {}", run.id)
         cleanup()
 
-      case _ =>
-        log.debug("Ignoring taskChanged")
+      case state: mesos.Protos.TaskState =>
+        log.debug("Ignoring {}", state)
     }
 
-    updatePromise.success(())
   }
 
   def cleanup(): Unit = {
     launchQueue.purge(runSpec.id)
     persistenceActor ! Delete(jobRun)
-  }
-
-  object Active {
-    private[this] val ActiveStates = Set(
-      mesos.Protos.TaskState.TASK_STAGING,
-      mesos.Protos.TaskState.TASK_STARTING,
-      mesos.Protos.TaskState.TASK_RUNNING
-    )
-    def unapply(arg: MarathonTaskStatus): Option[MarathonTaskStatus] = arg.mesosStatus match {
-      case Some(taskStatus) if ActiveStates(taskStatus.getState) => Some(arg)
-      case _ => None
-    }
   }
 
 }
@@ -165,7 +150,7 @@ object JobRunExecutorActor {
   case class JobRunFinished(jobResult: JobResult)
   case class JobRunAborted(jobResult: JobResult)
 
-  case class TaskChangedUpdate(taskChanged: TaskChanged, promise: Promise[Unit])
+  case class ForwardStatusUpdate(update: MesosStatusUpdateEvent)
 
   def props(
     run:         JobRun,
@@ -175,4 +160,17 @@ object JobRunExecutorActor {
   ): Props = Props(
     new JobRunExecutorActor(run, promise, repository, launchQueue)
   )
+}
+
+object TaskStates {
+  import mesos.Protos.TaskState._
+
+  val active = {
+    Set(TASK_STAGING, TASK_STARTING, TASK_RUNNING)
+  }
+  val failed = {
+    import mesos.Protos.TaskState._
+    Set(TASK_ERROR, TASK_FAILED, TASK_LOST)
+  }
+  def finished(state: mesos.Protos.TaskState): Boolean = state == mesos.Protos.TaskState.TASK_FINISHED
 }
