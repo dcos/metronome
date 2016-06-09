@@ -35,7 +35,7 @@ class JobScheduleController(
   def createSchedule(id: PathId) = AuthorizedAction.async(validate.json[ScheduleSpec]) { implicit request =>
     def addSchedule(jobSpec: JobSpec) = {
       val scheduleId = request.body.id
-      require(jobSpec.schedules.count(_.id == scheduleId) == 0, "Can only create a non existing schedule")
+      require(jobSpec.schedules.count(_.id == scheduleId) == 0, s"A schedule with id $scheduleId already exists")
       require(jobSpec.schedules.isEmpty, "Only one schedule supported at the moment")
       jobSpec.copy(schedules = request.body +: jobSpec.schedules)
     }
