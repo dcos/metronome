@@ -1,3 +1,4 @@
+import play.sbt.routes.RoutesKeys
 import play.sbt.{ PlayLayoutPlugin, PlayScala }
 import sbt.Keys._
 import sbt._
@@ -24,8 +25,9 @@ object Build extends sbt.Build {
   lazy val api = Project(
     id = "api",
     base = file("api"),
-    dependencies = Seq(jobs),
+    dependencies = Seq(jobs % "compile->compile;test->test"),
     settings = baseSettings ++ formatSettings ++ Seq(
+      RoutesKeys.routesImport ++= Seq("dcos.metronome.api.Binders._"),
       libraryDependencies ++= Seq(
         Dependency.playJson,
         Dependency.marathonPlugin,

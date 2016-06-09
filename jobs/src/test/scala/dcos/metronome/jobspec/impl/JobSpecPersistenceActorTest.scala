@@ -32,7 +32,7 @@ class JobSpecPersistenceActorTest extends TestKit(ActorSystem("test")) with FunS
     f.repository.update(any, any) returns Future.successful(f.jobSpec)
     f.repository.delete(any) returns Future.successful(true)
 
-    When("A create message is send")
+    When("A create message is sent")
     actor ! Create(f.jobSpec, createPromise)
     actor ! Update(identity, updatePromise)
     actor ! Delete(f.jobSpec, deletePromise)
@@ -54,7 +54,7 @@ class JobSpecPersistenceActorTest extends TestKit(ActorSystem("test")) with FunS
     val promise = Promise[JobSpec]
     f.repository.create(any, any) returns Future.successful(f.jobSpec)
 
-    When("A create message is send")
+    When("A create message is sent")
     actor ! Create(f.jobSpec, promise)
 
     Then("A creates message is replied")
@@ -69,10 +69,10 @@ class JobSpecPersistenceActorTest extends TestKit(ActorSystem("test")) with FunS
     val exception = new RuntimeException("boom")
     f.repository.create(f.id, f.jobSpec) returns Future.failed(exception)
 
-    When("A create message is send")
+    When("A create message is sent")
     actor ! Create(f.jobSpec, promise)
 
-    Then("A failed message is send")
+    Then("A failed message is sent")
     expectMsg(PersistFailed(self, f.jobSpec.id, exception, promise))
   }
 
@@ -84,10 +84,10 @@ class JobSpecPersistenceActorTest extends TestKit(ActorSystem("test")) with FunS
     val changed = f.jobSpec.copy(description = "changed")
     f.repository.update(any, any) returns Future.successful(changed)
 
-    When("A update message is send")
+    When("A update message is sent")
     actor ! Update(_ => changed, promise)
 
-    Then("An ack message is send")
+    Then("An ack message is sent")
     expectMsg(Updated(self, changed, promise))
   }
 
@@ -99,10 +99,10 @@ class JobSpecPersistenceActorTest extends TestKit(ActorSystem("test")) with FunS
     val exception = new RuntimeException("boom")
     f.repository.update(any, any) returns Future.failed(exception)
 
-    When("An update message is send")
+    When("An update message is sent")
     actor ! Update(_ => f.jobSpec, promise)
 
-    Then("A failed message is send")
+    Then("A failed message is sent")
     expectMsg(PersistFailed(self, f.jobSpec.id, exception, promise))
   }
 
@@ -113,10 +113,10 @@ class JobSpecPersistenceActorTest extends TestKit(ActorSystem("test")) with FunS
     val promise = Promise[JobSpec]
     f.repository.delete(f.id) returns Future.successful(true)
 
-    When("A delete message is send")
+    When("A delete message is sent")
     actor ! Delete(f.jobSpec, promise)
 
-    Then("An ack message is send")
+    Then("An ack message is sent")
     expectMsg(Deleted(self, f.jobSpec, promise))
   }
 
@@ -128,10 +128,10 @@ class JobSpecPersistenceActorTest extends TestKit(ActorSystem("test")) with FunS
     val exception = new RuntimeException("boom")
     f.repository.delete(f.id) returns Future.failed(exception)
 
-    When("An update message is send")
+    When("An update message is sent")
     actor ! Delete(f.jobSpec, promise)
 
-    Then("A failed message is send")
+    Then("A failed message is sent")
     expectMsg(PersistFailed(self, f.jobSpec.id, exception, promise))
   }
 
