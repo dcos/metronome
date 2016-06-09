@@ -1,6 +1,7 @@
 package dcos.metronome.jobrun
 
 import dcos.metronome.model.{ JobRun, JobRunId, JobSpec }
+import mesosphere.marathon.core.task.bus.TaskChangeObservables.TaskChanged
 import mesosphere.marathon.state.PathId
 
 import scala.concurrent.Future
@@ -51,4 +52,10 @@ trait JobRunService {
     * @return the job run that was killed
     */
   def killJobRun(jobRunId: JobRunId): Future[StartedJobRun]
+
+  /**
+    * Notify the JobRunService of a taskChanged event
+    * @param taskChanged containing the state changing operation and the resulting state change
+    */
+  def notifyOfTaskUpdate(taskChanged: TaskChanged): Future[Unit]
 }

@@ -6,6 +6,7 @@ import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
 import dcos.metronome.utils.time.Clock
+import mesosphere.marathon.core.task.bus.TaskChangeObservables.TaskChanged
 import mesosphere.marathon.state.PathId
 
 import scala.collection.concurrent.TrieMap
@@ -28,18 +29,21 @@ class JobRunServiceActor(
 
   override def receive: Receive = {
     // api messages
-    case ListRuns(promise)                 => promise.success(allJobRuns.values)
-    case GetJobRun(id, promise)            => promise.success(allJobRuns.get(id))
-    case GetActiveJobRuns(specId, promise) => promise.success(runsForSpec(specId))
-    case KillJobRun(id, promise)           => killJobRun(id, promise)
+    case ListRuns(promise)                    => promise.success(allJobRuns.values)
+    case GetJobRun(id, promise)               => promise.success(allJobRuns.get(id))
+    case GetActiveJobRuns(specId, promise)    => promise.success(runsForSpec(specId))
+    case KillJobRun(id, promise)              => killJobRun(id, promise)
 
     // trigger messages
-    case TriggerJobRun(spec, promise)      => triggerJobRun(spec, promise)
+    case TriggerJobRun(spec, promise)         => triggerJobRun(spec, promise)
 
     // executor messages
-    case JobRunUpdate(started)             => updateJobRun(started)
-    case JobRunFinished(result)            => jobRunFinished(result)
-    case JobRunAborted(result)             => jobRunAborted(result)
+    case JobRunUpdate(started)                => updateJobRun(started)
+    case JobRunFinished(result)               => jobRunFinished(result)
+    case JobRunAborted(result)                => jobRunAborted(result)
+
+    // Core messages
+    case NotifyOfUpdate(taskChanged, promise) => forwardUpdate(taskChanged, promise)
   }
 
   def runsForSpec(specId: PathId): Iterable[StartedJobRun] = allJobRuns.values.filter(_.jobRun.jobSpec.id == specId)
@@ -106,6 +110,18 @@ class JobRunServiceActor(
     }
   }
 
+  def forwardUpdate(taskChanged: TaskChanged, promise: Promise[Unit]): Unit = {
+    // FIXME (glue): provide conversion from taskId to JobRunId (let taskId be JobRunId#attempt)
+    val jobRunId = JobRunId(taskChanged.taskId.idString)
+
+    allRunExecutors.get(jobRunId) match {
+      case Some(actorRef) =>
+        actorRef ! TaskChangedUpdate(taskChanged, promise)
+      case None =>
+        promise.failure(JobRunDoesNotExist(jobRunId))
+    }
+  }
+
   def withJobExecutor[T](id: JobRunId, promise: Promise[StartedJobRun])(fn: (ActorRef, StartedJobRun) => T): Option[T] = {
     val result = for {
       executor <- allRunExecutors.get(id)
@@ -127,6 +143,7 @@ object JobRunServiceActor {
   case class GetActiveJobRuns(jobId: PathId, promise: Promise[Iterable[StartedJobRun]])
   case class KillJobRun(id: JobRunId, promise: Promise[StartedJobRun])
   case class TriggerJobRun(spec: JobSpec, promise: Promise[StartedJobRun])
+  case class NotifyOfUpdate(taskChanged: TaskChanged, promise: Promise[Unit])
 
   def props(
     clock:           Clock,

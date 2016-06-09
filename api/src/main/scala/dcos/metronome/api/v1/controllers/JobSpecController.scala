@@ -44,7 +44,8 @@ class JobSpecController(
   }
 
   def triggerJob(id: String) = AuthorizedAction.async { implicit request =>
-    jobSpecService.getJobSpec(PathId(id)).flatMap {
+    val pathId = PathId(id).canonicalPath()
+    jobSpecService.getJobSpec(pathId).flatMap {
       case Some(spec) => jobRunService.startJobRun(spec).map(Ok(_))
       case None       => Future.successful(NotFound(UnknownJob(id)))
     }

@@ -13,6 +13,7 @@ import play.api.libs.json.{ Json, _ }
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
+import scala.collection.immutable.Seq
 package object models {
 
   import mesosphere.marathon.api.v2.json.Formats.{ FormatWithDefault, PathIdFormat, enumFormat }

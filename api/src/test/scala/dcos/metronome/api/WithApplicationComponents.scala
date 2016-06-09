@@ -2,10 +2,11 @@ package dcos.metronome.api
 
 import controllers.Assets
 import dcos.metronome.{ ConcurrentJobRunNotAllowed, JobRunDoesNotExist, JobSpecDoesNotExist }
-import dcos.metronome.jobrun.{ StartedJobRun, JobRunService }
+import dcos.metronome.jobrun.{ JobRunService, StartedJobRun }
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.model.{ JobRunId, JobRun, JobSpec }
+import dcos.metronome.model.{ JobRun, JobRunId, JobSpec }
 import mesosphere.marathon.core.plugin.{ PluginDefinitions, PluginManager }
+import mesosphere.marathon.core.task.bus.TaskChangeObservables.TaskChanged
 import mesosphere.marathon.state.PathId
 import org.scalatest.{ Suite, TestData }
 import org.scalatestplus.play.{ OneAppPerSuite, OneAppPerTest, OneServerPerSuite, OneServerPerTest }
@@ -147,6 +148,7 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
     override def activeRuns(jobSpecId: PathId): Future[Iterable[StartedJobRun]] = Future.successful(Iterable.empty)
     override def listRuns(filter: (JobRun) => Boolean): Future[Iterable[StartedJobRun]] = Future.successful(Iterable.empty)
     override def startJobRun(jobSpec: JobSpec): Future[StartedJobRun] = Future.failed(ConcurrentJobRunNotAllowed(jobSpec))
+    override def notifyOfTaskUpdate(taskChanged: TaskChanged): Future[Unit] = Future.successful(())
   }
 
   lazy val assets: Assets = wire[Assets]
