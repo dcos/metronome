@@ -14,7 +14,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerSuiteWithComponents[M
 
   "POST /jobs" should {
     "creates a job when sending a valid job spec" in {
-      val response = route(app, FakeRequest(POST, "/jobs").withJsonBody(jobSpec1Json)).get
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec1Json)).get
       status(response) mustBe CREATED
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe jobSpec1Json
@@ -22,7 +22,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerSuiteWithComponents[M
 
     "ignore given schedules when sending a valid job spec with schedules" in {
       val jobSpecWithSchedule = Json.toJson(jobSpec2.copy(schedules = Seq(schedule1)))
-      val response = route(app, FakeRequest(POST, "/jobs").withJsonBody(jobSpecWithSchedule)).get
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpecWithSchedule)).get
       status(response) mustBe CREATED
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe jobSpec2Json
@@ -30,14 +30,14 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerSuiteWithComponents[M
 
     "indicate a problem when sending invalid json" in {
       val invalid = jobSpec1Json.as[JsObject] ++ Json.obj("id" -> "/not/valid")
-      val response = route(app, FakeRequest(POST, "/jobs").withJsonBody(invalid)).get
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(invalid)).get
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))
     }
 
     "indicate a problem when creating an existing job" in {
-      val response = route(app, FakeRequest(POST, "/jobs").withJsonBody(jobSpec1Json)).get
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec1Json)).get
       status(response) mustBe CONFLICT
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) \ "message" mustBe JsDefined(JsString("Job with this id already exists"))
@@ -46,7 +46,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerSuiteWithComponents[M
 
   "GET /jobs" should {
     "get all available jobs" in {
-      val response = route(app, FakeRequest(GET, "/jobs")).get
+      val response = route(app, FakeRequest(GET, s"/v1/jobs")).get
       status(response) mustBe OK
       contentType(response) mustBe Some("application/json")
       contentAsJson(response).as[JsArray].value.toSet mustBe Set(jobSpec1Json, jobSpec2Json)
@@ -55,14 +55,14 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerSuiteWithComponents[M
 
   "GET /jobs/{id}" should {
     "return a specific existing job" in {
-      val response = route(app, FakeRequest(GET, s"/jobs/${jobSpec1.id}")).get
+      val response = route(app, FakeRequest(GET, s"/v1/jobs/${jobSpec1.id}")).get
       status(response) mustBe OK
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe jobSpec1Json
     }
 
     "give a 404 for a non existing job" in {
-      val response = route(app, FakeRequest(GET, s"/jobs/notexistent")).get
+      val response = route(app, FakeRequest(GET, s"/v1/jobs/notexistent")).get
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownJob(PathId("notexistent")))
@@ -73,14 +73,14 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerSuiteWithComponents[M
     "update a specific existing job" in {
       val update = jobSpec1.copy(labels = Map("a" -> "b"))
       val updateJson = Json.toJson(update)
-      val response = route(app, FakeRequest(PUT, s"/jobs/${jobSpec1.id}").withJsonBody(updateJson)).get
+      val response = route(app, FakeRequest(PUT, s"/v1/jobs/${jobSpec1.id}").withJsonBody(updateJson)).get
       status(response) mustBe OK
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe updateJson
     }
 
     "give a 404 for a non existing job" in {
-      val response = route(app, FakeRequest(PUT, s"/jobs/notexistent").withJsonBody(jobSpec1Json)).get
+      val response = route(app, FakeRequest(PUT, s"/v1/jobs/notexistent").withJsonBody(jobSpec1Json)).get
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownJob(PathId("notexistent")))
@@ -88,7 +88,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerSuiteWithComponents[M
 
     "indicate a problem when sending invalid json" in {
       val invalid = jobSpec1Json.as[JsObject] ++ Json.obj("id" -> "/not/valid")
-      val response = route(app, FakeRequest(PUT, s"/jobs/${jobSpec1.id}").withJsonBody(invalid)).get
+      val response = route(app, FakeRequest(PUT, s"/v1/jobs/${jobSpec1.id}").withJsonBody(invalid)).get
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))
@@ -97,14 +97,14 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerSuiteWithComponents[M
 
   "DELETE /jobs/{id}" should {
     "delete a specific existing job" in {
-      val response = route(app, FakeRequest(DELETE, s"/jobs/${jobSpec2.id}")).get
+      val response = route(app, FakeRequest(DELETE, s"/v1/jobs/${jobSpec2.id}")).get
       status(response) mustBe OK
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe jobSpec2Json
     }
 
     "give a 404 for a non existing job" in {
-      val response = route(app, FakeRequest(DELETE, s"/jobs/notexistent")).get
+      val response = route(app, FakeRequest(DELETE, s"/v1/jobs/notexistent")).get
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownJob(PathId("notexistent")))

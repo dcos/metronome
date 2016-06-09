@@ -18,7 +18,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerSuiteWithComponen
 
   "POST /jobs/{id}/schedules" should {
     "create a job schedule when sending a valid schedule spec" in {
-      val response = route(app, FakeRequest(POST, s"/jobs/$specId/schedules").withJsonBody(schedule1Json)).get
+      val response = route(app, FakeRequest(POST, s"/v1/jobs/$specId/schedules").withJsonBody(schedule1Json)).get
       println(contentAsString(response))
       status(response) mustBe CREATED
       contentType(response) mustBe Some("application/json")
@@ -26,7 +26,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerSuiteWithComponen
     }
 
     "not found if the job id is not known" in {
-      val response = route(app, FakeRequest(POST, s"/jobs/notexistent/schedules").withJsonBody(schedule1Json)).get
+      val response = route(app, FakeRequest(POST, s"/v1/jobs/notexistent/schedules").withJsonBody(schedule1Json)).get
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownJob(PathId("notexistent")))
@@ -34,7 +34,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerSuiteWithComponen
 
     "indicate a problem when sending invalid json" in {
       val invalid = schedule2Json.as[JsObject] ++ Json.obj("cron" -> "wrong cron")
-      val response = route(app, FakeRequest(POST, s"/jobs/$specId/schedules").withJsonBody(invalid)).get
+      val response = route(app, FakeRequest(POST, s"/v1/jobs/$specId/schedules").withJsonBody(invalid)).get
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
       (contentAsJson(response) \ "message").as[String] must include ("Json validation error")
@@ -43,7 +43,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerSuiteWithComponen
 
   "GET /jobs/{id}/schedules" should {
     "get all available job schedules" in {
-      val response = route(app, FakeRequest(GET, s"/jobs/$specId/schedules")).get
+      val response = route(app, FakeRequest(GET, s"/v1/jobs/$specId/schedules")).get
       status(response) mustBe OK
       contentType(response) mustBe Some("application/json")
       contentAsJson(response).as[JsArray].value.toSet mustBe Set(schedule1Json)
@@ -52,14 +52,14 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerSuiteWithComponen
 
   "GET /jobs/{id}/schedules/{scheduleId}" should {
     "return a specific existing schedule" in {
-      val response = route(app, FakeRequest(GET, s"/jobs/$specId/schedules/${schedule1.id}")).get
+      val response = route(app, FakeRequest(GET, s"/v1/jobs/$specId/schedules/${schedule1.id}")).get
       status(response) mustBe OK
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe schedule1Json
     }
 
     "give a 404 for a non existing schedule" in {
-      val response = route(app, FakeRequest(GET, s"/jobs/$specId/schedules/notexistent")).get
+      val response = route(app, FakeRequest(GET, s"/v1/jobs/$specId/schedules/notexistent")).get
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownSchedule("notexistent"))
@@ -70,14 +70,14 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerSuiteWithComponen
     "update a specific existing schedule" in {
       val update = schedule1.copy(cron = cron2)
       val updateJson = Json.toJson(update)
-      val response = route(app, FakeRequest(PUT, s"/jobs/$specId/schedules/${update.id}").withJsonBody(updateJson)).get
+      val response = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/${update.id}").withJsonBody(updateJson)).get
       status(response) mustBe OK
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe updateJson
     }
 
     "give a 404 for a non existing job" in {
-      val response = route(app, FakeRequest(PUT, s"/jobs/$specId/schedules/notexistent").withJsonBody(schedule1Json)).get
+      val response = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/notexistent").withJsonBody(schedule1Json)).get
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownSchedule("notexistent"))
@@ -85,7 +85,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerSuiteWithComponen
 
     "indicate a problem when sending invalid json" in {
       val invalid = schedule1Json.as[JsObject] ++ Json.obj("cron" -> "no valid cron")
-      val response = route(app, FakeRequest(PUT, s"/jobs/$specId/schedules/${schedule1.id}").withJsonBody(invalid)).get
+      val response = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/${schedule1.id}").withJsonBody(invalid)).get
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
       (contentAsJson(response) \ "message").as[String] must include ("Json validation error")
@@ -94,12 +94,12 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerSuiteWithComponen
 
   "DELETE /jobs/{id}/schedules/{scheduleId}" should {
     "delete a specific existing schedule" in {
-      val response = route(app, FakeRequest(DELETE, s"/jobs/$specId/schedules/${schedule1.id}")).get
+      val response = route(app, FakeRequest(DELETE, s"/v1/jobs/$specId/schedules/${schedule1.id}")).get
       status(response) mustBe OK
     }
 
     "give a 404 for a non existing schedule" in {
-      val response = route(app, FakeRequest(DELETE, s"/jobs/$specId/schedules/notexistent")).get
+      val response = route(app, FakeRequest(DELETE, s"/v1/jobs/$specId/schedules/notexistent")).get
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownSchedule("notexistent"))
@@ -107,7 +107,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerSuiteWithComponen
   }
 
   override protected def beforeAll(): Unit = {
-    val response = route(app, FakeRequest(POST, "/jobs").withJsonBody(jobSpecJson)).get
+    val response = route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get
     status(response) mustBe CREATED
     contentType(response) mustBe Some("application/json")
     contentAsJson(response) mustBe jobSpecJson

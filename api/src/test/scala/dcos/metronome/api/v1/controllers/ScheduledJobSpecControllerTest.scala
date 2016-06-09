@@ -16,7 +16,7 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerSuiteWithCom
 
   "POST /scheduled-jobs" should {
     "creates a job when sending a valid job spec" in {
-      val response = route(app, FakeRequest(POST, "/scheduled-jobs").withJsonBody(jobSpec1Json)).get
+      val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(jobSpec1Json)).get
       status(response) mustBe CREATED
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe jobSpec1Json
@@ -24,7 +24,7 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerSuiteWithCom
 
     "ignore given schedules when sending a valid job spec with schedules" in {
       val jobSpecWithSchedule = Json.toJson(jobSpec2.copy(schedules = Seq(schedule1)))
-      val response = route(app, FakeRequest(POST, "/scheduled-jobs").withJsonBody(jobSpecWithSchedule)).get
+      val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(jobSpecWithSchedule)).get
       status(response) mustBe CREATED
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe jobSpec2Json
@@ -32,7 +32,7 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerSuiteWithCom
 
     "indicate a problem when sending invalid json" in {
       val invalid = jobSpec1Json.as[JsObject] ++ Json.obj("id" -> "/not/valid")
-      val response = route(app, FakeRequest(POST, "/scheduled-jobs").withJsonBody(invalid)).get
+      val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(invalid)).get
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))
@@ -43,14 +43,14 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerSuiteWithCom
     "update a specific existing job" in {
       val update = jobSpec1.copy(schedules = Seq(schedule2))
       val updateJson = Json.toJson(update)
-      val response = route(app, FakeRequest(PUT, s"/scheduled-jobs/${jobSpec1.id}").withJsonBody(updateJson)).get
+      val response = route(app, FakeRequest(PUT, s"/v0/scheduled-jobs/${jobSpec1.id}").withJsonBody(updateJson)).get
       status(response) mustBe OK
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe updateJson
     }
 
     "give a 404 for a non existing job" in {
-      val response = route(app, FakeRequest(PUT, s"/scheduled-jobs/notexistent").withJsonBody(jobSpec1Json)).get
+      val response = route(app, FakeRequest(PUT, s"/v0/scheduled-jobs/notexistent").withJsonBody(jobSpec1Json)).get
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownJob(PathId("notexistent")))
@@ -58,7 +58,7 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerSuiteWithCom
 
     "indicate a problem when sending invalid json" in {
       val invalid = jobSpec1Json.as[JsObject] ++ Json.obj("id" -> "/not/valid")
-      val response = route(app, FakeRequest(PUT, s"/scheduled-jobs/${jobSpec1.id}").withJsonBody(invalid)).get
+      val response = route(app, FakeRequest(PUT, s"/v0/scheduled-jobs/${jobSpec1.id}").withJsonBody(invalid)).get
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))
