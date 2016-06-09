@@ -2,7 +2,7 @@ package dcos.metronome.api
 
 import akka.actor.ActorSystem
 import controllers.Assets
-import dcos.metronome.api.v1.controllers.{ ApplicationController, EventStreamController, JobRunController, JobSpecController }
+import dcos.metronome.api.v1.controllers._
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
 import mesosphere.marathon.core.auth.AuthModule
@@ -12,6 +12,7 @@ import play.api.routing.Router
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
 import router.Routes
 import com.softwaremill.macwire._
+import play.api.libs.ws.WSClient
 
 class ApiModule(
     jobSpecService:   JobSpecService,

@@ -10,6 +10,7 @@ import play.api.ApplicationLoader.Context
 import play.api._
 import play.api.http.DefaultHttpErrorHandler
 import play.api.i18n._
+import play.api.libs.ws.ahc.AhcWSComponents
 import play.api.routing.Router
 
 /**
@@ -19,7 +20,7 @@ class JobApplicationLoader extends ApplicationLoader {
   def load(context: Context): Application = new JobComponents(context).application
 }
 
-class JobComponents(context: Context) extends BuiltInComponentsFromContext(context) with I18nComponents {
+class JobComponents(context: Context) extends BuiltInComponentsFromContext(context) with I18nComponents with AhcWSComponents {
   // set up logger
   LoggerConfigurator(context.environment.classLoader).foreach {
     _.configure(context.environment)
