@@ -4,6 +4,7 @@ import java.util.concurrent.LinkedBlockingDeque
 
 import akka.actor.{ ActorSystem, Props }
 import akka.testkit._
+import dcos.metronome.behavior.BehaviorFixture
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.jobrun.impl.JobRunExecutorActor.{ JobRunAborted, JobRunFinished }
 import dcos.metronome.jobrun.impl.JobRunServiceActor._
@@ -178,8 +179,9 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     val dummyQueue = new LinkedBlockingDeque[TestActor.Message]()
     val dummyProp = Props(new TestActor(dummyQueue))
     val repo = new InMemoryRepository[JobRunId, JobRun]
+    val behavior = BehaviorFixture.empty
 
     var createExecutor: (JobRun, Promise[JobResult]) => Props = (_, _) => dummyProp
-    def serviceActor = TestActorRef[JobRunServiceActor](JobRunServiceActor.props(clock, createExecutor, repo))
+    def serviceActor = TestActorRef[JobRunServiceActor](JobRunServiceActor.props(clock, createExecutor, repo, behavior))
   }
 }

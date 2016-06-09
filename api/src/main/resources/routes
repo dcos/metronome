@@ -1,5 +1,6 @@
 
 GET /ping dcos.metronome.api.v1.controllers.ApplicationController.ping
+GET /metrics dcos.metronome.api.v1.controllers.ApplicationController.showMetrics
 
 # Job routes
 GET /jobs dcos.metronome.api.v1.controllers.JobSpecController.listJobs(embed:Set[Embed] ?= Set.empty[Embed])

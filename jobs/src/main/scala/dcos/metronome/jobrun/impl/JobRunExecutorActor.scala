@@ -2,6 +2,7 @@ package dcos.metronome.jobrun.impl
 
 import akka.actor.{ ActorLogging, Props, Actor }
 import dcos.metronome.JobRunFailed
+import dcos.metronome.behavior.{ ActorMetrics, Behavior }
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model.{ JobRunStatus, JobRunId, JobResult, JobRun }
 import dcos.metronome.repository.Repository
@@ -14,11 +15,16 @@ import scala.concurrent.duration._
   *
   * @param run the related job run  object.
   */
-class JobRunExecutorActor(run: JobRun, promise: Promise[JobResult], repository: Repository[JobRunId, JobRun]) extends Actor with ActorLogging {
+class JobRunExecutorActor(
+    run:          JobRun,
+    promise:      Promise[JobResult],
+    repository:   Repository[JobRunId, JobRun],
+    val behavior: Behavior
+) extends Actor with ActorLogging with ActorMetrics {
   import JobRunPersistenceActor._
   import JobRunExecutorActor._
 
-  lazy val persistenceActor = context.actorOf(JobRunPersistenceActor.props(run.id, repository))
+  lazy val persistenceActor = context.actorOf(JobRunPersistenceActor.props(run.id, repository, behavior))
   var jobRun: JobRun = run
 
   override def preStart(): Unit = {
@@ -29,7 +35,7 @@ class JobRunExecutorActor(run: JobRun, promise: Promise[JobResult], repository: 
     }
   }
 
-  override def receive: Receive = {
+  override def receive: Receive = around {
     case KillCurrentJobRun              => killCurrentRun()
     case "job started"                  => updateJob(jobRun.copy(status = JobRunStatus.Active))
     case "job finished"                 => persistenceActor ! Delete(jobRun)
@@ -95,7 +101,12 @@ object JobRunExecutorActor {
   case class JobRunFinished(jobResult: JobResult)
   case class JobRunAborted(jobResult: JobResult)
 
-  def props(run: JobRun, promise: Promise[JobResult], repository: Repository[JobRunId, JobRun]): Props = Props(
-    new JobRunExecutorActor(run, promise, repository)
+  def props(
+    run:        JobRun,
+    promise:    Promise[JobResult],
+    repository: Repository[JobRunId, JobRun],
+    behavior:   Behavior
+  ): Props = Props(
+    new JobRunExecutorActor(run, promise, repository, behavior)
   )
 }
