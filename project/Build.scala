@@ -17,7 +17,8 @@ object Build extends sbt.Build {
       libraryDependencies ++= Seq(
         Dependency.macWireMacros,
         Dependency.macWireUtil,
-        Dependency.macWireProxy
+        Dependency.macWireProxy,
+        Dependency.metrics
       )
     )
   ).aggregate(api, jobs).enablePlugins(PlayScala).disablePlugins(PlayLayoutPlugin)
@@ -36,6 +37,7 @@ object Build extends sbt.Build {
         Dependency.macWireProxy,
         Dependency.yaml,
         Dependency.cronUtils,
+        Dependency.metrics,
         Dependency.Test.scalatest,
         Dependency.Test.scalatestPlay
       )
@@ -54,6 +56,7 @@ object Build extends sbt.Build {
         Dependency.macWireProxy,
         Dependency.cronUtils,
         Dependency.akka,
+        Dependency.metrics,
         Dependency.Test.akkaTestKit,
         Dependency.Test.mockito
       )
@@ -106,6 +109,7 @@ object Build extends sbt.Build {
       val WixAccord = "0.5"
       val Akka = "2.3.9"
       val Mockito = "2.0.54-beta"
+      val Metrics = "3.5.4_a2.3"
     }
 
     val playJson = "com.typesafe.play" %% "play-json" % V.Play
@@ -118,6 +122,7 @@ object Build extends sbt.Build {
     val cronUtils = "com.cronutils" % "cron-utils" % V.CronUtils
     val wixAccord = "com.wix" %% "accord-core" % V.WixAccord
     val akka = "com.typesafe.akka" %%  "akka-actor" % V.Akka
+    val metrics = "nl.grons" %% "metrics-scala" % V.Metrics
 
     object Test {
       val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"

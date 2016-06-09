@@ -25,7 +25,7 @@ class JobRunController(
   }
 
   def getJobRuns(id: PathId) = AuthorizedAction.async { implicit request =>
-    jobRunService.listRuns(_ => true).map(Ok(_))
+    jobRunService.activeRuns(id).map(Ok(_))
   }
 
   def getJobRun(id: PathId, runId: String) = AuthorizedAction.async { implicit request =>

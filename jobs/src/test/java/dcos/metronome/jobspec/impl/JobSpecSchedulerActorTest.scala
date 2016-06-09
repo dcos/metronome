@@ -2,6 +2,7 @@ package dcos.metronome.jobspec.impl
 
 import akka.actor.ActorSystem
 import akka.testkit.{ TestActorRef, ImplicitSender, TestKit }
+import dcos.metronome.behavior.BehaviorFixture
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.model._
 import dcos.metronome.utils.test.Mockito
@@ -74,7 +75,8 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
     val id = PathId("/test")
     val jobSpec = JobSpec(id, "test").copy(schedules = Seq(ScheduleSpec("every_minute", cron = everyMinute)))
     val clock = new FixedClock(DateTime.parse("2016-06-01T08:50:12.000Z"))
+    val behavior = BehaviorFixture.empty
     val jobRunService = mock[JobRunService]
-    def scheduleActor = TestActorRef[JobSpecSchedulerActor](JobSpecSchedulerActor.props(jobSpec, clock, jobRunService))
+    def scheduleActor = TestActorRef[JobSpecSchedulerActor](JobSpecSchedulerActor.props(jobSpec, clock, jobRunService, behavior))
   }
 }
