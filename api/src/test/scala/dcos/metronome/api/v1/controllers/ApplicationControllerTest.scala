@@ -1,12 +1,12 @@
 package dcos.metronome.api.v1.controllers
 
-import dcos.metronome.api.{ OneAppPerSuiteWithComponents, MockApiComponents }
+import dcos.metronome.api.{MockApiComponents, OneAppPerTestWithComponents}
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
-class ApplicationControllerTest extends PlaySpec with OneAppPerSuiteWithComponents[MockApiComponents] {
+class ApplicationControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] {
 
   "ping" should {
     "send a pong" in {
