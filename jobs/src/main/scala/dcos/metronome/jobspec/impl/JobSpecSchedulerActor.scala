@@ -54,7 +54,8 @@ class JobSpecSchedulerActor(
   def scheduleNextRun(): Unit = {
     val lastScheduledAt = scheduledAt
     cancelSchedule()
-    spec.schedule.foreach { schedule =>
+    // TODO: only reschedule for one specific schedule!
+    spec.schedules.foreach { schedule =>
       val now = clock.now()
       val from = lastScheduledAt.getOrElse(now)
       val nextTime = schedule.nextExecution(from)

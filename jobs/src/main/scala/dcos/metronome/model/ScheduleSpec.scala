@@ -7,6 +7,7 @@ import org.joda.time.{ DateTime, DateTimeZone }
 import scala.concurrent.duration._
 
 case class ScheduleSpec(
+    id:                String,
     cron:              CronSpec,
     timeZone:          DateTimeZone      = ScheduleSpec.DefaultTimeZone,
     startingDeadline:  Duration          = ScheduleSpec.DefaultStartingDeadline,
@@ -27,7 +28,7 @@ object ScheduleSpec {
   val DefaultConcurrencyPolicy = ConcurrencyPolicy.Forbid
   val DefaultEnabled = false
 
-  lazy val validScheduleSpec: Validator[ScheduleSpec] = validator[ScheduleSpec] { spec =>
+  implicit lazy val validScheduleSpec: Validator[ScheduleSpec] = validator[ScheduleSpec] { spec =>
     spec.startingDeadline >= 1.minute
   }
 }

@@ -50,6 +50,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
   private[this] lazy val apiModule: ApiModule = new ApiModule(
     jobsModule.jobSpecModule.jobSpecService,
     jobsModule.jobRunModule.jobRunService,
+    jobsModule.jobInfoModule.jobInfoService,
     jobsModule.pluginManger,
     httpErrorHandler,
     assets

@@ -31,7 +31,7 @@ class RestController extends Controller {
               }
             } recoverTotal { jsError =>
               val msg = s"Json validation error ${JsError.toFlatForm(jsError)}"
-              LazyHttpErrorHandler.onClientError(request, BAD_REQUEST, msg).map(Left.apply)
+              LazyHttpErrorHandler.onClientError(request, UNPROCESSABLE_ENTITY, msg).map(Left.apply)
             }
         }
       }

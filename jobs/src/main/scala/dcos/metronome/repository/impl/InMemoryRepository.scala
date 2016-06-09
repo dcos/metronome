@@ -6,6 +6,7 @@ import mesosphere.marathon.StoreCommandFailedException
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 /**
   * For testing purposes only.
@@ -19,9 +20,13 @@ class InMemoryRepository[Id, Model] extends Repository[Id, Model] {
   override def update(id: Id, change: (Model) => Model): Future[Model] = {
     models.get(id) match {
       case Some(model) =>
-        val changed = change(model)
-        models.update(id, changed)
-        Future.successful(changed)
+        try {
+          val changed = change(model)
+          models.update(id, changed)
+          Future.successful(changed)
+        } catch {
+          case NonFatal(ex) => Future.failed(ex)
+        }
       case None =>
         Future.failed(new PersistenceFailed(id.toString, "No model with this id"))
     }

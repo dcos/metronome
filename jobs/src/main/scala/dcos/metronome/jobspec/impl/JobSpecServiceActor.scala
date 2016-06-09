@@ -111,7 +111,8 @@ class JobSpecServiceActor(
     allJobs += jobSpec.id -> jobSpec
     inFlightChanges -= jobSpec.id
     scheduleActor(jobSpec).foreach { scheduler =>
-      jobSpec.schedule match {
+      //TODO: create actors for every schedule, not only head option
+      jobSpec.schedules.headOption match {
         case Some(schedule) if schedule.enabled => scheduler ! JobSpecSchedulerActor.UpdateJobSpec(jobSpec)
         case _ =>
           //the updated spec does not have an enabled schedule
@@ -158,7 +159,8 @@ class JobSpecServiceActor(
   }
 
   def scheduleActor(jobSpec: JobSpec): Option[ActorRef] = {
-    def newActor: Option[ActorRef] = jobSpec.schedule.map { schedule =>
+    //TODO: create actors for every schedule, not only head option
+    def newActor: Option[ActorRef] = jobSpec.schedules.headOption.map { schedule =>
       val ref = context.actorOf(schedulerActorFactory(jobSpec), s"scheduler:${jobSpec.id.safePath}")
       context.watch(ref)
       scheduleActors += jobSpec.id -> ref
