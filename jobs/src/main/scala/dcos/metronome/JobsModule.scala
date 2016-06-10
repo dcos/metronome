@@ -7,6 +7,7 @@ import dcos.metronome.jobrun.JobRunModule
 import dcos.metronome.jobspec.JobSpecModule
 import dcos.metronome.repository.{ RepositoryModule, SchedulerRepositoriesModule }
 import dcos.metronome.scheduler.SchedulerModule
+import dcos.metronome.system.logging.LoggingModule
 import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.core.plugin.{ PluginManager, PluginModule }
 
@@ -28,5 +29,7 @@ class JobsModule(config: JobsConfig, actorSystem: ActorSystem, clock: Clock) {
   lazy val jobHistoryModule = new JobHistoryModule(config, actorSystem, clock, repositoryModule.jobHistoryRepository)
 
   lazy val jobInfoModule = new JobInfoModule(jobSpecModule.jobSpecService, jobRunModule.jobRunService)
+
+  lazy val loggingModule = new LoggingModule(actorSystem)
 }
 

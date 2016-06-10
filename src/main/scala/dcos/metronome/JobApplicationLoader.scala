@@ -51,6 +51,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     jobsModule.jobSpecModule.jobSpecService,
     jobsModule.jobRunModule.jobRunService,
     jobsModule.jobInfoModule.jobInfoService,
+    jobsModule.loggingModule.loggingService,
     jobsModule.pluginManger,
     httpErrorHandler,
     assets
