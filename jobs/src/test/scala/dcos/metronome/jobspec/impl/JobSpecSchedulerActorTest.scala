@@ -8,8 +8,8 @@ import dcos.metronome.utils.test.Mockito
 import dcos.metronome.utils.time.FixedClock
 import mesosphere.marathon.state.PathId
 import org.joda.time.DateTime
-import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatest._
+import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 
 import scala.collection.immutable._
 
@@ -51,7 +51,7 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
     system.stop(actor)
   }
 
-  test("If the next scheduled time has reached, a new job run is triggerd") {
+  test("If the next scheduled time has reached, a new job run is triggered") {
     Given("A job scheduling actor")
     val f = new Fixture
     val actor = f.scheduleActor
