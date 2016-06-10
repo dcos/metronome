@@ -53,6 +53,12 @@ object MarathonImplicits {
     )
   }
 
+  object RunSpecId {
+    def apply(jobRunId: JobRunId): PathId = {
+      PathId.fromSafePath(jobRunId.toString)
+    }
+  }
+
   private[this] def constraintSpec2ProtosConstraint(spec: ConstraintSpec): marathon.Protos.Constraint = {
     val marathonOperator = spec.operator match {
       case Operator.Eq     => marathon.Protos.Constraint.Operator.CLUSTER

@@ -1,10 +1,11 @@
 package dcos.metronome.jobrun
 
-import akka.actor.{ ActorSystem, Props }
-import dcos.metronome.jobrun.impl.{ JobRunExecutorActor, JobRunServiceActor, JobRunServiceDelegate }
+import akka.actor.{ ActorContext, ActorSystem, Props }
+import dcos.metronome.jobrun.impl.{ JobRunExecutorActor, JobRunPersistenceActor, JobRunServiceActor, JobRunServiceDelegate }
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId }
 import dcos.metronome.repository.Repository
 import dcos.metronome.utils.time.Clock
+import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 
 import scala.concurrent.Promise
@@ -14,12 +15,14 @@ class JobRunModule(
     actorSystem:      ActorSystem,
     clock:            Clock,
     jobRunRepository: Repository[JobRunId, JobRun],
-    launchQueue:      LaunchQueue
+    launchQueue:      LaunchQueue,
+    driverHolder:     MarathonSchedulerDriverHolder
 ) {
 
   private[this] def executorFactory(jobRun: JobRun, promise: Promise[JobResult]): Props = {
-    //TODO: remove repo, but add a repo actor factory
-    JobRunExecutorActor.props(jobRun, promise, jobRunRepository, launchQueue)
+    val persistenceActorFactory = (id: JobRunId, context: ActorContext) =>
+      context.actorOf(JobRunPersistenceActor.props(id, jobRunRepository))
+    JobRunExecutorActor.props(jobRun, promise, persistenceActorFactory, launchQueue, driverHolder, clock)
   }
 
   //TODO: Start when we get elected
