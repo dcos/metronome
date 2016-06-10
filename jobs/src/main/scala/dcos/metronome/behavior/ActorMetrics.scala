@@ -10,7 +10,7 @@ trait ActorMetrics { actor: Actor with ActorLogging =>
   def behavior: Behavior
 
   /**
-    * The metric builder is used to
+    * The metric builder is used to create the metrics used in this actor.
     */
   private[this] lazy val metricBuilder = behavior.metrics.builder(actor.getClass)
 

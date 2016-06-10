@@ -4,7 +4,7 @@ import scala.reflect.ClassTag
 
 /**
   * This trait defines configurable system behavior.
-  * The behavior is configurable via the BehavirConfig.
+  * The behavior is configurable via the BehaviorConfig.
   *
   * Supported behaviors:
   *  - metric support for services and actors
