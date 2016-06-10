@@ -101,16 +101,6 @@ class JobRunExecutorActor(
     // TODO: we should switch to another receiver here to handle PersistFailed different
   }
 
-  object ActiveTaskStatus {
-    def unapply(status: mesos.Protos.TaskStatus): Option[mesos.Protos.TaskStatus] = {
-      import mesos.Protos.TaskState._
-      status.getState match {
-        case TASK_STARTING | TASK_STAGING | TASK_RUNNING => Some(status)
-        case _ => None
-      }
-    }
-  }
-
   def taskChanged(update: MesosStatusUpdateEvent): Unit = {
     // for now this is a simple and naive implementation
     import TaskStates._
