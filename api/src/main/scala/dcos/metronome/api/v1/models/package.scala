@@ -5,9 +5,7 @@ import dcos.metronome.jobinfo.JobInfo
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import mesosphere.marathon.state.PathId
-import org.apache.mesos.{ Protos => mesos }
 import org.joda.time.{ DateTime, DateTimeZone }
-import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.{ Json, _ }
@@ -15,9 +13,10 @@ import play.api.libs.json.{ Json, _ }
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.collection.immutable.Seq
+
 package object models {
 
-  import mesosphere.marathon.api.v2.json.Formats.{ FormatWithDefault, enumFormat }
+  import mesosphere.marathon.api.v2.json.Formats.FormatWithDefault
 
   implicit val errorFormat: Format[ErrorDetail] = Json.format[ErrorDetail]
   implicit val unknownJobsFormat: Format[UnknownJob] = Json.format[UnknownJob]
@@ -53,7 +52,8 @@ package object models {
   implicit lazy val DateTimeZoneFormat: Format[DateTimeZone] = new Format[DateTimeZone] {
     override def writes(o: DateTimeZone): JsValue = JsString(o.getID)
     override def reads(json: JsValue): JsResult[DateTimeZone] = json match {
-      case JsString(value) if DateTimeZone.getAvailableIDs.asScala.contains(value) => JsSuccess(DateTimeZone.forID(value))
+      case JsString(value) if DateTimeZone.getAvailableIDs.asScala.contains(value) =>
+        JsSuccess(DateTimeZone.forID(value))
       case invalid => JsError(s"No time zone found with this id: $invalid")
     }
   }
@@ -70,7 +70,8 @@ package object models {
     override def writes(o: ConcurrencyPolicy): JsValue = JsString(ConcurrencyPolicy.name(o))
     override def reads(json: JsValue): JsResult[ConcurrencyPolicy] = json match {
       case JsString(ConcurrencyPolicy(value)) => JsSuccess(value)
-      case invalid                            => JsError(s"'$invalid' is not a valid concurrency policy. Allowed values: ${ConcurrencyPolicy.names}")
+      case invalid => JsError(s"'$invalid' is not a valid concurrency policy. " +
+        s"Allowed values: ${ConcurrencyPolicy.names}")
     }
   }
 
@@ -78,7 +79,8 @@ package object models {
     override def writes(o: RestartPolicy): JsValue = JsString(RestartPolicy.name(o))
     override def reads(json: JsValue): JsResult[RestartPolicy] = json match {
       case JsString(RestartPolicy(value)) => JsSuccess(value)
-      case invalid                        => JsError(s"'$invalid' is not a valid restart policy. Allowed values: ${RestartPolicy.names}")
+      case invalid => JsError(s"'$invalid' is not a valid restart policy. " +
+        s"Allowed values: ${RestartPolicy.names}")
     }
   }
 
@@ -91,16 +93,30 @@ package object models {
     (__ \ "enabled").formatNullable[Boolean].withDefault(ScheduleSpec.DefaultEnabled)
   )(ScheduleSpec.apply, unlift(ScheduleSpec.unapply))
 
+  implicit lazy val OperatorFormat: Format[Operator] = new Format[Operator] {
+    override def writes(o: Operator): JsValue = JsString(Operator.name(o))
+    override def reads(json: JsValue): JsResult[Operator] = json match {
+      case JsString(Operator(value)) => JsSuccess(value)
+      case invalid => JsError(s"'$invalid' is not a valid operator. " +
+        s"Allowed values: ${Operator.names}")
+    }
+  }
+
   implicit lazy val ConstraintSpecFormat: Format[ConstraintSpec] = (
     (__ \ "attr").format[String] ~
-    (__ \ "op").format[String](filter[String](ValidationError(s"Invalid Operator. Allowed values: ${ConstraintSpec.AvailableOperations}"))(ConstraintSpec.isValidOperation)) ~
+    (__ \ "op").format[Operator] ~
     (__ \ "value").formatNullable[String]
   )(ConstraintSpec.apply, unlift(ConstraintSpec.unapply))
 
   implicit lazy val PlacementSpecFormat: Format[PlacementSpec] = Json.format[PlacementSpec]
 
-  implicit lazy val ModeFormat: Format[mesos.Volume.Mode] =
-    enumFormat(mesos.Volume.Mode.valueOf, str => s"$str is not a valid mode")
+  implicit lazy val ModeFormat: Format[Mode] = new Format[Mode] {
+    override def writes(o: Mode): JsValue = JsString(Mode.name(o))
+    override def reads(json: JsValue): JsResult[Mode] = json match {
+      case JsString(Mode(value)) => JsSuccess(value)
+      case invalid               => JsError(s"'$invalid' is not a valid mode. Allowed values: ${Mode.names}")
+    }
+  }
 
   implicit lazy val VolumeFormat: Format[Volume] = Json.format[Volume]
 
@@ -129,7 +145,7 @@ package object models {
 
   implicit lazy val JobSpecFormat: Format[JobSpec] = (
     (__ \ "id").format[PathId] ~
-    (__ \ "description").format[String] ~
+    (__ \ "description").formatNullable[String] ~
     (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty) ~
     (__ \ "run").format[RunSpec]
   )(JobSpec.apply(_, _, _, Seq.empty, _), s => (s.id, s.description, s.labels, s.run))
@@ -142,7 +158,8 @@ package object models {
     override def writes(o: JobRunStatus): JsValue = JsString(JobRunStatus.name(o))
     override def reads(json: JsValue): JsResult[JobRunStatus] = json match {
       case JsString(JobRunStatus(value)) => JsSuccess(value)
-      case invalid                       => JsError(s"'$invalid' is not a valid restart policy. Allowed values: ${JobRunStatus.names.keySet}")
+      case invalid => JsError(s"'$invalid' is not a valid restart policy. " +
+        s"Allowed values: ${JobRunStatus.names.keySet}")
     }
   }
 

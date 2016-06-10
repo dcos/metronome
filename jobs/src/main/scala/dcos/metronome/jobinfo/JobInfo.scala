@@ -9,7 +9,7 @@ import mesosphere.marathon.state.PathId
   */
 case class JobInfo(
   id:          PathId,
-  description: String,
+  description: Option[String],
   labels:      Map[String, String],
   run:         RunSpec,
   schedules:   Option[Seq[ScheduleSpec]],

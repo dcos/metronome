@@ -1,5 +1,7 @@
 package dcos.metronome.model
 
+import scala.collection.immutable.Seq
+
 case class PlacementSpec(
   constraints: Seq[ConstraintSpec] = PlacementSpec.DefaultConstraints
 )
@@ -7,11 +9,22 @@ object PlacementSpec {
   val DefaultConstraints = Seq.empty[ConstraintSpec]
 }
 
-case class ConstraintSpec(attr: String, op: String, value: Option[String])
+case class ConstraintSpec(attribute: String, operator: Operator, value: Option[String])
 
-object ConstraintSpec {
+sealed trait Operator
+object Operator {
+  case object Eq extends Operator
+  case object Like extends Operator
+  case object Unlike extends Operator
 
-  val AvailableOperations = Set("EQ", "NEQ", "LIKE", "UNLIKE")
-  def isValidOperation(name: String): Boolean = AvailableOperations(name)
+  val names: Map[String, Operator] = Map(
+    "EQ" -> Eq,
+    "LIKE" -> Like,
+    "UNLIKE" -> Unlike
+  )
+  val operatorNames: Map[Operator, String] = names.map{ case (a, b) => (b, a) }
+
+  def name(operator: Operator): String = operatorNames(operator)
+  def unapply(name: String): Option[Operator] = names.get(name)
+  def isDefined(name: String): Boolean = names.contains(name)
 }
-

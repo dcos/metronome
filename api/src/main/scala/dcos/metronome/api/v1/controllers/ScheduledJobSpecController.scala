@@ -11,6 +11,8 @@ import mesosphere.marathon.state.PathId
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
+import scala.collection.immutable._
+
 class ScheduledJobSpecController(
     jobSpecService:    JobSpecService,
     val authenticator: Authenticator,
@@ -34,7 +36,7 @@ class ScheduledJobSpecController(
 object ScheduledJobSpecController {
   implicit lazy val JobSpecWithScheduleFormat: Format[JobSpec] = (
     (__ \ "id").format[PathId] ~
-    (__ \ "description").format[String] ~
+    (__ \ "description").formatNullable[String] ~
     (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty) ~
     (__ \ "schedules").formatNullable[Seq[ScheduleSpec]].withDefault(Seq.empty) ~
     (__ \ "run").format[RunSpec]

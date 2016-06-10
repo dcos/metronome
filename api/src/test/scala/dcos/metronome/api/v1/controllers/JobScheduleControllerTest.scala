@@ -183,7 +183,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
   val schedule1Json = Json.toJson(schedule1)
   val schedule2Json = Json.toJson(schedule2)
   val specId = PathId("spec")
-  val jobSpec = JobSpec(specId, "description")
+  val jobSpec = JobSpec(specId)
   val jobSpecJson = Json.toJson(jobSpec)
 
   override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context)

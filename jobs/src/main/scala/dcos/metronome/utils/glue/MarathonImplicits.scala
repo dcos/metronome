@@ -2,7 +2,7 @@ package dcos.metronome.utils.glue
 
 import java.util.concurrent.TimeUnit
 
-import dcos.metronome.model.{ Artifact, ConstraintSpec, JobRun, JobSpec }
+import dcos.metronome.model._
 import mesosphere.marathon
 import mesosphere.marathon.core.readiness.ReadinessCheck
 import mesosphere.marathon.health.HealthCheck
@@ -53,11 +53,16 @@ object MarathonImplicits {
     )
   }
 
-  // FIXME (glue): spec.attribute ~ constraint.field?
   private[this] def constraintSpec2ProtosConstraint(spec: ConstraintSpec): marathon.Protos.Constraint = {
+    val marathonOperator = spec.operator match {
+      case Operator.Eq     => marathon.Protos.Constraint.Operator.CLUSTER
+      case Operator.Like   => marathon.Protos.Constraint.Operator.LIKE
+      case Operator.Unlike => marathon.Protos.Constraint.Operator.UNLIKE
+    }
+
     val builder = marathon.Protos.Constraint.newBuilder()
-      .setOperator(spec.op)
-      .setField(spec.attr)
+      .setOperator(marathonOperator)
+      .setField(spec.attribute)
     spec.value.foreach(builder.setValue)
     builder.build()
   }

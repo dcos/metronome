@@ -12,6 +12,8 @@ import play.api.libs.json._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
+import scala.collection.immutable._
+
 class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with GivenWhenThen with ScalaFutures {
 
   "POST /jobs" should {
@@ -180,7 +182,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
     }
   }
 
-  def spec(id: String) = JobSpec(PathId(id), "description")
+  def spec(id: String) = JobSpec(PathId(id))
   val CronSpec(cron) = "* * * * *"
   val schedule1 = ScheduleSpec("id1", cron)
   val jobSpec1 = spec("spec1")

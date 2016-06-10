@@ -116,7 +116,7 @@ class JobRunControllerTest extends PlaySpec with OneAppPerTestWithComponents[Moc
   }
 
   val specId = PathId("spec")
-  val jobSpec = JobSpec(specId, "description")
+  val jobSpec = JobSpec(specId)
   val jobSpecJson = Json.toJson(jobSpec)
 
   override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context)

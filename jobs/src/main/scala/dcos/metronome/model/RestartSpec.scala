@@ -8,7 +8,7 @@ case class RestartSpec(
 )
 
 object RestartSpec {
-  val DefaultRestartPolicy = RestartNever
+  val DefaultRestartPolicy = RestartPolicy.Never
   val DefaultActiveDeadline = None
 }
 

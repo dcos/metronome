@@ -10,6 +10,8 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ Matchers, GivenWhenThen, FunSuite }
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.collection.immutable._
+
 class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutures with Matchers {
 
   test("Fetch a specific JobSpec with no embed") {
@@ -93,8 +95,8 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
     val schedule1 = ScheduleSpec("id1", cron)
     val schedule2 = ScheduleSpec("id2", cron)
 
-    val spec1 = JobSpec(PathId("spec1"), "1", schedules = Seq(schedule1, schedule2))
-    val spec2 = JobSpec(PathId("spec2"), "2", schedules = Seq(schedule1, schedule2))
+    val spec1 = JobSpec(PathId("spec1"), schedules = Seq(schedule1, schedule2))
+    val spec2 = JobSpec(PathId("spec2"), schedules = Seq(schedule1, schedule2))
 
     val specService = JobSpecServiceFixture.simpleJobSpecService()
     val runService = JobRunServiceFixture.simpleJobRunService()

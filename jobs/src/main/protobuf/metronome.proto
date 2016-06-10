@@ -12,7 +12,7 @@ message Label {
 }
 
 message JobStatus {
-  optional string job_id = 1;
+  optional string job_spec_id = 1;
   optional int64 success_count = 2;
   optional int64 failure_count = 3;
   optional int64 last_success_at = 4;
@@ -25,18 +25,19 @@ message JobSpec {
   repeated Label labels = 3;
 
   message ScheduleSpec {
-    optional string schedule = 1;
-    optional string tz = 2;
-    optional int64 startingDeadline = 3;
+    optional string id = 1;
+    optional string schedule = 2;
+    optional string tz = 3;
+    optional int64 startingDeadline = 4;
 
     enum ConcurrencyPolicy {
       ALLOW = 1;
     }
-    optional ConcurrencyPolicy concurrency_policy = 4;
+    optional ConcurrencyPolicy concurrency_policy = 5;
 
-    optional bool enabled = 5;
+    optional bool enabled = 6;
   }
-  optional ScheduleSpec schedule = 5;
+  repeated ScheduleSpec schedules = 5;
 
   message RunSpec {
     optional double cpus = 1;
@@ -57,7 +58,7 @@ message JobSpec {
 
     message PlacementSpec {
       message Constraint {
-        optional string field = 1;
+        optional string attribute = 1;
 
         enum Operator {
           UNKNOWN = 1;
@@ -118,7 +119,7 @@ message JobSpec {
         NEVER = 2;
         ON_FAILURE = 3;
       }
-      optional RestartSpec policy = 1;
+      optional RestartPolicy policy = 1;
       optional int64 activeDeadline = 2;
     }
     optional RestartSpec restart = 13;

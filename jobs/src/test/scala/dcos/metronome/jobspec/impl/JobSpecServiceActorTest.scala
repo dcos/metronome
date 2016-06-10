@@ -116,7 +116,7 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
   test("A jobSpec can be updated") {
     Given("A service with one jobs")
     val f = new Fixture
-    val changed = f.jobSpec.copy(description = "chnanged")
+    val changed = f.jobSpec.copy(description = Some("changed"))
     val service = f.jobSpecService
     val promise = Promise[JobSpec]
     service.underlyingActor.addJobSpec(f.jobSpec)
@@ -257,7 +257,7 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     val repository = new InMemoryRepository[PathId, JobSpec]
     val dummyQueue = new LinkedBlockingDeque[TestActor.Message]()
     val dummyProp = Props(new TestActor(dummyQueue))
-    val jobSpec = JobSpec(PathId("/test"), "test")
+    val jobSpec = JobSpec(PathId("/test"))
     val jobSpecService = TestActorRef[JobSpecServiceActor](JobSpecServiceActor.props(repository, (id: PathId) => dummyProp, _ => dummyProp))
   }
 }
