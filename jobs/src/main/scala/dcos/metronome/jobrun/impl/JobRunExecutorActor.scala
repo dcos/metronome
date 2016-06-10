@@ -2,6 +2,7 @@ package dcos.metronome.jobrun.impl
 
 import akka.actor.{ Actor, ActorLogging, Props }
 import dcos.metronome.JobRunFailed
+import dcos.metronome.behavior.{ ActorMetrics, Behavior }
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus }
 import dcos.metronome.repository.Repository
@@ -20,15 +21,16 @@ import scala.concurrent.Promise
   * @param run the related job run  object.
   */
 class JobRunExecutorActor(
-    run:         JobRun,
-    promise:     Promise[JobResult],
-    repository:  Repository[JobRunId, JobRun],
-    launchQueue: LaunchQueue
-) extends Actor with ActorLogging {
+    run:          JobRun,
+    promise:      Promise[JobResult],
+    repository:   Repository[JobRunId, JobRun],
+    launchQueue:  LaunchQueue,
+    val behavior: Behavior
+) extends Actor with ActorLogging with ActorMetrics {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
 
-  lazy val persistenceActor = context.actorOf(JobRunPersistenceActor.props(run.id, repository))
+  lazy val persistenceActor = context.actorOf(JobRunPersistenceActor.props(run.id, repository, behavior))
   var jobRun: JobRun = run
 
   def runSpec: RunSpec = {
@@ -171,8 +173,9 @@ object JobRunExecutorActor {
     run:         JobRun,
     promise:     Promise[JobResult],
     repository:  Repository[JobRunId, JobRun],
-    launchQueue: LaunchQueue
+    launchQueue: LaunchQueue,
+    behavior:    Behavior
   ): Props = Props(
-    new JobRunExecutorActor(run, promise, repository, launchQueue)
+    new JobRunExecutorActor(run, promise, repository, launchQueue, behavior)
   )
 }

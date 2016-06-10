@@ -1,5 +1,7 @@
 package dcos.metronome
 
+import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.health.HealthCheckRegistry
 import com.softwaremill.macwire._
 import controllers.Assets
 import dcos.metronome.scheduler.SchedulerModule
@@ -41,11 +43,12 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
   override lazy val httpErrorHandler = new ErrorHandler
 
-  private[this] lazy val jobsModule: JobsModule = new JobsModule(
-    config,
-    actorSystem,
-    clock
-  )
+  //TODO: use the one created by Marathon
+  lazy val metricsRegistry: MetricRegistry = new MetricRegistry()
+
+  lazy val healthCheckRegistry: HealthCheckRegistry = new HealthCheckRegistry()
+
+  private[this] lazy val jobsModule: JobsModule = wire[JobsModule]
 
   private[this] lazy val apiModule: ApiModule = new ApiModule(
     jobsModule.jobSpecModule.jobSpecService,
@@ -53,6 +56,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     jobsModule.jobInfoModule.jobInfoService,
     jobsModule.pluginManger,
     httpErrorHandler,
+    jobsModule.behaviorModule.metrics,
     assets
   )
 
@@ -66,6 +70,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     lazy val pluginDir: Option[String] = configuration.getString("app.plugin.dir")
     lazy val pluginConf: Option[String] = configuration.getString("app.plugin.conf")
     lazy val runHistoryCount: Int = configuration.getInt("app.history.count").getOrElse(10)
+    lazy val withMetrics: Boolean = configuration.getBoolean("app.behavior.metrics").getOrElse(true)
 
     lazy val scallopConf: AllConf = {
       val options = Map[String, Option[String]](
