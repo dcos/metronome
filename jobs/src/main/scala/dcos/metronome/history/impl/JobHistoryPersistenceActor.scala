@@ -1,15 +1,19 @@
 package dcos.metronome.history.impl
 
 import akka.actor.{ Props, ActorRef }
+import dcos.metronome.behavior.Behavior
 import dcos.metronome.model.JobHistory
 import dcos.metronome.repository.{ Repository, NoConcurrentRepoChange }
 import mesosphere.marathon.state.PathId
 
-class JobHistoryPersistenceActor(repo: Repository[PathId, JobHistory]) extends NoConcurrentRepoChange[PathId, JobHistory, Unit] {
+class JobHistoryPersistenceActor(
+    repo:         Repository[PathId, JobHistory],
+    val behavior: Behavior
+) extends NoConcurrentRepoChange[PathId, JobHistory, Unit] {
   import JobHistoryPersistenceActor._
   import context.dispatcher
 
-  override def receive: Receive = {
+  override def receive: Receive = around {
     case Create(id, jobRun) => create(id, jobRun)
     case Update(id, change) => update(id, change)
     case Delete(id, orig)   => delete(id, orig)
@@ -45,7 +49,7 @@ object JobHistoryPersistenceActor {
   case class JobHistoryDeleted(sender: ActorRef, jobStatus: JobHistory, nothing: Unit) extends JobHistoryChange
   case class PersistFailed(sender: ActorRef, id: PathId, ex: Throwable, nothing: Unit) extends Failed
 
-  def props(repository: Repository[PathId, JobHistory]): Props = {
-    Props(new JobHistoryPersistenceActor(repository))
+  def props(repository: Repository[PathId, JobHistory], behavior: Behavior): Props = {
+    Props(new JobHistoryPersistenceActor(repository, behavior))
   }
 }

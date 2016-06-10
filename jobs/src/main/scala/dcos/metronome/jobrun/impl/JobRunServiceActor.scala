@@ -2,6 +2,7 @@ package dcos.metronome.jobrun.impl
 
 import akka.actor.{ Actor, ActorRef, Props, Stash }
 import dcos.metronome.JobRunDoesNotExist
+import dcos.metronome.behavior.{ ActorMetrics, Behavior }
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
@@ -18,8 +19,9 @@ import scala.concurrent.Promise
 class JobRunServiceActor(
     clock:           Clock,
     executorFactory: (JobRun, Promise[JobResult]) => Props,
-    val repo:        Repository[JobRunId, JobRun] //TODO: remove the repo
-) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash {
+    val repo:        Repository[JobRunId, JobRun], //TODO: remove the repo
+    val behavior:    Behavior
+) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash with ActorMetrics {
 
   import JobRunExecutorActor._
   import JobRunServiceActor._
@@ -37,7 +39,7 @@ class JobRunServiceActor(
   private[impl] val allJobRuns = TrieMap.empty[JobRunId, StartedJobRun]
   private[impl] val allRunExecutors = TrieMap.empty[JobRunId, ActorRef]
 
-  override def receive: Receive = {
+  override def receive: Receive = around {
     // api messages
     case ListRuns(promise)                 => promise.success(allJobRuns.values)
     case GetJobRun(id, promise)            => promise.success(allJobRuns.get(id))
@@ -59,6 +61,7 @@ class JobRunServiceActor(
   def runsForSpec(specId: PathId): Iterable[StartedJobRun] = allJobRuns.values.filter(_.jobRun.jobSpec.id == specId)
 
   def triggerJobRun(spec: JobSpec, promise: Promise[StartedJobRun]): Unit = {
+    log.info(s"Trigger new JobRun for JobSpec: $spec")
     val jobRun = new JobRun(JobRunId(spec), spec, JobRunStatus.Starting, clock.now(), None, Seq.empty)
     val startedJobRun = startJobRun(jobRun)
     promise.success(startedJobRun)
@@ -149,7 +152,8 @@ object JobRunServiceActor {
   def props(
     clock:           Clock,
     executorFactory: (JobRun, Promise[JobResult]) => Props,
-    repo:            Repository[JobRunId, JobRun]
-  ): Props = Props(new JobRunServiceActor(clock, executorFactory, repo))
+    repo:            Repository[JobRunId, JobRun],
+    behavior:        Behavior
+  ): Props = Props(new JobRunServiceActor(clock, executorFactory, repo, behavior))
 
 }

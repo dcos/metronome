@@ -1,6 +1,7 @@
 package dcos.metronome.jobspec.impl
 
 import akka.actor._
+import dcos.metronome.behavior.Behavior
 import dcos.metronome.model.JobSpec
 import dcos.metronome.repository.NoConcurrentRepoChange.{ Failed, Change }
 import dcos.metronome.repository.{ NoConcurrentRepoChange, Repository }
@@ -8,11 +9,15 @@ import mesosphere.marathon.state.PathId
 
 import scala.concurrent.Promise
 
-class JobSpecPersistenceActor(id: PathId, repo: Repository[PathId, JobSpec]) extends NoConcurrentRepoChange[PathId, JobSpec, Promise[JobSpec]] {
+class JobSpecPersistenceActor(
+    id:           PathId,
+    repo:         Repository[PathId, JobSpec],
+    val behavior: Behavior
+) extends NoConcurrentRepoChange[PathId, JobSpec, Promise[JobSpec]] {
   import JobSpecPersistenceActor._
   import context.dispatcher
 
-  override def receive: Receive = {
+  override def receive: Receive = around {
     case Create(jobSpec, promise) => create(jobSpec, promise)
     case Update(change, promise)  => update(change, promise)
     case Delete(orig, promise)    => delete(orig, promise)
@@ -52,7 +57,7 @@ object JobSpecPersistenceActor {
 
   case class PersistFailed(sender: ActorRef, id: PathId, ex: Throwable, promise: Promise[JobSpec]) extends Failed
 
-  def props(id: PathId, repository: Repository[PathId, JobSpec]): Props = {
-    Props(new JobSpecPersistenceActor(id, repository))
+  def props(id: PathId, repository: Repository[PathId, JobSpec], behavior: Behavior): Props = {
+    Props(new JobSpecPersistenceActor(id, repository, behavior))
   }
 }
