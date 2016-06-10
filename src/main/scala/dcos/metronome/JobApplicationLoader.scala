@@ -4,14 +4,18 @@ import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.health.HealthCheckRegistry
 import com.softwaremill.macwire._
 import controllers.Assets
-import dcos.metronome.scheduler.SchedulerModule
+import dcos.metronome.api.v1.LeaderProxyFilter
 import dcos.metronome.api.{ ApiModule, ErrorHandler }
 import dcos.metronome.utils.time.{ Clock, SystemClock }
 import mesosphere.marathon.AllConf
+import org.asynchttpclient.AsyncHttpClientConfig
 import org.joda.time.DateTimeZone
 import play.api.ApplicationLoader.Context
 import play.api._
 import play.api.i18n._
+import play.api.libs.ws.ahc.{ AhcWSClient, AhcConfigBuilder, AhcWSClientConfig }
+import play.api.libs.ws.{ WSConfigParser, WSClient }
+import play.api.mvc.EssentialFilter
 import play.api.routing.Router
 
 import scala.concurrent.Future
@@ -57,6 +61,25 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
   def schedulerService = jobsModule.schedulerModule.schedulerService
 
+  lazy val wsClient: WSClient = {
+    val parser = new WSConfigParser(configuration, environment)
+    val config = new AhcWSClientConfig(wsClientConfig = parser.parse())
+    val builder = new AhcConfigBuilder(config)
+    val logging = new AsyncHttpClientConfig.AdditionalChannelInitializer() {
+      override def initChannel(channel: io.netty.channel.Channel): Unit = {
+        channel.pipeline.addFirst("log", new io.netty.handler.logging.LoggingHandler("debug"))
+      }
+    }
+    val ahcBuilder = builder.configure()
+    ahcBuilder.setHttpAdditionalChannelInitializer(logging)
+    val ahcConfig = ahcBuilder.build()
+    new AhcWSClient(ahcConfig)
+  }
+
+  override lazy val httpFilters: Seq[EssentialFilter] = Seq(
+    new LeaderProxyFilter(wsClient, jobsModule.schedulerModule.electionService, config)
+  )
+
   override def router: Router = apiModule.router
 
   lazy val config = new Object with JobsConfig {
@@ -67,23 +90,31 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     lazy val runHistoryCount: Int = configuration.getInt("app.history.count").getOrElse(10)
     lazy val withMetrics: Boolean = configuration.getBoolean("app.behavior.metrics").getOrElse(true)
 
+    lazy val disableHttp: Boolean = configuration.getBoolean("play.server.http.disableHttp").getOrElse(false)
+    lazy val httpPort: Int = configuration.getInt("play.server.http.port").getOrElse(9000)
+    lazy val httpsPort: Int = configuration.getInt("play.server.https.port").getOrElse(9443)
+    lazy val hostname: String = configuration.getString("app.hostname").getOrElse(java.net.InetAddress.getLocalHost.getHostName)
+
     lazy val scallopConf: AllConf = {
+      val flags = Seq[Option[String]](
+        if (disableHttp) Some("--disable_http") else None
+      )
       val options = Map[String, Option[String]](
         "--framework_name" -> Some("metronome"),
         "--master" -> Some(master),
         "--plugin_dir" -> pluginDir,
         "--plugin_conf" -> pluginConf,
-        "--zk" -> Some("zk://localhost:2181/metronome")
+        "--zk" -> Some("zk://localhost:2181/metronome"),
+        "--http_port" -> Some(httpPort.toString),
+        "--https_port" -> Some(httpsPort.toString),
+        "--hostname" -> Some(hostname)
       )
         .collect { case (name, Some(value)) => (name, value) }
         .flatMap { case (name, value) => Seq(name, value) }
-      new AllConf(options.toSeq)
+      new AllConf(options.toSeq ++ flags.flatten)
     }
 
-    lazy val disableHttp: Boolean = scallopConf.disableHttp()
-    lazy val httpPort: Int = scallopConf.httpPort()
-    lazy val httpsPort: Int = scallopConf.httpsPort()
-    lazy val hostname: String = scallopConf.hostname()
+    //TODO: those values need to be configured via play - not the other way around
     lazy val zkTimeoutDuration: FiniteDuration = scallopConf.zkTimeoutDuration
     lazy val mesosLeaderUiUrl: Option[String] = scallopConf.mesosLeaderUiUrl.get
   }
