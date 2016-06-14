@@ -2,21 +2,23 @@ package dcos.metronome.jobrun.impl
 
 import java.util.concurrent.LinkedBlockingDeque
 
-import akka.actor.{ ActorSystem, Props }
+import akka.actor.{ActorSystem, Props}
 import akka.testkit._
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.jobrun.impl.JobRunExecutorActor.{ JobRunAborted, JobRunFinished }
+import dcos.metronome.jobrun.impl.JobRunExecutorActor.{Aborted, Finished}
 import dcos.metronome.jobrun.impl.JobRunServiceActor._
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.InMemoryRepository
 import dcos.metronome.utils.test.Mockito
 import dcos.metronome.utils.time.FixedClock
+import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.state.PathId
 import org.joda.time.DateTime
 import org.scalatest._
-import org.scalatest.concurrent.{ Eventually, ScalaFutures }
+import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
-import scala.concurrent.{ Future, Promise }
+import scala.concurrent.{Future, Promise}
+import scala.collection.immutable.Seq
 
 class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteLike with BeforeAndAfterAll with GivenWhenThen with ScalaFutures with Matchers with Eventually with ImplicitSender with Mockito {
 
@@ -111,7 +113,7 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
 
     When("The job finished")
     val result = JobResult(startedRun.jobRun)
-    actor ! JobRunFinished(result)
+    actor ! Finished(result)
 
     Then("The list of started job runs is returned")
     eventually(actor.underlyingActor.allJobRuns should have size 0)
@@ -128,7 +130,7 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
 
     When("The job finished")
     val result = JobResult(startedRun.jobRun)
-    actor ! JobRunAborted(result)
+    actor ! Aborted(result)
 
     Then("The list of started job runs is returned")
     eventually(actor.underlyingActor.allJobRuns should have size 0)
@@ -152,7 +154,7 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
 
     And("The executor sends a task aborted")
     val result = JobResult(startedRun.jobRun)
-    actor ! JobRunAborted(result)
+    actor ! Aborted(result)
 
     Then("The list of started job runs is returned")
     eventually(actor.underlyingActor.allJobRuns should have size 0)
@@ -169,7 +171,7 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     val clock = new FixedClock(DateTime.parse("2016-06-01T08:50:12.000Z"))
 
     def run() = {
-      val jobRun = new JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Active, clock.now(), None, Seq.empty)
+      val jobRun = new JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Active, clock.now(), None, Map.empty[Task.Id, JobRunTask])
       new StartedJobRun(jobRun, Future.successful(JobResult(jobRun)))
     }
     val run1 = run()

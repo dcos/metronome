@@ -1,5 +1,6 @@
 package dcos.metronome.model
 
+import mesosphere.marathon.core.task.Task
 import org.joda.time.DateTime
 
 case class JobRun(
@@ -8,13 +9,13 @@ case class JobRun(
   status:     JobRunStatus,
   createdAt:  DateTime,
   finishedAt: Option[DateTime],
-  tasks:      Seq[JobRunTask]
+  tasks:      Map[Task.Id, JobRunTask]
 )
 
 case class JobRunTask(
-  id:          String,
+  id:          Task.Id,
   startedAt:   DateTime,
-  completedAt: DateTime,
+  completedAt: Option[DateTime],
   status:      String
 )
 
@@ -23,7 +24,7 @@ object JobRunStatus {
   case object Starting extends JobRunStatus
   case object Active extends JobRunStatus
   case object Success extends JobRunStatus
-  case object Failed extends JobRunStatus
+  case object Failed extends JobRunStatus // TODO: we might differentiate between Failed and Aborted
 
   val names: Map[String, JobRunStatus] = Map(
     "starting" -> Starting,
