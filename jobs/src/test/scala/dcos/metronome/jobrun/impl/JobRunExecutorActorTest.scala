@@ -65,7 +65,8 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val (actor, activeJobRun) = f.initializeActiveExecutorActor()
 
     When("The actor receives a status update indicating the run is finished")
-    actor ! f.statusUpdate(mesos.Protos.TaskState.TASK_FINISHED)
+    val statusUpdate = f.statusUpdate(mesos.Protos.TaskState.TASK_FINISHED)
+    actor ! statusUpdate
 
     Then("The launch queue is purged")
     verify(f.launchQueue).purge(RunSpecId(activeJobRun.id))
@@ -78,6 +79,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val updateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
     updateMsg.startedJobRun.jobRun.tasks should have size 1
     updateMsg.startedJobRun.jobRun.status shouldBe JobRunStatus.Success
+    updateMsg.startedJobRun.jobRun.finishedAt shouldEqual Some(DateTime.parse(statusUpdate.update.timestamp))
 
     And("The JobRun is reported successful")
     val finishedMsg = f.parent.expectMsgType[JobRunExecutorActor.Finished]

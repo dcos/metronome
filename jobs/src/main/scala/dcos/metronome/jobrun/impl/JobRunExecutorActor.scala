@@ -113,7 +113,11 @@ class JobRunExecutorActor(
 
   def becomeFinishing(update: MesosStatusUpdateEvent): Unit = {
     launchQueue.purge(runSpec.id)
-    jobRun = jobRun.copy(status = JobRunStatus.Success, tasks = updatedTasks(update))
+    jobRun = jobRun.copy(
+      status = JobRunStatus.Success,
+      tasks = updatedTasks(update),
+      finishedAt = Some(DateTime.parse(update.timestamp))
+    )
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
 
