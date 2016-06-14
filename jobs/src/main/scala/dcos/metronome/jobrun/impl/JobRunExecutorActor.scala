@@ -144,7 +144,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def becomeAborting() = {
+  def becomeAborting(): Unit = {
     log.info(s"Execution of JobRun ${jobRun.id} has been aborted")
     // kill all running tasks
     jobRun.tasks.values.filter(t => isActive(t.status)).foreach { t =>
@@ -209,8 +209,15 @@ class JobRunExecutorActor(
       val result = JobResult(jobRun)
       context.parent ! Finished(result)
       promise.success(result)
+      context.become(terminal)
 
-    case PersistFailed(_, id, ex, _) => becomeAborting()
+    case PersistFailed(_, id, ex, _) =>
+      log.info(s"Execution of JobRun ${jobRun.id} has been finished but deleting the jobRun failed")
+      jobRun = jobRun.copy(status = JobRunStatus.Failed)
+      val result = JobResult(jobRun)
+      context.parent ! JobRunExecutorActor.Aborted(result)
+      promise.failure(JobRunFailed(result))
+      context.become(terminal)
   }
 
   def failing: Receive = {
@@ -219,8 +226,13 @@ class JobRunExecutorActor(
       val result = JobResult(jobRun)
       context.parent ! JobRunExecutorActor.Failed(result)
       promise.failure(JobRunFailed(result))
+      context.become(terminal)
 
-    case PersistFailed(_, id, ex, _) => becomeAborting()
+    case PersistFailed(_, id, ex, _) =>
+      val result = JobResult(jobRun)
+      context.parent ! JobRunExecutorActor.Aborted(result)
+      promise.failure(JobRunFailed(result))
+      context.become(terminal)
   }
 
   def aborting: Receive = {
@@ -230,12 +242,18 @@ class JobRunExecutorActor(
       val result = JobResult(jobRun)
       context.parent ! Aborted(result)
       promise.failure(JobRunFailed(result))
+      context.become(terminal)
 
     case PersistFailed(_, id, ex, _) =>
       log.info(s"Execution of JobRun ${jobRun.id} was aborted and deleting failed")
       val result = JobResult(jobRun)
       context.parent ! Aborted(result)
       promise.failure(JobRunFailed(result))
+      context.become(terminal)
+  }
+
+  def terminal: Receive = {
+    case _ => log.debug("Actor terminal; not handling or expecting any more messages")
   }
 
   def jobRunFinished() = {

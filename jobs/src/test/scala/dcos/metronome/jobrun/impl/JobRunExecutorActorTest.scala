@@ -2,6 +2,7 @@ package dcos.metronome.jobrun.impl
 
 import akka.actor.{ ActorContext, ActorRef, ActorSystem }
 import akka.testkit.{ ImplicitSender, TestActorRef, TestKit, TestProbe }
+import dcos.metronome.JobRunFailed
 import dcos.metronome.behavior.BehaviorFixture
 import dcos.metronome.jobrun.impl.JobRunExecutorActor.ForwardStatusUpdate
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobSpec }
@@ -14,6 +15,7 @@ import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.event.MesosStatusUpdateEvent
 import mesosphere.marathon.state.PathId
 import org.apache.mesos
+import org.apache.mesos.SchedulerDriver
 import org.joda.time.DateTime
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatest.{ BeforeAndAfterAll, FunSuiteLike, GivenWhenThen, Matchers }
@@ -145,9 +147,164 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     system.stop(actor)
 
   }
-  /* TODO:
-    - PersistFailed
-    */
+
+  test("Persistence failure is propagated during creating") {
+    Given("An executor with a JobRun in state Creating")
+    val f = new Fixture
+    val (actor, jobRun) = f.initializeCreatingExecutorActor()
+
+    When("The persisting the jobRun fails")
+    val exception = new RuntimeException("Create failed")
+    f.persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
+    f.persistenceActor.send(actor, JobRunPersistenceActor.PersistFailed(f.persistenceActor.ref, jobRun.id, exception, ()))
+
+    Then("No task is killed because we didn't start one yet")
+    noMoreInteractions(f.driver)
+
+    And("The launch queue is purged")
+    verify(f.launchQueue).purge(RunSpecId(jobRun.id))
+
+    And("The JobRun is reported failed")
+    val updateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
+    updateMsg.startedJobRun.jobRun.status shouldBe JobRunStatus.Failed
+
+    And("The JobRun is deleted")
+    f.persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
+    f.persistenceActor.reply(JobRunPersistenceActor.JobRunDeleted(f.persistenceActor.ref, jobRun, ()))
+
+    And("The JobRun is reported aborted")
+    val failMsg = f.parent.expectMsgType[JobRunExecutorActor.Aborted]
+    failMsg.jobResult.jobRun.status shouldBe JobRunStatus.Failed
+
+    And("the promise fails")
+    f.promise.future.failed.futureValue shouldEqual JobRunFailed(JobResult(jobRun.copy(status = JobRunStatus.Failed)))
+
+    system.stop(actor)
+  }
+
+  test("Persistence failure is propagated during starting") {
+    Given("An executor with a JobRun in state Starting")
+    val f = new Fixture
+    val (actor, jobRun) = f.initializeStartedExecutorActor()
+
+    When("The actor receives a status update indicating the run is running")
+    val statusUpdate = f.statusUpdate(mesos.Protos.TaskState.TASK_RUNNING)
+    actor ! statusUpdate
+
+    And("The JobRun is reported active")
+    val updateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
+    updateMsg.startedJobRun.jobRun.status shouldBe JobRunStatus.Active
+    updateMsg.startedJobRun.jobRun.tasks should have size 1
+    val taskId = updateMsg.startedJobRun.jobRun.tasks.keys.head
+
+    When("persisting the update fails")
+    val exception = new RuntimeException("Create failed")
+    f.persistenceActor.expectMsgType[JobRunPersistenceActor.Update]
+    f.persistenceActor.reply(JobRunPersistenceActor.PersistFailed(f.persistenceActor.ref, jobRun.id, exception, ()))
+
+    Then("The task is killed")
+    verify(f.driver).killTask(taskId.mesosTaskId)
+
+    And("The launch queue is purged")
+    verify(f.launchQueue).purge(RunSpecId(jobRun.id))
+
+    And("The jobRun is reported failed")
+    val secondUpdateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
+    secondUpdateMsg.startedJobRun.jobRun.status shouldBe JobRunStatus.Failed
+
+    And("The JobRun is deleted")
+    f.persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
+    f.persistenceActor.reply(JobRunPersistenceActor.JobRunDeleted(f.persistenceActor.ref, jobRun, ()))
+
+    And("The JobRun is reported aborted")
+    val failMsg = f.parent.expectMsgType[JobRunExecutorActor.Aborted]
+    failMsg.jobResult.jobRun.status shouldBe JobRunStatus.Failed
+
+    And("the promise fails")
+    f.promise.future.failed.futureValue.getMessage shouldEqual JobRunFailed(JobResult(jobRun.copy(status = JobRunStatus.Failed))).getMessage
+
+    system.stop(actor)
+  }
+
+  test("Persistence failure is propagated during active") {
+    Given("An executor with a JobRun in state Starting")
+    val f = new Fixture
+    val (actor, jobRun) = f.initializeActiveExecutorActor()
+
+    When("The actor receives a status update indicating the run is finished")
+    val statusUpdate = f.statusUpdate(mesos.Protos.TaskState.TASK_FINISHED)
+    actor ! statusUpdate
+
+    And("The JobRun is reported successful")
+    val updateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
+    updateMsg.startedJobRun.jobRun.status shouldBe JobRunStatus.Success
+    updateMsg.startedJobRun.jobRun.tasks should have size 1
+
+    When("persisting the update fails")
+    val exception = new RuntimeException("Create failed")
+    f.persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
+    f.persistenceActor.reply(JobRunPersistenceActor.PersistFailed(f.persistenceActor.ref, jobRun.id, exception, ()))
+
+    Then("No task is killed because it finished")
+    noMoreInteractions(f.driver)
+
+    And("The launch queue is purged")
+    verify(f.launchQueue).purge(RunSpecId(jobRun.id))
+
+    And("The JobRun is reported aborted")
+    val failMsg = f.parent.expectMsgType[JobRunExecutorActor.Aborted]
+    failMsg.jobResult.jobRun.status shouldBe JobRunStatus.Failed
+
+    And("the promise fails")
+    f.promise.future.failed.futureValue.getMessage shouldEqual JobRunFailed(JobResult(jobRun.copy(status = JobRunStatus.Failed))).getMessage
+
+    system.stop(actor)
+  }
+
+  test("Persistence failure is propagated during starting and deleting the jobRun also fails") {
+    Given("An executor with a JobRun in state Starting")
+    val f = new Fixture
+    val (actor, jobRun) = f.initializeStartedExecutorActor()
+
+    When("The actor receives a status update indicating the run is finished")
+    val statusUpdate = f.statusUpdate(mesos.Protos.TaskState.TASK_RUNNING)
+    actor ! statusUpdate
+
+    And("The JobRun is reported active")
+    val updateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
+    updateMsg.startedJobRun.jobRun.status shouldBe JobRunStatus.Active
+    updateMsg.startedJobRun.jobRun.tasks should have size 1
+    val taskId = updateMsg.startedJobRun.jobRun.tasks.keys.head
+
+    When("persisting the update fails")
+    val exception = new RuntimeException("Create failed")
+    f.persistenceActor.expectMsgType[JobRunPersistenceActor.Update]
+    f.persistenceActor.reply(JobRunPersistenceActor.PersistFailed(f.persistenceActor.ref, jobRun.id, exception, ()))
+
+    Then("The task is killed")
+    verify(f.driver).killTask(taskId.mesosTaskId)
+
+    And("The launch queue is purged")
+    verify(f.launchQueue).purge(RunSpecId(jobRun.id))
+
+    And("The jobRun is reported failed")
+    val secondUpdateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
+    secondUpdateMsg.startedJobRun.jobRun.status shouldBe JobRunStatus.Failed
+
+    And("The JobRun is deleted")
+    f.persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
+    f.persistenceActor.reply(JobRunPersistenceActor.PersistFailed(f.persistenceActor.ref, jobRun.id, exception, ()))
+
+    And("The JobRun is reported aborted")
+    val failMsg = f.parent.expectMsgType[JobRunExecutorActor.Aborted]
+    failMsg.jobResult.jobRun.status shouldBe JobRunStatus.Failed
+
+    And("the promise fails")
+    f.promise.future.failed.futureValue.getMessage shouldEqual JobRunFailed(JobResult(jobRun.copy(status = JobRunStatus.Failed))).getMessage
+
+    system.stop(actor)
+  }
+
   override protected def afterAll(): Unit = {
     shutdown()
   }
@@ -157,7 +314,12 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val jobSpec = JobSpec(id, Some("test"))
     val clock = new FixedClock(DateTime.parse("2016-06-01T08:50:12.000Z"))
     val launchQueue: LaunchQueue = mock[LaunchQueue]
-    val driverHolder: MarathonSchedulerDriverHolder = mock[MarathonSchedulerDriverHolder]
+    val driver = mock[SchedulerDriver]
+    val driverHolder: MarathonSchedulerDriverHolder = {
+      val holder = new MarathonSchedulerDriverHolder
+      holder.driver = Some(driver)
+      holder
+    }
 
     def statusUpdate(state: mesos.Protos.TaskState) = ForwardStatusUpdate(MesosStatusUpdateEvent(
       "slaveId", Task.Id("taskId"), state.toString, "message", jobSpec.id, "host",
@@ -173,11 +335,17 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       TestActorRef(JobRunExecutorActor.props(jobRun, promise, persistenceActorFactory, launchQueue, driverHolder, clock, behaviour), parent.ref, "JobRunExecutor")
     }
 
+    def initializeCreatingExecutorActor() = {
+      val startingJobRun = new JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Starting, clock.now(), None, Map.empty)
+      val actorRef: ActorRef = executorActor(startingJobRun)
+      (actorRef, startingJobRun)
+    }
+
     def initializeStartedExecutorActor() = {
       val startingJobRun = new JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Starting, clock.now(), None, Map.empty)
       val actorRef: ActorRef = executorActor(startingJobRun)
       persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
-      actorRef ! JobRunPersistenceActor.JobRunCreated(persistenceActor.ref, startingJobRun, Unit)
+      persistenceActor.reply(JobRunPersistenceActor.JobRunCreated(persistenceActor.ref, startingJobRun, Unit))
       verify(launchQueue, timeout(1000)).add(any, any)
       (actorRef, startingJobRun)
     }
