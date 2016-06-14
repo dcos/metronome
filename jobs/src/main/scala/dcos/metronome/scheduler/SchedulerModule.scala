@@ -21,6 +21,7 @@ import mesosphere.marathon.core.plugin.PluginModule
 import mesosphere.marathon.core.task.bus.TaskBusModule
 import mesosphere.marathon.core.task.tracker._
 import mesosphere.marathon.core.task.update.impl.TaskStatusUpdateProcessorImpl
+import mesosphere.marathon.core.task.update.impl.steps.{ ContinueOnErrorStep, PostToEventStreamStepImpl }
 import mesosphere.marathon.core.task.update.{ TaskStatusUpdateProcessor, TaskUpdateStep }
 import mesosphere.marathon.event.EventModule
 import mesosphere.marathon.state._
@@ -73,8 +74,10 @@ class SchedulerModule(
   }
   private[this] lazy val taskTrackerModule: TaskTrackerModule = {
     val taskRepository: TaskRepository = persistenceModule.taskRepository
-    // FIXME (wiring): NotifyJobRunServiceStep - requires ref to JobRunService
-    val updateSteps: Seq[TaskUpdateStep] = Seq.empty[TaskUpdateStep]
+    val updateSteps: Seq[TaskUpdateStep] = Seq(
+      // We might consider writing custom TaskUpdateSteps instead of using the provided ones
+      ContinueOnErrorStep(new PostToEventStreamStepImpl(eventBus))
+    )
 
     new TaskTrackerModule(marathonClock, metrics, scallopConf, leadershipModule, taskRepository, updateSteps)
   }

@@ -37,9 +37,5 @@ object JobRunServiceFixture {
       specs += run.id -> startedRun
       Future.successful(startedRun)
     }
-
-    override def notifyOfTaskUpdate(taskChanged: TaskChanged): Future[Unit] = {
-      Future.successful(())
-    }
   }
 }

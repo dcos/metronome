@@ -6,7 +6,7 @@ import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
 import dcos.metronome.utils.time.Clock
-import mesosphere.marathon.core.task.bus.TaskChangeObservables.TaskChanged
+import mesosphere.marathon.event.MesosStatusUpdateEvent
 import mesosphere.marathon.state.PathId
 
 import scala.collection.concurrent.TrieMap
@@ -24,26 +24,36 @@ class JobRunServiceActor(
   import JobRunExecutorActor._
   import JobRunServiceActor._
 
+  override def preStart(): Unit = {
+    super.preStart()
+    context.system.eventStream.subscribe(self, classOf[MesosStatusUpdateEvent])
+  }
+
+  override def postStop(): Unit = {
+    super.postStop()
+    context.system.eventStream.unsubscribe(self)
+  }
+
   private[impl] val allJobRuns = TrieMap.empty[JobRunId, StartedJobRun]
   private[impl] val allRunExecutors = TrieMap.empty[JobRunId, ActorRef]
 
   override def receive: Receive = {
     // api messages
-    case ListRuns(promise)                    => promise.success(allJobRuns.values)
-    case GetJobRun(id, promise)               => promise.success(allJobRuns.get(id))
-    case GetActiveJobRuns(specId, promise)    => promise.success(runsForSpec(specId))
-    case KillJobRun(id, promise)              => killJobRun(id, promise)
+    case ListRuns(promise)                 => promise.success(allJobRuns.values)
+    case GetJobRun(id, promise)            => promise.success(allJobRuns.get(id))
+    case GetActiveJobRuns(specId, promise) => promise.success(runsForSpec(specId))
+    case KillJobRun(id, promise)           => killJobRun(id, promise)
 
     // trigger messages
-    case TriggerJobRun(spec, promise)         => triggerJobRun(spec, promise)
+    case TriggerJobRun(spec, promise)      => triggerJobRun(spec, promise)
 
     // executor messages
-    case JobRunUpdate(started)                => updateJobRun(started)
-    case JobRunFinished(result)               => jobRunFinished(result)
-    case JobRunAborted(result)                => jobRunAborted(result)
+    case JobRunUpdate(started)             => updateJobRun(started)
+    case JobRunFinished(result)            => jobRunFinished(result)
+    case JobRunAborted(result)             => jobRunAborted(result)
 
-    // Core messages
-    case NotifyOfUpdate(taskChanged, promise) => forwardUpdate(taskChanged, promise)
+    //event stream events
+    case update: MesosStatusUpdateEvent    => forwardStatusUpdate(update)
   }
 
   def runsForSpec(specId: PathId): Iterable[StartedJobRun] = allJobRuns.values.filter(_.jobRun.jobSpec.id == specId)
@@ -102,16 +112,15 @@ class JobRunServiceActor(
     }
   }
 
-  def forwardUpdate(taskChanged: TaskChanged, promise: Promise[Unit]): Unit = {
-    // FIXME (glue): provide conversion from taskId to JobRunId (let taskId be JobRunId#attempt)
-    val id = taskChanged.taskId.idString.replaceFirst("^.*[.]", "")
-    val jobRunId = JobRunId(taskChanged.runSpecId, id)
+  def forwardStatusUpdate(update: MesosStatusUpdateEvent): Unit = {
+    val jobRunId = JobRunId(update.appId)
 
     allRunExecutors.get(jobRunId) match {
       case Some(actorRef) =>
-        actorRef ! TaskChangedUpdate(taskChanged, promise)
+        log.debug("Forwarding status update to {}", actorRef.path)
+        actorRef ! ForwardStatusUpdate(update)
       case None =>
-        promise.failure(JobRunDoesNotExist(jobRunId))
+        log.debug("Ignoring MesosStatusUpdateEvent for {}. No one interested.", jobRunId)
     }
   }
 
@@ -136,7 +145,6 @@ object JobRunServiceActor {
   case class GetActiveJobRuns(jobId: PathId, promise: Promise[Iterable[StartedJobRun]])
   case class KillJobRun(id: JobRunId, promise: Promise[StartedJobRun])
   case class TriggerJobRun(spec: JobSpec, promise: Promise[StartedJobRun])
-  case class NotifyOfUpdate(taskChanged: TaskChanged, promise: Promise[Unit])
 
   def props(
     clock:           Clock,
