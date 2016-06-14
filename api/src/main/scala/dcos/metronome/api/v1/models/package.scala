@@ -84,14 +84,25 @@ package object models {
     }
   }
 
-  implicit lazy val ScheduleSpecFormat: Format[ScheduleSpec] = (
-    (__ \ "id").format[String] ~
-    (__ \ "cron").format[CronSpec] ~
-    (__ \ "timezone").formatNullable[DateTimeZone].withDefault(ScheduleSpec.DefaultTimeZone) ~
-    (__ \ "startingDeadlineSeconds").formatNullable[Duration].withDefault(ScheduleSpec.DefaultStartingDeadline) ~
-    (__ \ "concurrencyPolicy").formatNullable[ConcurrencyPolicy].withDefault(ScheduleSpec.DefaultConcurrencyPolicy) ~
-    (__ \ "enabled").formatNullable[Boolean].withDefault(ScheduleSpec.DefaultEnabled)
-  )(ScheduleSpec.apply, unlift(ScheduleSpec.unapply))
+  implicit lazy val ScheduleSpecFormat: Format[ScheduleSpec] = {
+    lazy val ScheduleSpecFormatBasic: Format[ScheduleSpec] = (
+      (__ \ "id").format[String] ~
+      (__ \ "cron").format[CronSpec] ~
+      (__ \ "timezone").formatNullable[DateTimeZone].withDefault(ScheduleSpec.DefaultTimeZone) ~
+      (__ \ "startingDeadlineSeconds").formatNullable[Duration].withDefault(ScheduleSpec.DefaultStartingDeadline) ~
+      (__ \ "concurrencyPolicy").formatNullable[ConcurrencyPolicy].withDefault(ScheduleSpec.DefaultConcurrencyPolicy) ~
+      (__ \ "enabled").formatNullable[Boolean].withDefault(ScheduleSpec.DefaultEnabled)
+    )(ScheduleSpec.apply, unlift(ScheduleSpec.unapply))
+
+    Format(
+      Reads.of[ScheduleSpec](ScheduleSpecFormatBasic),
+      new Writes[ScheduleSpec] {
+        override def writes(o: ScheduleSpec): JsValue =
+          ScheduleSpecFormatBasic.writes(o).as[JsObject] ++
+            Json.obj("nextRunAt" -> o.nextExecution(DateTime.now(o.timeZone)))
+      }
+    )
+  }
 
   implicit lazy val OperatorFormat: Format[Operator] = new Format[Operator] {
     override def writes(o: Operator): JsValue = JsString(Operator.name(o))
