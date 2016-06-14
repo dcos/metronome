@@ -1,6 +1,10 @@
 
 GET /ping dcos.metronome.api.v1.controllers.ApplicationController.ping
 
+GET /v1/logger dcos.metronome.api.v1.controllers.LoggerController.loggerList
+GET /v1/logger/:name dcos.metronome.api.v1.controllers.LoggerController.getLogger(name)
+PUT /v1/logger/:name dcos.metronome.api.v1.controllers.LoggerController.setLogLevel(name, logLevel)
+
 # Job routes
 GET /v1/jobs dcos.metronome.api.v1.controllers.JobSpecController.listJobs(embed: Set[Embed] ?= Set.empty[Embed])
 POST /v1/jobs dcos.metronome.api.v1.controllers.JobSpecController.createJob

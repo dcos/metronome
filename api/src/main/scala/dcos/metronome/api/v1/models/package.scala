@@ -1,5 +1,6 @@
 package dcos.metronome.api.v1
 
+import ch.qos.logback.classic.Logger
 import dcos.metronome.api.{ UnknownJobRun, UnknownSchedule, ErrorDetail, UnknownJob }
 import dcos.metronome.jobinfo.JobInfo
 import dcos.metronome.jobrun.StartedJobRun
@@ -181,4 +182,14 @@ package object models {
   implicit lazy val JobResultWrites: Writes[JobResult] = Json.writes[JobResult]
 
   implicit lazy val JobInfoWrites: Writes[JobInfo] = Json.writes[JobInfo]
+
+  implicit lazy val LoggerWrites: Writes[Logger] = new Writes[Logger] {
+    override def writes(logger: Logger): JsValue = {
+      val level: String = Option(logger.getLevel).map(_.toString).getOrElse("INHERITED")
+      Json.obj(
+        "name" -> logger.getName,
+        "level" -> level
+      )
+    }
+  }
 }
