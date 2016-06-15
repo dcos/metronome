@@ -61,15 +61,7 @@ class JobRunExecutorActor(
   def becomeCreating(): Unit = {
     log.info(s"Create JobRun ${jobRun.id} - become creating")
     persistenceActor ! Create(jobRun)
-    context.become(creating orElse receiveKill)
-  }
-
-  def creating: Receive = {
-    case JobRunCreated(_, persisted, _) =>
-      becomeStarting(persisted)
-
-    case PersistFailed(_, id, ex, _) =>
-      becomeAborting()
+    context.become(creating)
   }
 
   def becomeStarting(run: JobRun): Unit = {
@@ -77,19 +69,12 @@ class JobRunExecutorActor(
     log.info(s"Execution of JobRun ${jobRun.id} has been started - become starting")
     launchQueue.add(runSpec, count = 1)
 
-    context.become(starting orElse receiveKill)
+    context.become(starting)
   }
-
-  def jobRunTaskFromUpdate(update: MesosStatusUpdateEvent): JobRunTask = JobRunTask(
-    id = update.taskId,
-    startedAt = DateTime.parse(update.timestamp),
-    completedAt = None,
-    status = update.taskStatus
-  )
 
   def reconcileAndBecomeActive(): Unit = {
     //TODO: fill reconciling logic here
-    context.become(active orElse receiveKill)
+    context.become(active)
   }
 
   def becomeActive(update: MesosStatusUpdateEvent): Unit = {
@@ -98,14 +83,19 @@ class JobRunExecutorActor(
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
 
     log.debug("become active")
-    context.become(active orElse receiveKill)
+    context.become(active)
   }
 
   def updatedTasks(update: MesosStatusUpdateEvent): Map[Task.Id, JobRunTask] = {
     val updatedTask = jobRun.tasks.get(update.taskId).map { t =>
       t.copy(completedAt = Some(DateTime.parse(update.timestamp)))
     }.getOrElse {
-      jobRunTaskFromUpdate(update)
+      JobRunTask(
+        id = update.taskId,
+        startedAt = DateTime.parse(update.timestamp),
+        completedAt = None,
+        status = update.taskStatus
+      )
     }
 
     jobRun.tasks + (updatedTask.id -> updatedTask)
@@ -122,7 +112,7 @@ class JobRunExecutorActor(
     persistenceActor ! Delete(jobRun)
 
     log.debug("become finishing")
-    context.become(finishing orElse receiveKill)
+    context.become(finishing)
   }
 
   def continueOrBecomeFailing(update: MesosStatusUpdateEvent): Unit = {
@@ -140,7 +130,7 @@ class JobRunExecutorActor(
         persistenceActor ! Delete(jobRun)
 
         log.info("become failing")
-        context.become(failing orElse receiveKill)
+        context.become(failing)
     }
   }
 
@@ -164,8 +154,10 @@ class JobRunExecutorActor(
 
   // Behavior
 
-  override def receive: Receive = receiveKill orElse {
-    case msg: Any => log.warning("Cannot handle {}; not initialized.", msg)
+  override def receive: Receive = around {
+    receiveKill orElse {
+      case msg: Any => log.warning("Cannot handle {}; not initialized.", msg)
+    }
   }
 
   def receiveKill: Receive = {
@@ -174,94 +166,108 @@ class JobRunExecutorActor(
       becomeAborting()
   }
 
-  def starting: Receive = {
-    case ForwardStatusUpdate(update) if isActive(update) =>
-      becomeActive(update)
+  def creating: Receive = around {
+    receiveKill orElse {
+      case JobRunCreated(_, persisted, _) =>
+        becomeStarting(persisted)
 
-    case ForwardStatusUpdate(update) if isFinished(update) =>
-      becomeFinishing(update)
-
-    case ForwardStatusUpdate(update) if isFailed(update) =>
-      continueOrBecomeFailing(update)
-
-    case JobRunUpdated(_, persisted, _) =>
-      log.debug(s"JobRun ${persisted.id} has been persisted")
-
-    case PersistFailed(_, id, ex, _) =>
-      becomeAborting()
+      case PersistFailed(_, id, ex, _) =>
+        becomeAborting()
+    }
   }
 
-  def active: Receive = {
-    case ForwardStatusUpdate(update) if isFinished(update) =>
-      becomeFinishing(update)
+  def starting: Receive = around {
+    receiveKill orElse {
+      case ForwardStatusUpdate(update) if isActive(update) =>
+        becomeActive(update)
 
-    case ForwardStatusUpdate(update) if isFailed(update) =>
-      continueOrBecomeFailing(update)
+      case ForwardStatusUpdate(update) if isFinished(update) =>
+        becomeFinishing(update)
 
-    case JobRunUpdated(_, persisted, _) => log.debug(s"JobRun ${persisted.id} has been persisted")
+      case ForwardStatusUpdate(update) if isFailed(update) =>
+        continueOrBecomeFailing(update)
 
-    case PersistFailed(_, id, ex, _)    => becomeAborting()
+      case JobRunUpdated(_, persisted, _) =>
+        log.debug(s"JobRun ${persisted.id} has been persisted")
+
+      case PersistFailed(_, id, ex, _) =>
+        becomeAborting()
+    }
   }
 
-  def finishing: Receive = {
-    case JobRunDeleted(_, persisted, _) =>
-      log.info(s"Execution of JobRun ${jobRun.id} has been finished")
-      val result = JobResult(jobRun)
-      context.parent ! Finished(result)
-      promise.success(result)
-      context.become(terminal)
+  def active: Receive = around {
+    receiveKill orElse {
+      case ForwardStatusUpdate(update) if isFinished(update) =>
+        becomeFinishing(update)
 
-    case PersistFailed(_, id, ex, _) =>
-      log.info(s"Execution of JobRun ${jobRun.id} has been finished but deleting the jobRun failed")
-      jobRun = jobRun.copy(status = JobRunStatus.Failed)
-      val result = JobResult(jobRun)
-      context.parent ! JobRunExecutorActor.Aborted(result)
-      promise.failure(JobRunFailed(result))
-      context.become(terminal)
+      case ForwardStatusUpdate(update) if isFailed(update) =>
+        continueOrBecomeFailing(update)
+
+      case JobRunUpdated(_, persisted, _) => log.debug(s"JobRun ${persisted.id} has been persisted")
+
+      case PersistFailed(_, id, ex, _)    => becomeAborting()
+    }
   }
 
-  def failing: Receive = {
-    case JobRunDeleted(_, persisted, _) =>
-      log.info(s"Execution of JobRun ${jobRun.id} has failed")
-      val result = JobResult(jobRun)
-      context.parent ! JobRunExecutorActor.Failed(result)
-      promise.failure(JobRunFailed(result))
-      context.become(terminal)
+  def finishing: Receive = around {
+    receiveKill orElse {
+      case JobRunDeleted(_, persisted, _) =>
+        log.info(s"Execution of JobRun ${jobRun.id} has been finished")
+        val result = JobResult(jobRun)
+        context.parent ! Finished(result)
+        promise.success(result)
+        context.become(terminal)
 
-    case PersistFailed(_, id, ex, _) =>
-      val result = JobResult(jobRun)
-      context.parent ! JobRunExecutorActor.Aborted(result)
-      promise.failure(JobRunFailed(result))
-      context.become(terminal)
+      case PersistFailed(_, id, ex, _) =>
+        log.info(s"Execution of JobRun ${jobRun.id} has been finished but deleting the jobRun failed")
+        jobRun = jobRun.copy(status = JobRunStatus.Failed)
+        val result = JobResult(jobRun)
+        context.parent ! JobRunExecutorActor.Aborted(result)
+        promise.failure(JobRunFailed(result))
+        context.become(terminal)
+    }
   }
 
-  def aborting: Receive = {
-    // We can't handle a successful deletion and a failure differently
-    case JobRunDeleted(_, persisted, _) =>
-      log.info(s"Execution of JobRun ${jobRun.id} was aborted")
-      val result = JobResult(jobRun)
-      context.parent ! Aborted(result)
-      promise.failure(JobRunFailed(result))
-      context.become(terminal)
+  def failing: Receive = around {
+    receiveKill orElse {
+      case JobRunDeleted(_, persisted, _) =>
+        log.info(s"Execution of JobRun ${jobRun.id} has failed")
+        val result = JobResult(jobRun)
+        context.parent ! JobRunExecutorActor.Failed(result)
+        promise.failure(JobRunFailed(result))
+        context.become(terminal)
 
-    case PersistFailed(_, id, ex, _) =>
-      log.info(s"Execution of JobRun ${jobRun.id} was aborted and deleting failed")
-      val result = JobResult(jobRun)
-      context.parent ! Aborted(result)
-      promise.failure(JobRunFailed(result))
-      context.become(terminal)
+      case PersistFailed(_, id, ex, _) =>
+        val result = JobResult(jobRun)
+        context.parent ! JobRunExecutorActor.Aborted(result)
+        promise.failure(JobRunFailed(result))
+        context.become(terminal)
+    }
   }
 
-  def terminal: Receive = {
+  def aborting: Receive = around {
+    receiveKill orElse {
+      // We can't handle a successful deletion and a failure differently
+      case JobRunDeleted(_, persisted, _) =>
+        log.info(s"Execution of JobRun ${jobRun.id} was aborted")
+        val result = JobResult(jobRun)
+        context.parent ! Aborted(result)
+        promise.failure(JobRunFailed(result))
+        context.become(terminal)
+
+      case PersistFailed(_, id, ex, _) =>
+        log.info(s"Execution of JobRun ${jobRun.id} was aborted and deleting failed")
+        val result = JobResult(jobRun)
+        context.parent ! Aborted(result)
+        promise.failure(JobRunFailed(result))
+        context.become(terminal)
+    }
+  }
+
+  def terminal: Receive = around {
     case _ => log.debug("Actor terminal; not handling or expecting any more messages")
   }
 
-  def jobRunFinished() = {
-    log.info(s"Execution of JobRun ${jobRun.id} has been finished")
-    val result = JobResult(jobRun)
-    context.parent ! Finished(result)
-    promise.success(result)
-  }
 }
 
 object JobRunExecutorActor {

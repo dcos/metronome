@@ -11,7 +11,6 @@ import mesosphere.marathon.event.MesosStatusUpdateEvent
 import mesosphere.marathon.state.PathId
 
 import scala.collection.concurrent.TrieMap
-import scala.collection.immutable.Seq
 import scala.concurrent.Promise
 
 /**
