@@ -9,7 +9,7 @@ import org.scalatest.{ FunSuiteLike, GivenWhenThen, Matchers }
 
 import scala.concurrent.Promise
 
-class ActorMetricsTest extends TestKit(ActorSystem("test")) with FunSuiteLike with GivenWhenThen with ScalaFutures with Matchers {
+class ActorBehaviorTest extends TestKit(ActorSystem("test")) with FunSuiteLike with GivenWhenThen with ScalaFutures with Matchers {
 
   test("Actors with active metrics") {
 
@@ -66,11 +66,11 @@ class ActorMetricsTest extends TestKit(ActorSystem("test")) with FunSuiteLike wi
       override def withMetrics: Boolean = false
     }, new MetricRegistry(), new HealthCheckRegistry)
 
-    def dummyActorWithMetrics(behavior: Behavior) = TestActorRef[DummyActorWithMetrics](Props(new DummyActorWithMetrics(behavior)))
+    def dummyActorWithMetrics(behavior: Behavior) = TestActorRef[DummyActorWithBehavior](Props(new DummyActorWithBehavior(behavior)))
   }
 }
 
-class DummyActorWithMetrics(val behavior: Behavior) extends Actor with ActorLogging with ActorMetrics {
+class DummyActorWithBehavior(val behavior: Behavior) extends Actor with ActorLogging with ActorBehavior {
   override def receive: Receive = around {
     case DummyPromise(promise) => promise.success(true)
   }

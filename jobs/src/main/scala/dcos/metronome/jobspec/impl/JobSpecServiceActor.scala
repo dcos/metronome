@@ -1,7 +1,7 @@
 package dcos.metronome.jobspec.impl
 
 import akka.actor._
-import dcos.metronome.behavior.{ Metrics, ActorMetrics, Behavior }
+import dcos.metronome.behavior.{ Metrics, ActorBehavior, Behavior }
 import dcos.metronome.model.{ Event, JobSpec }
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
 import dcos.metronome.{ JobSpecAlreadyExists, JobSpecChangeInFlight, JobSpecDoesNotExist }
@@ -19,7 +19,7 @@ class JobSpecServiceActor(
     persistenceActorFactory: PathId => Props,
     schedulerActorFactory:   JobSpec => Props,
     val behavior:            Behavior
-) extends LoadContentOnStartup[PathId, JobSpec] with ActorMetrics {
+) extends LoadContentOnStartup[PathId, JobSpec] with ActorBehavior {
   import JobSpecPersistenceActor._
   import JobSpecServiceActor._
 

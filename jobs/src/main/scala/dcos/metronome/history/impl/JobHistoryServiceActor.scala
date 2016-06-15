@@ -1,7 +1,7 @@
 package dcos.metronome.history.impl
 
 import akka.actor.{ ActorLogging, ActorRef, Props, Actor }
-import dcos.metronome.behavior.{ ActorMetrics, Behavior }
+import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.history.JobHistoryConfig
 import dcos.metronome.model.{ RunInfo, JobRun, Event, JobHistory }
 import dcos.metronome.repository.{ Repository, LoadContentOnStartup }
@@ -12,7 +12,7 @@ import scala.collection.concurrent.TrieMap
 import scala.concurrent.Promise
 
 class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: Repository[PathId, JobHistory], val behavior: Behavior)
-    extends Actor with ActorLogging with LoadContentOnStartup[PathId, JobHistory] with ActorMetrics {
+    extends Actor with ActorLogging with LoadContentOnStartup[PathId, JobHistory] with ActorBehavior {
   import JobHistoryServiceActor._
   import JobHistoryPersistenceActor._
 

@@ -1,13 +1,13 @@
 package dcos.metronome.repository
 
 import akka.actor.{ Stash, ActorLogging, Actor, ActorRef }
-import dcos.metronome.behavior.ActorMetrics
+import dcos.metronome.behavior.ActorBehavior
 
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success }
 
-trait NoConcurrentRepoChange[Id, Model, Data] extends Actor with ActorLogging with Stash with ActorMetrics {
+trait NoConcurrentRepoChange[Id, Model, Data] extends Actor with ActorLogging with Stash with ActorBehavior {
   import NoConcurrentRepoChange._
 
   def repoChange(

@@ -5,7 +5,7 @@ import nl.grons.metrics.scala.Meter
 
 import scala.util.control.NonFatal
 
-trait ActorMetrics { actor: Actor with ActorLogging =>
+trait ActorBehavior { actor: Actor with ActorLogging =>
 
   def behavior: Behavior
 

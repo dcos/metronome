@@ -2,7 +2,7 @@ package dcos.metronome.jobrun.impl
 
 import akka.actor.{ Actor, ActorRef, Props, Stash }
 import dcos.metronome.JobRunDoesNotExist
-import dcos.metronome.behavior.{ ActorMetrics, Behavior }
+import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
@@ -21,7 +21,7 @@ class JobRunServiceActor(
     executorFactory: (JobRun, Promise[JobResult]) => Props,
     val repo:        Repository[JobRunId, JobRun], //TODO: remove the repo
     val behavior:    Behavior
-) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash with ActorMetrics {
+) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash with ActorBehavior {
 
   import JobRunExecutorActor._
   import JobRunServiceActor._

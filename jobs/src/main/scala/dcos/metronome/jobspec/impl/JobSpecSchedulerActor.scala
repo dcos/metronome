@@ -1,7 +1,7 @@
 package dcos.metronome.jobspec.impl
 
 import akka.actor._
-import dcos.metronome.behavior.{ ActorMetrics, Behavior }
+import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.model.JobSpec
 import dcos.metronome.utils.time.Clock
@@ -18,7 +18,7 @@ class JobSpecSchedulerActor(
     clock:        Clock,
     runService:   JobRunService,
     val behavior: Behavior
-) extends Actor with Stash with ActorLogging with ActorMetrics {
+) extends Actor with Stash with ActorLogging with ActorBehavior {
 
   import JobSpecSchedulerActor._
   import context.dispatcher

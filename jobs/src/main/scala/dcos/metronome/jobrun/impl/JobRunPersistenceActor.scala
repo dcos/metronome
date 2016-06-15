@@ -1,7 +1,7 @@
 package dcos.metronome.jobrun.impl
 
 import akka.actor._
-import dcos.metronome.behavior.{ ActorMetrics, Behavior }
+import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.model.{ JobRun, JobRunId }
 import dcos.metronome.repository.{ NoConcurrentRepoChange, Repository }
 

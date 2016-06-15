@@ -2,7 +2,7 @@ package dcos.metronome.jobrun.impl
 
 import akka.actor.{ Actor, ActorLogging, Props }
 import dcos.metronome.JobRunFailed
-import dcos.metronome.behavior.{ ActorMetrics, Behavior }
+import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus }
 import dcos.metronome.repository.Repository
@@ -25,7 +25,7 @@ class JobRunExecutorActor(
     repository:   Repository[JobRunId, JobRun],
     launchQueue:  LaunchQueue,
     val behavior: Behavior
-) extends Actor with ActorLogging with ActorMetrics {
+) extends Actor with ActorLogging with ActorBehavior {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
 
