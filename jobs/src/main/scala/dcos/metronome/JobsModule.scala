@@ -2,8 +2,6 @@ package dcos.metronome
 
 import akka.actor.ActorSystem
 import dcos.metronome.history.JobHistoryModule
-import com.codahale.metrics.MetricRegistry
-import com.codahale.metrics.health.HealthCheckRegistry
 import dcos.metronome.behavior.BehaviorModule
 import dcos.metronome.jobinfo.JobInfoModule
 import dcos.metronome.jobrun.JobRunModule
@@ -14,17 +12,15 @@ import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.core.plugin.{ PluginManager, PluginModule }
 
 class JobsModule(
-    config:              JobsConfig,
-    actorSystem:         ActorSystem,
-    clock:               Clock,
-    metricsRegistry:     MetricRegistry,
-    healthCheckRegistry: HealthCheckRegistry
+    config:      JobsConfig,
+    actorSystem: ActorSystem,
+    clock:       Clock
 ) {
 
   private[this] lazy val pluginModule = new PluginModule(config.scallopConf)
   def pluginManger: PluginManager = pluginModule.pluginManager
 
-  lazy val behaviorModule = new BehaviorModule(config, metricsRegistry, healthCheckRegistry)
+  lazy val behaviorModule = new BehaviorModule(config, schedulerModule.metricsModule.metricsRegistry, schedulerModule.metricsModule.healthCheckRegistry)
 
   lazy val repositoryModule = new RepositoryModule()
 

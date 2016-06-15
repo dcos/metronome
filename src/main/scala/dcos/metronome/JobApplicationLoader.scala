@@ -43,11 +43,6 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
   override lazy val httpErrorHandler = new ErrorHandler
 
-  //TODO: use the one created by Marathon
-  lazy val metricsRegistry: MetricRegistry = new MetricRegistry()
-
-  lazy val healthCheckRegistry: HealthCheckRegistry = new HealthCheckRegistry()
-
   private[this] lazy val jobsModule: JobsModule = wire[JobsModule]
 
   private[this] lazy val apiModule: ApiModule = new ApiModule(
