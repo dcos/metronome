@@ -20,7 +20,7 @@ trait Repository[Id, Model] {
     * @throws StoreCommandFailedException
     *         in the case of an underlying store problems.
     */
-  def all(): Future[Iterable[Id]]
+  def ids(): Future[Iterable[Id]]
 
   /**
     * Get the model with the given id.
@@ -35,11 +35,11 @@ trait Repository[Id, Model] {
   /**
     * Create the model with the given id.
     *
-    * @param id the id of the model.
+    * @param id the id of the model to create.
     * @param model the model to persist.
     * @return the stored model.
     * @throws StoreCommandFailedException
-    *         in the case of an existing entity or underlying store problems.
+    *         in the case of an already existing entity or underlying store problems.
     */
   def create(id: Id, model: Model): Future[Model]
 

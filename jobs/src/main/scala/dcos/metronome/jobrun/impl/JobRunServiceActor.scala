@@ -43,7 +43,7 @@ class JobRunServiceActor(
     // api messages
     case ListRuns(promise)                 => promise.success(allJobRuns.values)
     case GetJobRun(id, promise)            => promise.success(allJobRuns.get(id))
-    case GetActiveJobRuns(specId, promise) => promise.success(runsForSpec(specId))
+    case GetActiveJobRuns(specId, promise) => promise.success(runsForJob(specId))
     case KillJobRun(id, promise)           => killJobRun(id, promise)
 
     // trigger messages
@@ -58,7 +58,7 @@ class JobRunServiceActor(
     case update: MesosStatusUpdateEvent    => forwardStatusUpdate(update)
   }
 
-  def runsForSpec(specId: PathId): Iterable[StartedJobRun] = allJobRuns.values.filter(_.jobRun.jobSpec.id == specId)
+  def runsForJob(jobId: PathId): Iterable[StartedJobRun] = allJobRuns.values.filter(_.jobRun.id.jobId == jobId)
 
   def triggerJobRun(spec: JobSpec, promise: Promise[StartedJobRun]): Unit = {
     log.info(s"Trigger new JobRun for JobSpec: $spec")
@@ -148,7 +148,7 @@ object JobRunServiceActor {
   case class GetJobRun(id: JobRunId, promise: Promise[Option[StartedJobRun]])
   case class GetActiveJobRuns(jobId: PathId, promise: Promise[Iterable[StartedJobRun]])
   case class KillJobRun(id: JobRunId, promise: Promise[StartedJobRun])
-  case class TriggerJobRun(spec: JobSpec, promise: Promise[StartedJobRun])
+  case class TriggerJobRun(jobSpec: JobSpec, promise: Promise[StartedJobRun])
 
   def props(
     clock:           Clock,

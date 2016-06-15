@@ -7,6 +7,7 @@ import dcos.metronome.jobspec.impl.{ JobSpecPersistenceActor, JobSpecSchedulerAc
 import dcos.metronome.model.JobSpec
 import dcos.metronome.repository.Repository
 import dcos.metronome.utils.time.Clock
+import mesosphere.marathon.core.leadership.LeadershipModule
 import mesosphere.marathon.state.PathId
 
 class JobSpecModule(
@@ -15,14 +16,16 @@ class JobSpecModule(
     clock:             Clock,
     jobSpecRepository: Repository[PathId, JobSpec],
     runService:        JobRunService,
-    behavior:          Behavior
+    behavior:          Behavior,
+    leadershipModule:  LeadershipModule
 ) {
 
   private[this] def persistenceActor(id: PathId) = JobSpecPersistenceActor.props(id, jobSpecRepository, behavior)
   private[this] def scheduleActor(jobSpec: JobSpec) = JobSpecSchedulerActor.props(jobSpec, clock, runService, behavior)
-  //TODO: start when we get elected
-  val serviceActor = actorSystem.actorOf(JobSpecServiceActor.props(jobSpecRepository, persistenceActor, scheduleActor, behavior))
+
+  val serviceActor = leadershipModule.startWhenLeader(
+    JobSpecServiceActor.props(jobSpecRepository, persistenceActor, scheduleActor, behavior), "JobSpecServiceActor"
+  )
 
   def jobSpecService: JobSpecService = behavior(new JobSpecServiceDelegate(config, serviceActor))
-
 }

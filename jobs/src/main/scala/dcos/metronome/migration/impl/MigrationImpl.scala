@@ -1,7 +1,8 @@
 package dcos.metronome.migration.impl
 
 import dcos.metronome.migration.Migration
-import mesosphere.util.state.{ PersistentStore, PersistentStoreManagement }
+import dcos.metronome.repository.impl.kv.{ JobHistoryPathResolver, JobRunPathResolver, JobSpecPathResolver }
+import mesosphere.util.state.{ PersistentStore, PersistentStoreManagement, PersistentStoreWithNestedPathsSupport }
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.Duration
@@ -16,8 +17,12 @@ class MigrationImpl(store: PersistentStore) extends Migration {
   }
 
   private[this] def initializeStore(): Future[Unit] = store match {
-    case manager: PersistentStoreManagement => manager.initialize()
-    case _: PersistentStore                 => Future.successful(())
+    case store: PersistentStoreManagement with PersistentStoreWithNestedPathsSupport =>
+      store.initialize()
+      store.createPath(JobSpecPathResolver.basePath)
+      store.createPath(JobRunPathResolver.basePath)
+      store.createPath(JobHistoryPathResolver.basePath)
+    case _: PersistentStore => Future.successful(())
   }
 
 }

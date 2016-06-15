@@ -109,7 +109,7 @@ object JobSpecConversions {
           cron = CronSpec(schedule.getSchedule),
           timeZone = DateTimeZone.forID(schedule.getTz),
           startingDeadline = schedule.getStartingDeadline.seconds,
-          concurrencyPolicy = ConcurrencyPolicy.unapply(schedule.getConcurrencyPolicy.toString).get,
+          concurrencyPolicy = ConcurrencyPolicy.names(schedule.getConcurrencyPolicy.toString),
           enabled = schedule.getEnabled
         )
       }.toList
@@ -189,7 +189,7 @@ object RunSpecConversions {
 
       val activeDeadline = if (restart.hasActiveDeadline) Some(restart.getActiveDeadline.seconds) else None
 
-      RestartSpec(policy = RestartPolicy.unapply(restart.getPolicy.toString).get, activeDeadline = activeDeadline)
+      RestartSpec(policy = RestartPolicy.names(restart.getPolicy.toString), activeDeadline = activeDeadline)
     }
   }
 
@@ -210,7 +210,7 @@ object RunSpecConversions {
       Volume(
         containerPath = volume.getContainerPath,
         hostPath = volume.getHostPath,
-        mode = Mode.unapply(volume.getMode.toString).get
+        mode = Mode.names(volume.getMode.toString)
       )
     }.toList
   }
@@ -247,7 +247,7 @@ object RunSpecConversions {
       val value = if (constraint.hasValue) Some(constraint.getValue) else None
       ConstraintSpec(
         attribute = constraint.getAttribute,
-        operator = Operator.unapply(constraint.getOperator.toString).get,
+        operator = Operator.names(constraint.getOperator.toString),
         value = value
       )
     }.toList

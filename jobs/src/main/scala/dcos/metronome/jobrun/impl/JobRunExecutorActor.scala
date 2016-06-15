@@ -20,7 +20,7 @@ import scala.util.Try
 /**
   * Handles one job run from start until the job either completes successful or failed.
   *
-  * @param run the related job run  object.
+  * @param run the related job run object.
   */
 class JobRunExecutorActor(
     run:                        JobRun,

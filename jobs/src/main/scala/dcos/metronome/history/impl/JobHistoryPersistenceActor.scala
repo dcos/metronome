@@ -20,17 +20,17 @@ class JobHistoryPersistenceActor(
   }
 
   def create(id: PathId, jobRun: JobHistory): Unit = {
-    log.debug(s"Create JobStatus ${jobRun.id}")
-    repoChange(repo.create(jobRun.id, jobRun), (), JobHistoryCreated, PersistFailed(_, id, _, _))
+    log.debug(s"Create JobHistory ${jobRun.jobSpecId}")
+    repoChange(repo.create(jobRun.jobSpecId, jobRun), (), JobHistoryCreated, PersistFailed(_, id, _, _))
   }
 
   def update(id: PathId, change: JobHistory => JobHistory): Unit = {
-    log.debug(s"Update JobStatus $id")
+    log.debug(s"Update JobHistory $id")
     repoChange(repo.update(id, change), (), JobHistoryUpdated, PersistFailed(_, id, _, _))
   }
 
   def delete(id: PathId, orig: JobHistory): Unit = {
-    log.debug(s"Delete JobStatus $id")
+    log.debug(s"Delete JobHistory $id")
     repoChange(repo.delete(id).map(_ => orig), (), JobHistoryDeleted, PersistFailed(_, id, _, _))
   }
 }
@@ -44,9 +44,9 @@ object JobHistoryPersistenceActor {
 
   //ack messages
   trait JobHistoryChange extends Change
-  case class JobHistoryCreated(sender: ActorRef, jobStatus: JobHistory, nothing: Unit) extends JobHistoryChange
-  case class JobHistoryUpdated(sender: ActorRef, jobStatus: JobHistory, nothing: Unit) extends JobHistoryChange
-  case class JobHistoryDeleted(sender: ActorRef, jobStatus: JobHistory, nothing: Unit) extends JobHistoryChange
+  case class JobHistoryCreated(sender: ActorRef, jobHistory: JobHistory, nothing: Unit) extends JobHistoryChange
+  case class JobHistoryUpdated(sender: ActorRef, jobHistory: JobHistory, nothing: Unit) extends JobHistoryChange
+  case class JobHistoryDeleted(sender: ActorRef, jobHistory: JobHistory, nothing: Unit) extends JobHistoryChange
   case class PersistFailed(sender: ActorRef, id: PathId, ex: Throwable, nothing: Unit) extends Failed
 
   def props(repository: Repository[PathId, JobHistory], behavior: Behavior): Props = {
