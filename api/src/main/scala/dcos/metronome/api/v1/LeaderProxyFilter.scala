@@ -1,22 +1,20 @@
 package dcos.metronome.api.v1
 
 import akka.util.ByteString
-import dcos.metronome.JobsConfig
+import dcos.metronome.api.ApiConfig
 import mesosphere.marathon.core.election.ElectionService
 import org.slf4j.LoggerFactory
 import play.api.http.HttpEntity
 import play.api.libs.streams.Accumulator
 import play.api.libs.ws.{ WSClient, StreamedBody }
 import play.api.mvc._
-import scala.concurrent.duration._
 
-class LeaderProxyFilter(ws: WSClient, electionService: ElectionService, config: JobsConfig) extends EssentialFilter with Results {
+class LeaderProxyFilter(ws: WSClient, electionService: ElectionService, config: ApiConfig) extends EssentialFilter with Results {
 
   import LeaderProxyFilter._
   import scala.concurrent.ExecutionContext.Implicits.global
   val log = LoggerFactory.getLogger(getClass)
 
-  val scheme = if (config.disableHttp) "https" else "http"
   val localHostPort = config.hostname + (if (config.disableHttp) config.httpsPort else config.httpPort)
   val localRoutes = Set("/ping", "/v1/metrics")
 
@@ -40,11 +38,12 @@ class LeaderProxyFilter(ws: WSClient, electionService: ElectionService, config: 
   def proxyRequest(request: RequestHeader, leaderHostPort: String): Accumulator[ByteString, Result] = {
     log.info(s"Proxy request ${request.path} to $leaderHostPort")
     val headers = request.headers.headers ++ Seq(HEADER_LEADER -> leaderHostPort, HEADER_VIA -> localHostPort)
+    val scheme = if (request.secure) "https" else "http"
     Accumulator.source[ByteString].mapFuture { source =>
       ws.url(s"$scheme://$leaderHostPort${request.path}?${request.rawQueryString}")
         .withMethod(request.method)
         .withHeaders(headers: _*)
-        .withRequestTimeout(30.seconds)
+        .withRequestTimeout(config.leaderProxyTimeout)
         .withBody(StreamedBody(source))
         .execute()
         .map{ r =>

@@ -5,7 +5,7 @@ import com.codahale.metrics.health.HealthCheckRegistry
 import com.softwaremill.macwire._
 import controllers.Assets
 import dcos.metronome.api.v1.LeaderProxyFilter
-import dcos.metronome.api.{ ApiModule, ErrorHandler }
+import dcos.metronome.api.{ ApiConfig, ApiModule, ErrorHandler }
 import dcos.metronome.utils.time.{ Clock, SystemClock }
 import mesosphere.marathon.AllConf
 import org.asynchttpclient.AsyncHttpClientConfig
@@ -19,7 +19,7 @@ import play.api.mvc.EssentialFilter
 import play.api.routing.Router
 
 import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
 /**
   * Application loader that wires up the application dependencies using Macwire
@@ -50,6 +50,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
   private[this] lazy val jobsModule: JobsModule = wire[JobsModule]
 
   private[this] lazy val apiModule: ApiModule = new ApiModule(
+    config,
     jobsModule.jobSpecModule.jobSpecService,
     jobsModule.jobRunModule.jobRunService,
     jobsModule.jobInfoModule.jobInfoService,
@@ -67,7 +68,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     val builder = new AhcConfigBuilder(config)
     val logging = new AsyncHttpClientConfig.AdditionalChannelInitializer() {
       override def initChannel(channel: io.netty.channel.Channel): Unit = {
-        channel.pipeline.addFirst("log", new io.netty.handler.logging.LoggingHandler("debug"))
+        channel.pipeline.addFirst("log", new io.netty.handler.logging.LoggingHandler(classOf[WSClient]))
       }
     }
     val ahcBuilder = builder.configure()
@@ -82,7 +83,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
   override def router: Router = apiModule.router
 
-  lazy val config = new Object with JobsConfig {
+  lazy val config = new Object with JobsConfig with ApiConfig {
 
     lazy val master: String = "localhost:5050"
     lazy val pluginDir: Option[String] = configuration.getString("app.plugin.dir")
@@ -94,6 +95,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     lazy val httpPort: Int = configuration.getInt("play.server.http.port").getOrElse(9000)
     lazy val httpsPort: Int = configuration.getInt("play.server.https.port").getOrElse(9443)
     lazy val hostname: String = configuration.getString("app.hostname").getOrElse(java.net.InetAddress.getLocalHost.getHostName)
+    lazy val leaderProxyTimeout: Duration = configuration.getLong("app.leaderproxy.timeout").getOrElse(30000l).millis
 
     lazy val scallopConf: AllConf = {
       val flags = Seq[Option[String]](

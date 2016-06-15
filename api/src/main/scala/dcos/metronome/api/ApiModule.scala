@@ -16,6 +16,7 @@ import com.softwaremill.macwire._
 import dcos.metronome.behavior.Metrics
 
 class ApiModule(
+    config:           ApiConfig,
     jobSpecService:   JobSpecService,
     jobRunService:    JobRunService,
     jobInfoService:   JobInfoService,
