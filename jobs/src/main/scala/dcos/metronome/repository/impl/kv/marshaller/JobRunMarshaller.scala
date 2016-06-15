@@ -29,7 +29,7 @@ object JobRunMarshaller extends EntityMarshaller[JobRun] {
 }
 
 object JobRunConversions {
-  implicit class JobRunIdToProto(jobRunId: JobRunId) {
+  implicit class JobRunIdToProto(val jobRunId: JobRunId) extends AnyVal {
     def toProto: Protos.JobRun.Id = {
       Protos.JobRun.Id.newBuilder()
         .setJobId(jobRunId.jobId.toString)
@@ -38,7 +38,7 @@ object JobRunConversions {
     }
   }
 
-  implicit class JobRunTaskToProto(task: JobRunTask) {
+  implicit class JobRunTaskToProto(val task: JobRunTask) extends AnyVal {
     def toProto: Protos.JobRun.JobRunTask = {
       val builder = Protos.JobRun.JobRunTask.newBuilder()
         .setId(task.id.idString)
@@ -49,7 +49,7 @@ object JobRunConversions {
     }
   }
 
-  implicit class ProtoToJobRunTask(proto: Protos.JobRun.JobRunTask) {
+  implicit class ProtoToJobRunTask(val proto: Protos.JobRun.JobRunTask) extends AnyVal {
     def toModel: JobRunTask = JobRunTask(
       Task.Id(proto.getId),
       new DateTime(proto.getStartedAt, DateTimeZone.UTC),
@@ -58,11 +58,11 @@ object JobRunConversions {
     )
   }
 
-  implicit class ProtoToJobRunId(proto: Protos.JobRun.Id) {
+  implicit class ProtoToJobRunId(val proto: Protos.JobRun.Id) extends AnyVal {
     def toModel: JobRunId = JobRunId(PathId(proto.getJobId), proto.getRunId)
   }
 
-  implicit class JobRunToProto(jobRun: JobRun) {
+  implicit class JobRunToProto(val jobRun: JobRun) extends AnyVal {
     def toProto: Protos.JobRun = {
       import JobSpecConversions.JobSpecToProto
 
@@ -78,7 +78,7 @@ object JobRunConversions {
     }
   }
 
-  implicit class ProtoToJobRun(proto: Protos.JobRun) {
+  implicit class ProtoToJobRun(val proto: Protos.JobRun) extends AnyVal {
     def toModel: JobRun = {
       import JobSpecConversions.ProtoToJobSpec
 
@@ -93,11 +93,11 @@ object JobRunConversions {
     }
   }
 
-  implicit class JobRunStatusToProto(status: JobRunStatus) {
+  implicit class JobRunStatusToProto(val status: JobRunStatus) extends AnyVal {
     def toProto: Protos.JobRun.Status = Protos.JobRun.Status.valueOf(JobRunStatus.name(status))
   }
 
-  implicit class ProtoToJobRunStatus(proto: Protos.JobRun.Status) {
+  implicit class ProtoToJobRunStatus(val proto: Protos.JobRun.Status) extends AnyVal {
     def toModel: JobRunStatus = JobRunStatus.names(proto.toString)
   }
 }

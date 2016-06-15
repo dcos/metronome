@@ -8,7 +8,7 @@ import org.joda.time.{ DateTime, DateTimeZone }
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.Buffer
+import scala.collection.mutable
 
 object JobHistoryMarshaller extends EntityMarshaller[JobHistory] {
   import JobHistoryConversions._
@@ -35,10 +35,10 @@ object JobHistoryMarshaller extends EntityMarshaller[JobHistory] {
 
   private def fromProto(proto: Protos.JobHistory) = {
     val lastSuccessAt: Option[DateTime] =
-      if (proto.hasLastSuccessAt()) Some(new DateTime(proto.getLastSuccessAt, DateTimeZone.UTC)) else None
+      if (proto.hasLastSuccessAt) Some(new DateTime(proto.getLastSuccessAt, DateTimeZone.UTC)) else None
 
     val lastFailureAt: Option[DateTime] =
-      if (proto.hasLastFailureAt()) Some(new DateTime(proto.getLastFailureAt, DateTimeZone.UTC)) else None
+      if (proto.hasLastFailureAt) Some(new DateTime(proto.getLastFailureAt, DateTimeZone.UTC)) else None
 
     JobHistory(
       jobSpecId = PathId(proto.getJobSpecId),
@@ -54,7 +54,7 @@ object JobHistoryMarshaller extends EntityMarshaller[JobHistory] {
 
 object JobHistoryConversions {
 
-  implicit class JobRunInfoToProto(jobRunInfos: Seq[JobRunInfo]) {
+  implicit class JobRunInfoToProto(val jobRunInfos: Seq[JobRunInfo]) extends AnyVal {
     import JobRunConversions.JobRunIdToProto
 
     def toProto: Seq[Protos.JobHistory.JobRunInfo] = jobRunInfos.map { jobRunInfo =>
@@ -66,7 +66,7 @@ object JobHistoryConversions {
     }
   }
 
-  implicit class ProtoToJobRunInfo(protos: Buffer[Protos.JobHistory.JobRunInfo]) {
+  implicit class ProtoToJobRunInfo(val protos: mutable.Buffer[Protos.JobHistory.JobRunInfo]) extends AnyVal {
     import JobRunConversions.ProtoToJobRunId
 
     def toModel: Seq[JobRunInfo] = protos.map { proto =>
