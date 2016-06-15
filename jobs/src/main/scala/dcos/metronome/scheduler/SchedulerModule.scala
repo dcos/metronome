@@ -51,7 +51,7 @@ class SchedulerModule(
   private[this] lazy val eventModule: EventModule = new EventModule(scallopConf)
   private[this] lazy val eventBus: EventStream = eventModule.provideEventBus(actorSystem)
 
-  private[this] lazy val schedulerDriverHolder: MarathonSchedulerDriverHolder = new MarathonSchedulerDriverHolder
+  lazy val schedulerDriverHolder: MarathonSchedulerDriverHolder = new MarathonSchedulerDriverHolder
 
   private[this] lazy val hostPort: String = {
     val port = if (config.disableHttp) config.httpsPort else config.httpPort
@@ -75,7 +75,7 @@ class SchedulerModule(
   private[this] lazy val taskTrackerModule: TaskTrackerModule = {
     val taskRepository: TaskRepository = persistenceModule.taskRepository
     val updateSteps: Seq[TaskUpdateStep] = Seq(
-      // We might consider writing custom TaskUpdateSteps instead of using the provided ones
+      // TODO: write a custom TaskUpdateStep that provides a model that we expect
       ContinueOnErrorStep(new PostToEventStreamStepImpl(eventBus))
     )
 

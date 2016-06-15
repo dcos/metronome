@@ -1,9 +1,10 @@
 package dcos.metronome.api.v1
 
-import dcos.metronome.api.{ UnknownJobRun, UnknownSchedule, ErrorDetail, UnknownJob }
+import dcos.metronome.api.{ ErrorDetail, UnknownJob, UnknownJobRun, UnknownSchedule }
 import dcos.metronome.jobinfo.JobInfo
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
+import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.state.PathId
 import org.joda.time.{ DateTime, DateTimeZone }
 import play.api.libs.functional.syntax._
@@ -161,6 +162,10 @@ package object models {
     (__ \ "run").format[RunSpec]
   )(JobSpec.apply(_, _, _, Seq.empty, _), s => (s.id, s.description, s.labels, s.run))
 
+  implicit lazy val TaskIdFormat: Format[Task.Id] = Format(
+    Reads.of[String](Reads.minLength[String](3)).map(Task.Id(_)),
+    Writes[Task.Id] { id => JsString(id.idString) }
+  )
   implicit lazy val JobRunTaskFormat: Format[JobRunTask] = Json.format[JobRunTask]
 
   implicit lazy val JobRunIdFormat: Writes[JobRunId] = Writes[JobRunId] { id => JsString(id.value) }
@@ -181,7 +186,7 @@ package object models {
       "status" -> run.status,
       "createdAt" -> run.createdAt,
       "finishedAt" -> run.finishedAt,
-      "tasks" -> run.tasks
+      "tasks" -> run.tasks.values
     )
   }
 
