@@ -1,16 +1,14 @@
 package dcos.metronome.api
 
 import controllers.Assets
+import dcos.metronome.behavior.{ Metrics, BehaviorFixture, Behavior }
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobinfo.impl.JobInfoServiceImpl
-import dcos.metronome.jobrun.{ JobRunService, JobRunServiceFixture, StartedJobRun }
+import dcos.metronome.{ ConcurrentJobRunNotAllowed, JobRunDoesNotExist, JobSpecDoesNotExist }
+import dcos.metronome.jobrun.{ JobRunServiceFixture, StartedJobRun, JobRunService }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
-import dcos.metronome.model.{ JobRun, JobRunId, JobSpec }
-import dcos.metronome.{ ConcurrentJobRunNotAllowed, JobRunDoesNotExist }
 import mesosphere.marathon.core.plugin.PluginManager
-import mesosphere.marathon.core.task.bus.TaskChangeObservables.TaskChanged
-import mesosphere.marathon.state.PathId
 import org.scalatest.{ Suite, TestData }
 import org.scalatestplus.play.{ OneAppPerSuite, OneAppPerTest, OneServerPerSuite, OneServerPerTest }
 import play.api.ApplicationLoader.Context
@@ -103,6 +101,10 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
   }
 
   override lazy val httpErrorHandler = new ErrorHandler
+
+  lazy val behavior: Behavior = BehaviorFixture.empty
+
+  lazy val metrics: Metrics = behavior.metrics
 
   lazy val pluginManager: PluginManager = PluginManager.None
 

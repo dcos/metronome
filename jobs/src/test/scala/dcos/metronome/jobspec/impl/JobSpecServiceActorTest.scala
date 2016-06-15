@@ -5,6 +5,7 @@ import java.util.concurrent.LinkedBlockingDeque
 
 import akka.actor.{ Actor, Props, ActorSystem }
 import akka.testkit._
+import dcos.metronome.behavior.BehaviorFixture
 import dcos.metronome.{ JobSpecDoesNotExist, JobSpecChangeInFlight, JobSpecAlreadyExists }
 import dcos.metronome.model.JobSpec
 import dcos.metronome.repository.impl.InMemoryRepository
@@ -258,6 +259,7 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     val dummyQueue = new LinkedBlockingDeque[TestActor.Message]()
     val dummyProp = Props(new TestActor(dummyQueue))
     val jobSpec = JobSpec(PathId("/test"))
-    val jobSpecService = TestActorRef[JobSpecServiceActor](JobSpecServiceActor.props(repository, (id: PathId) => dummyProp, _ => dummyProp))
+    val behavior = BehaviorFixture.empty
+    val jobSpecService = TestActorRef[JobSpecServiceActor](JobSpecServiceActor.props(repository, (id: PathId) => dummyProp, _ => dummyProp, behavior))
   }
 }

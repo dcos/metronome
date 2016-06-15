@@ -12,6 +12,8 @@ import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
 import play.api.http.HttpErrorHandler
 import play.api.routing.Router
 import router.Routes
+import com.softwaremill.macwire._
+import dcos.metronome.behavior.Metrics
 
 class ApiModule(
     jobSpecService:   JobSpecService,
@@ -19,6 +21,7 @@ class ApiModule(
     jobInfoService:   JobInfoService,
     pluginManager:    PluginManager,
     httpErrorHandler: HttpErrorHandler,
+    metrics:          Metrics,
     assets:           Assets
 ) {
 

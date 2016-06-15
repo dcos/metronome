@@ -42,8 +42,8 @@ class SchedulerModule(
     override def now(): Timestamp = Timestamp(clock.now())
   }
 
-  // FIXME: We probably need the metrics elsewhere too
-  private[this] lazy val metrics = new MetricsModule().metrics
+  lazy val metricsModule = new MetricsModule()
+  private[this] lazy val metrics = metricsModule.metrics
   private[this] lazy val random = Random
   private[this] lazy val shutdownHooks = ShutdownHooks()
   private[this] lazy val actorsModule = new ActorsModule(shutdownHooks, actorSystem)
