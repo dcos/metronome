@@ -70,8 +70,8 @@ object ZkConfig {
   import scala.concurrent.duration._
 
   val DEFAULT_ZK_URL: String = "zk://localhost:2181/metronome"
-  val DEFAULT_ZK_TIMEOUT: FiniteDuration = (10 * 1000L).millis // 10 seconds
-  val DEFAULT_ZK_SESSION_TIMEOUT: FiniteDuration = (10 * 1000L).millis // 10 seconds
+  val DEFAULT_ZK_TIMEOUT: FiniteDuration = 10.seconds
+  val DEFAULT_ZK_SESSION_TIMEOUT: FiniteDuration = 10.seconds
   val DEFAULT_ZK_COMPRESSION_ENABLED: Boolean = true
   val DEFAULT_ZK_COMPRESSION_THRESHOLD: Long = 64 * 1024 // 64 KB
 }
