@@ -118,7 +118,7 @@ object JobSpecConversions {
 }
 
 object RunSpecConversions {
-  implicit class RunSpecToProto(val runSpec: RunSpec) extends AnyVal {
+  implicit class RunSpecToProto(val runSpec: JobRunSpec) extends AnyVal {
     def toProto: Protos.JobSpec.RunSpec = {
       val builder = Protos.JobSpec.RunSpec.newBuilder()
 
@@ -143,7 +143,7 @@ object RunSpecConversions {
   }
 
   implicit class ProtoToRunSpec(val runSpec: Protos.JobSpec.RunSpec) extends AnyVal {
-    def toModel: RunSpec = {
+    def toModel: JobRunSpec = {
       import scala.concurrent.duration._
 
       val cmd = if (runSpec.hasCmd) Some(runSpec.getCmd) else None

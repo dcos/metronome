@@ -9,9 +9,6 @@ import org.scalatest.concurrent.ScalaFutures
 
 import concurrent.Future
 
-/**
-  * Created by gaston on 14/06/16.
-  */
 class ZkJobSpecRepositoryTest extends FunSuite with Mockito with ScalaFutures {
 
   test("delete") {

@@ -50,18 +50,14 @@ class ZkJobRunRepository(
   ec
 ) {
   override def ids(): Future[Iterable[JobRunId]] = {
-    store match {
-      case s: PersistentStoreWithNestedPathsSupport =>
-        s.allIds(JobRunPathResolver.basePath).flatMap { parentPaths =>
-          parentPaths.foldLeft(Future.successful(List.empty[JobRunId])) {
-            case (resultsFuture, parentPath) => resultsFuture.flatMap { jobRunIdsSoFar: List[JobRunId] =>
-              s.allIds(s"""${JobRunPathResolver.basePath}/$parentPath""").map { jobRunPaths =>
-                jobRunPaths.map(JobRunId(JobSpecPathResolver.fromPath(parentPath), _))
-              }.map { jobRunIds => jobRunIds.toList ::: jobRunIdsSoFar }
-            }
-          }
+    store.allIds(JobRunPathResolver.basePath).flatMap { parentPaths =>
+      parentPaths.foldLeft(Future.successful(List.empty[JobRunId])) {
+        case (resultsFuture, parentPath) => resultsFuture.flatMap { jobRunIdsSoFar: List[JobRunId] =>
+          store.allIds(s"""${JobRunPathResolver.basePath}/$parentPath""").map { jobRunPaths =>
+            jobRunPaths.map(JobRunId(JobSpecPathResolver.fromPath(parentPath), _))
+          }.map { jobRunIds => jobRunIds.toList ::: jobRunIdsSoFar }
         }
-      case _ => super.ids()
+      }
     }
   }
 }
