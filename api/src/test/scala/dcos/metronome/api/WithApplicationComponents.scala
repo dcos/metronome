@@ -1,10 +1,10 @@
 package dcos.metronome.api
 
 import controllers.Assets
-import dcos.metronome.behavior.{ Metrics, BehaviorFixture, Behavior }
+import dcos.metronome.behavior.{ Behavior, BehaviorFixture, Metrics }
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobinfo.impl.JobInfoServiceImpl
-import dcos.metronome.jobrun.{ JobRunServiceFixture, JobRunService }
+import dcos.metronome.jobrun.{ JobRunService, JobRunServiceFixture }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import mesosphere.marathon.core.plugin.PluginManager
@@ -13,10 +13,10 @@ import org.scalatestplus.play.{ OneAppPerSuite, OneAppPerTest, OneServerPerSuite
 import play.api.ApplicationLoader.Context
 import play.api.i18n.I18nComponents
 import play.api.routing.Router
-import play.api.{ BuiltInComponents, _ }
 import scala.concurrent.duration._
 
 import scala.concurrent.duration.Duration
+import play.api._
 
 /**
   * A trait that provides a components in scope and creates new components when newApplication is called
@@ -114,7 +114,7 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
 
   lazy val jobRunService: JobRunService = JobRunServiceFixture.simpleJobRunService()
 
-  lazy val jobInfoService: JobInfoService = new JobInfoServiceImpl(jobSpecService, jobRunService)
+  lazy val jobInfoService: JobInfoService = wire[JobInfoServiceImpl]
 
   lazy val assets: Assets = wire[Assets]
 

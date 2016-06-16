@@ -118,7 +118,7 @@ object JobSpecConversions {
 }
 
 object RunSpecConversions {
-  implicit class RunSpecToProto(runSpec: RunSpec) {
+  implicit class RunSpecToProto(runSpec: JobRunSpec) {
     def toProto: Protos.JobSpec.RunSpec = {
       val builder = Protos.JobSpec.RunSpec.newBuilder()
 
@@ -143,7 +143,7 @@ object RunSpecConversions {
   }
 
   implicit class ProtoToRunSpec(runSpec: Protos.JobSpec.RunSpec) {
-    def toModel: RunSpec = {
+    def toModel: JobRunSpec = {
       import scala.concurrent.duration._
 
       val cmd = if (runSpec.hasCmd) Some(runSpec.getCmd) else None
@@ -151,7 +151,7 @@ object RunSpecConversions {
       val user = if (runSpec.hasUser) Some(runSpec.getUser) else None
       val docker = if (runSpec.hasDocker) Some(runSpec.getDocker.toModel) else None
 
-      RunSpec(
+      JobRunSpec(
         cpus = runSpec.getCpus,
         mem = runSpec.getMem,
         disk = runSpec.getDisk,

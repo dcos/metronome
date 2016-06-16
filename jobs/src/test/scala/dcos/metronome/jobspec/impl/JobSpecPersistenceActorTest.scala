@@ -39,7 +39,7 @@ class JobSpecPersistenceActorTest extends TestKit(ActorSystem("test")) with FunS
     actor ! Delete(f.jobSpec, deletePromise)
 
     Then("only the create call is executed")
-    verify(f.repository).create(any, any)
+    eventually(verify(f.repository).create(any, any))
     noMoreInteractions(f.repository)
     latch.open()
     expectMsg(Created(self, f.jobSpec, createPromise))

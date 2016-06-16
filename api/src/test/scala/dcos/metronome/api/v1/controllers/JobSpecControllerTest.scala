@@ -1,10 +1,11 @@
 package dcos.metronome.api.v1.controllers
 
 import dcos.metronome.api.v1.models._
-import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents, UnknownJob }
+import dcos.metronome.api.{ TestAuthFixture, MockApiComponents, OneAppPerTestWithComponents, UnknownJob }
 import dcos.metronome.model.{ CronSpec, JobSpec, ScheduleSpec }
+import mesosphere.marathon.core.plugin.PluginManager
 import mesosphere.marathon.state.PathId
-import org.scalatest.GivenWhenThen
+import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context
@@ -14,7 +15,7 @@ import play.api.test.Helpers._
 
 import scala.collection.immutable._
 
-class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with GivenWhenThen with ScalaFutures {
+class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with GivenWhenThen with ScalaFutures with BeforeAndAfter {
 
   "POST /jobs" should {
     "creates a job when sending a valid job spec" in {
@@ -67,11 +68,29 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) \ "message" mustBe JsDefined(JsString("Job with this id already exists"))
     }
+
+    "without auth this endpoint is not accessible" in {
+      Given("No job")
+
+      When("we do a request without authorization")
+      auth.authorized = false
+      val forbidden = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec1Json)).get
+
+      Then("an unauthorized response is send")
+      status(forbidden) mustBe UNAUTHORIZED
+
+      When("we do a request without authentication")
+      auth.authenticated = false
+      val unauthorized = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec1Json)).get
+
+      Then("a forbidden response is send")
+      status(unauthorized) mustBe FORBIDDEN
+    }
   }
 
   "GET /jobs" should {
     "get all available jobs" in {
-      Given("A job spec")
+      Given("Two job specs")
       route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec1Json)).get.futureValue
       route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec2Json)).get.futureValue
 
@@ -82,6 +101,27 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       status(response) mustBe OK
       contentType(response) mustBe Some("application/json")
       contentAsJson(response).as[JsArray].value.toSet mustBe Set(jobSpec1Json, jobSpec2Json)
+    }
+
+    "without auth this endpoint is not accessible" in {
+      Given("Two job specs")
+      route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec1Json)).get.futureValue
+      route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec2Json)).get.futureValue
+
+      When("we do a request without authorization")
+      auth.authorized = false
+      val filtered = route(app, FakeRequest(GET, s"/v1/jobs")).get
+
+      Then("an empty list is send")
+      status(filtered) mustBe OK
+      contentAsJson(filtered).as[JsArray].value.size mustBe 0
+
+      When("we do a request without authentication")
+      auth.authenticated = false
+      val unauthorized = route(app, FakeRequest(GET, s"/v1/jobs")).get
+
+      Then("a forbidden response is send")
+      status(unauthorized) mustBe FORBIDDEN
     }
   }
 
@@ -109,6 +149,25 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownJob(PathId("notexistent")))
+    }
+
+    "without auth this endpoint is not accessible" in {
+      Given("A job spec")
+      route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec1Json)).get.futureValue
+
+      When("we do a request without authorization")
+      auth.authorized = false
+      val forbidden = route(app, FakeRequest(GET, s"/v1/jobs/${jobSpec1.id}")).get
+
+      Then("a 404 response is send")
+      status(forbidden) mustBe NOT_FOUND
+
+      When("we do a request without authentication")
+      auth.authenticated = false
+      val unauthorized = route(app, FakeRequest(GET, s"/v1/jobs/${jobSpec1.id}")).get
+
+      Then("a forbidden response is send")
+      status(unauthorized) mustBe FORBIDDEN
     }
   }
 
@@ -153,6 +212,26 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))
     }
+
+    "without auth this endpoint is not accessible" in {
+      Given("A job spec")
+      route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec1Json)).get.futureValue
+      val updateJson = Json.toJson(jobSpec1.copy(labels = Map("a" -> "b")))
+
+      When("we do a request without authorization")
+      auth.authorized = false
+      val forbidden = route(app, FakeRequest(PUT, s"/v1/jobs/${jobSpec1.id}").withJsonBody(updateJson)).get
+
+      Then("an unauthorized response is send")
+      status(forbidden) mustBe UNAUTHORIZED
+
+      When("we do a request without authentication")
+      auth.authenticated = false
+      val unauthorized = route(app, FakeRequest(PUT, s"/v1/jobs/${jobSpec1.id}").withJsonBody(updateJson)).get
+
+      Then("a forbidden response is send")
+      status(unauthorized) mustBe FORBIDDEN
+    }
   }
 
   "DELETE /jobs/{id}" should {
@@ -180,6 +259,25 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe Json.toJson(UnknownJob(PathId("notexistent")))
     }
+
+    "without auth this endpoint is not accessible" in {
+      Given("A job spec")
+      route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec1Json)).get.futureValue
+
+      When("we do a request without authorization")
+      auth.authorized = false
+      val forbidden = route(app, FakeRequest(DELETE, s"/v1/jobs/${jobSpec1.id}")).get
+
+      Then("an unauthorized response is send")
+      status(forbidden) mustBe UNAUTHORIZED
+
+      When("we do a request without authentication")
+      auth.authenticated = false
+      val unauthorized = route(app, FakeRequest(DELETE, s"/v1/jobs/${jobSpec1.id}")).get
+
+      Then("a forbidden response is send")
+      status(unauthorized) mustBe FORBIDDEN
+    }
   }
 
   def spec(id: String) = JobSpec(PathId(id))
@@ -189,7 +287,15 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
   val jobSpec1Json = Json.toJson(jobSpec1)
   val jobSpec2 = spec("spec2")
   val jobSpec2Json = Json.toJson(jobSpec2)
+  val auth = new TestAuthFixture
 
-  override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context)
+  before {
+    auth.authorized = true
+    auth.authenticated = true
+  }
+
+  override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context) {
+    override lazy val pluginManager: PluginManager = auth.pluginManager
+  }
 }
 

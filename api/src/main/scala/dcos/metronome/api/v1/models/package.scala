@@ -139,27 +139,27 @@ package object models {
     (__ \ "activeDeadlineSeconds").formatNullable[Duration]
   ) (RestartSpec.apply, unlift(RestartSpec.unapply))
 
-  implicit lazy val RunSpecFormat: Format[RunSpec] = (
-    (__ \ "cpus").formatNullable[Double].withDefault(RunSpec.DefaultCpus) ~
-    (__ \ "mem").formatNullable[Double].withDefault(RunSpec.DefaultMem) ~
-    (__ \ "disk").formatNullable[Double].withDefault(RunSpec.DefaultDisk) ~
+  implicit lazy val RunSpecFormat: Format[JobRunSpec] = (
+    (__ \ "cpus").formatNullable[Double].withDefault(JobRunSpec.DefaultCpus) ~
+    (__ \ "mem").formatNullable[Double].withDefault(JobRunSpec.DefaultMem) ~
+    (__ \ "disk").formatNullable[Double].withDefault(JobRunSpec.DefaultDisk) ~
     (__ \ "cmd").formatNullable[String] ~
     (__ \ "args").formatNullable[Seq[String]] ~
     (__ \ "user").formatNullable[String] ~
-    (__ \ "env").formatNullable[Map[String, String]].withDefault(RunSpec.DefaultEnv) ~
-    (__ \ "placement").formatNullable[PlacementSpec].withDefault(RunSpec.DefaultPlacement) ~
-    (__ \ "artifacts").formatNullable[Seq[Artifact]].withDefault(RunSpec.DefaultArtifacts) ~
-    (__ \ "maxLaunchDelay").formatNullable[Duration].withDefault(RunSpec.DefaultMaxLaunchDelay) ~
+    (__ \ "env").formatNullable[Map[String, String]].withDefault(JobRunSpec.DefaultEnv) ~
+    (__ \ "placement").formatNullable[PlacementSpec].withDefault(JobRunSpec.DefaultPlacement) ~
+    (__ \ "artifacts").formatNullable[Seq[Artifact]].withDefault(JobRunSpec.DefaultArtifacts) ~
+    (__ \ "maxLaunchDelay").formatNullable[Duration].withDefault(JobRunSpec.DefaultMaxLaunchDelay) ~
     (__ \ "docker").formatNullable[DockerSpec] ~
-    (__ \ "volumes").formatNullable[Seq[Volume]].withDefault(RunSpec.DefaultVolumes) ~
-    (__ \ "restart").formatNullable[RestartSpec].withDefault(RunSpec.DefaultRestartSpec)
-  )(RunSpec.apply, unlift(RunSpec.unapply))
+    (__ \ "volumes").formatNullable[Seq[Volume]].withDefault(JobRunSpec.DefaultVolumes) ~
+    (__ \ "restart").formatNullable[RestartSpec].withDefault(JobRunSpec.DefaultRestartSpec)
+  )(JobRunSpec.apply, unlift(JobRunSpec.unapply))
 
   implicit lazy val JobSpecFormat: Format[JobSpec] = (
     (__ \ "id").format[PathId] ~
     (__ \ "description").formatNullable[String] ~
     (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty) ~
-    (__ \ "run").format[RunSpec]
+    (__ \ "run").format[JobRunSpec]
   )(JobSpec.apply(_, _, _, Seq.empty, _), s => (s.id, s.description, s.labels, s.run))
 
   implicit lazy val TaskIdFormat: Format[Task.Id] = Format(
