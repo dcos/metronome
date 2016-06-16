@@ -4,8 +4,7 @@ import controllers.Assets
 import dcos.metronome.behavior.{ Metrics, BehaviorFixture, Behavior }
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobinfo.impl.JobInfoServiceImpl
-import dcos.metronome.{ ConcurrentJobRunNotAllowed, JobRunDoesNotExist, JobSpecDoesNotExist }
-import dcos.metronome.jobrun.{ JobRunServiceFixture, StartedJobRun, JobRunService }
+import dcos.metronome.jobrun.{ JobRunServiceFixture, JobRunService }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import mesosphere.marathon.core.plugin.PluginManager
@@ -15,6 +14,9 @@ import play.api.ApplicationLoader.Context
 import play.api.i18n.I18nComponents
 import play.api.routing.Router
 import play.api.{ BuiltInComponents, _ }
+import scala.concurrent.duration._
+
+import scala.concurrent.duration.Duration
 
 /**
   * A trait that provides a components in scope and creates new components when newApplication is called
@@ -117,6 +119,14 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
   lazy val assets: Assets = wire[Assets]
 
   lazy val apiModule: ApiModule = wire[ApiModule]
+
+  lazy val config: ApiConfig = new ApiConfig {
+    override def leaderProxyTimeout: Duration = 30.seconds
+    override def hostname: String = "localhost"
+    override def httpPort: Int = 9000
+    override def httpsPort: Int = 9443
+    override def disableHttp: Boolean = false
+  }
 
   override def router: Router = apiModule.router
 }

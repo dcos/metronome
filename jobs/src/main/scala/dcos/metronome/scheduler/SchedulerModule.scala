@@ -180,6 +180,8 @@ class SchedulerModule(
     scallopConf, taskBusModule.taskStatusObservables, offerMatcherManagerModule.subOfferMatcherManager
   )
 
+  lazy val electionService: ElectionService = electionModule.service
+
   /** Combine offersWanted state from multiple sources. */
   private[this] lazy val offersWanted =
     offerMatcherManagerModule.globalOfferMatcherWantsOffers
