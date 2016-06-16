@@ -9,7 +9,7 @@ import dcos.metronome.model.JobRunId
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer, UpdateRunSpec, ViewRunSpec }
 import mesosphere.marathon.state.PathId
 
-import scala.concurrent.Future
+import scala.async.Async.{ async, await }
 
 class JobRunController(
     jobSpecService:    JobSpecService,
@@ -29,29 +29,42 @@ class JobRunController(
   }
 
   def getJobRun(id: PathId, runId: String) = AuthorizedAction.async { implicit request =>
-    jobRunService.getJobRun(JobRunId(id, runId)).map {
-      case Some(run) => request.authorized(ViewRunSpec, run, Ok(run))
-      case None      => NotFound(UnknownJobRun(id, runId))
+    async {
+      await(jobRunService.getJobRun(JobRunId(id, runId))) match {
+        case Some(run) => request.authorized(ViewRunSpec, run, Ok(run))
+        case None      => NotFound(UnknownJobRun(id, runId))
+      }
     }
   }
 
   def killJobRun(id: PathId, runId: String) = AuthorizedAction.async { implicit request =>
-    jobSpecService.getJobSpec(id).flatMap {
-      case Some(spec) => request.authorizedAsync(UpdateRunSpec, spec) { _ =>
-        jobRunService.killJobRun(JobRunId(id, runId)).map(Ok(_)).recover {
-          case JobRunDoesNotExist(_) => NotFound(UnknownJobRun(id, runId))
-        }
+    async {
+      await(jobSpecService.getJobSpec(id)) match {
+        case Some(spec) =>
+          await {
+            request.authorizedAsync(UpdateRunSpec, spec) { _ =>
+              jobRunService.killJobRun(JobRunId(id, runId)).map(Ok(_)).recover {
+                case JobRunDoesNotExist(_) => NotFound(UnknownJobRun(id, runId))
+              }
+            }
+          }
+        case None => NotFound(UnknownJob(id))
       }
-      case None => Future.successful(NotFound(UnknownJob(id)))
     }
   }
 
   def triggerJob(id: PathId) = AuthorizedAction.async { implicit request =>
-    jobSpecService.getJobSpec(id).flatMap {
-      case Some(spec) => request.authorizedAsync(UpdateRunSpec, spec) { _ =>
-        jobRunService.startJobRun(spec).map(Created(_))
+    async {
+      await(jobSpecService.getJobSpec(id)) match {
+        case Some(spec) =>
+          await {
+            request.authorizedAsync(UpdateRunSpec, spec) { _ =>
+              jobRunService.startJobRun(spec).map(Created(_))
+            }
+          }
+        case None =>
+          NotFound(UnknownJob(id))
       }
-      case None => Future.successful(NotFound(UnknownJob(id)))
     }
   }
 }

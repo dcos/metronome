@@ -11,6 +11,7 @@ import mesosphere.marathon.state.PathId
 import PathId._
 import play.api.mvc.Result
 
+import scala.async.Async.{ async, await }
 import scala.concurrent.Future
 
 class JobScheduleController(
@@ -85,9 +86,13 @@ class JobScheduleController(
   }
 
   private def withJobSpec[R](id: PathId)(fn: JobSpec => Future[Result])(implicit request: AuthorizedRequest[R]): Future[Result] = {
-    jobSpecService.getJobSpec(id).flatMap {
-      case Some(jobSpec) => request.authorizedAsync(UpdateRunSpec, jobSpec) { fn }
-      case None          => Future.successful(NotFound(UnknownJob(id)))
+    async {
+      await(jobSpecService.getJobSpec(id)) match {
+        case Some(jobSpec) =>
+          await(request.authorizedAsync(UpdateRunSpec, jobSpec) { fn })
+        case None =>
+          NotFound(UnknownJob(id))
+      }
     }
   }
 }

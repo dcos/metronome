@@ -13,6 +13,7 @@ import mesosphere.marathon.state.PathId
 import mesosphere.marathon.state.PathId._
 import play.api.mvc.Result
 
+import scala.async.Async.{ async, await }
 import scala.concurrent.Future
 
 class JobSpecController(
@@ -56,23 +57,29 @@ class JobSpecController(
   }
 
   def deleteJob(id: PathId, stopCurrentJobRuns: Boolean) = AuthorizedAction.async { implicit request =>
-    def deleteJobSpec(jobSpec: JobSpec): Future[Result] = {
-      jobRunService.activeRuns(id).flatMap { runs =>
-        if (runs.nonEmpty && !stopCurrentJobRuns) {
-          Future.successful(Conflict(ErrorDetail("There are active job runs. Override with stopCurrentJobRuns=true")))
-        } else {
-          (for {
-            killed <- Future.sequence(runs.map(run => jobRunService.killJobRun(run.jobRun.id)))
-            deleted <- jobSpecService.deleteJobSpec(id)
-          } yield Ok(deleted)).recover {
-            case ex: JobSpecDoesNotExist => NotFound(UnknownJob(id))
+    def deleteJobSpec(jobSpec: JobSpec): Future[Result] = async {
+      val runs = await(jobRunService.activeRuns(id))
+      if (runs.nonEmpty && !stopCurrentJobRuns) {
+        Conflict(ErrorDetail("There are active job runs. Override with stopCurrentJobRuns=true"))
+      } else {
+        await {
+          Future.sequence(runs.map(run => jobRunService.killJobRun(run.jobRun.id))).recover {
+            case _: JobSpecDoesNotExist => NotFound(UnknownJob(id))
+          }
+        }
+        await {
+          jobSpecService.deleteJobSpec(id).map(Ok(_)).recover {
+            case _: JobSpecDoesNotExist => NotFound(UnknownJob(id))
           }
         }
       }
     }
-    jobSpecService.getJobSpec(id).flatMap {
-      case Some(jobSpec) => request.authorizedAsync(DeleteRunSpec, jobSpec) { deleteJobSpec }
-      case None          => Future.successful(NotFound(UnknownJob(id)))
+    async {
+      await(jobSpecService.getJobSpec(id)) match {
+        case Some(jobSpec) =>
+          await(request.authorizedAsync(DeleteRunSpec, jobSpec) { deleteJobSpec })
+        case None => NotFound(UnknownJob(id))
+      }
     }
   }
 }
