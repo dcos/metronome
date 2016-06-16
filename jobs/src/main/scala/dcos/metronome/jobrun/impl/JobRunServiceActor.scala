@@ -3,11 +3,11 @@ package dcos.metronome.jobrun.impl
 import akka.actor.{ Actor, ActorRef, Props, Stash }
 import dcos.metronome.JobRunDoesNotExist
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
+import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
 import dcos.metronome.utils.time.Clock
-import mesosphere.marathon.event.MesosStatusUpdateEvent
 import mesosphere.marathon.state.PathId
 
 import scala.collection.concurrent.TrieMap
@@ -28,7 +28,7 @@ class JobRunServiceActor(
 
   override def preStart(): Unit = {
     super.preStart()
-    context.system.eventStream.subscribe(self, classOf[MesosStatusUpdateEvent])
+    context.system.eventStream.subscribe(self, classOf[TaskStateChangedEvent])
   }
 
   override def postStop(): Unit = {
@@ -55,14 +55,14 @@ class JobRunServiceActor(
     case Aborted(result)                   => jobRunAborted(result)
 
     //event stream events
-    case update: MesosStatusUpdateEvent    => forwardStatusUpdate(update)
+    case update: TaskStateChangedEvent     => forwardStatusUpdate(update)
   }
 
   def runsForJob(jobId: PathId): Iterable[StartedJobRun] = allJobRuns.values.filter(_.jobRun.id.jobId == jobId)
 
   def triggerJobRun(spec: JobSpec, promise: Promise[StartedJobRun]): Unit = {
     log.info(s"Trigger new JobRun for JobSpec: $spec")
-    val jobRun = new JobRun(JobRunId(spec), spec, JobRunStatus.Starting, clock.now(), None, Map.empty)
+    val jobRun = new JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.now(), None, Map.empty)
     val startedJobRun = startJobRun(jobRun)
     promise.success(startedJobRun)
   }
@@ -116,15 +116,15 @@ class JobRunServiceActor(
     }
   }
 
-  def forwardStatusUpdate(update: MesosStatusUpdateEvent): Unit = {
-    val jobRunId = JobRunId(update.appId)
+  def forwardStatusUpdate(update: TaskStateChangedEvent): Unit = {
+    val jobRunId = JobRunId(update.taskId.runSpecId)
 
     allRunExecutors.get(jobRunId) match {
       case Some(actorRef) =>
         log.debug("Forwarding status update to {}", actorRef.path)
         actorRef ! ForwardStatusUpdate(update)
       case None =>
-        log.debug("Ignoring MesosStatusUpdateEvent for {}. No one interested.", jobRunId)
+        log.debug("Ignoring TaskStateChangedEvent for {}. No one interested.", jobRunId)
     }
   }
 
@@ -138,6 +138,7 @@ class JobRunServiceActor(
   }
 
   override def initialize(runs: List[JobRun]): Unit = {
+    // FIXME: we need to wait until the Reconciliation has finished!
     runs.foreach(startJobRun)
   }
 }

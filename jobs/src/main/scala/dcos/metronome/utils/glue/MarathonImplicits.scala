@@ -16,9 +16,11 @@ import scala.language.implicitConversions
   */
 object MarathonImplicits {
 
-  implicit def jobRunToAppDefinition(run: JobRun): AppDefinition = {
+  // FIXME: the metronome RunSpec should be renamed to JobRunSpec to prevent conflicts
+  implicit def jobRunToRunSpec(run: JobRun): mesosphere.marathon.state.RunSpec = {
     val jobSpec = run.jobSpec
 
+    // TODO: do we need a metronome-specific RunSpec implementation?
     AppDefinition(
       id = PathId.fromSafePath(run.id.toString), // FIXME (glue): JobRunId#attempt
       cmd = jobSpec.run.cmd,

@@ -12,4 +12,6 @@ trait SchedulerConfig {
   def hostname: String
   def zkTimeout: FiniteDuration
   def mesosLeaderUiUrl: Option[String]
+  def reconciliationInterval: FiniteDuration
+  def reconciliationTimeout: FiniteDuration
 }

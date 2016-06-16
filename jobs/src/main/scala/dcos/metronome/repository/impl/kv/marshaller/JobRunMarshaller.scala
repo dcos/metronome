@@ -1,12 +1,14 @@
 package dcos.metronome.repository.impl.kv.marshaller
 
 import dcos.metronome.Protos
-import dcos.metronome.model.{ JobRunTask, JobRun, JobRunId, JobRunStatus }
+import dcos.metronome.model.{ JobRun, JobRunId, JobRunStatus, JobRunTask }
 import dcos.metronome.repository.impl.kv.EntityMarshaller
+import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.state.PathId
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.slf4j.LoggerFactory
+
 import scala.collection.JavaConverters._
 
 object JobRunMarshaller extends EntityMarshaller[JobRun] {
@@ -43,7 +45,7 @@ object JobRunConversions {
       val builder = Protos.JobRun.JobRunTask.newBuilder()
         .setId(task.id.idString)
         .setStartedAt(task.startedAt.getMillis)
-        .setStatus(task.status)
+        .setState(task.state.toProto)
       task.completedAt.foreach(t => builder.setCompletedAt(t.getMillis))
       builder.build()
     }
@@ -54,7 +56,7 @@ object JobRunConversions {
       Task.Id(proto.getId),
       new DateTime(proto.getStartedAt, DateTimeZone.UTC),
       if (proto.hasCompletedAt) Some(new DateTime(proto.getCompletedAt, DateTimeZone.UTC)) else None,
-      proto.getStatus
+      proto.getState.toModel
     )
   }
 
@@ -99,5 +101,13 @@ object JobRunConversions {
 
   implicit class ProtoToJobRunStatus(val proto: Protos.JobRun.Status) extends AnyVal {
     def toModel: JobRunStatus = JobRunStatus.names(proto.toString)
+  }
+
+  implicit class TaskStateToProto(val taskState: TaskState) extends AnyVal {
+    def toProto: Protos.JobRun.JobRunTask.State = Protos.JobRun.JobRunTask.State.valueOf(TaskState.name(taskState))
+  }
+
+  implicit class ProtoToTaskState(val proto: Protos.JobRun.JobRunTask.State) extends AnyVal {
+    def toModel: TaskState = TaskState.names(proto.toString)
   }
 }

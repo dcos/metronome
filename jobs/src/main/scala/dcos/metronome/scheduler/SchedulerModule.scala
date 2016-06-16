@@ -3,7 +3,7 @@ package dcos.metronome.scheduler
 import akka.actor.{ ActorRefFactory, ActorSystem }
 import akka.event.EventStream
 import dcos.metronome.repository.SchedulerRepositoriesModule
-import dcos.metronome.scheduler.impl.{ PeriodicOperationsImpl, SchedulerCallbacksImpl, SchedulerServiceImpl }
+import dcos.metronome.scheduler.impl.{ NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor, SchedulerCallbacksImpl, SchedulerServiceImpl }
 import dcos.metronome.utils.time.Clock
 import dcos.metronome.MetricsModule
 import mesosphere.marathon._
@@ -72,11 +72,10 @@ class SchedulerModule(
 
     LeadershipModule(actorRefFactory, electionService)
   }
-  private[this] lazy val taskTrackerModule: TaskTrackerModule = {
+  lazy val taskTrackerModule: TaskTrackerModule = {
     val taskRepository: TaskRepository = persistenceModule.taskRepository
     val updateSteps: Seq[TaskUpdateStep] = Seq(
-      // TODO: write a custom TaskUpdateStep that provides a model that we expect
-      ContinueOnErrorStep(new PostToEventStreamStepImpl(eventBus))
+      ContinueOnErrorStep(new NotifyOfTaskStateOperationStep(eventBus, clock))
     )
 
     new TaskTrackerModule(marathonClock, metrics, scallopConf, leadershipModule, taskRepository, updateSteps)
@@ -198,4 +197,8 @@ class SchedulerModule(
     taskOpFactory = launcherModule.taskOpFactory
   )
 
+  val reconciliationActor = leadershipModule.startWhenLeader(
+    props = ReconciliationActor.props(schedulerDriverHolder, taskTrackerModule.taskTracker, config),
+    name = "reconciliation"
+  )
 }

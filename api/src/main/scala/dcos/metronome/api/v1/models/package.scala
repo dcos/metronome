@@ -4,6 +4,7 @@ import dcos.metronome.api.{ ErrorDetail, UnknownJob, UnknownJobRun, UnknownSched
 import dcos.metronome.jobinfo.JobInfo
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
+import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.state.PathId
 import org.joda.time.{ DateTime, DateTimeZone }
@@ -166,6 +167,16 @@ package object models {
     Reads.of[String](Reads.minLength[String](3)).map(Task.Id(_)),
     Writes[Task.Id] { id => JsString(id.idString) }
   )
+
+  implicit lazy val TaskStateFormat: Format[TaskState] = new Format[TaskState] {
+    override def writes(o: TaskState): JsValue = JsString(TaskState.name(o))
+    override def reads(json: JsValue): JsResult[TaskState] = json match {
+      case JsString(TaskState(value)) => JsSuccess(value)
+      case invalid => JsError(s"'$invalid' is not a valid task state. " +
+        s"Allowed values: ${TaskState.names.keySet}")
+    }
+  }
+
   implicit lazy val JobRunTaskFormat: Format[JobRunTask] = Json.format[JobRunTask]
 
   implicit lazy val JobRunIdFormat: Writes[JobRunId] = Writes[JobRunId] { id => JsString(id.value) }
@@ -174,7 +185,7 @@ package object models {
     override def writes(o: JobRunStatus): JsValue = JsString(JobRunStatus.name(o))
     override def reads(json: JsValue): JsResult[JobRunStatus] = json match {
       case JsString(JobRunStatus(value)) => JsSuccess(value)
-      case invalid => JsError(s"'$invalid' is not a valid restart policy. " +
+      case invalid => JsError(s"'$invalid' is not a valid job run status. " +
         s"Allowed values: ${JobRunStatus.names.keySet}")
     }
   }
