@@ -190,6 +190,18 @@ package object models {
     )
   }
 
+  implicit lazy val JobRunInfoWrites: Writes[RunInfo] = Json.writes[RunInfo]
+  implicit lazy val JobHistoryWrites: Writes[JobHistory] = new Writes[JobHistory] {
+    override def writes(o: JobHistory): JsValue = Json.obj(
+      "successCount" -> o.successCount,
+      "failureCount" -> o.failureCount,
+      "lastSuccessAt" -> o.lastSuccessAt,
+      "lastFailureAt" -> o.lastFailureAt,
+      "successfulFinishedRuns" -> o.successfulFinishedRuns,
+      "failedFinishedRuns" -> o.failedFinishedRuns
+    )
+  }
+
   implicit lazy val StartedJobRunWrites: Writes[StartedJobRun] = new Writes[StartedJobRun] {
     override def writes(o: StartedJobRun): JsValue = JobRunWrites.writes(o.jobRun)
   }

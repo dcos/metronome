@@ -38,6 +38,6 @@ class JobsModule(
 
   lazy val jobHistoryModule = new JobHistoryModule(config, actorSystem, clock, repositoryModule.jobHistoryRepository, behaviorModule.behavior)
 
-  lazy val jobInfoModule = new JobInfoModule(jobSpecModule.jobSpecService, jobRunModule.jobRunService, behaviorModule.behavior)
+  lazy val jobInfoModule = new JobInfoModule(jobSpecModule.jobSpecService, jobRunModule.jobRunService, behaviorModule.behavior, jobHistoryModule.jobHistoryService)
 }
 
