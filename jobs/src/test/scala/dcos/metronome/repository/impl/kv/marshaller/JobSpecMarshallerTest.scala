@@ -3,7 +3,7 @@ package dcos.metronome.repository.impl.kv.marshaller
 import dcos.metronome.model._
 import mesosphere.marathon.state.PathId
 import org.joda.time.DateTimeZone
-import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }
+import org.scalatest.{ FunSuite, Matchers }
 
 import scala.collection.immutable._
 
@@ -30,7 +30,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers {
   class Fixture {
     import concurrent.duration._
 
-    val runSpec = RunSpec(
+    val runSpec = JobRunSpec(
       cpus = 42.0,
       mem = 133.7,
       disk = 3133.7,

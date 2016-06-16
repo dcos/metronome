@@ -1,10 +1,11 @@
 package dcos.metronome.api.v1.controllers
 
 import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
-import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents, UnknownJob }
+import dcos.metronome.api.{ TestAuthFixture, MockApiComponents, OneAppPerTestWithComponents, UnknownJob }
 import dcos.metronome.model.{ CronSpec, JobSpec, ScheduleSpec }
+import mesosphere.marathon.core.plugin.PluginManager
 import mesosphere.marathon.state.PathId
-import org.scalatest.GivenWhenThen
+import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context
@@ -14,7 +15,7 @@ import play.api.test.Helpers._
 
 import scala.collection.immutable._
 
-class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with GivenWhenThen with ScalaFutures {
+class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with GivenWhenThen with ScalaFutures with BeforeAndAfter {
 
   import ScheduledJobSpecController._
 
@@ -55,6 +56,24 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))
+    }
+
+    "without auth this endpoint is not accessible" in {
+      Given("No job")
+
+      When("we do a request without authorization")
+      auth.authorized = false
+      val forbidden = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(jobSpec1Json)).get
+
+      Then("an unauthorized response is send")
+      status(forbidden) mustBe UNAUTHORIZED
+
+      When("we do a request without authentication")
+      auth.authenticated = false
+      val unauthorized = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(jobSpec1Json)).get
+
+      Then("a forbidden response is send")
+      status(unauthorized) mustBe FORBIDDEN
     }
   }
 
@@ -99,6 +118,27 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))
     }
+
+    "without auth this endpoint is not accessible" in {
+      Given("A job with schedule")
+      route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(jobSpec1Json)).get.futureValue
+      val update = jobSpec1.copy(schedules = Seq(schedule2))
+      val updateJson = Json.toJson(update)
+
+      When("we do a request without authorization")
+      auth.authorized = false
+      val forbidden = route(app, FakeRequest(PUT, s"/v0/scheduled-jobs/${jobSpec1.id}").withJsonBody(updateJson)).get
+
+      Then("an unauthorized response is send")
+      status(forbidden) mustBe UNAUTHORIZED
+
+      When("we do a request without authentication")
+      auth.authenticated = false
+      val unauthorized = route(app, FakeRequest(PUT, s"/v0/scheduled-jobs/${jobSpec1.id}").withJsonBody(updateJson)).get
+
+      Then("a forbidden response is send")
+      status(unauthorized) mustBe FORBIDDEN
+    }
   }
 
   val CronSpec(cron) = "* * * * *"
@@ -108,7 +148,15 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
   val jobSpec1Json = Json.toJson(jobSpec1)
   val jobSpec2 = JobSpec(PathId("spec2"), schedules = Seq(schedule1))
   val jobSpec2Json = Json.toJson(jobSpec2)
+  val auth = new TestAuthFixture
 
-  override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context)
+  before {
+    auth.authorized = true
+    auth.authenticated = true
+  }
+
+  override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context) {
+    override lazy val pluginManager: PluginManager = auth.pluginManager
+  }
 }
 

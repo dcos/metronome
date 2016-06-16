@@ -50,6 +50,7 @@ object Build extends sbt.Build {
     base = file("jobs"),
     settings = baseSettings ++ formatSettings ++ PB.protobufSettings ++ Seq(
       libraryDependencies ++= Seq(
+        Dependency.asyncAwait,
         Dependency.playJson,
         Dependency.marathon,
         Dependency.macWireMacros,
@@ -102,17 +103,19 @@ object Build extends sbt.Build {
   object Dependency {
     object V {
       // Test deps versions
+      val AsyncAwait = "0.9.6-RC2"
       val ScalaTest = "2.1.7"
       val MacWire = "2.2.2"
       val Marathon = "2.0.0-SNAPSHOT"
       val Play = "2.5.3"
       val CronUtils = "3.1.6"
       val WixAccord = "0.5"
-      val Akka = "2.3.9"
+      val Akka = "2.3.15"
       val Mockito = "2.0.54-beta"
       val Metrics = "3.5.4_a2.3"
     }
 
+    val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
     val playJson = "com.typesafe.play" %% "play-json" % V.Play
     val playWS = "com.typesafe.play" %% "play-ws" % V.Play
     val yaml = "net.jcazevedo" %% "moultingyaml" % "0.2"

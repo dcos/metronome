@@ -1,7 +1,7 @@
 package dcos.metronome.jobinfo
 
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.model.{ RunSpec, ScheduleSpec, JobSpec }
+import dcos.metronome.model.{ JobRunSpec, ScheduleSpec, JobSpec }
 import mesosphere.marathon.state.PathId
 
 /**
@@ -11,7 +11,7 @@ case class JobInfo(
   id:          PathId,
   description: Option[String],
   labels:      Map[String, String],
-  run:         RunSpec,
+  run:         JobRunSpec,
   schedules:   Option[Seq[ScheduleSpec]],
   activeRuns:  Option[Iterable[StartedJobRun]]
 )
