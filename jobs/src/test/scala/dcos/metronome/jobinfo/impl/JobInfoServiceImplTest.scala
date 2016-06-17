@@ -1,11 +1,14 @@
 package dcos.metronome.jobinfo.impl
 
+import dcos.metronome.history.JobHistoryServiceFixture
 import dcos.metronome.jobinfo.JobInfo.Embed
 import dcos.metronome.jobinfo.JobSpecSelector
 import dcos.metronome.jobrun.JobRunServiceFixture
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
-import dcos.metronome.model.{ CronSpec, ScheduleSpec, JobSpec }
+import dcos.metronome.model.{ JobHistory, CronSpec, ScheduleSpec, JobSpec }
+import dcos.metronome.utils.time.FixedClock
 import mesosphere.marathon.state.PathId
+import org.joda.time.DateTime
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ Matchers, GivenWhenThen, FunSuite }
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -90,7 +93,22 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
     result1.foreach(_.activeRuns should be(empty))
   }
 
+  test("Status embed option will render embedded history info") {
+    Given("A repo with 2 specs and 2 runs")
+    val f = new Fixture
+
+    When("The job info is fetched")
+    val result = f.jobInfoService.selectJobs(JobSpecSelector.all, Set(Embed.History)).futureValue
+
+    Then("The extended info is rendered for active runs")
+    result should have size 2
+    result.foreach(_.schedules should be(empty))
+    result.foreach(_.activeRuns should be(empty))
+    result.map(_.history.get).toSet should be(Set(f.history1, f.history2))
+  }
+
   class Fixture {
+    val clock = new FixedClock(DateTime.now)
     val CronSpec(cron) = "* * * * *"
     val schedule1 = ScheduleSpec("id1", cron)
     val schedule2 = ScheduleSpec("id2", cron)
@@ -98,14 +116,18 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
     val spec1 = JobSpec(PathId("spec1"), schedules = Seq(schedule1, schedule2))
     val spec2 = JobSpec(PathId("spec2"), schedules = Seq(schedule1, schedule2))
 
+    val history1 = JobHistory(spec1.id, 23, 23, Some(clock.now()), Some(clock.now()), Seq.empty, Seq.empty)
+    val history2 = JobHistory(spec2.id, 23, 23, Some(clock.now()), Some(clock.now()), Seq.empty, Seq.empty)
+
     val specService = JobSpecServiceFixture.simpleJobSpecService()
     val runService = JobRunServiceFixture.simpleJobRunService()
+    val historyService = JobHistoryServiceFixture.simpleHistoryService(Seq(history1, history2))
 
     specService.createJobSpec(spec1).futureValue
     specService.createJobSpec(spec2).futureValue
     runService.startJobRun(spec1).futureValue
     runService.startJobRun(spec2).futureValue
 
-    val jobInfoService = new JobInfoServiceImpl(specService, runService)
+    val jobInfoService = new JobInfoServiceImpl(specService, runService, historyService)
   }
 }

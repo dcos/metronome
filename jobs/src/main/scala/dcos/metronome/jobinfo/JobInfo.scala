@@ -1,7 +1,7 @@
 package dcos.metronome.jobinfo
 
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.model.{ JobRunSpec, ScheduleSpec, JobSpec }
+import dcos.metronome.model.{ JobHistory, JobRunSpec, ScheduleSpec, JobSpec }
 import mesosphere.marathon.state.PathId
 
 /**
@@ -13,7 +13,8 @@ case class JobInfo(
   labels:      Map[String, String],
   run:         JobRunSpec,
   schedules:   Option[Seq[ScheduleSpec]],
-  activeRuns:  Option[Iterable[StartedJobRun]]
+  activeRuns:  Option[Iterable[StartedJobRun]],
+  history:     Option[JobHistory]
 )
 
 object JobInfo {
@@ -21,14 +22,21 @@ object JobInfo {
   object Embed {
     val names: Map[String, Embed] = Map(
       "activeRuns" -> ActiveRuns,
-      "schedules" -> Schedules
+      "schedules" -> Schedules,
+      "history" -> History
     )
     case object Schedules extends Embed
     case object ActiveRuns extends Embed
+    case object History extends Embed
   }
 
-  def apply(spec: JobSpec, schedules: Option[Seq[ScheduleSpec]], runs: Option[Iterable[StartedJobRun]]): JobInfo = {
-    JobInfo(spec.id, spec.description, spec.labels, spec.run, schedules, runs)
+  def apply(
+    spec:      JobSpec,
+    schedules: Option[Seq[ScheduleSpec]],
+    runs:      Option[Iterable[StartedJobRun]],
+    status:    Option[JobHistory]
+  ): JobInfo = {
+    JobInfo(spec.id, spec.description, spec.labels, spec.run, schedules, runs, status)
   }
 }
 

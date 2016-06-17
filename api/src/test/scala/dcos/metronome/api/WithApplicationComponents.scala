@@ -2,6 +2,7 @@ package dcos.metronome.api
 
 import controllers.Assets
 import dcos.metronome.behavior.{ Behavior, BehaviorFixture, Metrics }
+import dcos.metronome.history.{ JobHistoryServiceFixture, JobHistoryService }
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobinfo.impl.JobInfoServiceImpl
 import dcos.metronome.jobrun.{ JobRunService, JobRunServiceFixture }
@@ -113,6 +114,8 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
   lazy val jobSpecService: JobSpecService = JobSpecServiceFixture.simpleJobSpecService()
 
   lazy val jobRunService: JobRunService = JobRunServiceFixture.simpleJobRunService()
+
+  lazy val jobHistoryService: JobHistoryService = JobHistoryServiceFixture.simpleHistoryService(Seq.empty)
 
   lazy val jobInfoService: JobInfoService = wire[JobInfoServiceImpl]
 

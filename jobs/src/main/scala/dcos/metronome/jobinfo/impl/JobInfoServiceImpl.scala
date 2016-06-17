@@ -1,36 +1,48 @@
 package dcos.metronome.jobinfo.impl
 
+import dcos.metronome.history.JobHistoryService
 import dcos.metronome.jobinfo.JobInfo.Embed
 import dcos.metronome.jobinfo.{ JobInfo, JobSpecSelector, JobInfoService }
 import dcos.metronome.jobrun.{ StartedJobRun, JobRunService }
 import dcos.metronome.jobspec.JobSpecService
+import dcos.metronome.model.{ JobSpec, JobHistory }
 import mesosphere.marathon.state.PathId
 
+import scala.async.Async.{ async, await }
 import scala.concurrent.{ ExecutionContext, Future }
 
-class JobInfoServiceImpl(jobSpecService: JobSpecService, jobRunService: JobRunService) extends JobInfoService {
+class JobInfoServiceImpl(jobSpecService: JobSpecService, jobRunService: JobRunService, jobHistoryService: JobHistoryService) extends JobInfoService {
 
   override def selectJob(jobSpecId: PathId, selector: JobSpecSelector, embed: Set[Embed])(implicit ec: ExecutionContext): Future[Option[JobInfo]] = {
-    jobSpecService.getJobSpec(jobSpecId).flatMap {
-      case Some(jobSpec) if selector.matches(jobSpec) =>
-        val runFuture = if (embed(Embed.ActiveRuns)) jobRunService.activeRuns(jobSpecId).map(Some(_)) else Future.successful(None)
-        val specSchedules = if (embed(Embed.Schedules)) Some(jobSpec.schedules) else None
-        runFuture.map(runs => Some(JobInfo(jobSpec, specSchedules, runs)))
-      case _ => Future.successful(None)
+    async {
+      val runOption = if (embed(Embed.ActiveRuns)) Some(await(jobRunService.activeRuns(jobSpecId))) else None
+      val historyOption = if (embed(Embed.History)) await(jobHistoryService.statusFor(jobSpecId)) else None
+      await(jobSpecService.getJobSpec(jobSpecId)).filter(selector.matches).map { jobSpec =>
+        JobInfo(jobSpec, schedulesOption(jobSpec, embed), runOption, historyOption)
+      }
     }
   }
 
   override def selectJobs(selector: JobSpecSelector, embed: Set[Embed])(implicit ec: ExecutionContext): Future[Iterable[JobInfo]] = {
-    for {
-      specs <- jobSpecService.listJobSpecs(selector.matches)
-      runsIt <- if (embed(Embed.ActiveRuns)) jobRunService.listRuns(run => selector.matches(run.jobSpec)) else Future.successful(Iterable.empty[StartedJobRun])
-      runs = runsIt.groupBy(_.jobRun.jobSpec.id)
-    } yield {
+    async {
+      val specs = await(jobSpecService.listJobSpecs(selector.matches))
+      val allIds = specs.map(_.id).toSet
+      val runs =
+        if (embed(Embed.ActiveRuns))
+          await(jobRunService.listRuns(run => allIds(run.jobSpec.id))).groupBy(_.jobRun.jobSpec.id)
+        else
+          Map.empty[PathId, Seq[StartedJobRun]]
+      val histories =
+        if (embed(Embed.History))
+          await(jobHistoryService.list(history => allIds(history.id))).map(history => history.id -> history).toMap
+        else
+          Map.empty[PathId, JobHistory]
       specs.map { spec =>
-        val specRuns = runs.get(spec.id)
-        val specSchedules = if (embed(Embed.Schedules)) Some(spec.schedules) else None
-        JobInfo(spec, specSchedules, specRuns)
+        JobInfo(spec, schedulesOption(spec, embed), runs.get(spec.id), histories.get(spec.id))
       }
     }
+  }
+  private[this] def schedulesOption(spec: JobSpec, embed: Set[Embed]) = {
+    if (embed(Embed.Schedules)) Some(spec.schedules) else None
   }
 }
