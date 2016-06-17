@@ -49,10 +49,21 @@ message JobRun {
   optional int64 finishedAt = 5;
 
   message JobRunTask {
+    enum State {
+      UNKNOWN = 1;
+      TASK_CREATED = 2;
+      TASK_STAGING = 3;
+      TASK_STARTING = 4;
+      TASK_RUNNING = 5;
+      TASK_FINISHED = 6;
+      TASK_FAILED = 7;
+      TASK_KILLED = 8;
+    }
+
     optional string id = 1;
     optional int64 startedAt = 2;
     optional int64 completedAt = 3;
-    optional string status = 4;
+    optional State state = 4;
   }
   repeated JobRunTask tasks = 6;
 }

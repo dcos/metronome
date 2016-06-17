@@ -1,6 +1,7 @@
 package dcos.metronome
 
-import dcos.metronome.model.{ JobSpec, JobResult, JobRunId }
+import dcos.metronome.model.{ JobResult, JobRunId, JobSpec }
+import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.state.PathId
 
 class ApplicationException(message: String, cause: Throwable) extends RuntimeException(message, cause) {
@@ -17,3 +18,5 @@ case class JobRunFailed(result: JobResult) extends ApplicationException(s"JobRun
 case class ConcurrentJobRunNotAllowed(spec: JobSpec) extends ApplicationException(s"Concurrent JobRun not allowed ${spec.id}")
 
 case class PersistenceFailed(id: String, reason: String) extends ApplicationException(s"Persistence Failed for: $id Reason: $reason")
+
+case class UnexpectedTaskState(task: Task) extends ApplicationException(s"Encountered unexpected task state in repository: $task")

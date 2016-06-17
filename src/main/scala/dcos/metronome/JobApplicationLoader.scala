@@ -1,7 +1,5 @@
 package dcos.metronome
 
-import com.codahale.metrics.MetricRegistry
-import com.codahale.metrics.health.HealthCheckRegistry
 import com.softwaremill.macwire._
 import controllers.Assets
 import dcos.metronome.scheduler.SchedulerModule
@@ -137,5 +135,8 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
     //TODO: those values need to be configured via play - not the other way around
     lazy val mesosLeaderUiUrl: Option[String] = scallopConf.mesosLeaderUiUrl.get
+
+    lazy val reconciliationInterval: FiniteDuration = configuration.getLong("scheduler.reconciliation.interval").getOrElse(15 * 60 * 1000L).milliseconds
+    lazy val reconciliationTimeout: FiniteDuration = configuration.getLong("scheduler.reconciliation.timeout").getOrElse(60 * 1000L).milliseconds
   }
 }

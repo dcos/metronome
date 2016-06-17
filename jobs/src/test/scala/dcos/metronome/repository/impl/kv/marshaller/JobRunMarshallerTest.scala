@@ -2,7 +2,7 @@ package dcos.metronome.repository.impl.kv.marshaller
 
 import dcos.metronome.model._
 import mesosphere.marathon.state.PathId
-import org.joda.time.{ DateTime, DateTimeZone }
+import org.joda.time.DateTime
 import org.scalatest.{ FunSuite, Matchers }
 
 class JobRunMarshallerTest extends FunSuite with Matchers {

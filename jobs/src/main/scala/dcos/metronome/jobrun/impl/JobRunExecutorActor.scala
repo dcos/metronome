@@ -1,21 +1,20 @@
 package dcos.metronome.jobrun.impl
 
-import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Props }
-import dcos.metronome.JobRunFailed
+import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Props, Stash }
+import dcos.metronome.{ JobRunFailed, UnexpectedTaskState }
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
+import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
+import dcos.metronome.utils.glue.MarathonImplicits.RunSpecId
 import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.event.MesosStatusUpdateEvent
-import mesosphere.marathon.state.RunSpec
-import org.apache.mesos
-import org.joda.time.DateTime
+import mesosphere.marathon.core.task.Task.LaunchedEphemeral
+import mesosphere.marathon.core.task.tracker.TaskTracker
 
 import scala.concurrent.Promise
-import scala.util.Try
 
 /**
   * Handles one job run from start until the job either completes successful or failed.
@@ -27,10 +26,11 @@ class JobRunExecutorActor(
     promise:                    Promise[JobResult],
     persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
     launchQueue:                LaunchQueue,
+    taskTracker:                TaskTracker,
     driverHolder:               MarathonSchedulerDriverHolder,
     clock:                      Clock,
     val behavior:               Behavior
-) extends Actor with ActorLogging with ActorBehavior {
+) extends Actor with Stash with ActorLogging with ActorBehavior {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
   import TaskStates._
@@ -38,38 +38,54 @@ class JobRunExecutorActor(
   lazy val persistenceActor = persistenceActorRefFactory(run.id, context)
   var jobRun: JobRun = run
 
-  def runSpec: RunSpec = {
-    import dcos.metronome.utils.glue.MarathonImplicits._
-    jobRun
-  }
+  val runSpecId = RunSpecId(jobRun.id)
 
   override def preStart(): Unit = {
     jobRun.status match {
-      case JobRunStatus.Starting =>
-        becomeCreating()
+      case JobRunStatus.Initial => becomeCreating()
 
-      case JobRunStatus.Active =>
-        reconcileAndBecomeActive()
+      case JobRunStatus.Starting | JobRunStatus.Active =>
+        launchQueue.get(runSpecId) match {
+          case Some(info) if info.finalTaskCount > 0 =>
+            log.info("found an active launch queue for {}, not scheduling more tasks", runSpecId)
+            val tasks = taskTracker.appTasksLaunchedSync(runSpecId).collect {
+              // FIXME: we do currently only allow non-resident tasks. Since there is no clear state on
+              // Marathon's task representation, this is the safest conversion we can do for now:
+              case task: LaunchedEphemeral => JobRunTask(task)
+              case task: Task              => throw new UnexpectedTaskState(task)
+            }
+            self ! Initialized(tasks)
 
-      case _ =>
-        becomeAborting()
+          case _ =>
+            self ! Initialized(tasks = Nil)
+        }
+
+      case JobRunStatus.Success => becomeFinishing(jobRun)
+
+      case JobRunStatus.Failed  => becomeFailing(jobRun)
     }
   }
 
   // Transitions
+  // TODO should we name those 'transitionToX' to make clear that it's a transition?
 
   def becomeCreating(): Unit = {
     log.info(s"Create JobRun ${jobRun.id} - become creating")
-    persistenceActor ! Create(jobRun)
+    persistenceActor ! Create(jobRun.copy(status = JobRunStatus.Starting))
     context.become(creating)
   }
 
-  def becomeStarting(run: JobRun): Unit = {
-    jobRun = run
+  def becomeStarting(updatedJobRun: JobRun): Unit = {
+    jobRun = updatedJobRun
     log.info(s"Execution of JobRun ${jobRun.id} has been started - become starting")
-    launchQueue.add(runSpec, count = 1)
+    addTaskToLaunchQueue()
 
     context.become(starting)
+  }
+
+  def addTaskToLaunchQueue(): Unit = {
+    import dcos.metronome.utils.glue.MarathonImplicits._
+    launchQueue.add(jobRun, count = 1)
   }
 
   def reconcileAndBecomeActive(): Unit = {
@@ -77,7 +93,7 @@ class JobRunExecutorActor(
     context.become(active)
   }
 
-  def becomeActive(update: MesosStatusUpdateEvent): Unit = {
+  def becomeActive(update: TaskStateChangedEvent): Unit = {
     jobRun = jobRun.copy(status = JobRunStatus.Active, tasks = updatedTasks(update))
     persistenceActor ! Update(_ => jobRun)
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
@@ -86,28 +102,24 @@ class JobRunExecutorActor(
     context.become(active)
   }
 
-  def updatedTasks(update: MesosStatusUpdateEvent): Map[Task.Id, JobRunTask] = {
+  def updatedTasks(update: TaskStateChangedEvent): Map[Task.Id, JobRunTask] = {
     val updatedTask = jobRun.tasks.get(update.taskId).map { t =>
-      t.copy(completedAt = Some(DateTime.parse(update.timestamp)))
+      t.copy(completedAt = Some(update.timestamp))
     }.getOrElse {
       JobRunTask(
         id = update.taskId,
-        startedAt = DateTime.parse(update.timestamp),
+        startedAt = update.timestamp,
         completedAt = None,
-        status = update.taskStatus
+        state = update.taskState
       )
     }
 
     jobRun.tasks + (updatedTask.id -> updatedTask)
   }
 
-  def becomeFinishing(update: MesosStatusUpdateEvent): Unit = {
-    launchQueue.purge(runSpec.id)
-    jobRun = jobRun.copy(
-      status = JobRunStatus.Success,
-      tasks = updatedTasks(update),
-      finishedAt = Some(DateTime.parse(update.timestamp))
-    )
+  def becomeFinishing(updatedJobRun: JobRun): Unit = {
+    launchQueue.purge(runSpecId)
+    jobRun = updatedJobRun
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
 
@@ -115,35 +127,40 @@ class JobRunExecutorActor(
     context.become(finishing)
   }
 
-  def continueOrBecomeFailing(update: MesosStatusUpdateEvent): Unit = {
+  def continueOrBecomeFailing(update: TaskStateChangedEvent): Unit = {
     def inTime: Boolean = jobRun.jobSpec.run.restart.activeDeadline.fold(true) { deadline =>
       jobRun.createdAt.plus(deadline.toMillis).getMillis > clock.now().getMillis
     }
     jobRun.jobSpec.run.restart.policy match {
       case RestartPolicy.OnFailure if inTime =>
         log.info("still in time, launching another task")
-        launchQueue.add(runSpec, 1)
+        addTaskToLaunchQueue()
 
       case _ =>
-        launchQueue.purge(runSpec.id)
-        jobRun = jobRun.copy(status = JobRunStatus.Failed, tasks = updatedTasks(update))
-        persistenceActor ! Delete(jobRun)
-
-        log.info("become failing")
-        context.become(failing)
+        becomeFailing(jobRun.copy(status = JobRunStatus.Failed, tasks = updatedTasks(update)))
     }
+  }
+
+  // FIXME: compare to becomeFinishing, there's lots of DRY violation
+  def becomeFailing(updatedJobRun: JobRun): Unit = {
+    launchQueue.purge(runSpecId)
+    jobRun = updatedJobRun
+    context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
+    persistenceActor ! Delete(jobRun)
+
+    log.info("become failing")
+    context.become(failing)
   }
 
   def becomeAborting(): Unit = {
     log.info(s"Execution of JobRun ${jobRun.id} has been aborted")
     // kill all running tasks
-    jobRun.tasks.values.filter(t => isActive(t.status)).foreach { t =>
+    jobRun.tasks.values.filter(t => isActive(t.state)).foreach { t =>
       driverHolder.driver.foreach(_.killTask(t.id.mesosTaskId))
     }
-    launchQueue.purge(runSpec.id)
+    launchQueue.purge(runSpecId)
 
     // Abort the jobRun
-    // TODO: JobRunStatus.Aborted?
     jobRun = jobRun.copy(status = JobRunStatus.Failed)
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
@@ -155,9 +172,27 @@ class JobRunExecutorActor(
   // Behavior
 
   override def receive: Receive = around {
-    receiveKill orElse {
-      case msg: Any => log.warning("Cannot handle {}; not initialized.", msg)
-    }
+    case Initialized(Nil) =>
+      log.info("initializing - no existing tasks in the queue")
+      becomeStarting(jobRun)
+      unstashAll()
+
+    case Initialized(tasks) =>
+      log.info("initializing - found existing tasks in the queue")
+      // sync the state with loaded tasks
+      // since the task tracker only stores active tasks, we don't remove anything here
+      tasks.foreach { task =>
+        jobRun.tasks + (task.id -> task)
+      }
+      if (tasks.exists(t => isActive(t.state))) {
+        // the actor is already active, so don't transition to active, just switch
+        context.become(active)
+      } else {
+        becomeStarting(jobRun)
+      }
+      unstashAll()
+
+    case _ => stash()
   }
 
   def receiveKill: Receive = {
@@ -168,8 +203,8 @@ class JobRunExecutorActor(
 
   def creating: Receive = around {
     receiveKill orElse {
-      case JobRunCreated(_, persisted, _) =>
-        becomeStarting(persisted)
+      case JobRunCreated(_, updatedJobRun, _) =>
+        becomeStarting(updatedJobRun)
 
       case PersistFailed(_, id, ex, _) =>
         becomeAborting()
@@ -178,13 +213,17 @@ class JobRunExecutorActor(
 
   def starting: Receive = around {
     receiveKill orElse {
-      case ForwardStatusUpdate(update) if isActive(update) =>
+      case ForwardStatusUpdate(update) if isActive(update.taskState) =>
         becomeActive(update)
 
-      case ForwardStatusUpdate(update) if isFinished(update) =>
-        becomeFinishing(update)
+      case ForwardStatusUpdate(update) if isFinished(update.taskState) =>
+        becomeFinishing(jobRun.copy(
+          status = JobRunStatus.Success,
+          tasks = updatedTasks(update),
+          finishedAt = Some(update.timestamp)
+        ))
 
-      case ForwardStatusUpdate(update) if isFailed(update) =>
+      case ForwardStatusUpdate(update) if isFailed(update.taskState) =>
         continueOrBecomeFailing(update)
 
       case JobRunUpdated(_, persisted, _) =>
@@ -197,10 +236,14 @@ class JobRunExecutorActor(
 
   def active: Receive = around {
     receiveKill orElse {
-      case ForwardStatusUpdate(update) if isFinished(update) =>
-        becomeFinishing(update)
+      case ForwardStatusUpdate(update) if isFinished(update.taskState) =>
+        becomeFinishing(jobRun.copy(
+          status = JobRunStatus.Success,
+          tasks = updatedTasks(update),
+          finishedAt = Some(update.timestamp)
+        ))
 
-      case ForwardStatusUpdate(update) if isFailed(update) =>
+      case ForwardStatusUpdate(update) if isFailed(update.taskState) =>
         continueOrBecomeFailing(update)
 
       case JobRunUpdated(_, persisted, _) => log.debug(s"JobRun ${persisted.id} has been persisted")
@@ -272,6 +315,8 @@ class JobRunExecutorActor(
 
 object JobRunExecutorActor {
 
+  case class Initialized(tasks: Iterable[JobRunTask])
+
   case object KillCurrentJobRun
   case class JobRunUpdate(startedJobRun: StartedJobRun)
 
@@ -279,34 +324,28 @@ object JobRunExecutorActor {
   case class Failed(jobResult: JobResult)
   case class Aborted(jobResult: JobResult)
 
-  case class ForwardStatusUpdate(update: MesosStatusUpdateEvent)
+  case class ForwardStatusUpdate(update: TaskStateChangedEvent)
 
   def props(
     run:                        JobRun,
     promise:                    Promise[JobResult],
     persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
     launchQueue:                LaunchQueue,
+    taskTracker:                TaskTracker,
     driverHolder:               MarathonSchedulerDriverHolder,
     clock:                      Clock,
     behavior:                   Behavior
   ): Props = Props(
-    new JobRunExecutorActor(run, promise, persistenceActorRefFactory, launchQueue, driverHolder, clock, behavior)
+    new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
+      launchQueue, taskTracker, driverHolder, clock, behavior)
   )
 }
 
 object TaskStates {
-  import mesos.Protos.TaskState._
+  import dcos.metronome.scheduler.TaskState
 
-  private[this] def asTaskState(value: String): Option[mesos.Protos.TaskState] =
-    Try { mesos.Protos.TaskState.valueOf(value) }.toOption
-
-  private[this] val active = Set(TASK_STAGING, TASK_STARTING, TASK_RUNNING)
-  def isActive(taskStatus: String): Boolean = asTaskState(taskStatus).fold(false)(active)
-  def isActive(event: MesosStatusUpdateEvent): Boolean = isActive(event.taskStatus)
-
-  private[this] val failed = Set(TASK_ERROR, TASK_FAILED, TASK_LOST)
-  def isFailed(event: MesosStatusUpdateEvent): Boolean = asTaskState(event.taskStatus).fold(false)(failed)
-
-  def isFinished(event: MesosStatusUpdateEvent): Boolean =
-    asTaskState(event.taskStatus).fold(false)(_ == mesos.Protos.TaskState.TASK_FINISHED)
+  private[this] val active = Set[TaskState](TaskState.Staging, TaskState.Starting, TaskState.Running)
+  def isActive(taskState: TaskState): Boolean = active(taskState)
+  def isFailed(taskState: TaskState): Boolean = taskState == TaskState.Failed
+  def isFinished(taskState: TaskState): Boolean = taskState == TaskState.Finished
 }

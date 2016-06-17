@@ -34,7 +34,7 @@ class JobInfoServiceImpl(jobSpecService: JobSpecService, jobRunService: JobRunSe
           Map.empty[PathId, Seq[StartedJobRun]]
       val histories =
         if (embed(Embed.History))
-          await(jobHistoryService.list(history => allIds(history.id))).map(history => history.id -> history).toMap
+          await(jobHistoryService.list(history => allIds(history.jobSpecId))).map(history => history.jobSpecId -> history).toMap
         else
           Map.empty[PathId, JobHistory]
       specs.map { spec =>
