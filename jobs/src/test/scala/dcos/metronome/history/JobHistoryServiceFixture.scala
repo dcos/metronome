@@ -8,7 +8,7 @@ import scala.concurrent.Future
 object JobHistoryServiceFixture {
 
   def simpleHistoryService(seq: Seq[JobHistory]): JobHistoryService = new JobHistoryService {
-    private val lookup = seq.map(h => h.id -> h).toMap
+    private val lookup: Map[PathId, JobHistory] = seq.map(h => h.id -> h)(collection.breakOut)
 
     override def statusFor(jobSpecId: PathId): Future[Option[JobHistory]] = {
       Future.successful(lookup.get(jobSpecId))

@@ -17,9 +17,8 @@ class JobInfoServiceImpl(jobSpecService: JobSpecService, jobRunService: JobRunSe
     async {
       val runOption = if (embed(Embed.ActiveRuns)) Some(await(jobRunService.activeRuns(jobSpecId))) else None
       val historyOption = if (embed(Embed.History)) await(jobHistoryService.statusFor(jobSpecId)) else None
-      def scheduleOption(jobSpec: JobSpec) = if (embed(Embed.Schedules)) Some(jobSpec.schedules) else None
       await(jobSpecService.getJobSpec(jobSpecId)).filter(selector.matches).map { jobSpec =>
-        JobInfo(jobSpec, scheduleOption(jobSpec), runOption, historyOption)
+        JobInfo(jobSpec, schedulesOption(jobSpec, embed), runOption, historyOption)
       }
     }
   }
@@ -38,10 +37,12 @@ class JobInfoServiceImpl(jobSpecService: JobSpecService, jobRunService: JobRunSe
           await(jobHistoryService.list(history => allIds(history.id))).map(history => history.id -> history).toMap
         else
           Map.empty[PathId, JobHistory]
-      def schedule(spec: JobSpec) = if (embed(Embed.Schedules)) Some(spec.schedules) else None
       specs.map { spec =>
-        JobInfo(spec, schedule(spec), runs.get(spec.id), histories.get(spec.id))
+        JobInfo(spec, schedulesOption(spec, embed), runs.get(spec.id), histories.get(spec.id))
       }
     }
+  }
+  private[this] def schedulesOption(spec: JobSpec, embed: Set[Embed]) = {
+    if (embed(Embed.Schedules)) Some(spec.schedules) else None
   }
 }
