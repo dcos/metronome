@@ -4,8 +4,10 @@ import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.health.HealthCheckRegistry
 import com.softwaremill.macwire._
 import controllers.Assets
+import dcos.metronome.scheduler.SchedulerModule
 import dcos.metronome.api.v1.LeaderProxyFilter
 import dcos.metronome.api.{ ApiConfig, ApiModule, ErrorHandler }
+import dcos.metronome.repository.impl.kv.ZkConfig
 import dcos.metronome.utils.time.{ Clock, SystemClock }
 import mesosphere.marathon.AllConf
 import org.asynchttpclient.AsyncHttpClientConfig
@@ -86,6 +88,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
   lazy val config = new Object with JobsConfig with ApiConfig {
 
     lazy val master: String = "localhost:5050"
+
     lazy val pluginDir: Option[String] = configuration.getString("app.plugin.dir")
     lazy val pluginConf: Option[String] = configuration.getString("app.plugin.conf")
     lazy val runHistoryCount: Int = configuration.getInt("app.history.count").getOrElse(10)
@@ -97,19 +100,35 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     lazy val hostname: String = configuration.getString("app.hostname").getOrElse(java.net.InetAddress.getLocalHost.getHostName)
     lazy val leaderProxyTimeout: Duration = configuration.getLong("app.leaderproxy.timeout").getOrElse(30000l).millis
 
+    override lazy val zkURL: String = configuration.getString("app.zk.url").getOrElse(ZkConfig.DEFAULT_ZK_URL)
+    override lazy val zkSessionTimeout: FiniteDuration = configuration.getLong("app.zk.session_timeout")
+      .map(_.millis)
+      .getOrElse(ZkConfig.DEFAULT_ZK_SESSION_TIMEOUT)
+    override lazy val zkTimeout: FiniteDuration = configuration.getLong("app.zk.timeout")
+      .map(_.millis)
+      .getOrElse(ZkConfig.DEFAULT_ZK_TIMEOUT)
+    override lazy val zkCompressionEnabled: Boolean = configuration.getBoolean("app.zk.compression.enabled")
+      .getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_ENABLED)
+    override lazy val zkCompressionThreshold: Long = configuration.getLong("app.zk.compression.threshold")
+      .getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_THRESHOLD)
+
     lazy val scallopConf: AllConf = {
       val flags = Seq[Option[String]](
-        if (disableHttp) Some("--disable_http") else None
+        if (disableHttp) Some("--disable_http") else None,
+        if (zkCompressionEnabled) Some("--zk_compression") else None
       )
       val options = Map[String, Option[String]](
         "--framework_name" -> Some("metronome"),
         "--master" -> Some(master),
         "--plugin_dir" -> pluginDir,
         "--plugin_conf" -> pluginConf,
-        "--zk" -> Some("zk://localhost:2181/metronome"),
         "--http_port" -> Some(httpPort.toString),
         "--https_port" -> Some(httpsPort.toString),
-        "--hostname" -> Some(hostname)
+        "--hostname" -> Some(hostname),
+        "--zk" -> Some(zkURL),
+        "--zk_session_timeout" -> Some(zkSessionTimeout.toMillis.toString),
+        "--zk_timeout" -> Some(zkTimeout.toMillis.toString),
+        "--zk_compression_threshold" -> Some(zkCompressionThreshold.toString)
       )
         .collect { case (name, Some(value)) => (name, value) }
         .flatMap { case (name, value) => Seq(name, value) }
@@ -117,7 +136,6 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     }
 
     //TODO: those values need to be configured via play - not the other way around
-    lazy val zkTimeoutDuration: FiniteDuration = scallopConf.zkTimeoutDuration
     lazy val mesosLeaderUiUrl: Option[String] = scallopConf.mesosLeaderUiUrl.get
   }
 }

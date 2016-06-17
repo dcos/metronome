@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 
 import scala.collection.immutable.Seq
-import scala.collection.mutable.Buffer
+import scala.collection.mutable
 
 object JobSpecMarshaller extends EntityMarshaller[JobSpec] {
   val log = LoggerFactory.getLogger(JobSpecMarshaller.getClass)
@@ -32,7 +32,7 @@ object JobSpecMarshaller extends EntityMarshaller[JobSpec] {
 }
 
 object JobSpecConversions {
-  implicit class JobSpecToProto(jobSpec: JobSpec) {
+  implicit class JobSpecToProto(val jobSpec: JobSpec) extends AnyVal {
     def toProto: Protos.JobSpec = {
       import RunSpecConversions.RunSpecToProto
 
@@ -50,7 +50,7 @@ object JobSpecConversions {
     }
   }
 
-  implicit class ProtoToJobSpec(proto: Protos.JobSpec) {
+  implicit class ProtoToJobSpec(val proto: Protos.JobSpec) extends AnyVal {
     def toModel: JobSpec = {
       import RunSpecConversions.ProtoToRunSpec
 
@@ -66,7 +66,7 @@ object JobSpecConversions {
     }
   }
 
-  implicit class LabelsToProto(labels: Map[String, String]) {
+  implicit class LabelsToProto(val labels: Map[String, String]) extends AnyVal {
     def toProto: Iterable[Protos.Label] = labels.map {
       case (key, value) =>
         Protos.Label.newBuilder()
@@ -76,13 +76,13 @@ object JobSpecConversions {
     }
   }
 
-  implicit class ProtoToLabels(labels: Buffer[Protos.Label]) {
+  implicit class ProtoToLabels(val labels: mutable.Buffer[Protos.Label]) extends AnyVal {
     def toModel: Map[String, String] = labels.map { label =>
       label.getKey -> label.getValue
     }.toMap
   }
 
-  implicit class ScheduleSpecsToProto(schedules: Seq[ScheduleSpec]) {
+  implicit class ScheduleSpecsToProto(val schedules: Seq[ScheduleSpec]) extends AnyVal {
     def toProto: Seq[Protos.JobSpec.ScheduleSpec] = schedules.map { schedule =>
       Protos.JobSpec.ScheduleSpec.newBuilder()
         .setId(schedule.id)
@@ -99,7 +99,7 @@ object JobSpecConversions {
     }
   }
 
-  implicit class ProtoToScheduleSpec(schedules: Buffer[Protos.JobSpec.ScheduleSpec]) {
+  implicit class ProtoToScheduleSpec(val schedules: mutable.Buffer[Protos.JobSpec.ScheduleSpec]) extends AnyVal {
     def toModel: Seq[ScheduleSpec] = {
       import scala.concurrent.duration._
 
@@ -109,7 +109,7 @@ object JobSpecConversions {
           cron = CronSpec(schedule.getSchedule),
           timeZone = DateTimeZone.forID(schedule.getTz),
           startingDeadline = schedule.getStartingDeadline.seconds,
-          concurrencyPolicy = ConcurrencyPolicy.unapply(schedule.getConcurrencyPolicy.toString).get,
+          concurrencyPolicy = ConcurrencyPolicy.names(schedule.getConcurrencyPolicy.toString),
           enabled = schedule.getEnabled
         )
       }.toList
@@ -118,7 +118,7 @@ object JobSpecConversions {
 }
 
 object RunSpecConversions {
-  implicit class RunSpecToProto(runSpec: JobRunSpec) {
+  implicit class RunSpecToProto(val runSpec: JobRunSpec) extends AnyVal {
     def toProto: Protos.JobSpec.RunSpec = {
       val builder = Protos.JobSpec.RunSpec.newBuilder()
 
@@ -142,7 +142,7 @@ object RunSpecConversions {
     }
   }
 
-  implicit class ProtoToRunSpec(runSpec: Protos.JobSpec.RunSpec) {
+  implicit class ProtoToRunSpec(val runSpec: Protos.JobSpec.RunSpec) extends AnyVal {
     def toModel: JobRunSpec = {
       import scala.concurrent.duration._
 
@@ -169,7 +169,7 @@ object RunSpecConversions {
     }
   }
 
-  implicit class RestartSpecToProto(restart: RestartSpec) {
+  implicit class RestartSpecToProto(val restart: RestartSpec) extends AnyVal {
     def toProto: Protos.JobSpec.RunSpec.RestartSpec = {
       val builder = Protos.JobSpec.RunSpec.RestartSpec.newBuilder
 
@@ -183,17 +183,17 @@ object RunSpecConversions {
     }
   }
 
-  implicit class ProtoToRestartSpec(restart: Protos.JobSpec.RunSpec.RestartSpec) {
+  implicit class ProtoToRestartSpec(val restart: Protos.JobSpec.RunSpec.RestartSpec) extends AnyVal {
     def toModel: RestartSpec = {
       import scala.concurrent.duration._
 
       val activeDeadline = if (restart.hasActiveDeadline) Some(restart.getActiveDeadline.seconds) else None
 
-      RestartSpec(policy = RestartPolicy.unapply(restart.getPolicy.toString).get, activeDeadline = activeDeadline)
+      RestartSpec(policy = RestartPolicy.names(restart.getPolicy.toString), activeDeadline = activeDeadline)
     }
   }
 
-  implicit class VolumesToProto(volumes: Seq[Volume]) {
+  implicit class VolumesToProto(val volumes: Seq[Volume]) extends AnyVal {
     def toProto: Iterable[Protos.JobSpec.RunSpec.Volume] = volumes.map { volume =>
       Protos.JobSpec.RunSpec.Volume.newBuilder()
         .setContainerPath(volume.containerPath)
@@ -205,17 +205,17 @@ object RunSpecConversions {
     }
   }
 
-  implicit class ProtoToVolumes(volumes: Buffer[Protos.JobSpec.RunSpec.Volume]) {
+  implicit class ProtoToVolumes(val volumes: mutable.Buffer[Protos.JobSpec.RunSpec.Volume]) extends AnyVal {
     def toModel: Seq[Volume] = volumes.map { volume =>
       Volume(
         containerPath = volume.getContainerPath,
         hostPath = volume.getHostPath,
-        mode = Mode.unapply(volume.getMode.toString).get
+        mode = Mode.names(volume.getMode.toString)
       )
     }.toList
   }
 
-  implicit class PlacementSpecToProto(placement: PlacementSpec) {
+  implicit class PlacementSpecToProto(val placement: PlacementSpec) extends AnyVal {
     def toProto: Protos.JobSpec.RunSpec.PlacementSpec = {
       Protos.JobSpec.RunSpec.PlacementSpec.newBuilder()
         .addAllConstraints(placement.constraints.toProto.asJava)
@@ -223,11 +223,11 @@ object RunSpecConversions {
     }
   }
 
-  implicit class ProtoToPlacementSpec(placementSpec: Protos.JobSpec.RunSpec.PlacementSpec) {
+  implicit class ProtoToPlacementSpec(val placementSpec: Protos.JobSpec.RunSpec.PlacementSpec) extends AnyVal {
     def toModel: PlacementSpec = PlacementSpec(constraints = placementSpec.getConstraintsList.asScala.toModel)
   }
 
-  implicit class ConstraintsToProto(constraints: Seq[ConstraintSpec]) {
+  implicit class ConstraintsToProto(val constraints: Seq[ConstraintSpec]) extends AnyVal {
     def toProto: Iterable[Protos.JobSpec.RunSpec.PlacementSpec.Constraint] = constraints.map { constraint =>
       val builder = Protos.JobSpec.RunSpec.PlacementSpec.Constraint.newBuilder
 
@@ -242,18 +242,18 @@ object RunSpecConversions {
     }
   }
 
-  implicit class ProtosToConstraintSpec(constraints: Buffer[Protos.JobSpec.RunSpec.PlacementSpec.Constraint]) {
+  implicit class ProtosToConstraintSpec(val constraints: mutable.Buffer[Protos.JobSpec.RunSpec.PlacementSpec.Constraint]) extends AnyVal {
     def toModel: Seq[ConstraintSpec] = constraints.map { constraint =>
       val value = if (constraint.hasValue) Some(constraint.getValue) else None
       ConstraintSpec(
         attribute = constraint.getAttribute,
-        operator = Operator.unapply(constraint.getOperator.toString).get,
+        operator = Operator.names(constraint.getOperator.toString),
         value = value
       )
     }.toList
   }
 
-  implicit class ArtifactsToProto(artifacts: Seq[Artifact]) {
+  implicit class ArtifactsToProto(val artifacts: Seq[Artifact]) extends AnyVal {
     def toProto: Iterable[Protos.JobSpec.RunSpec.Artifact] = artifacts.map { artifact =>
       Protos.JobSpec.RunSpec.Artifact.newBuilder()
         .setUrl(artifact.uri)
@@ -264,7 +264,7 @@ object RunSpecConversions {
     }
   }
 
-  implicit class ProtosToArtifacts(artifacts: Buffer[Protos.JobSpec.RunSpec.Artifact]) {
+  implicit class ProtosToArtifacts(val artifacts: mutable.Buffer[Protos.JobSpec.RunSpec.Artifact]) extends AnyVal {
     def toModel: Seq[Artifact] = artifacts.map { artifact =>
       Artifact(
         uri = artifact.getUrl,
@@ -275,17 +275,17 @@ object RunSpecConversions {
     }.toList
   }
 
-  implicit class DockerSpecToProto(dockerSpec: DockerSpec) {
+  implicit class DockerSpecToProto(val dockerSpec: DockerSpec) extends AnyVal {
     def toProto: Protos.JobSpec.RunSpec.DockerSpec = {
       Protos.JobSpec.RunSpec.DockerSpec.newBuilder().setImage(dockerSpec.image).build()
     }
   }
 
-  implicit class ProtoToDockerSpec(dockerSpec: Protos.JobSpec.RunSpec.DockerSpec) {
+  implicit class ProtoToDockerSpec(val dockerSpec: Protos.JobSpec.RunSpec.DockerSpec) extends AnyVal {
     def toModel: DockerSpec = DockerSpec(image = dockerSpec.getImage)
   }
 
-  implicit class EnvironmentToProto(environment: Map[String, String]) {
+  implicit class EnvironmentToProto(val environment: Map[String, String]) extends AnyVal {
     def toProto: Iterable[Protos.JobSpec.RunSpec.EnvironmentVariable] = environment.map {
       case (key, value) =>
         Protos.JobSpec.RunSpec.EnvironmentVariable.newBuilder()
@@ -295,7 +295,7 @@ object RunSpecConversions {
     }
   }
 
-  implicit class ProtosToEnvironment(environmentVariables: Buffer[Protos.JobSpec.RunSpec.EnvironmentVariable]) {
+  implicit class ProtosToEnvironment(val environmentVariables: mutable.Buffer[Protos.JobSpec.RunSpec.EnvironmentVariable]) extends AnyVal {
     def toModel: Map[String, String] = environmentVariables.map { environmentVariable =>
       environmentVariable.getKey -> environmentVariable.getValue
     }.toMap

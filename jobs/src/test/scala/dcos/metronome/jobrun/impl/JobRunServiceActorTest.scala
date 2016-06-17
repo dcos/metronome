@@ -21,7 +21,8 @@ import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import scala.concurrent.{ Future, Promise }
 import scala.collection.immutable.Seq
 
-class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteLike with BeforeAndAfterAll with GivenWhenThen with ScalaFutures with Matchers with Eventually with ImplicitSender with Mockito {
+class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteLike with BeforeAndAfterAll
+    with GivenWhenThen with ScalaFutures with Matchers with Eventually with ImplicitSender with Mockito {
 
   test("List runs will list all running services") {
     Given("A service with 2 jobRuns")

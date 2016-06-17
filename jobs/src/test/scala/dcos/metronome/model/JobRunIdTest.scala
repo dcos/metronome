@@ -15,7 +15,7 @@ class JobRunIdTest extends FunSuite with Matchers with Mockito with GivenWhenThe
     val jobRunId = JobRunId(appId)
 
     Then("It is broken apart correctly")
-    jobRunId.jobSpecId shouldEqual PathId("test")
+    jobRunId.jobId shouldEqual PathId("test")
     jobRunId.value shouldEqual "20160614133813ap8ZQ"
   }
 
@@ -27,7 +27,7 @@ class JobRunIdTest extends FunSuite with Matchers with Mockito with GivenWhenThe
     val jobRunId = JobRunId(appId)
 
     Then("It is broken apart correctly")
-    jobRunId.jobSpecId shouldEqual PathId("test/foo")
+    jobRunId.jobId shouldEqual PathId("test/foo")
     jobRunId.value shouldEqual "20160614133813ap8ZQ"
   }
 }

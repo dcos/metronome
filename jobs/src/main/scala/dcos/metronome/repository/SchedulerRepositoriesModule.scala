@@ -5,14 +5,11 @@ import java.util.UUID
 
 import com.twitter.common.quantity.{ Amount, Time }
 import com.twitter.common.zookeeper.ZooKeeperClient
-import com.twitter.util.JavaTimer
-import com.twitter.zk.{ AuthInfo, NativeConnector, ZkClient }
-import dcos.metronome.{ JobsConfig, MetricsModule }
 import dcos.metronome.migration.Migration
 import dcos.metronome.migration.impl.MigrationImpl
+import dcos.metronome.{ JobsConfig, MetricsModule }
 import mesosphere.marathon.Protos.MarathonTask
 import mesosphere.marathon.state.{ AppDefinition, AppRepository, EntityStoreCache, Group, GroupRepository, MarathonStore, MarathonTaskState, TaskRepository }
-import mesosphere.util.state.zk.{ CompressionConf, ZKStore }
 import mesosphere.util.state.{ FrameworkId, PersistentStore }
 import org.apache.zookeeper.KeeperException
 import org.slf4j.LoggerFactory
@@ -21,22 +18,22 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ Await, Future }
 
 // FIXME: use a dedicated conf object
-class SchedulerRepositoriesModule(config: JobsConfig) {
+class SchedulerRepositoriesModule(config: JobsConfig, repositoryModule: RepositoryModule) {
   import SchedulerRepositoriesModule._
 
   private[this] lazy val metricsModule = new MetricsModule()
   private[this] lazy val metrics = metricsModule.metrics
+  private[this] lazy val marathonConf = config.scallopConf
 
-  private[this] val conf = config.scallopConf
   lazy val zk: ZooKeeperClient = {
     require(
-      conf.zooKeeperSessionTimeout() < Integer.MAX_VALUE,
+      marathonConf.zooKeeperSessionTimeout() < Integer.MAX_VALUE,
       "ZooKeeper timeout too large!"
     )
 
     val client = new ZooKeeperLeaderElectionClient(
-      Amount.of(conf.zooKeeperSessionTimeout().toInt, Time.MILLISECONDS),
-      conf.zooKeeperHostAddresses.asJavaCollection
+      Amount.of(marathonConf.zooKeeperSessionTimeout().toInt, Time.MILLISECONDS),
+      config.zkHostAddresses.asJavaCollection
     )
 
     // Marathon can't do anything useful without a ZK connection
@@ -56,23 +53,7 @@ class SchedulerRepositoriesModule(config: JobsConfig) {
     client
   }
 
-  private[this] lazy val persistentStore: PersistentStore = {
-    import com.twitter.util.TimeConversions._
-    val sessionTimeout = conf.zooKeeperSessionTimeout().millis
-
-    val authInfo = (conf.zkUsername, conf.zkPassword) match {
-      case (Some(user), Some(pass)) => Some(AuthInfo.digest(user, pass))
-      case _                        => None
-    }
-
-    val connector = NativeConnector(conf.zkHosts, None, sessionTimeout, new JavaTimer(isDaemon = true), authInfo)
-
-    val client = ZkClient(connector)
-      .withAcl(conf.zkDefaultCreationACL.asScala)
-      .withRetries(3)
-    val compressionConf = CompressionConf(conf.zooKeeperCompressionEnabled(), conf.zooKeeperCompressionThreshold())
-    new ZKStore(client, client(conf.zooKeeperStatePath), compressionConf)
-  }
+  private[this] lazy val persistentStore: PersistentStore = repositoryModule.zkStore
 
   lazy val taskStore = new MarathonStore[MarathonTaskState](
     persistentStore,
@@ -89,13 +70,17 @@ class SchedulerRepositoriesModule(config: JobsConfig) {
     prefix = "group:",
     newState = () => Group.empty
   )
-  lazy val groupRepository: GroupRepository = new GroupRepository(groupStore, conf.zooKeeperMaxVersions.get, metrics)
+  lazy val groupRepository: GroupRepository = new GroupRepository(
+    groupStore,
+    marathonConf.zooKeeperMaxVersions.get,
+    metrics
+  )
 
   lazy val frameworkIdStore = {
     val newState = () => new FrameworkId(UUID.randomUUID().toString)
     val prefix = "framework:"
     val marathonStore = new MarathonStore[FrameworkId](persistentStore, metrics, newState, prefix)
-    if (conf.storeCache()) new EntityStoreCache[FrameworkId](marathonStore) else marathonStore
+    if (marathonConf.storeCache()) new EntityStoreCache[FrameworkId](marathonStore) else marathonStore
   }
 
   lazy val appStore = new MarathonStore[AppDefinition](
@@ -104,7 +89,7 @@ class SchedulerRepositoriesModule(config: JobsConfig) {
     prefix = "app:",
     newState = () => AppDefinition.apply()
   )
-  lazy val appRepository: AppRepository = new AppRepository(appStore, maxVersions = conf.zooKeeperMaxVersions.get, metrics)
+  lazy val appRepository: AppRepository = new AppRepository(appStore, marathonConf.zooKeeperMaxVersions.get, metrics)
 
   lazy val migration: Migration = new MigrationImpl(persistentStore)
 }

@@ -22,19 +22,27 @@ class JobsModule(
 
   lazy val behaviorModule = new BehaviorModule(config, schedulerModule.metricsModule.metricsRegistry, schedulerModule.metricsModule.healthCheckRegistry)
 
-  lazy val repositoryModule = new RepositoryModule()
+  lazy val repositoryModule = new RepositoryModule(config)
 
-  lazy val schedulerRepositoriesModule = new SchedulerRepositoriesModule(config)
+  lazy val schedulerRepositoriesModule = new SchedulerRepositoriesModule(config, repositoryModule)
 
   lazy val schedulerModule: SchedulerModule = new SchedulerModule(config, actorSystem, clock, schedulerRepositoriesModule)
 
   lazy val jobRunModule = {
     val launchQueue = schedulerModule.launchQueueModule.launchQueue
     val driverHolder = schedulerModule.schedulerDriverHolder
-    new JobRunModule(config, actorSystem, clock, repositoryModule.jobRunRepository, launchQueue, driverHolder, behaviorModule.behavior)
+    new JobRunModule(config, actorSystem, clock, repositoryModule.jobRunRepository, launchQueue, driverHolder, behaviorModule.behavior, schedulerModule.leadershipModule)
   }
 
-  lazy val jobSpecModule = new JobSpecModule(config, actorSystem, clock, repositoryModule.jobSpecRepository, jobRunModule.jobRunService, behaviorModule.behavior)
+  lazy val jobSpecModule = new JobSpecModule(
+    config,
+    actorSystem,
+    clock,
+    repositoryModule.jobSpecRepository,
+    jobRunModule.jobRunService,
+    behaviorModule.behavior,
+    schedulerModule.leadershipModule
+  )
 
   lazy val jobHistoryModule = new JobHistoryModule(config, actorSystem, clock, repositoryModule.jobHistoryRepository, behaviorModule.behavior)
 

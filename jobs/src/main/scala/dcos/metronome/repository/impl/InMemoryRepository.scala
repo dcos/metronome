@@ -15,7 +15,7 @@ class InMemoryRepository[Id, Model] extends Repository[Id, Model] {
 
   val models: TrieMap[Id, Model] = TrieMap.empty[Id, Model]
 
-  override def all(): Future[Iterable[Id]] = Future.successful(models.keys)
+  override def ids(): Future[Iterable[Id]] = Future.successful(models.keys)
 
   override def update(id: Id, change: (Model) => Model): Future[Model] = {
     models.get(id) match {

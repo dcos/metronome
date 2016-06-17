@@ -3,7 +3,7 @@ package dcos.metronome.history.impl
 import akka.actor.{ ActorLogging, ActorRef, Props, Actor }
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.history.JobHistoryConfig
-import dcos.metronome.model.{ RunInfo, JobRun, Event, JobHistory }
+import dcos.metronome.model.{ JobRunInfo, JobRun, Event, JobHistory }
 import dcos.metronome.repository.{ Repository, LoadContentOnStartup }
 import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.state.PathId
@@ -16,7 +16,7 @@ class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: R
   import JobHistoryServiceActor._
   import JobHistoryPersistenceActor._
 
-  val statusMap = TrieMap.empty[PathId, JobHistory].withDefault(JobHistory.empty)
+  val jobHistoryMap = TrieMap.empty[PathId, JobHistory].withDefault(JobHistory.empty)
   var persistenceActor: ActorRef = _
 
   override def preStart(): Unit = {
@@ -31,60 +31,60 @@ class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: R
 
   override def receive: Receive = around {
     //event stream events
-    case Event.JobRunStarted(run, _, _)  => started(run)
-    case Event.JobRunFinished(run, _, _) => finished(run)
-    case Event.JobRunFailed(run, _, _)   => failed(run)
-    case Event.JobRunUpdate(run, _, _)   => //ignore
+    case Event.JobRunStarted(run, _, _)      => started(run)
+    case Event.JobRunFinished(run, _, _)     => finished(run)
+    case Event.JobRunFailed(run, _, _)       => failed(run)
+    case Event.JobRunUpdate(run, _, _)       => //ignore
 
     //service events
-    case GetJobStatus(id, promise)       => promise.success(statusMap.get(id))
-    case ListJobStatus(filter, promise)  => promise.success(statusMap.values.filter(filter))
+    case GetJobHistory(id, promise)          => promise.success(jobHistoryMap.get(id))
+    case ListJobHistories(filter, promise)   => promise.success(jobHistoryMap.values.filter(filter))
 
     //persistence events
-    case JobHistoryCreated(_, status, _) => statusMap += status.id -> status
-    case JobHistoryUpdated(_, status, _) => statusMap += status.id -> status
-    case JobHistoryDeleted(_, status, _) => statusMap -= status.id
-    case PersistFailed(_, id, ex, _)     => log.error(ex, s"Could not persist JobStatus for $id")
+    case JobHistoryCreated(_, jobHistory, _) => jobHistoryMap += jobHistory.jobSpecId -> jobHistory
+    case JobHistoryUpdated(_, jobHistory, _) => jobHistoryMap += jobHistory.jobSpecId -> jobHistory
+    case JobHistoryDeleted(_, jobHistory, _) => jobHistoryMap -= jobHistory.jobSpecId
+    case PersistFailed(_, id, ex, _)         => log.error(ex, s"Could not persist JobHistory for $id")
   }
 
   def started(run: JobRun): Unit = {
     log.debug(s"JobRun: ${run.id} has been reported started.")
-    val id = run.jobSpec.id
-    if (!statusMap.contains(id)) persistenceActor ! Create(id, JobHistory.empty(id))
+    val id = run.id.jobId
+    if (!jobHistoryMap.contains(id)) persistenceActor ! Create(id, JobHistory.empty(id))
   }
 
   def finished(run: JobRun): Unit = {
     log.debug(s"JobRun: ${run.id} has been reported finished successfully.")
-    def update(status: JobHistory): JobHistory = status.copy(
-      successCount = status.successCount + 1,
+    def update(jobHistory: JobHistory): JobHistory = jobHistory.copy(
+      successCount = jobHistory.successCount + 1,
       lastSuccessAt = Some(clock.now()),
-      successfulFinishedRuns = runHistory(run, status.successfulFinishedRuns)
+      successfulRuns = runHistory(run, jobHistory.successfulRuns)
     )
-    persistenceActor ! Update(run.jobSpec.id, update)
+    persistenceActor ! Update(run.id.jobId, update)
   }
 
   def failed(run: JobRun): Unit = {
     log.debug(s"JobRun: ${run.id} has been reported failed.")
-    def update(status: JobHistory): JobHistory = status.copy(
-      failureCount = status.failureCount + 1,
+    def update(jobHistory: JobHistory): JobHistory = jobHistory.copy(
+      failureCount = jobHistory.failureCount + 1,
       lastFailureAt = Some(clock.now()),
-      failedFinishedRuns = runHistory(run, status.failedFinishedRuns)
+      failedRuns = runHistory(run, jobHistory.failedRuns)
     )
-    persistenceActor ! Update(run.jobSpec.id, update)
+    persistenceActor ! Update(run.id.jobId, update)
   }
 
-  def runHistory(run: JobRun, seq: Seq[RunInfo]): Seq[RunInfo] = {
-    (RunInfo(run) +: seq).take(config.runHistoryCount)
+  def runHistory(run: JobRun, seq: Seq[JobRunInfo]): Seq[JobRunInfo] = {
+    (JobRunInfo(run) +: seq).take(config.runHistoryCount)
   }
 
   override def initialize(all: List[JobHistory]): Unit = {
-    all.foreach(a => statusMap += a.id -> a)
+    all.foreach(a => jobHistoryMap += a.jobSpecId -> a)
   }
 }
 
 object JobHistoryServiceActor {
-  case class GetJobStatus(id: PathId, promise: Promise[Option[JobHistory]])
-  case class ListJobStatus(filter: JobHistory => Boolean, promise: Promise[Iterable[JobHistory]])
+  case class GetJobHistory(id: PathId, promise: Promise[Option[JobHistory]])
+  case class ListJobHistories(filter: JobHistory => Boolean, promise: Promise[Iterable[JobHistory]])
 
   def props(config: JobHistoryConfig, clock: Clock, repo: Repository[PathId, JobHistory], behavior: Behavior): Props = {
     Props(new JobHistoryServiceActor(config, clock, repo, behavior))

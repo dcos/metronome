@@ -12,13 +12,13 @@ class JobHistoryServiceDelegate(actorRef: ActorRef) extends JobHistoryService {
 
   override def statusFor(jobSpecId: PathId): Future[Option[JobHistory]] = {
     val promise = Promise[Option[JobHistory]]
-    actorRef ! GetJobStatus(jobSpecId, promise)
+    actorRef ! GetJobHistory(jobSpecId, promise)
     promise.future
   }
 
   override def list(filter: (JobHistory) => Boolean): Future[Iterable[JobHistory]] = {
     val promise = Promise[Iterable[JobHistory]]
-    actorRef ! ListJobStatus(filter, promise)
+    actorRef ! ListJobHistories(filter, promise)
     promise.future
   }
 }

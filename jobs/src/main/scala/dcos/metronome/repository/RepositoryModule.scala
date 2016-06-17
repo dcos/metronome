@@ -1,15 +1,45 @@
 package dcos.metronome.repository
 
-import dcos.metronome.model.{ JobHistory, JobRunId, JobRun, JobSpec }
-import dcos.metronome.repository.impl.InMemoryRepository
+import com.twitter.util.JavaTimer
+import com.twitter.zk.{ NativeConnector, ZNode, ZkClient }
+import dcos.metronome.model.{ JobHistory, JobRun, JobRunId, JobSpec }
+import dcos.metronome.repository.impl.kv.{ ZkConfig, ZkJobHistoryRepository, ZkJobRunRepository, ZkJobSpecRepository }
 import mesosphere.marathon.state.PathId
+import mesosphere.util.state.zk.{ CompressionConf, ZKStore }
 
-class RepositoryModule {
+import scala.concurrent.ExecutionContext
 
-  def jobSpecRepository: Repository[PathId, JobSpec] = new InMemoryRepository[PathId, JobSpec]
+class RepositoryModule(config: ZkConfig) {
+  val ec = ExecutionContext.global
 
-  def jobRunRepository: Repository[JobRunId, JobRun] = new InMemoryRepository[JobRunId, JobRun]
+  private[this] val zkClient: ZkClient = {
+    import com.twitter.util.TimeConversions._
 
-  def jobHistoryRepository: Repository[PathId, JobHistory] = new InMemoryRepository[PathId, JobHistory]
+    val connector = NativeConnector(
+      config.zkHosts,
+      None,
+      config.zkSessionTimeout.toMillis.millis,
+      new JavaTimer(isDaemon = true),
+      config.zkAuthInfo
+    )
+
+    ZkClient(connector)
+      .withAcl(config.zkDefaultCreationACL)
+      .withRetries(3)
+  }
+
+  private[this] val zkRoot: ZNode = ZNode(zkClient, config.zkStatePath)
+
+  val zkStore: ZKStore = new ZKStore(
+    zkClient,
+    zkRoot,
+    CompressionConf(config.zkCompressionEnabled, config.zkCompressionThreshold)
+  )
+
+  def jobSpecRepository: Repository[PathId, JobSpec] = new ZkJobSpecRepository(zkStore, ec)
+
+  def jobRunRepository: Repository[JobRunId, JobRun] = new ZkJobRunRepository(zkStore, ec)
+
+  def jobHistoryRepository: Repository[PathId, JobHistory] = new ZkJobHistoryRepository(zkStore, ec)
 }
 

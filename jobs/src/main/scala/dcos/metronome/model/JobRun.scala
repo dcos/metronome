@@ -27,10 +27,10 @@ object JobRunStatus {
   case object Failed extends JobRunStatus // TODO: we might differentiate between Failed and Aborted
 
   val names: Map[String, JobRunStatus] = Map(
-    "starting" -> Starting,
-    "active" -> Active,
-    "success" -> Success,
-    "failed" -> Failed
+    "STARTING" -> Starting,
+    "ACTIVE" -> Active,
+    "SUCCESS" -> Success,
+    "FAILED" -> Failed
   )
   val statusNames: Map[JobRunStatus, String] = names.map{ case (a, b) => (b, a) }
 

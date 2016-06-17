@@ -29,7 +29,7 @@ trait LoadContentOnStartup[Id, Model] extends Actor with Stash with ActorLogging
   }
 
   def loadAll(): Unit = {
-    val loadAllFuture = repo.all().flatMap { ids =>
+    val loadAllFuture = repo.ids().flatMap { ids =>
       ids.foldLeft(Future.successful(List.empty[Model])) {
         case (resultsFuture, id) => resultsFuture.flatMap { res =>
           repo.get(id).map(_.map(_ :: res).getOrElse(res))

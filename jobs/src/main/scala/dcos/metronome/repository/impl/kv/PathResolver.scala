@@ -5,6 +5,11 @@ package dcos.metronome.repository.impl.kv
   * @tparam Id the type of Id this resolver can work with.
   */
 trait PathResolver[Id] {
+  /**
+    * Return the base path for the given entity
+    * @return
+    */
+  def basePath: String
 
   /**
     * Translate a given id to a path.

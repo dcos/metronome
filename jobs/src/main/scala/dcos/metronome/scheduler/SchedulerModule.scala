@@ -66,7 +66,7 @@ class SchedulerModule(
     hostPort,
     shutdownHooks
   )
-  private[this] lazy val leadershipModule: LeadershipModule = {
+  lazy val leadershipModule: LeadershipModule = {
     val actorRefFactory: ActorRefFactory = actorsModule.actorRefFactory
     val electionService: ElectionService = electionModule.service
 
@@ -115,7 +115,7 @@ class SchedulerModule(
 
   private[this] lazy val frameworkIdUtil: FrameworkIdUtil = new FrameworkIdUtil(
     persistenceModule.frameworkIdStore,
-    timeout = config.zkTimeoutDuration,
+    timeout = config.zkTimeout,
     key = "id"
   )
   private[this] lazy val scheduler: MarathonScheduler = {

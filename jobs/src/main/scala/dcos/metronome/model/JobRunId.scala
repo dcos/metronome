@@ -4,18 +4,18 @@ import mesosphere.marathon.state.PathId
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{ DateTime, DateTimeZone }
 
-case class JobRunId(jobSpecId: PathId, value: String) {
-  override def toString: String = s"${jobSpecId.path.mkString(".")}.$value"
+case class JobRunId(jobId: PathId, value: String) {
+  override def toString: String = s"${jobId.path.mkString(".")}.$value"
 }
 
 object JobRunId {
   val idFormat = DateTimeFormat.forPattern("yyyyMMddHHmmss")
   private[this] val RunSpecRegex = """^(.*)\.(.*)$""".r
 
-  def apply(spec: JobSpec): JobRunId = {
+  def apply(job: JobSpec): JobRunId = {
     val date = DateTime.now(DateTimeZone.UTC).toString(idFormat)
     val random = scala.util.Random.alphanumeric.take(5).mkString
-    JobRunId(spec.id, s"$date$random")
+    JobRunId(job.id, s"$date$random")
   }
 
   // TODO: parsing runSpecId to extract a JobRunId is ugly. It would be better to let the

@@ -10,6 +10,6 @@ trait SchedulerConfig {
   def httpPort: Int
   def httpsPort: Int
   def hostname: String
-  def zkTimeoutDuration: FiniteDuration
+  def zkTimeout: FiniteDuration
   def mesosLeaderUiUrl: Option[String]
 }
