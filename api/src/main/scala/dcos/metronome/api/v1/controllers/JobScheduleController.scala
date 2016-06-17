@@ -3,9 +3,9 @@ package dcos.metronome.api.v1.controllers
 import dcos.metronome.JobSpecDoesNotExist
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
+import dcos.metronome.api.v1.models.schema._
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ ScheduleSpec, JobSpec }
-import mesosphere.marathon.plugin.RunSpec
 import mesosphere.marathon.plugin.auth._
 import mesosphere.marathon.state.PathId
 import PathId._

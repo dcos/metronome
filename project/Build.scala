@@ -39,6 +39,7 @@ object Build extends sbt.Build {
         Dependency.yaml,
         Dependency.cronUtils,
         Dependency.metrics,
+        Dependency.jsonValidate,
         Dependency.Test.scalatest,
         Dependency.Test.scalatestPlay
       )
@@ -84,7 +85,8 @@ object Build extends sbt.Build {
     resolvers ++= Seq(
       "Mesosphere Public Repo" at "http://downloads.mesosphere.io/maven",
       "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/",
-      "Spray Maven Repository" at "http://repo.spray.io/"
+      "Spray Maven Repository" at "http://repo.spray.io/",
+      "emueller-bintray" at "http://dl.bintray.com/emueller/maven"
     ),
     fork in Test := true
   )
@@ -113,6 +115,7 @@ object Build extends sbt.Build {
       val Akka = "2.3.15"
       val Mockito = "2.0.54-beta"
       val Metrics = "3.5.4_a2.3"
+      val JsonValidate = "0.7.0"
     }
 
     val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
@@ -122,12 +125,13 @@ object Build extends sbt.Build {
     val macWireMacros = "com.softwaremill.macwire" %% "macros" % V.MacWire % "provided"
     val macWireUtil = "com.softwaremill.macwire" %% "util" % V.MacWire
     val macWireProxy = "com.softwaremill.macwire" %% "proxy" % V.MacWire
-    val marathon = "dcos.marathon" %% "marathon" % V.Marathon exclude("com.typesafe.play", "play-json") exclude("mesosphere.marathon", "ui") exclude("mesosphere.marathon", "ui") exclude("mesosphere", "chaos") exclude("org.apache.hadoop", "hadoop-hdfs") exclude("org.apache.hadoop", "hadoop-common") exclude("org.eclipse.jetty", "jetty-servlets")
+    val marathon = "dcos.marathon" %% "marathon" % V.Marathon exclude("com.typesafe.play", "*") exclude("mesosphere.marathon", "ui") exclude("mesosphere", "chaos") exclude("org.apache.hadoop", "hadoop-hdfs") exclude("org.apache.hadoop", "hadoop-common") exclude("org.eclipse.jetty", "*")
     val marathonPlugin = "dcos.marathon" %% "plugin-interface" % V.Marathon
     val cronUtils = "com.cronutils" % "cron-utils" % V.CronUtils
     val wixAccord = "com.wix" %% "accord-core" % V.WixAccord
     val akka = "com.typesafe.akka" %%  "akka-actor" % V.Akka
     val metrics = "nl.grons" %% "metrics-scala" % V.Metrics
+    val jsonValidate = "com.eclipsesource" %% "play-json-schema-validator" % V.JsonValidate
 
     object Test {
       val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"
