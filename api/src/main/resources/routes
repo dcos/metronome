@@ -32,4 +32,4 @@ POST /v0/scheduled-jobs dcos.metronome.api.v1.controllers.ScheduledJobSpecContro
 PUT /v0/scheduled-jobs/:jobId dcos.metronome.api.v1.controllers.ScheduledJobSpecController.updateJob(jobId: PathId)
 
 
-# GET        /assets/*file                 controllers.Assets.at(path="/public", file)
+GET /public/*file                 controllers.Assets.at(path="/public", file)

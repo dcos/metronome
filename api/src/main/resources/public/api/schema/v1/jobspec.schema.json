@@ -3,7 +3,7 @@
   "definitions": {
     "pathType": {
       "type": "string",
-      "pattern": "^([a-z0-9]([a-z0-9\\-]*[a-z0-9]+)*)([.][a-z0-9]([a-z0-9\\-]*[a-z0-9]+)*)*$",
+      "pattern": "^([a-z0-9]([a-z0-9-]*[a-z0-9]+)*)([.][a-z0-9]([a-z0-9-]*[a-z0-9]+)*)*$",
       "minLength": 1
     }
   },
@@ -20,7 +20,8 @@
       "description": "A description of this job."
     },
     "labels": {
-      "description": "Attaching metadata to apps can be useful to expose additional information to other services, so we added the ability to place labels on apps (for example, you could label apps staging and production to mark services by their position in the pipeline).",
+      "type": "object",
+      "description": "Attaching metadata to jobs can be useful to expose additional information to other services, so we added the ability to place labels on jobs (for example, you could label jobs staging and production to mark services by their position in the pipeline).",
       "additionalProperties": {
         "type": "string"
       }
@@ -35,7 +36,7 @@
             "type": "string"
           },
           "type": "array",
-          "description": "An array of strings that represents an alternative mode of specifying the command to run. This was motivated by safe usage of containerizer features like a custom Docker ENTRYPOINT. This args field may be used in place of cmd even when using the default command executor. This change mirrors API and semantics changes in the Mesos CommandInfo protobuf message starting with version `0.20.0`.  Either `cmd` or `args` must be supplied. It is invalid to supply both `cmd` and `args` in the same app."
+          "description": "An array of strings that represents an alternative mode of specifying the command to run. This was motivated by safe usage of containerizer features like a custom Docker ENTRYPOINT. Either `cmd` or `args` must be supplied. It is invalid to supply both `cmd` and `args` in the same job."
         },
         "artifacts": {
           "type": "array",
@@ -65,18 +66,18 @@
           }
         },
         "cmd": {
-          "description": "The command that is executed.  This value is wrapped by Mesos via `/bin/sh -c ${app.cmd}`.  Either `cmd` or `args` must be supplied. It is invalid to supply both `cmd` and `args` in the same app.",
+          "description": "The command that is executed.  This value is wrapped by Mesos via `/bin/sh -c ${job.cmd}`.  Either `cmd` or `args` must be supplied. It is invalid to supply both `cmd` and `args` in the same job.",
           "type": "string",
           "minLength": 1
         },
         "cpus": {
           "type": "number",
-          "description": "The number of CPU shares this application needs per instance. This number does not have to be integer, but can be a fraction.",
-          "minimum": 0
+          "description": "The number of CPU shares this job needs per instance. This number does not have to be integer, but can be a fraction.",
+          "minimum": 0.01
         },
         "disk": {
           "type": "number",
-          "description": "How much disk space is needed for this application. This number does not have to be an integer, but can be a fraction.",
+          "description": "How much disk space is needed for this job. This number does not have to be an integer, but can be a fraction.",
           "minimum": 0
         },
         "docker": {
@@ -107,8 +108,8 @@
         },
         "mem": {
           "type": "number",
-          "description": "The amount of memory in MB that is needed for the application per instance.",
-          "minimum": 0
+          "description": "The amount of memory in MB that is needed for the job per instance.",
+          "minimum": 32
         },
         "placement": {
           "type": "object",

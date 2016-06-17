@@ -22,6 +22,11 @@ trait JsonSchema[Model] {
     */
   def schemaType: SchemaType
 
+  /**
+    * The path to the schema location
+    */
+  def schemaLocation: String
+
 }
 
 object JsonSchema {
@@ -31,6 +36,8 @@ object JsonSchema {
       new JsonSchema[T] {
         override def classTag: ClassTag[T] = ct
         override def schemaType: SchemaType = schema
+        //we serve the public directory: the resource path is the same as the schema location path
+        override def schemaLocation: String = fromClassPath
       }
     }.getOrElse(throw new IllegalArgumentException(s"Schema not found: $fromClassPath"))
   }
