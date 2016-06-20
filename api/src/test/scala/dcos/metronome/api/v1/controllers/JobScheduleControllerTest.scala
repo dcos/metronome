@@ -81,7 +81,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       Then("A validation problem is indicated")
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
-      (contentAsJson(response) \ "message").as[String] must include ("Json validation error")
+      (contentAsJson(response) \ "message").as[String] mustBe "Object is not valid"
     }
 
     "without auth this endpoint is not accessible" in {
@@ -231,7 +231,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       Then("A validation error is returned")
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
-      (contentAsJson(response) \ "message").as[String] must include ("Json validation error")
+      (contentAsJson(response) \ "message").as[String] mustBe "Object is not valid"
     }
 
     "without auth this endpoint is not accessible" in {

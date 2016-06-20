@@ -1,7 +1,7 @@
-package dcos.metronome.api.v1.controllers
+package dcos.metronome.api.v0.controllers
 
 import dcos.metronome.JobSpecDoesNotExist
-import dcos.metronome.api.{ UnknownJob, Authorization }
+import dcos.metronome.api.{ JsonSchema, UnknownJob, Authorization }
 import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobSpec, JobRunSpec, ScheduleSpec }
@@ -20,7 +20,7 @@ class ScheduledJobSpecController(
 ) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
-  import ScheduledJobSpecController.JobSpecWithScheduleFormat
+  import ScheduledJobSpecController._
 
   def createJob = AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
     request.authorizedAsync(CreateRunSpec) { jobSpec =>
@@ -45,4 +45,6 @@ object ScheduledJobSpecController {
     (__ \ "schedules").formatNullable[Seq[ScheduleSpec]].withDefault(Seq.empty) ~
     (__ \ "run").format[JobRunSpec]
   )(JobSpec.apply, unlift(JobSpec.unapply))
+
+  implicit lazy val JobSpecSchema: JsonSchema[JobSpec] = JsonSchema.fromResource("/public/api/schema/v0/jobspec_v0.schema.json")
 }

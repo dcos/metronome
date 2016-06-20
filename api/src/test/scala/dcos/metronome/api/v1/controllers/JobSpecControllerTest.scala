@@ -2,7 +2,7 @@ package dcos.metronome.api.v1.controllers
 
 import dcos.metronome.api.v1.models._
 import dcos.metronome.api.{ TestAuthFixture, MockApiComponents, OneAppPerTestWithComponents, UnknownJob }
-import dcos.metronome.model.{ CronSpec, JobSpec, ScheduleSpec }
+import dcos.metronome.model.{ JobRunSpec, CronSpec, JobSpec, ScheduleSpec }
 import mesosphere.marathon.core.plugin.PluginManager
 import mesosphere.marathon.state.PathId
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
@@ -25,6 +25,8 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec1Json)).get
 
       Then("The job is created")
+      println(jobSpec1Json)
+      println(contentAsJson(response))
       status(response) mustBe CREATED
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe jobSpec1Json
@@ -280,7 +282,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
     }
   }
 
-  def spec(id: String) = JobSpec(PathId(id))
+  def spec(id: String) = JobSpec(PathId(id), run = JobRunSpec(cmd = Some("test")))
   val CronSpec(cron) = "* * * * *"
   val schedule1 = ScheduleSpec("id1", cron)
   val jobSpec1 = spec("spec1")

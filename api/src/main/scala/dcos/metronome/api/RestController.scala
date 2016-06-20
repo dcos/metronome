@@ -1,14 +1,15 @@
 package dcos.metronome.api
 
+import com.eclipsesource.schema.SchemaValidator
 import com.wix.accord.{ Validator, Success, Failure }
 import mesosphere.marathon.api.v2.Validation
-import play.api.http.{ LazyHttpErrorHandler, ContentTypes, ContentTypeOf, Writeable }
+import play.api.http.{ ContentTypes, ContentTypeOf, Writeable }
 import play.api.libs.json._
 import play.api.mvc._
 
-import scala.concurrent.Future
-
 class RestController extends Controller {
+
+  import dcos.metronome.api.v1.models.JsErrorWrites
 
   implicit def jsonWritable[T <: Any](implicit w: Writes[T], codec: Codec, request: RequestHeader): Writeable[T] = {
     implicit val contentType = ContentTypeOf[T](Some(ContentTypes.JSON))
@@ -16,23 +17,32 @@ class RestController extends Controller {
   }
 
   object validate extends BodyParsers {
-
-    def json[A](implicit reader: Reads[A], validator: Validator[A]): BodyParser[A] = {
+    def json[A](implicit reader: Reads[A], schema: JsonSchema[A], validator: Validator[A]): BodyParser[A] = {
       BodyParser("json reader and validator") { request =>
         import play.api.libs.iteratee.Execution.Implicits.trampoline
-        parse.json(request) mapFuture {
-          case Left(simpleResult) =>
-            Future.successful(Left(simpleResult))
-          case Right(jsValue) =>
-            jsValue.validate(reader) map { a =>
-              validator(a) match {
-                case Success    => Future.successful(Right(a))
-                case f: Failure => Future.successful(Left(UnprocessableEntity(Validation.failureWrites.writes(f))))
-              }
-            } recoverTotal { jsError =>
-              val msg = s"Json validation error ${JsError.toFlatForm(jsError)}"
-              LazyHttpErrorHandler.onClientError(request, UNPROCESSABLE_ENTITY, msg).map(Left.apply)
-            }
+
+        def validateObject(a: A): Either[Result, A] = validator(a) match {
+          case Success    => Right(a)
+          case f: Failure => Left(UnprocessableEntity(Validation.failureWrites.writes(f)))
+        }
+
+        def readObject(jsValue: JsValue): Either[Result, A] = {
+          jsValue.validate(reader) match {
+            case JsSuccess(value, _) => validateObject(value)
+            case error: JsError      => Left(UnprocessableEntity(Json.toJson(error)))
+          }
+        }
+
+        def schemaValidate(jsValue: JsValue): Either[Result, A] = {
+          SchemaValidator.validate(schema.schemaType)(jsValue) match {
+            case JsSuccess(value, _) => readObject(value)
+            case error: JsError      => Left(UnprocessableEntity(Json.toJson(error)))
+          }
+        }
+
+        parse.json(request).map {
+          case Left(simpleResult) => Left(simpleResult)
+          case Right(jsValue)     => schemaValidate(jsValue)
         }
       }
     }

@@ -1,7 +1,8 @@
 package dcos.metronome.api.v1.controllers
 
 import dcos.metronome.api.v1.models._
-import dcos.metronome.api.{ Authorization, ErrorDetail, UnknownJob }
+import dcos.metronome.api.v1.models.schema._
+import dcos.metronome.api.{ ErrorDetail, Authorization, UnknownJob }
 import dcos.metronome.jobinfo.JobInfo.Embed
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobrun.JobRunService

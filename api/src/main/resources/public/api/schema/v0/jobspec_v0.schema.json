@@ -1,0 +1,239 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "definitions": {
+    "pathType": {
+      "type": "string",
+      "pattern": "^([a-z0-9]([a-z0-9-]*[a-z0-9]+)*)([.][a-z0-9]([a-z0-9-]*[a-z0-9]+)*)*$",
+      "minLength": 1
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "$ref": "#/definitions/pathType",
+      "description": "Unique identifier for the job consisting of a series of names separated by dots. Each name must be at least 1 character and may only contain digits (`0-9`), dashes (`-`), and lowercase letters (`a-z`). The name may not begin or end with a dash."
+    },
+    "description": {
+      "type": "string",
+      "description": "A description of this job."
+    },
+    "labels": {
+      "type": "object",
+      "description": "Attaching metadata to jobs can be useful to expose additional information to other services, so we added the ability to place labels on jobs (for example, you could label jobs staging and production to mark services by their position in the pipeline).",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "A run specification",
+      "properties": {
+        "args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "An array of strings that represents an alternative mode of specifying the command to run. This was motivated by safe usage of containerizer features like a custom Docker ENTRYPOINT. Either `cmd` or `args` must be supplied. It is invalid to supply both `cmd` and `args` in the same job."
+        },
+        "artifacts": {
+          "type": "array",
+          "description": "Provided URIs are passed to Mesos fetcher module and resolved in runtime.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "uri": {
+                "type": "string",
+                "description": "URI to be fetched by Mesos fetcher module"
+              },
+              "executable": {
+                "type": "boolean",
+                "description": "Set fetched artifact as executable"
+              },
+              "extract": {
+                "type": "boolean",
+                "description": "Extract fetched artifact if supported by Mesos fetcher module"
+              },
+              "cache": {
+                "type": "boolean",
+                "description": "Cache fetched artifact if supported by Mesos fetcher module"
+              }
+            },
+            "required": [ "uri" ]
+          }
+        },
+        "cmd": {
+          "description": "The command that is executed.  This value is wrapped by Mesos via `/bin/sh -c ${job.cmd}`.  Either `cmd` or `args` must be supplied. It is invalid to supply both `cmd` and `args` in the same job.",
+          "type": "string",
+          "minLength": 1
+        },
+        "cpus": {
+          "type": "number",
+          "description": "The number of CPU shares this job needs per instance. This number does not have to be integer, but can be a fraction.",
+          "minimum": 0.01
+        },
+        "disk": {
+          "type": "number",
+          "description": "How much disk space is needed for this job. This number does not have to be an integer, but can be a fraction.",
+          "minimum": 0
+        },
+        "docker": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "image": {
+              "type": "string",
+              "documentation": "The docker repository image name."
+            }
+          },
+          "required": ["image"]
+        },
+        "env": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "oneOf": [
+                { "type": "string" }
+              ]
+            }
+          }
+        },
+        "maxLaunchDelay": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The number of seconds until the job needs to be running. If the deadline is reached without successfully running the job, the job is aborted."
+        },
+        "mem": {
+          "type": "number",
+          "description": "The amount of memory in MB that is needed for the job per instance.",
+          "minimum": 32
+        },
+        "placement": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "constraints": {
+              "type": "array",
+              "description": "The array of constraints to place this job.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "attribute": {
+                    "type": "string",
+                    "description": "The attribute name for this constraint."
+                  },
+                  "operator": {
+                    "type": "string",
+                    "description": "The operator for this constraint.",
+                    "enum": ["EQ", "LIKE", "UNLIKE"]
+                  },
+                  "value": {
+                    "type": "string",
+                    "description": "The value for this constraint."
+                  }
+                },
+                "required": ["attribute", "operator"]
+              }
+            }
+          }
+        },
+        "user": {
+          "type": "string",
+          "description": "The user to use to run the tasks on the agent."
+        },
+        "restart": {
+          "type": "object",
+          "additionalProperties": false,
+          "documentation": "Defines the behavior if a task fails",
+          "properties": {
+            "policy": {
+              "type": "string",
+              "documentation": "The policy to use if a job fails. NEVER will never try to relaunch a job. ON_FAILURE will try to start a job in case of failure.",
+              "enum": ["NEVER", "ON_FAILURE"]
+            },
+            "activeDeadlineSeconds": {
+              "type": "integer",
+              "documentation": "If the job fails, how long should we try to restart the job. If no value is set, this means forever."
+            }
+          },
+          "required": ["policy"]
+        },
+        "volumes": {
+          "type": "array",
+          "documentation": "The list of volumes for this job.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "documentation": "A volume definition for this job.",
+            "properties": {
+              "containerPath": {
+                "type": "string",
+                "description": "The path of the volume in the container",
+                "minLength": 1
+              },
+              "hostPath": {
+                "type": "string",
+                "description": "The path of the volume on the host",
+                "minLength": 1
+              },
+              "mode": {
+                "type": "string",
+                "description": "Possible values are RO for ReadOnly and RW for Read/Write",
+                "enum": ["RO", "RW"]
+              }
+            },
+            "required": ["containerPath", "hostPath", "mode"]
+          }
+        }
+      },
+      "required": ["cpus", "mem", "disk"]
+    },
+    "schedules": {
+      "type": "array",
+      "description": "All schedules for this job.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/pathType",
+            "description": "Unique identifier for the job schedule of a string with at least 1 character and may only contain digits (`0-9`), dashes (`-`), and lowercase letters (`a-z`). The id may not begin or end with a dash."
+          },
+          "cron": {
+            "type": "string",
+            "description": "Cron based schedule string."
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "IANA based time zone string. See http://www.iana.org/time-zones for a list of available time zones."
+          },
+          "startingDeadlineSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The number of seconds until the job is still considered valid to start."
+          },
+          "concurrencyPolicy": {
+            "type": "string",
+            "enum": [
+              "ALLOW",
+              "FORBID",
+              "REPLACE"
+            ],
+            "description": "Defines the behavior if a job is started, before the current job has finished. ALLOW will launch a new job, FORBIF will not start a new job and replace will kill the current running job, before the new one is started"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Defines if the schedule is enabled or not."
+          }
+        },
+        "required": [
+          "id",
+          "cron"
+        ]
+      }
+    }
+  },
+  "required": ["id", "run"]
+}

@@ -28,8 +28,8 @@ POST /v1/jobs/:jobId/runs/:runId/actions/stop dcos.metronome.api.v1.controllers.
 
 
 # TODO: deprecated API (remove in subsequent version)
-POST /v0/scheduled-jobs dcos.metronome.api.v1.controllers.ScheduledJobSpecController.createJob
-PUT /v0/scheduled-jobs/:jobId dcos.metronome.api.v1.controllers.ScheduledJobSpecController.updateJob(jobId: PathId)
+POST /v0/scheduled-jobs dcos.metronome.api.v0.controllers.ScheduledJobSpecController.createJob
+PUT /v0/scheduled-jobs/:jobId dcos.metronome.api.v0.controllers.ScheduledJobSpecController.updateJob(jobId: PathId)
 
 
-# GET        /assets/*file                 controllers.Assets.at(path="/public", file)
+GET /public/*file                 controllers.Assets.at(path="/public", file)

@@ -1,6 +1,6 @@
 package dcos.metronome.api.v1
 
-import dcos.metronome.api.{ ErrorDetail, UnknownJob, UnknownJobRun, UnknownSchedule }
+import dcos.metronome.api._
 import dcos.metronome.jobinfo.JobInfo
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
@@ -136,7 +136,7 @@ package object models {
   implicit lazy val DockerSpecFormat: Format[DockerSpec] = Json.format[DockerSpec]
 
   implicit lazy val RestartSpecFormat: Format[RestartSpec] = (
-    (__ \ "restartPolicy").formatNullable[RestartPolicy].withDefault(RestartSpec.DefaultRestartPolicy) ~
+    (__ \ "policy").formatNullable[RestartPolicy].withDefault(RestartSpec.DefaultRestartPolicy) ~
     (__ \ "activeDeadlineSeconds").formatNullable[Duration]
   ) (RestartSpec.apply, unlift(RestartSpec.unapply))
 
@@ -220,4 +220,13 @@ package object models {
   implicit lazy val JobResultWrites: Writes[JobResult] = Json.writes[JobResult]
 
   implicit lazy val JobInfoWrites: Writes[JobInfo] = Json.writes[JobInfo]
+
+  implicit lazy val JsErrorWrites: Writes[JsError] = new Writes[JsError] {
+    override def writes(error: JsError): JsValue = Json.obj(
+      "message" -> s"Object is not valid",
+      "details" -> error.errors.map {
+        case (jsPath, errs) => Json.obj("path" -> jsPath.toString(), "errors" -> errs.map(_.message))
+      }
+    )
+  }
 }

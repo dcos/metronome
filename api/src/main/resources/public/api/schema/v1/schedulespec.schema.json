@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "additionalProperties": true,
+  "definitions": {
+    "pathType": {
+      "type": "string",
+      "pattern": "^([a-z0-9][a-z0-9\\-]*[a-z0-9]+)$",
+      "minLength": 1
+    }
+  },
+  "type": "object",
+  "properties": {
+    "id": {
+      "$ref": "#/definitions/pathType",
+      "description": "Unique identifier for the job schedule of a string with at least 1 character and may only contain digits (`0-9`), dashes (`-`), and lowercase letters (`a-z`). The id may not begin or end with a dash."
+    },
+    "cron": {
+      "type": "string",
+      "description": "Cron based schedule string."
+    },
+    "timeZone": {
+      "type": "string",
+      "description": "IANA based time zone string. See http://www.iana.org/time-zones for a list of available time zones."
+    },
+    "startingDeadlineSeconds": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The number of seconds until the job is still considered valid to start."
+    },
+    "concurrencyPolicy": {
+      "type": "string",
+      "enum": ["ALLOW", "FORBID", "REPLACE"],
+      "description": "Defines the behavior if a job is started, before the current job has finished. ALLOW will launch a new job, FORBIF will not start a new job and replace will kill the current running job, before the new one is started"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "Defines if the schedule is enabled or not."
+    }
+  },
+  "required": [
+    "id", "cron"
+  ]
+}

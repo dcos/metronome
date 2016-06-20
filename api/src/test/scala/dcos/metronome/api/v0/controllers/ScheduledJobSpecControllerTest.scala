@@ -1,4 +1,4 @@
-package dcos.metronome.api.v1.controllers
+package dcos.metronome.api.v0.controllers
 
 import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
 import dcos.metronome.api.{ TestAuthFixture, MockApiComponents, OneAppPerTestWithComponents, UnknownJob }
