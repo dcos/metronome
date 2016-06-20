@@ -41,7 +41,7 @@ class JobRunServiceActor(
 
   override def receive: Receive = around {
     // api messages
-    case ListRuns(filter)              => sender() ! allJobRuns.values.filter(f => filter(f.jobRun))
+    case ListRuns(filter)              => sender() ! allJobRuns.values.filter(startedJobRun => filter(startedJobRun.jobRun))
     case GetJobRun(id)                 => sender() ! allJobRuns.get(id)
     case GetActiveJobRuns(specId)      => sender() ! runsForJob(specId)
     case KillJobRun(id)                => killJobRun(id)
