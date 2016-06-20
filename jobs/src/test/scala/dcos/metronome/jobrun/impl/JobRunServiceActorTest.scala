@@ -30,15 +30,15 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     val actor = f.serviceActor
     actor.underlyingActor.allJobRuns += f.run1.jobRun.id -> f.run1
     actor.underlyingActor.allJobRuns += f.run2.jobRun.id -> f.run2
-    val promise = Promise[Iterable[StartedJobRun]]
 
     When("The list of started job runs is queried")
-    actor ! ListRuns(promise)
+    actor ! ListRuns(_ => true)
 
     Then("The list of started job runs is returned")
-    promise.future.futureValue should have size 2
-    promise.future.futureValue should contain(f.run1)
-    promise.future.futureValue should contain(f.run2)
+    val result = expectMsgClass(classOf[Iterable[StartedJobRun]])
+    result should have size 2
+    result should contain(f.run1)
+    result should contain(f.run2)
     system.stop(actor)
   }
 
@@ -50,19 +50,16 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     actor.underlyingActor.allJobRuns += f.run2.jobRun.id -> f.run2
 
     When("An existing jobRun is queried")
-    val existing = Promise[Option[StartedJobRun]]
-    actor ! GetJobRun(f.run1.jobRun.id, existing)
+    actor ! GetJobRun(f.run1.jobRun.id)
 
     Then("The job run is returned")
-    existing.future.futureValue should be (defined)
-    existing.future.futureValue.get should be(f.run1)
+    expectMsg(Some(f.run1))
 
     When("A non existing jobRun is queried")
-    val nonExisting = Promise[Option[StartedJobRun]]
-    actor ! GetJobRun(JobRunId(f.jobSpec), nonExisting)
+    actor ! GetJobRun(JobRunId(f.jobSpec))
 
     Then("None is returned")
-    nonExisting.future.futureValue should be (empty)
+    expectMsg(None)
     system.stop(actor)
   }
 
@@ -74,18 +71,17 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     actor.underlyingActor.allJobRuns += f.run2.jobRun.id -> f.run2
 
     When("An existing jobRun is queried")
-    val existing = Promise[Iterable[StartedJobRun]]
-    actor ! GetActiveJobRuns(f.jobSpec.id, existing)
+    actor ! GetActiveJobRuns(f.jobSpec.id)
 
     Then("The list of started job runs is returned")
-    existing.future.futureValue should have size 2
+    val result = expectMsgClass(classOf[Iterable[StartedJobRun]])
+    result should have size 2
 
     When("A non existing jobRun is queried")
-    val nonExisting = Promise[Iterable[StartedJobRun]]
-    actor ! GetActiveJobRuns(PathId("n/a"), nonExisting)
+    actor ! GetActiveJobRuns(PathId("n/a"))
 
     Then("An empty list is returned")
-    nonExisting.future.futureValue should be (empty)
+    expectMsg(Iterable.empty)
     system.stop(actor)
   }
 
@@ -95,11 +91,10 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     val actor = f.serviceActor
 
     When("An existing jobRun is queried")
-    val promise = Promise[StartedJobRun]
-    actor ! TriggerJobRun(f.jobSpec, promise)
+    actor ! TriggerJobRun(f.jobSpec)
 
     Then("The list of started job runs is returned")
-    val started = promise.future.futureValue
+    val started = expectMsgClass(classOf[StartedJobRun])
     started.jobRun.jobSpec should be(f.jobSpec)
     actor.underlyingActor.allJobRuns should have size 1
     system.stop(actor)
@@ -109,9 +104,8 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     Given("An empty service")
     val f = new Fixture
     val actor = f.serviceActor
-    val promise = Promise[StartedJobRun]
-    actor ! TriggerJobRun(f.jobSpec, promise)
-    val startedRun = promise.future.futureValue
+    actor ! TriggerJobRun(f.jobSpec)
+    val startedRun = expectMsgClass(classOf[StartedJobRun])
 
     When("The job finished")
     val result = JobResult(startedRun.jobRun)
@@ -126,9 +120,8 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     Given("An empty service")
     val f = new Fixture
     val actor = f.serviceActor
-    val promise = Promise[StartedJobRun]
-    actor ! TriggerJobRun(f.jobSpec, promise)
-    val startedRun = promise.future.futureValue
+    actor ! TriggerJobRun(f.jobSpec)
+    val startedRun = expectMsgClass(classOf[StartedJobRun])
 
     When("The job finished")
     val result = JobResult(startedRun.jobRun)
@@ -143,16 +136,14 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     Given("A service with 2 jobRuns")
     val f = new Fixture
     val actor = f.serviceActor
-    val promise = Promise[StartedJobRun]
-    actor ! TriggerJobRun(f.jobSpec, promise)
-    val startedRun = promise.future.futureValue
+    actor ! TriggerJobRun(f.jobSpec)
+    val startedRun = expectMsgClass(classOf[StartedJobRun])
 
     When("An existing jobRun is queried")
-    val kill = Promise[StartedJobRun]
-    actor ! KillJobRun(startedRun.jobRun.id, kill)
+    actor ! KillJobRun(startedRun.jobRun.id)
 
     Then("The list of started job runs is returned")
-    kill.future.futureValue should be(startedRun)
+    expectMsg(startedRun)
 
     And("The executor sends a task aborted")
     val result = JobResult(startedRun.jobRun)

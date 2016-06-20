@@ -98,6 +98,8 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     lazy val hostname: String = configuration.getString("app.hostname").getOrElse(java.net.InetAddress.getLocalHost.getHostName)
     lazy val leaderProxyTimeout: Duration = configuration.getLong("app.leaderproxy.timeout").getOrElse(30000l).millis
 
+    lazy val askTimeout: FiniteDuration = configuration.getLong("app.akka.ask.timeout").getOrElse(10000l).millis
+
     override lazy val zkURL: String = configuration.getString("app.zk.url").getOrElse(ZkConfig.DEFAULT_ZK_URL)
     override lazy val zkSessionTimeout: FiniteDuration = configuration.getLong("app.zk.session_timeout")
       .map(_.millis)

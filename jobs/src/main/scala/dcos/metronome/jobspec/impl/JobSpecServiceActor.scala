@@ -1,14 +1,13 @@
 package dcos.metronome.jobspec.impl
 
 import akka.actor._
-import dcos.metronome.behavior.{ Metrics, ActorBehavior, Behavior }
+import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.model.{ Event, JobSpec }
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
 import dcos.metronome.{ JobSpecAlreadyExists, JobSpecChangeInFlight, JobSpecDoesNotExist }
 import mesosphere.marathon.state.PathId
 
 import scala.collection.concurrent.TrieMap
-import scala.concurrent.Promise
 
 /**
   * This actor knows all available JobSpecs (as view) and manages all available JobSpecExecutors.
@@ -30,68 +29,68 @@ class JobSpecServiceActor(
 
   override def receive: Receive = around {
     // crud messages
-    case CreateJobSpec(jobSpec, promise)    => createJobSpec(jobSpec, promise)
-    case UpdateJobSpec(id, change, promise) => updateJobSpec(id, change, promise)
-    case DeleteJobSpec(id, promise)         => deleteJobSpec(id, promise)
-    case GetJobSpec(id, promise)            => getJobSpec(id, promise)
-    case ListJobSpecs(filter, promise)      => listJobSpecs(filter, promise)
+    case CreateJobSpec(jobSpec)             => createJobSpec(jobSpec)
+    case UpdateJobSpec(id, change)          => updateJobSpec(id, change)
+    case DeleteJobSpec(id)                  => deleteJobSpec(id)
+    case GetJobSpec(id)                     => getJobSpec(id)
+    case ListJobSpecs(filter)               => listJobSpecs(filter)
 
     // persistence ack messages
-    case Created(_, jobSpec, promise)       => jobSpecCreated(jobSpec, promise)
-    case Updated(_, jobSpec, promise)       => jobSpecUpdated(jobSpec, promise)
-    case Deleted(_, jobSpec, promise)       => jobSpecDeleted(jobSpec, promise)
-    case PersistFailed(_, id, ex, promise)  => jobChangeFailed(id, ex, promise)
+    case Created(_, jobSpec, delegate)      => jobSpecCreated(jobSpec, delegate)
+    case Updated(_, jobSpec, delegate)      => jobSpecUpdated(jobSpec, delegate)
+    case Deleted(_, jobSpec, delegate)      => jobSpecDeleted(jobSpec, delegate)
+    case PersistFailed(_, id, ex, delegate) => jobChangeFailed(id, ex, delegate)
 
     // lifetime messages
     case Terminated(ref)                    => handleTerminated(ref)
   }
 
-  def getJobSpec(id: PathId, promise: Promise[Option[JobSpec]]): Unit = {
-    promise.success(allJobs.get(id))
+  def getJobSpec(id: PathId): Unit = {
+    sender() ! allJobs.get(id)
   }
 
-  def listJobSpecs(filter: JobSpec => Boolean, promise: Promise[Iterable[JobSpec]]): Unit = {
-    promise.success(allJobs.values.filter(filter))
+  def listJobSpecs(filter: JobSpec => Boolean): Unit = {
+    sender() ! allJobs.values.filter(filter)
   }
 
-  def createJobSpec(jobSpec: JobSpec, promise: Promise[JobSpec]): Unit = {
-    noSpecWithId(jobSpec, promise) {
-      noChangeInFlight(jobSpec, promise) {
-        persistenceActor(jobSpec.id) ! JobSpecPersistenceActor.Create(jobSpec, promise)
+  def createJobSpec(jobSpec: JobSpec): Unit = {
+    noSpecWithId(jobSpec) {
+      noChangeInFlight(jobSpec) {
+        persistenceActor(jobSpec.id) ! JobSpecPersistenceActor.Create(jobSpec, sender())
       }
     }
   }
 
-  def updateJobSpec(id: PathId, change: JobSpec => JobSpec, promise: Promise[JobSpec]): Unit = {
-    withJob(id, promise) { old =>
-      noChangeInFlight(old, promise) {
-        persistenceActor(id) ! JobSpecPersistenceActor.Update(change, promise)
+  def updateJobSpec(id: PathId, change: JobSpec => JobSpec): Unit = {
+    withJob(id) { old =>
+      noChangeInFlight(old) {
+        persistenceActor(id) ! JobSpecPersistenceActor.Update(change, sender())
       }
     }
   }
 
-  def deleteJobSpec(id: PathId, promise: Promise[JobSpec]): Unit = {
-    withJob(id, promise) { old =>
-      noChangeInFlight(old, promise) {
-        persistenceActor(id) ! JobSpecPersistenceActor.Delete(old, promise)
+  def deleteJobSpec(id: PathId): Unit = {
+    withJob(id) { old =>
+      noChangeInFlight(old) {
+        persistenceActor(id) ! JobSpecPersistenceActor.Delete(old, sender())
       }
     }
   }
 
-  def withJob[T](id: PathId, promise: Promise[JobSpec])(fn: (JobSpec) => T): Option[T] = {
+  def withJob[T](id: PathId)(fn: (JobSpec) => T): Option[T] = {
     val result = allJobs.get(id).map(fn)
-    if (result.isEmpty) promise.failure(JobSpecDoesNotExist(id))
+    if (result.isEmpty) sender() ! Status.Failure(JobSpecDoesNotExist(id))
     result
   }
 
-  def noSpecWithId(jobSpec: JobSpec, promise: Promise[JobSpec])(change: => Unit): Unit = {
-    if (allJobs.contains(jobSpec.id)) promise.failure(JobSpecAlreadyExists(jobSpec.id)) else {
+  def noSpecWithId(jobSpec: JobSpec)(change: => Unit): Unit = {
+    if (allJobs.contains(jobSpec.id)) sender() ! Status.Failure(JobSpecAlreadyExists(jobSpec.id)) else {
       change
     }
   }
 
-  def noChangeInFlight[T](jobSpec: JobSpec, promise: Promise[T])(change: => Unit): Unit = {
-    if (inFlightChanges.contains(jobSpec.id)) promise.failure(JobSpecChangeInFlight(jobSpec.id)) else {
+  def noChangeInFlight[T](jobSpec: JobSpec)(change: => Unit): Unit = {
+    if (inFlightChanges.contains(jobSpec.id)) sender() ! Status.Failure(JobSpecChangeInFlight(jobSpec.id)) else {
       inFlightChanges += jobSpec.id
       change
     }
@@ -103,13 +102,13 @@ class JobSpecServiceActor(
     scheduleActor(jobSpec)
   }
 
-  def jobSpecCreated(jobSpec: JobSpec, promise: Promise[JobSpec]): Unit = {
+  def jobSpecCreated(jobSpec: JobSpec, delegate: ActorRef): Unit = {
     addJobSpec(jobSpec)
     context.system.eventStream.publish(Event.JobSpecCreated(jobSpec))
-    promise.success(jobSpec)
+    delegate ! jobSpec
   }
 
-  def jobSpecUpdated(jobSpec: JobSpec, promise: Promise[JobSpec]): Unit = {
+  def jobSpecUpdated(jobSpec: JobSpec, delegate: ActorRef): Unit = {
     allJobs += jobSpec.id -> jobSpec
     inFlightChanges -= jobSpec.id
     scheduleActor(jobSpec).foreach { scheduler =>
@@ -124,10 +123,10 @@ class JobSpecServiceActor(
       }
     }
     context.system.eventStream.publish(Event.JobSpecUpdated(jobSpec))
-    promise.success(jobSpec)
+    delegate ! jobSpec
   }
 
-  def jobSpecDeleted(jobSpec: JobSpec, promise: Promise[JobSpec]): Unit = {
+  def jobSpecDeleted(jobSpec: JobSpec, delegate: ActorRef): Unit = {
     def removeFrom(map: TrieMap[PathId, ActorRef]) = map.remove(jobSpec.id).foreach { actorRef =>
       context.unwatch(actorRef)
       context.stop(actorRef)
@@ -137,12 +136,12 @@ class JobSpecServiceActor(
     removeFrom(persistenceActors)
     removeFrom(scheduleActors)
     context.system.eventStream.publish(Event.JobSpecDeleted(jobSpec))
-    promise.success(jobSpec)
+    delegate ! jobSpec
   }
 
-  def jobChangeFailed(id: PathId, ex: Throwable, promise: Promise[JobSpec]): Unit = {
+  def jobChangeFailed(id: PathId, ex: Throwable, delegate: ActorRef): Unit = {
     inFlightChanges -= id
-    promise.failure(ex)
+    delegate ! Status.Failure(ex)
   }
 
   def handleTerminated(ref: ActorRef): Unit = {
@@ -180,11 +179,11 @@ class JobSpecServiceActor(
 object JobSpecServiceActor {
 
   //crud messages
-  case class ListJobSpecs(filter: JobSpec => Boolean, promise: Promise[Iterable[JobSpec]])
-  case class GetJobSpec(id: PathId, promise: Promise[Option[JobSpec]])
-  case class CreateJobSpec(jobSpec: JobSpec, promise: Promise[JobSpec])
-  case class UpdateJobSpec(id: PathId, change: JobSpec => JobSpec, promise: Promise[JobSpec])
-  case class DeleteJobSpec(id: PathId, promise: Promise[JobSpec])
+  case class ListJobSpecs(filter: JobSpec => Boolean)
+  case class GetJobSpec(id: PathId)
+  case class CreateJobSpec(jobSpec: JobSpec)
+  case class UpdateJobSpec(id: PathId, change: JobSpec => JobSpec)
+  case class DeleteJobSpec(id: PathId)
 
   def props(
     repo:                    Repository[PathId, JobSpec],
