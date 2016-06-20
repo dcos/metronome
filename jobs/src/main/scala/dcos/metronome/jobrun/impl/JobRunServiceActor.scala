@@ -1,6 +1,6 @@
 package dcos.metronome.jobrun.impl
 
-import akka.actor.{ Actor, ActorRef, Props, Stash }
+import akka.actor._
 import dcos.metronome.JobRunDoesNotExist
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.eventbus.TaskStateChangedEvent
@@ -41,30 +41,30 @@ class JobRunServiceActor(
 
   override def receive: Receive = around {
     // api messages
-    case ListRuns(promise)                 => promise.success(allJobRuns.values)
-    case GetJobRun(id, promise)            => promise.success(allJobRuns.get(id))
-    case GetActiveJobRuns(specId, promise) => promise.success(runsForJob(specId))
-    case KillJobRun(id, promise)           => killJobRun(id, promise)
+    case ListRuns(filter)              => sender() ! allJobRuns.values.filter(startedJobRun => filter(startedJobRun.jobRun))
+    case GetJobRun(id)                 => sender() ! allJobRuns.get(id)
+    case GetActiveJobRuns(specId)      => sender() ! runsForJob(specId)
+    case KillJobRun(id)                => killJobRun(id)
 
     // trigger messages
-    case TriggerJobRun(spec, promise)      => triggerJobRun(spec, promise)
+    case TriggerJobRun(spec)           => triggerJobRun(spec)
 
     // executor messages
-    case JobRunUpdate(started)             => updateJobRun(started)
-    case Finished(result)                  => jobRunFinished(result)
-    case Aborted(result)                   => jobRunAborted(result)
+    case JobRunUpdate(started)         => updateJobRun(started)
+    case Finished(result)              => jobRunFinished(result)
+    case Aborted(result)               => jobRunAborted(result)
 
     //event stream events
-    case update: TaskStateChangedEvent     => forwardStatusUpdate(update)
+    case update: TaskStateChangedEvent => forwardStatusUpdate(update)
   }
 
   def runsForJob(jobId: PathId): Iterable[StartedJobRun] = allJobRuns.values.filter(_.jobRun.id.jobId == jobId)
 
-  def triggerJobRun(spec: JobSpec, promise: Promise[StartedJobRun]): Unit = {
+  def triggerJobRun(spec: JobSpec): Unit = {
     log.info(s"Trigger new JobRun for JobSpec: $spec")
     val jobRun = new JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.now(), None, Map.empty)
     val startedJobRun = startJobRun(jobRun)
-    promise.success(startedJobRun)
+    sender() ! startedJobRun
   }
 
   def startJobRun(jobRun: JobRun): StartedJobRun = {
@@ -88,11 +88,11 @@ class JobRunServiceActor(
     allJobRuns += started.jobRun.id -> started
   }
 
-  def killJobRun(id: JobRunId, promise: Promise[StartedJobRun]): Unit = {
+  def killJobRun(id: JobRunId): Unit = {
     log.info(s"Request kill of job run $id")
-    withJobExecutor(id, promise) { (executor, run) =>
+    withJobExecutor(id) { (executor, run) =>
       executor ! KillCurrentJobRun
-      promise.success(run)
+      sender() ! run
     }
   }
 
@@ -128,12 +128,12 @@ class JobRunServiceActor(
     }
   }
 
-  def withJobExecutor[T](id: JobRunId, promise: Promise[StartedJobRun])(fn: (ActorRef, StartedJobRun) => T): Option[T] = {
+  def withJobExecutor[T](id: JobRunId)(fn: (ActorRef, StartedJobRun) => T): Option[T] = {
     val result = for {
       executor <- allRunExecutors.get(id)
       startedRun <- allJobRuns.get(id)
     } yield fn(executor, startedRun)
-    if (result.isEmpty) promise.failure(JobRunDoesNotExist(id))
+    if (result.isEmpty) sender() ! Status.Failure(JobRunDoesNotExist(id))
     result
   }
 
@@ -145,11 +145,11 @@ class JobRunServiceActor(
 
 object JobRunServiceActor {
 
-  case class ListRuns(promise: Promise[Iterable[StartedJobRun]])
-  case class GetJobRun(id: JobRunId, promise: Promise[Option[StartedJobRun]])
-  case class GetActiveJobRuns(jobId: PathId, promise: Promise[Iterable[StartedJobRun]])
-  case class KillJobRun(id: JobRunId, promise: Promise[StartedJobRun])
-  case class TriggerJobRun(jobSpec: JobSpec, promise: Promise[StartedJobRun])
+  case class ListRuns(filter: JobRun => Boolean)
+  case class GetJobRun(id: JobRunId)
+  case class GetActiveJobRuns(jobId: PathId)
+  case class KillJobRun(id: JobRunId)
+  case class TriggerJobRun(jobSpec: JobSpec)
 
   def props(
     clock:           Clock,

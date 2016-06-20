@@ -3,8 +3,10 @@ package dcos.metronome.jobspec.impl
 import java.io.IOException
 import java.util.concurrent.LinkedBlockingDeque
 
-import akka.actor.{ Actor, Props, ActorSystem }
+import akka.actor.{ Status, Actor, Props, ActorSystem }
 import akka.testkit._
+import akka.pattern.ask
+import akka.util.Timeout
 import dcos.metronome.behavior.BehaviorFixture
 import dcos.metronome.{ JobSpecDoesNotExist, JobSpecChangeInFlight, JobSpecAlreadyExists }
 import dcos.metronome.model.JobSpec
@@ -13,7 +15,7 @@ import mesosphere.marathon.state.PathId
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatest.{ Matchers, GivenWhenThen, BeforeAndAfterAll, FunSuiteLike }
 
-import scala.concurrent.Promise
+import scala.concurrent.duration._
 
 class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteLike with BeforeAndAfterAll with GivenWhenThen with ScalaFutures with Matchers with Eventually with ImplicitSender {
 
@@ -24,58 +26,54 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     Given("A service with one jobs")
     val f = new Fixture
     val service = f.jobSpecService
-    val promise = Promise[Option[JobSpec]]
     service.underlyingActor.addJobSpec(f.jobSpec)
 
     When("A jobSpec is created")
-    service ! GetJobSpec(f.jobSpec.id, promise)
+    val result = service.ask(GetJobSpec(f.jobSpec.id)).mapTo[Option[JobSpec]]
 
     Then("The jobSpec is available")
-    promise.future.futureValue should be(Some(f.jobSpec))
+    result.futureValue should be(Some(f.jobSpec))
   }
 
   test("A non existing jobSpec can be retrieved") {
     Given("A service with no jobs")
     val f = new Fixture
     val service = f.jobSpecService
-    val promise = Promise[Option[JobSpec]]
 
     When("A jobSpec is created")
-    service ! GetJobSpec(f.jobSpec.id, promise)
+    val result = service.ask(GetJobSpec(f.jobSpec.id)).mapTo[Option[JobSpec]]
 
     Then("The jobSpec is available")
-    promise.future.futureValue should be(None)
+    result.futureValue should be(None)
   }
 
   test("All available jobSpecs can be retrieved") {
     Given("A service with 3 jobs")
     val f = new Fixture
     val service = f.jobSpecService
-    val promise = Promise[Iterable[JobSpec]]
     service.underlyingActor.addJobSpec(f.jobSpec.copy(id = PathId("/test/one")))
     service.underlyingActor.addJobSpec(f.jobSpec.copy(id = PathId("/test/two")))
     service.underlyingActor.addJobSpec(f.jobSpec.copy(id = PathId("/test/three")))
 
     When("A jobSpec is created")
-    service ! ListJobSpecs(_ => true, promise)
+    val result = service.ask(ListJobSpecs(_ => true)).mapTo[Iterable[JobSpec]]
 
     Then("The jobSpec is available")
-    promise.future.futureValue should have size 3
+    result.futureValue should have size 3
   }
 
   test("A jobSpec can be created") {
     Given("A service with no jobs")
     val f = new Fixture
     val service = f.jobSpecService
-    val promise = Promise[JobSpec]
 
     When("A jobSpec is created")
-    service ! CreateJobSpec(f.jobSpec, promise)
+    service ! CreateJobSpec(f.jobSpec)
     eventually(service.underlyingActor.inFlightChanges should have size 1)
-    service ! Created(self, f.jobSpec, promise)
+    service ! Created(self, f.jobSpec, self)
 
     Then("The jobSpec is available")
-    promise.future.futureValue should be(f.jobSpec)
+    expectMsg(f.jobSpec)
     service.underlyingActor.allJobs should have size 1
     service.underlyingActor.allJobs(f.jobSpec.id) should be (f.jobSpec)
     service.underlyingActor.inFlightChanges should have size 0
@@ -85,14 +83,13 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     Given("A service with one job")
     val f = new Fixture
     val service = f.jobSpecService
-    val promise = Promise[JobSpec]
     service.underlyingActor.addJobSpec(f.jobSpec)
 
     When("An existing jobSpec is created")
-    service ! CreateJobSpec(f.jobSpec, promise)
+    service ! CreateJobSpec(f.jobSpec)
 
     Then("An exception will be thrown")
-    promise.future.failed.futureValue should be(JobSpecAlreadyExists(f.jobSpec.id))
+    expectMsg(Status.Failure(JobSpecAlreadyExists(f.jobSpec.id)))
     eventually(service.underlyingActor.inFlightChanges should have size 0)
   }
 
@@ -100,16 +97,15 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     Given("A service with one job")
     val f = new Fixture
     val service = f.jobSpecService
-    val promise = Promise[JobSpec]
     val exception = new RuntimeException("failed")
 
     When("An existing jobSpec is created")
-    service ! CreateJobSpec(f.jobSpec, promise)
+    service ! CreateJobSpec(f.jobSpec)
     eventually(service.underlyingActor.inFlightChanges should have size 1)
-    service ! PersistFailed(self, f.jobSpec.id, exception, promise)
+    service ! PersistFailed(self, f.jobSpec.id, exception, self)
 
     Then("An exception will be thrown")
-    promise.future.failed.futureValue should be(exception)
+    expectMsg(Status.Failure(exception))
     eventually(service.underlyingActor.inFlightChanges should have size 0)
     service.underlyingActor.allJobs should have size 0
   }
@@ -119,16 +115,15 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     val f = new Fixture
     val changed = f.jobSpec.copy(description = Some("changed"))
     val service = f.jobSpecService
-    val promise = Promise[JobSpec]
     service.underlyingActor.addJobSpec(f.jobSpec)
 
     When("A jobSpec is updated")
-    service ! UpdateJobSpec(f.jobSpec.id, _ => changed, promise)
+    service ! UpdateJobSpec(f.jobSpec.id, _ => changed)
     eventually(service.underlyingActor.inFlightChanges should have size 1)
-    service ! Updated(self, changed, promise)
+    service ! Updated(self, changed, self)
 
     Then("The jobSpec is updated")
-    promise.future.futureValue should be(changed)
+    expectMsg(changed)
     service.underlyingActor.allJobs should have size 1
     service.underlyingActor.allJobs(f.jobSpec.id) should be (changed)
     service.underlyingActor.inFlightChanges should have size 0
@@ -138,13 +133,12 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     Given("A service with one job")
     val f = new Fixture
     val service = f.jobSpecService
-    val promise = Promise[JobSpec]
 
     When("A non existing jobSpec is updated")
-    service ! UpdateJobSpec(f.jobSpec.id, identity, promise)
+    service ! UpdateJobSpec(f.jobSpec.id, identity)
 
     Then("An exception will be thrown")
-    promise.future.failed.futureValue should be(JobSpecDoesNotExist(f.jobSpec.id))
+    expectMsg(Status.Failure(JobSpecDoesNotExist(f.jobSpec.id)))
     eventually(service.underlyingActor.inFlightChanges should have size 0)
   }
 
@@ -152,15 +146,14 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     Given("A service with one job")
     val f = new Fixture
     val service = f.jobSpecService
-    val promise = Promise[JobSpec]
     service.underlyingActor.addJobSpec(f.jobSpec)
 
     When("An existing jobSpec is updated twice")
-    service ! UpdateJobSpec(f.jobSpec.id, identity, Promise[JobSpec])
-    service ! UpdateJobSpec(f.jobSpec.id, identity, promise)
+    service ! UpdateJobSpec(f.jobSpec.id, identity)
+    service ! UpdateJobSpec(f.jobSpec.id, identity)
 
     Then("An exception will be thrown")
-    promise.future.failed.futureValue should be(JobSpecChangeInFlight(f.jobSpec.id))
+    expectMsg(Status.Failure(JobSpecChangeInFlight(f.jobSpec.id)))
     eventually(service.underlyingActor.inFlightChanges should have size 1)
   }
 
@@ -168,17 +161,16 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     Given("A service with one job")
     val f = new Fixture
     val service = f.jobSpecService
-    val promise = Promise[JobSpec]
     val exception = new RuntimeException("failed")
     service.underlyingActor.addJobSpec(f.jobSpec)
 
     When("An existing jobSpec is updated and the repo fails")
-    service ! UpdateJobSpec(f.jobSpec.id, identity, promise)
+    service ! UpdateJobSpec(f.jobSpec.id, identity)
     eventually(service.underlyingActor.inFlightChanges should have size 1)
-    service ! PersistFailed(self, f.jobSpec.id, exception, promise)
+    service ! PersistFailed(self, f.jobSpec.id, exception, self)
 
     Then("An exception will be thrown")
-    promise.future.failed.futureValue should be(exception)
+    expectMsg(Status.Failure(exception))
     eventually(service.underlyingActor.inFlightChanges should have size 0)
     service.underlyingActor.allJobs should have size 1
   }
@@ -187,16 +179,15 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     Given("A service with one job")
     val f = new Fixture
     val service = f.jobSpecService
-    val promise = Promise[JobSpec]
     service.underlyingActor.addJobSpec(f.jobSpec)
 
     When("A jobSpec is created")
-    service ! DeleteJobSpec(f.jobSpec.id, promise)
+    service ! DeleteJobSpec(f.jobSpec.id)
     eventually(service.underlyingActor.inFlightChanges should have size 1)
-    service ! Deleted(self, f.jobSpec, promise)
+    service ! Deleted(self, f.jobSpec, self)
 
     Then("The jobSpec is available")
-    promise.future.futureValue should be(f.jobSpec)
+    expectMsg(f.jobSpec)
     service.underlyingActor.allJobs should have size 0
     service.underlyingActor.inFlightChanges should have size 0
   }
@@ -205,13 +196,12 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     Given("A service with one job")
     val f = new Fixture
     val service = f.jobSpecService
-    val promise = Promise[JobSpec]
 
     When("A change is already in flight")
-    service ! DeleteJobSpec(f.jobSpec.id, promise)
+    service ! DeleteJobSpec(f.jobSpec.id)
 
     Then("An exception will be thrown")
-    promise.future.failed.futureValue should be(JobSpecDoesNotExist(f.jobSpec.id))
+    expectMsg(Status.Failure(JobSpecDoesNotExist(f.jobSpec.id)))
     eventually(service.underlyingActor.inFlightChanges should have size 0)
   }
 
@@ -219,15 +209,14 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     Given("A service with one job")
     val f = new Fixture
     val service = f.jobSpecService
-    val promise = Promise[JobSpec]
     service.underlyingActor.addJobSpec(f.jobSpec)
 
     When("A change is already in flight")
-    service ! DeleteJobSpec(f.jobSpec.id, Promise[JobSpec])
-    service ! DeleteJobSpec(f.jobSpec.id, promise)
+    service ! DeleteJobSpec(f.jobSpec.id)
+    service ! DeleteJobSpec(f.jobSpec.id)
 
     Then("An exception will be thrown")
-    promise.future.failed.futureValue should be(JobSpecChangeInFlight(f.jobSpec.id))
+    expectMsg(Status.Failure(JobSpecChangeInFlight(f.jobSpec.id)))
     eventually(service.underlyingActor.inFlightChanges should have size 1)
   }
 
@@ -235,20 +224,21 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     Given("A service with one job")
     val f = new Fixture
     val service = f.jobSpecService
-    val promise = Promise[JobSpec]
     val exception = new RuntimeException("failed")
     service.underlyingActor.addJobSpec(f.jobSpec)
 
     When("An existing jobSpec is created")
-    service ! DeleteJobSpec(f.jobSpec.id, promise)
+    service ! DeleteJobSpec(f.jobSpec.id)
     eventually(service.underlyingActor.inFlightChanges should have size 1)
-    service ! PersistFailed(self, f.jobSpec.id, exception, promise)
+    service ! PersistFailed(self, f.jobSpec.id, exception, self)
 
     Then("An exception will be thrown")
-    promise.future.failed.futureValue should be(exception)
+    expectMsg(Status.Failure(exception))
     eventually(service.underlyingActor.inFlightChanges should have size 0)
     service.underlyingActor.allJobs should have size 1
   }
+
+  implicit val timeout: Timeout = 3.seconds
 
   override protected def afterAll(): Unit = {
     shutdown()
