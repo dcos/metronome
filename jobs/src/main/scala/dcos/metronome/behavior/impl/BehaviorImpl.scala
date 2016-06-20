@@ -25,17 +25,17 @@ class BehaviorImpl(val config: BehaviorConfig, val metrics: Metrics) extends Beh
     def timer(method: Method): Timer = {
       methodTimer.getOrElse(method.getName, {
         log.debug(s"Create new timer for method: ${method.getName} in class ${classTag.runtimeClass.getName}")
-        val timer = builder.timer(method.getName)
+        val timer = builder.timer(s"time.${method.getName}")
         methodTimer += method.getName -> timer
         timer
       })
     }
     var methodExceptionCount = Map.empty[String, Meter]
     def methodException(method: Method, ex: Throwable): Meter = {
-      val name = method.getName + ex.getClass.getName
+      val name = s"exception.${method.getName}.${ex.getClass.getName}"
       methodExceptionCount.getOrElse(name, {
         log.debug(s"Create new count for method: ${method.getName} exception: ${ex.getClass.getName} in class ${classTag.runtimeClass.getName}")
-        val meter = builder.meter(method.getName)
+        val meter = builder.meter(name)
         methodExceptionCount += name -> meter
         meter
       })
