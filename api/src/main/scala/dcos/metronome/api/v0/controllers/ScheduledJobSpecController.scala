@@ -1,4 +1,4 @@
-package dcos.metronome.api.v1.controllers
+package dcos.metronome.api.v0.controllers
 
 import dcos.metronome.JobSpecDoesNotExist
 import dcos.metronome.api.{ JsonSchema, UnknownJob, Authorization }
