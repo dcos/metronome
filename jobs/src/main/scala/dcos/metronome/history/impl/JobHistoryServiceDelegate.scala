@@ -2,15 +2,14 @@ package dcos.metronome.history.impl
 
 import akka.actor.ActorRef
 import dcos.metronome.history.JobHistoryService
-import dcos.metronome.model.JobHistory
-import mesosphere.marathon.state.PathId
+import dcos.metronome.model.{ JobId, JobHistory }
 
 import scala.concurrent.{ Future, Promise }
 
 class JobHistoryServiceDelegate(actorRef: ActorRef) extends JobHistoryService {
   import JobHistoryServiceActor._
 
-  override def statusFor(jobSpecId: PathId): Future[Option[JobHistory]] = {
+  override def statusFor(jobSpecId: JobId): Future[Option[JobHistory]] = {
     val promise = Promise[Option[JobHistory]]
     actorRef ! GetJobHistory(jobSpecId, promise)
     promise.future

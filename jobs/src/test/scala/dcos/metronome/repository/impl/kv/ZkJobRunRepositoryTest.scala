@@ -1,8 +1,7 @@
 package dcos.metronome.repository.impl.kv
 
-import dcos.metronome.model.JobRunId
+import dcos.metronome.model.{ JobId, JobRunId }
 import dcos.metronome.utils.test.Mockito
-import mesosphere.marathon.state.PathId
 import mesosphere.util.state.PersistentStoreWithNestedPathsSupport
 import org.scalatest.{ FunSuite, Matchers }
 import org.scalatest.concurrent.ScalaFutures._
@@ -28,10 +27,10 @@ class ZkJobRunRepositoryTest extends FunSuite with Mockito with Matchers {
 
     f.repository.ids().futureValue should contain theSameElementsAs (
       Seq(
-        JobRunId(PathId("/first/job"), "first.run"),
-        JobRunId(PathId("/first/job"), "second.run"),
-        JobRunId(PathId("/second/job"), "third.run"),
-        JobRunId(PathId("/second/job"), "fourth.run")
+        JobRunId(JobId("first.job"), "first.run"),
+        JobRunId(JobId("first.job"), "second.run"),
+        JobRunId(JobId("second.job"), "third.run"),
+        JobRunId(JobId("second.job"), "fourth.run")
       )
     )
   }

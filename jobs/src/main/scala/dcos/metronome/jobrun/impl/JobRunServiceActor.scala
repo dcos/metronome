@@ -8,7 +8,6 @@ import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
 import dcos.metronome.utils.time.Clock
-import mesosphere.marathon.state.PathId
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.Promise
@@ -58,7 +57,7 @@ class JobRunServiceActor(
     case update: TaskStateChangedEvent => forwardStatusUpdate(update)
   }
 
-  def runsForJob(jobId: PathId): Iterable[StartedJobRun] = allJobRuns.values.filter(_.jobRun.id.jobId == jobId)
+  def runsForJob(jobId: JobId): Iterable[StartedJobRun] = allJobRuns.values.filter(_.jobRun.id.jobId == jobId)
 
   def triggerJobRun(spec: JobSpec): Unit = {
     log.info(s"Trigger new JobRun for JobSpec: $spec")
@@ -147,7 +146,7 @@ object JobRunServiceActor {
 
   case class ListRuns(filter: JobRun => Boolean)
   case class GetJobRun(id: JobRunId)
-  case class GetActiveJobRuns(jobId: PathId)
+  case class GetActiveJobRuns(jobId: JobId)
   case class KillJobRun(id: JobRunId)
   case class TriggerJobRun(jobSpec: JobSpec)
 

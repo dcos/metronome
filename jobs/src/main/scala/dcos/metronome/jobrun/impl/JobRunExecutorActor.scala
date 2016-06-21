@@ -6,7 +6,6 @@ import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
-import dcos.metronome.utils.glue.MarathonImplicits.RunSpecId
 import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
@@ -38,7 +37,7 @@ class JobRunExecutorActor(
   lazy val persistenceActor = persistenceActorRefFactory(run.id, context)
   var jobRun: JobRun = run
 
-  val runSpecId = RunSpecId(jobRun.id)
+  val runSpecId = jobRun.id.toPathId
 
   override def preStart(): Unit = {
     jobRun.status match {

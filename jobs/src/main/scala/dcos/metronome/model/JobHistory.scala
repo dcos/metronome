@@ -1,10 +1,9 @@
 package dcos.metronome.model
 
-import mesosphere.marathon.state.PathId
 import org.joda.time.{ DateTimeZone, DateTime }
 
 case class JobHistory(
-  jobSpecId:      PathId,
+  jobSpecId:      JobId,
   successCount:   Long,
   failureCount:   Long,
   lastSuccessAt:  Option[DateTime],
@@ -14,7 +13,7 @@ case class JobHistory(
 )
 
 object JobHistory {
-  def empty(id: PathId): JobHistory = JobHistory(id, 0, 0, None, None, Seq.empty, Seq.empty)
+  def empty(id: JobId): JobHistory = JobHistory(id, 0, 0, None, None, Seq.empty, Seq.empty)
 }
 
 case class JobRunInfo(id: JobRunId, createdAt: DateTime, finishedAt: DateTime)

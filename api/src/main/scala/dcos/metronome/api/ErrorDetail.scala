@@ -1,9 +1,9 @@
 package dcos.metronome.api
 
-import mesosphere.marathon.state.PathId
+import dcos.metronome.model.JobId
 
 case class ErrorDetail(message: String)
-case class UnknownJob(id: PathId, message: String = "Job not found")
+case class UnknownJob(id: JobId, message: String = "Job not found")
 case class UnknownSchedule(id: String, message: String = "Schedule not found")
-case class UnknownJobRun(jobSpec: PathId, id: String, message: String = "Job Run not found")
+case class UnknownJobRun(jobSpec: JobId, id: String, message: String = "Job Run not found")
 

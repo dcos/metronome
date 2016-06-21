@@ -5,15 +5,14 @@ import dcos.metronome.jobinfo.JobInfo.Embed
 import dcos.metronome.jobinfo.{ JobInfo, JobSpecSelector, JobInfoService }
 import dcos.metronome.jobrun.{ StartedJobRun, JobRunService }
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.model.{ JobSpec, JobHistory }
-import mesosphere.marathon.state.PathId
+import dcos.metronome.model.{ JobId, JobSpec, JobHistory }
 
 import scala.async.Async.{ async, await }
 import scala.concurrent.{ ExecutionContext, Future }
 
 class JobInfoServiceImpl(jobSpecService: JobSpecService, jobRunService: JobRunService, jobHistoryService: JobHistoryService) extends JobInfoService {
 
-  override def selectJob(jobSpecId: PathId, selector: JobSpecSelector, embed: Set[Embed])(implicit ec: ExecutionContext): Future[Option[JobInfo]] = {
+  override def selectJob(jobSpecId: JobId, selector: JobSpecSelector, embed: Set[Embed])(implicit ec: ExecutionContext): Future[Option[JobInfo]] = {
     async {
       val runOption = if (embed(Embed.ActiveRuns)) Some(await(jobRunService.activeRuns(jobSpecId))) else None
       val historyOption = if (embed(Embed.History)) await(jobHistoryService.statusFor(jobSpecId)) else None
@@ -31,12 +30,12 @@ class JobInfoServiceImpl(jobSpecService: JobSpecService, jobRunService: JobRunSe
         if (embed(Embed.ActiveRuns))
           await(jobRunService.listRuns(run => allIds(run.jobSpec.id))).groupBy(_.jobRun.jobSpec.id)
         else
-          Map.empty[PathId, Seq[StartedJobRun]]
+          Map.empty[JobId, Seq[StartedJobRun]]
       val histories =
         if (embed(Embed.History))
           await(jobHistoryService.list(history => allIds(history.jobSpecId))).map(history => history.jobSpecId -> history).toMap
         else
-          Map.empty[PathId, JobHistory]
+          Map.empty[JobId, JobHistory]
       specs.map { spec =>
         JobInfo(spec, schedulesOption(spec, embed), runs.get(spec.id), histories.get(spec.id))
       }

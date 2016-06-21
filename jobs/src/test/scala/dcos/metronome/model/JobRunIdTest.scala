@@ -1,33 +1,31 @@
 package dcos.metronome.model
 
 import dcos.metronome.utils.test.Mockito
-import mesosphere.marathon.state.PathId
 import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }
 
 class JobRunIdTest extends FunSuite with Matchers with Mockito with GivenWhenThen {
   test("Convert simple appId into JobRunId") {
     Given("a simple appId")
 
-    // Marathon core doesn't recognize dot delimiters delimiters we'll get an appId with a single element
-    val appId: PathId = PathId("test.20160614133813ap8ZQ")
+    val jobId: JobId = JobId("test")
 
     When("The id is converted into a JobRunId")
-    val jobRunId = JobRunId(appId)
+    val jobRunId = JobRunId(jobId, "20160614133813ap8ZQ")
 
     Then("It is broken apart correctly")
-    jobRunId.jobId shouldEqual PathId("test")
+    jobRunId.jobId shouldEqual JobId("test")
     jobRunId.value shouldEqual "20160614133813ap8ZQ"
   }
 
   test("Convert appId with dots into JobRunId") {
     Given("an appId with multiple dots")
-    val appId: PathId = PathId("test.foo.20160614133813ap8ZQ")
+    val appId: JobId = JobId("test.foo")
 
     When("The id is converted into a JobRunId")
-    val jobRunId = JobRunId(appId)
+    val jobRunId = JobRunId(appId, "20160614133813ap8ZQ")
 
     Then("It is broken apart correctly")
-    jobRunId.jobId shouldEqual PathId("test/foo")
+    jobRunId.jobId shouldEqual JobId("test.foo")
     jobRunId.value shouldEqual "20160614133813ap8ZQ"
   }
 }

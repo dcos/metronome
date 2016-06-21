@@ -5,8 +5,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import dcos.metronome.jobspec.impl.JobSpecServiceActor._
 import dcos.metronome.jobspec.{ JobSpecConfig, JobSpecService }
-import dcos.metronome.model.JobSpec
-import mesosphere.marathon.state.PathId
+import dcos.metronome.model.{ JobId, JobSpec }
 
 import scala.concurrent.Future
 
@@ -21,11 +20,11 @@ class JobSpecServiceDelegate(
     actorRef.ask(CreateJobSpec(jobSpec)).mapTo[JobSpec]
   }
 
-  override def getJobSpec(id: PathId): Future[Option[JobSpec]] = {
+  override def getJobSpec(id: JobId): Future[Option[JobSpec]] = {
     actorRef.ask(GetJobSpec(id)).mapTo[Option[JobSpec]]
   }
 
-  override def updateJobSpec(id: PathId, update: (JobSpec) => JobSpec): Future[JobSpec] = {
+  override def updateJobSpec(id: JobId, update: (JobSpec) => JobSpec): Future[JobSpec] = {
     actorRef.ask(UpdateJobSpec(id, update)).mapTo[JobSpec]
   }
 
@@ -33,7 +32,7 @@ class JobSpecServiceDelegate(
     actorRef.ask(ListJobSpecs(filter)).mapTo[Iterable[JobSpec]]
   }
 
-  override def deleteJobSpec(id: PathId): Future[JobSpec] = {
+  override def deleteJobSpec(id: JobId): Future[JobSpec] = {
     actorRef.ask(DeleteJobSpec(id)).mapTo[JobSpec]
   }
 }

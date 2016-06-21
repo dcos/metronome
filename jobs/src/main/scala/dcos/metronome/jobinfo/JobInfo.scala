@@ -1,14 +1,13 @@
 package dcos.metronome.jobinfo
 
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.model.{ JobHistory, JobRunSpec, ScheduleSpec, JobSpec }
-import mesosphere.marathon.state.PathId
+import dcos.metronome.model._
 
 /**
   * This class represents a JobSpec with optional enriched data.
   */
 case class JobInfo(
-  id:          PathId,
+  id:          JobId,
   description: Option[String],
   labels:      Map[String, String],
   run:         JobRunSpec,

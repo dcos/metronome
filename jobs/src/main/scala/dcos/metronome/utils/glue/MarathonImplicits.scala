@@ -6,7 +6,8 @@ import dcos.metronome.model._
 import mesosphere.marathon
 import mesosphere.marathon.core.readiness.ReadinessCheck
 import mesosphere.marathon.health.HealthCheck
-import mesosphere.marathon.state.{ AppDefinition, Container, EnvVarValue, FetchUri, PathId, PortDefinition, Secret, UpgradeStrategy }
+import mesosphere.marathon.state.Container
+import mesosphere.marathon.state._
 
 import scala.collection.immutable.Seq
 import scala.concurrent.duration._
@@ -22,7 +23,7 @@ object MarathonImplicits {
 
     // TODO: do we need a metronome-specific RunSpec implementation?
     AppDefinition(
-      id = PathId.fromSafePath(run.id.toString), // FIXME (glue): JobRunId#attempt
+      id = run.id.toPathId,
       cmd = jobSpec.run.cmd,
       args = jobSpec.run.args,
       user = jobSpec.run.user,
@@ -53,12 +54,6 @@ object MarathonImplicits {
       residency = None,
       secrets = Map.empty[String, Secret]
     )
-  }
-
-  object RunSpecId {
-    def apply(jobRunId: JobRunId): PathId = {
-      PathId.fromSafePath(jobRunId.toString)
-    }
   }
 
   private[this] def constraintSpec2ProtosConstraint(spec: ConstraintSpec): marathon.Protos.Constraint = {

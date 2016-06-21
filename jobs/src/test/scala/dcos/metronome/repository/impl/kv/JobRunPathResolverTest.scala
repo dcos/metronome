@@ -1,7 +1,6 @@
 package dcos.metronome.repository.impl.kv
 
-import dcos.metronome.model.JobRunId
-import mesosphere.marathon.state.PathId
+import dcos.metronome.model.{ JobId, JobRunId }
 import org.scalatest.{ FunSuite, Matchers }
 
 class JobRunPathResolverTest extends FunSuite with Matchers {
@@ -21,16 +20,16 @@ class JobRunPathResolverTest extends FunSuite with Matchers {
     f.resolver.toPath(f.id) should be (s"""${f.basePath}/${f.path}""")
   }
 
-  test("test JobRunPathResolver#toPath(PathId)") {
+  test("test JobRunPathResolver#toPath(JobId)") {
     val f = new Fixture
-    f.resolver.toPath(f.pathId) should be (s"""${f.basePath}/${f.parentPath}""")
+    f.resolver.toPath(f.jobId) should be (s"""${f.basePath}/${f.parentPath}""")
   }
 
   class Fixture {
     val basePath = "job-runs"
-    val pathId = PathId("/foo/bar/baz")
+    val jobId = JobId("foo.bar.baz")
     val runId = "run"
-    val id = JobRunId(pathId, runId)
+    val id = JobRunId(jobId, runId)
     val parentPath = "foo.bar.baz"
     val path = s"""$parentPath/${runId}"""
     val resolver = JobRunPathResolver

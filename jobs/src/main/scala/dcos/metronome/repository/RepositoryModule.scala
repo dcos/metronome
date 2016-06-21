@@ -2,9 +2,8 @@ package dcos.metronome.repository
 
 import com.twitter.util.JavaTimer
 import com.twitter.zk.{ NativeConnector, ZNode, ZkClient }
-import dcos.metronome.model.{ JobHistory, JobRun, JobRunId, JobSpec }
+import dcos.metronome.model._
 import dcos.metronome.repository.impl.kv.{ ZkConfig, ZkJobHistoryRepository, ZkJobRunRepository, ZkJobSpecRepository }
-import mesosphere.marathon.state.PathId
 import mesosphere.util.state.zk.{ CompressionConf, ZKStore }
 
 import scala.concurrent.ExecutionContext
@@ -36,10 +35,10 @@ class RepositoryModule(config: ZkConfig) {
     CompressionConf(config.zkCompressionEnabled, config.zkCompressionThreshold)
   )
 
-  def jobSpecRepository: Repository[PathId, JobSpec] = new ZkJobSpecRepository(zkStore, ec)
+  def jobSpecRepository: Repository[JobId, JobSpec] = new ZkJobSpecRepository(zkStore, ec)
 
   def jobRunRepository: Repository[JobRunId, JobRun] = new ZkJobRunRepository(zkStore, ec)
 
-  def jobHistoryRepository: Repository[PathId, JobHistory] = new ZkJobHistoryRepository(zkStore, ec)
+  def jobHistoryRepository: Repository[JobId, JobHistory] = new ZkJobHistoryRepository(zkStore, ec)
 }
 

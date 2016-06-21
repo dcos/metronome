@@ -1,7 +1,7 @@
 package dcos.metronome.api
 
 import dcos.metronome.jobinfo.JobInfo.Embed
-import mesosphere.marathon.state.PathId
+import dcos.metronome.model.JobId
 import play.api.mvc.{ QueryStringBindable, PathBindable }
 import mesosphere.marathon.api.v2.Validation.validateOrThrow
 
@@ -10,38 +10,36 @@ import scala.util.control.NonFatal
 object Binders {
 
   //Define types here to use them in routes file without full classified name
-  type PathId = mesosphere.marathon.state.PathId
+  type JobId = dcos.metronome.model.JobId
   type Embed = dcos.metronome.jobinfo.JobInfo.Embed
 
   /**
-    * This binder binds path parameter to PathIds
+    * This binder binds path parameter to JobIds
     */
-  implicit val pathPathBinder: PathBindable[PathId] = new PathBindable[PathId] {
-    override def bind(key: String, value: String): Either[String, PathId] = {
+  implicit val pathPathBinder: PathBindable[JobId] = new PathBindable[JobId] {
+    override def bind(key: String, value: String): Either[String, JobId] = {
       try {
-        //TODO: make this functionality available in Marathon
-        Right(validateOrThrow(PathId(value.split("[.]").toList, absolute = true)))
+        Right(validateOrThrow(JobId(value)))
       } catch {
         case NonFatal(ex) => Left(s"Not a valid id: $value")
       }
     }
-    override def unbind(key: String, value: PathId): String = value.path.mkString(".")
+    override def unbind(key: String, value: JobId): String = value.toString
   }
 
   /**
-    * This binder binds query parameter to PathIds
+    * This binder binds query parameter to JobIds
     */
-  implicit val pathQueryBinder: QueryStringBindable[PathId] = new QueryStringBindable[PathId] {
-    override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, PathId]] = {
-      val pathId = params.get(key).flatMap(_.headOption)
+  implicit val pathQueryBinder: QueryStringBindable[JobId] = new QueryStringBindable[JobId] {
+    override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, JobId]] = {
+      val jobId = params.get(key).flatMap(_.headOption)
       try {
-        //TODO: make this functionality available in Marathon
-        pathId.map(value => Right(validateOrThrow(PathId(value.split("[.]").toList, absolute = true))))
+        jobId.map(value => Right(validateOrThrow(JobId(value))))
       } catch {
-        case NonFatal(ex) => Some(Left(s"Not a valid id: $pathId"))
+        case NonFatal(ex) => Some(Left(s"Not a valid id: $jobId"))
       }
     }
-    override def unbind(key: String, value: PathId): String = value.path.mkString(".")
+    override def unbind(key: String, value: JobId): String = value.toString
   }
 
   implicit val embedQueryBinder: QueryStringBindable[Set[Embed]] = new QueryStringBindable[Set[Embed]] {

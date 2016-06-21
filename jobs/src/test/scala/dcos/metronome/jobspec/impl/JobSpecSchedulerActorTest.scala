@@ -4,10 +4,9 @@ import akka.actor.ActorSystem
 import akka.testkit.{ TestActorRef, ImplicitSender, TestKit }
 import dcos.metronome.behavior.BehaviorFixture
 import dcos.metronome.jobrun.JobRunService
-import dcos.metronome.model.{ CronSpec, JobSpec, ScheduleSpec }
+import dcos.metronome.model.{ JobId, CronSpec, JobSpec, ScheduleSpec }
 import dcos.metronome.utils.test.Mockito
 import dcos.metronome.utils.time.FixedClock
-import mesosphere.marathon.state.PathId
 import org.joda.time.DateTime
 import org.scalatest._
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
@@ -74,7 +73,7 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
   class Fixture {
     val CronSpec(everyMinute) = "* * * * *"
     val CronSpec(everyHourHalfPast) = "30 * * * *"
-    val id = PathId("/test")
+    val id = JobId("/test")
     val jobSpec = JobSpec(id).copy(schedules = Seq(ScheduleSpec("every_minute", cron = everyMinute)))
     val clock = new FixedClock(DateTime.parse("2016-06-01T08:50:12.000Z"))
     val behavior = BehaviorFixture.empty

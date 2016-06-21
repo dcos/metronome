@@ -2,16 +2,15 @@ package dcos.metronome.jobspec.impl
 
 import akka.actor._
 import dcos.metronome.behavior.Behavior
-import dcos.metronome.model.JobSpec
+import dcos.metronome.model.{ JobId, JobSpec }
 import dcos.metronome.repository.NoConcurrentRepoChange.{ Failed, Change }
 import dcos.metronome.repository.{ NoConcurrentRepoChange, Repository }
-import mesosphere.marathon.state.PathId
 
 class JobSpecPersistenceActor(
-    id:           PathId,
-    repo:         Repository[PathId, JobSpec],
+    id:           JobId,
+    repo:         Repository[JobId, JobSpec],
     val behavior: Behavior
-) extends NoConcurrentRepoChange[PathId, JobSpec, ActorRef] {
+) extends NoConcurrentRepoChange[JobId, JobSpec, ActorRef] {
   import JobSpecPersistenceActor._
   import context.dispatcher
 
@@ -47,15 +46,15 @@ object JobSpecPersistenceActor {
   sealed trait JobSpecChange extends Change {
     def sender: ActorRef
     def jobSpec: JobSpec
-    def id: String = jobSpec.id.toString()
+    def id: String = jobSpec.id.toString
   }
   case class Created(sender: ActorRef, jobSpec: JobSpec, delegate: ActorRef) extends JobSpecChange
   case class Updated(sender: ActorRef, jobSpec: JobSpec, delegate: ActorRef) extends JobSpecChange
   case class Deleted(sender: ActorRef, jobSpec: JobSpec, delegate: ActorRef) extends JobSpecChange
 
-  case class PersistFailed(sender: ActorRef, id: PathId, ex: Throwable, delegate: ActorRef) extends Failed
+  case class PersistFailed(sender: ActorRef, id: JobId, ex: Throwable, delegate: ActorRef) extends Failed
 
-  def props(id: PathId, repository: Repository[PathId, JobSpec], behavior: Behavior): Props = {
+  def props(id: JobId, repository: Repository[JobId, JobSpec], behavior: Behavior): Props = {
     Props(new JobSpecPersistenceActor(id, repository, behavior))
   }
 }

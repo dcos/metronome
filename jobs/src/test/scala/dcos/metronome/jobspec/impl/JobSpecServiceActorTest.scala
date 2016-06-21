@@ -9,9 +9,8 @@ import akka.pattern.ask
 import akka.util.Timeout
 import dcos.metronome.behavior.BehaviorFixture
 import dcos.metronome.{ JobSpecDoesNotExist, JobSpecChangeInFlight, JobSpecAlreadyExists }
-import dcos.metronome.model.JobSpec
+import dcos.metronome.model.{ JobId, JobSpec }
 import dcos.metronome.repository.impl.InMemoryRepository
-import mesosphere.marathon.state.PathId
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatest.{ Matchers, GivenWhenThen, BeforeAndAfterAll, FunSuiteLike }
 
@@ -51,9 +50,9 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     Given("A service with 3 jobs")
     val f = new Fixture
     val service = f.jobSpecService
-    service.underlyingActor.addJobSpec(f.jobSpec.copy(id = PathId("/test/one")))
-    service.underlyingActor.addJobSpec(f.jobSpec.copy(id = PathId("/test/two")))
-    service.underlyingActor.addJobSpec(f.jobSpec.copy(id = PathId("/test/three")))
+    service.underlyingActor.addJobSpec(f.jobSpec.copy(id = JobId("test.one")))
+    service.underlyingActor.addJobSpec(f.jobSpec.copy(id = JobId("test.two")))
+    service.underlyingActor.addJobSpec(f.jobSpec.copy(id = JobId("test.three")))
 
     When("A jobSpec is created")
     val result = service.ask(ListJobSpecs(_ => true)).mapTo[Iterable[JobSpec]]
@@ -245,11 +244,11 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
   }
 
   class Fixture {
-    val repository = new InMemoryRepository[PathId, JobSpec]
+    val repository = new InMemoryRepository[JobId, JobSpec]
     val dummyQueue = new LinkedBlockingDeque[TestActor.Message]()
     val dummyProp = Props(new TestActor(dummyQueue))
-    val jobSpec = JobSpec(PathId("/test"))
+    val jobSpec = JobSpec(JobId("test"))
     val behavior = BehaviorFixture.empty
-    val jobSpecService = TestActorRef[JobSpecServiceActor](JobSpecServiceActor.props(repository, (id: PathId) => dummyProp, _ => dummyProp, behavior))
+    val jobSpecService = TestActorRef[JobSpecServiceActor](JobSpecServiceActor.props(repository, (id: JobId) => dummyProp, _ => dummyProp, behavior))
   }
 }

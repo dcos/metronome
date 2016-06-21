@@ -1,9 +1,8 @@
 package dcos.metronome.repository.impl.kv.marshaller
 
 import dcos.metronome.Protos
-import dcos.metronome.model.{ JobHistory, JobRunInfo }
+import dcos.metronome.model.{ JobId, JobHistory, JobRunInfo }
 import dcos.metronome.repository.impl.kv.EntityMarshaller
-import mesosphere.marathon.state.PathId
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.slf4j.LoggerFactory
 
@@ -41,7 +40,7 @@ object JobHistoryMarshaller extends EntityMarshaller[JobHistory] {
       if (proto.hasLastFailureAt) Some(new DateTime(proto.getLastFailureAt, DateTimeZone.UTC)) else None
 
     JobHistory(
-      jobSpecId = PathId(proto.getJobSpecId),
+      jobSpecId = JobId(proto.getJobSpecId),
       successCount = proto.getSuccessCount,
       failureCount = proto.getFailureCount,
       lastSuccessAt = lastSuccessAt,
