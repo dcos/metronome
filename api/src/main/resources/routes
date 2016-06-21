@@ -6,30 +6,30 @@ GET /v1/metrics dcos.metronome.api.v1.controllers.ApplicationController.showMetr
 GET /v1/jobs dcos.metronome.api.v1.controllers.JobSpecController.listJobs(embed: Set[Embed] ?= Set.empty[Embed])
 POST /v1/jobs dcos.metronome.api.v1.controllers.JobSpecController.createJob
 
-GET /v1/jobs/:jobId dcos.metronome.api.v1.controllers.JobSpecController.getJob(jobId: PathId, embed: Set[Embed] ?= Set.empty[Embed])
-PUT /v1/jobs/:jobId dcos.metronome.api.v1.controllers.JobSpecController.updateJob(jobId: PathId)
-DELETE /v1/jobs/:jobId dcos.metronome.api.v1.controllers.JobSpecController.deleteJob(jobId: PathId, stopCurrentJobRuns: Boolean ?= false)
+GET /v1/jobs/:jobId dcos.metronome.api.v1.controllers.JobSpecController.getJob(jobId: JobId, embed: Set[Embed] ?= Set.empty[Embed])
+PUT /v1/jobs/:jobId dcos.metronome.api.v1.controllers.JobSpecController.updateJob(jobId: JobId)
+DELETE /v1/jobs/:jobId dcos.metronome.api.v1.controllers.JobSpecController.deleteJob(jobId: JobId, stopCurrentJobRuns: Boolean ?= false)
 
 
 # Job scheduler routes
-GET /v1/jobs/:jobId/schedules dcos.metronome.api.v1.controllers.JobScheduleController.getSchedules(jobId: PathId)
-POST /v1/jobs/:jobId/schedules dcos.metronome.api.v1.controllers.JobScheduleController.createSchedule(jobId: PathId)
+GET /v1/jobs/:jobId/schedules dcos.metronome.api.v1.controllers.JobScheduleController.getSchedules(jobId: JobId)
+POST /v1/jobs/:jobId/schedules dcos.metronome.api.v1.controllers.JobScheduleController.createSchedule(jobId: JobId)
 
-GET /v1/jobs/:jobId/schedules/:scheduleId dcos.metronome.api.v1.controllers.JobScheduleController.getSchedule(jobId: PathId, scheduleId)
-PUT /v1/jobs/:jobId/schedules/:scheduleId dcos.metronome.api.v1.controllers.JobScheduleController.updateSchedule(jobId: PathId, scheduleId)
-DELETE /v1/jobs/:jobId/schedules/:scheduleId dcos.metronome.api.v1.controllers.JobScheduleController.deleteSchedule(jobId: PathId, scheduleId)
+GET /v1/jobs/:jobId/schedules/:scheduleId dcos.metronome.api.v1.controllers.JobScheduleController.getSchedule(jobId: JobId, scheduleId)
+PUT /v1/jobs/:jobId/schedules/:scheduleId dcos.metronome.api.v1.controllers.JobScheduleController.updateSchedule(jobId: JobId, scheduleId)
+DELETE /v1/jobs/:jobId/schedules/:scheduleId dcos.metronome.api.v1.controllers.JobScheduleController.deleteSchedule(jobId: JobId, scheduleId)
 
 
 # Job run routes
-POST /v1/jobs/:jobId/runs dcos.metronome.api.v1.controllers.JobRunController.triggerJob(jobId: PathId)
-GET /v1/jobs/:jobId/runs dcos.metronome.api.v1.controllers.JobRunController.getJobRuns(jobId: PathId)
-GET /v1/jobs/:jobId/runs/:runId dcos.metronome.api.v1.controllers.JobRunController.getJobRun(jobId: PathId, runId)
-POST /v1/jobs/:jobId/runs/:runId/actions/stop dcos.metronome.api.v1.controllers.JobRunController.killJobRun(jobId: PathId, runId)
+POST /v1/jobs/:jobId/runs dcos.metronome.api.v1.controllers.JobRunController.triggerJob(jobId: JobId)
+GET /v1/jobs/:jobId/runs dcos.metronome.api.v1.controllers.JobRunController.getJobRuns(jobId: JobId)
+GET /v1/jobs/:jobId/runs/:runId dcos.metronome.api.v1.controllers.JobRunController.getJobRun(jobId: JobId, runId)
+POST /v1/jobs/:jobId/runs/:runId/actions/stop dcos.metronome.api.v1.controllers.JobRunController.killJobRun(jobId: JobId, runId)
 
 
 # TODO: deprecated API (remove in subsequent version)
 POST /v0/scheduled-jobs dcos.metronome.api.v0.controllers.ScheduledJobSpecController.createJob
-PUT /v0/scheduled-jobs/:jobId dcos.metronome.api.v0.controllers.ScheduledJobSpecController.updateJob(jobId: PathId)
+PUT /v0/scheduled-jobs/:jobId dcos.metronome.api.v0.controllers.ScheduledJobSpecController.updateJob(jobId: JobId)
 
 
 GET /public/*file                 controllers.Assets.at(path="/public", file)

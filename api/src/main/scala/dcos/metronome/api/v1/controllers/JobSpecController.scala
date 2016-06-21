@@ -7,11 +7,10 @@ import dcos.metronome.jobinfo.JobInfo.Embed
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.model.JobSpec
+import dcos.metronome.model.{ JobId, JobSpec }
 import dcos.metronome.{ JobSpecAlreadyExists, JobSpecDoesNotExist }
 import mesosphere.marathon.plugin.auth._
-import mesosphere.marathon.state.PathId
-import mesosphere.marathon.state.PathId._
+import JobId._
 import play.api.mvc.Result
 
 import scala.async.Async.{ async, await }
@@ -41,14 +40,14 @@ class JobSpecController(
     jobInfoService.selectJobs(request.selectAuthorized, embed).map(Ok(_))
   }
 
-  def getJob(id: PathId, embed: Set[Embed]) = AuthorizedAction.async { implicit request =>
+  def getJob(id: JobId, embed: Set[Embed]) = AuthorizedAction.async { implicit request =>
     jobInfoService.selectJob(id, request.selectAuthorized, embed).map {
       case Some(job) => Ok(job)
       case None      => NotFound(UnknownJob(id))
     }
   }
 
-  def updateJob(id: PathId) = AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
+  def updateJob(id: JobId) = AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
     request.authorizedAsync(UpdateRunSpec) { jobSpec =>
       def updateJob(job: JobSpec): JobSpec = jobSpec.copy(schedules = job.schedules)
       jobSpecService.updateJobSpec(id, updateJob).map(Ok(_)).recover {
@@ -57,7 +56,7 @@ class JobSpecController(
     }
   }
 
-  def deleteJob(id: PathId, stopCurrentJobRuns: Boolean) = AuthorizedAction.async { implicit request =>
+  def deleteJob(id: JobId, stopCurrentJobRuns: Boolean) = AuthorizedAction.async { implicit request =>
     def deleteJobSpec(jobSpec: JobSpec): Future[Result] = async {
       val runs = await(jobRunService.activeRuns(id))
       if (runs.nonEmpty && !stopCurrentJobRuns) {

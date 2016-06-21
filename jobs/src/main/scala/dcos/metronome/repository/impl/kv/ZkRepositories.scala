@@ -2,38 +2,37 @@ package dcos.metronome.repository.impl.kv
 
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.kv.marshaller.{ JobHistoryMarshaller, JobRunMarshaller, JobSpecMarshaller }
-import mesosphere.marathon.state.PathId
 import mesosphere.util.state.PersistentStoreWithNestedPathsSupport
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-case class PathIdPathResolver(basePath: String) extends PathResolver[PathId] {
+case class JobIdPathResolver(basePath: String) extends PathResolver[JobId] {
   lazy val idRegex = """^(.+)$""".r
 
-  override def toPath(id: PathId): String = s"""$basePath/${id.path.mkString(".")}"""
-  override def fromPath(path: String): PathId = path match {
-    case idRegex(id) => PathId(id.split("[.]").toList, absolute = true)
+  override def toPath(id: JobId): String = s"""$basePath/${id.path.mkString(".")}"""
+  override def fromPath(path: String): JobId = path match {
+    case idRegex(id) => JobId(id.split("[.]").toList)
   }
 }
 
-object JobHistoryPathResolver extends PathIdPathResolver("job-histories")
-object JobSpecPathResolver extends PathIdPathResolver("job-specs")
+object JobHistoryPathResolver extends JobIdPathResolver("job-histories")
+object JobSpecPathResolver extends JobIdPathResolver("job-specs")
 object JobRunPathResolver extends PathResolver[JobRunId] {
   override def basePath: String = "job-runs"
 
   lazy val idRegex = """^([^/]+)/(.+)$""".r
 
   override def toPath(id: JobRunId): String = s"""$basePath/${id.jobId.path.mkString(".")}/${id.value}"""
-  def toPath(jobId: PathId): String = s"""$basePath/${jobId.path.mkString(".")}"""
+  def toPath(jobId: JobId): String = s"""$basePath/${jobId.path.mkString(".")}"""
   override def fromPath(path: String): JobRunId = path match {
-    case idRegex(jobId, jobRunId) => JobRunId(PathId(jobId.split("[.]").toList), jobRunId)
+    case idRegex(jobId, jobRunId) => JobRunId(JobId(jobId.split("[.]").toList), jobRunId)
   }
 }
 
 class ZkJobHistoryRepository(
   store:                    PersistentStoreWithNestedPathsSupport,
   override implicit val ec: ExecutionContext
-) extends KeyValueRepository[PathId, JobHistory](
+) extends KeyValueRepository[JobId, JobHistory](
   JobHistoryPathResolver,
   JobHistoryMarshaller,
   store,
@@ -65,13 +64,13 @@ class ZkJobRunRepository(
 class ZkJobSpecRepository(
   store:                    PersistentStoreWithNestedPathsSupport,
   override implicit val ec: ExecutionContext
-) extends KeyValueRepository[PathId, JobSpec](
+) extends KeyValueRepository[JobId, JobSpec](
   JobSpecPathResolver,
   JobSpecMarshaller,
   store,
   ec
 ) {
-  override def create(id: PathId, jobSpec: JobSpec): Future[JobSpec] = {
+  override def create(id: JobId, jobSpec: JobSpec): Future[JobSpec] = {
     val future = store match {
       case s: PersistentStoreWithNestedPathsSupport =>
         s.createPath(JobRunPathResolver.toPath(jobSpec.id)).flatMap { _ =>
@@ -83,7 +82,7 @@ class ZkJobSpecRepository(
     future.map(_ => jobSpec)
   }
 
-  override def delete(id: PathId): Future[Boolean] = {
+  override def delete(id: JobId): Future[Boolean] = {
     store match {
       case s: PersistentStoreWithNestedPathsSupport =>
         s.delete(JobRunPathResolver.toPath(id)).flatMap { jobRunDeleteResult =>

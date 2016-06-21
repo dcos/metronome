@@ -2,9 +2,8 @@ package dcos.metronome.api.v1.controllers
 
 import dcos.metronome.api.v1.models._
 import dcos.metronome.api.{ TestAuthFixture, MockApiComponents, OneAppPerTestWithComponents, UnknownJob }
-import dcos.metronome.model.{ JobRunSpec, CronSpec, JobSpec, ScheduleSpec }
+import dcos.metronome.model.{ JobId, CronSpec, JobSpec, ScheduleSpec }
 import mesosphere.marathon.core.plugin.PluginManager
-import mesosphere.marathon.state.PathId
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.PlaySpec
@@ -150,7 +149,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       Then("A 404 is sent")
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
-      contentAsJson(response) mustBe Json.toJson(UnknownJob(PathId("notexistent")))
+      contentAsJson(response) mustBe Json.toJson(UnknownJob(JobId("notexistent")))
     }
 
     "without auth this endpoint is not accessible" in {
@@ -198,7 +197,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       Then("A 404 is sent")
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
-      contentAsJson(response) mustBe Json.toJson(UnknownJob(PathId("notexistent")))
+      contentAsJson(response) mustBe Json.toJson(UnknownJob(JobId("notexistent")))
     }
 
     "indicate a problem when sending invalid json" in {
@@ -259,7 +258,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       Then("A 404 is sent")
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
-      contentAsJson(response) mustBe Json.toJson(UnknownJob(PathId("notexistent")))
+      contentAsJson(response) mustBe Json.toJson(UnknownJob(JobId("notexistent")))
     }
 
     "without auth this endpoint is not accessible" in {
@@ -282,7 +281,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
     }
   }
 
-  def spec(id: String) = JobSpec(PathId(id), run = JobRunSpec(cmd = Some("test")))
+  def spec(id: String) = JobSpec(JobId(id))
   val CronSpec(cron) = "* * * * *"
   val schedule1 = ScheduleSpec("id1", cron)
   val jobSpec1 = spec("spec1")

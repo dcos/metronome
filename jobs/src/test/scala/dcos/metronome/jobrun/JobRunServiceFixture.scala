@@ -3,7 +3,6 @@ package dcos.metronome.jobrun
 import dcos.metronome.JobRunDoesNotExist
 import dcos.metronome.model._
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.state.PathId
 import org.joda.time.DateTime
 
 import scala.collection.concurrent.TrieMap
@@ -25,7 +24,7 @@ object JobRunServiceFixture {
       }
     }
 
-    override def activeRuns(jobSpecId: PathId): Future[Iterable[StartedJobRun]] = {
+    override def activeRuns(jobSpecId: JobId): Future[Iterable[StartedJobRun]] = {
       Future.successful(specs.values.filter(_.jobRun.jobSpec.id == jobSpecId))
     }
     override def listRuns(filter: (JobRun) => Boolean): Future[Iterable[StartedJobRun]] = {

@@ -1,7 +1,6 @@
 package dcos.metronome.repository.impl.kv.marshaller
 
 import dcos.metronome.model._
-import mesosphere.marathon.state.PathId
 import org.joda.time.DateTimeZone
 import org.scalatest.{ FunSuite, Matchers }
 
@@ -49,7 +48,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers {
     )
 
     val jobSpec = JobSpec(
-      id = PathId("/foo/bar"),
+      id = JobId("/foo/bar"),
       description = Some("My description"),
       labels = Map("stage" -> "production"),
       schedules = Seq(ScheduleSpec(

@@ -1,13 +1,12 @@
 package dcos.metronome.history
 
-import dcos.metronome.model.JobHistory
-import mesosphere.marathon.state.PathId
+import dcos.metronome.model.{ JobId, JobHistory }
 
 import scala.concurrent.Future
 
 trait JobHistoryService {
 
-  def statusFor(jobSpecId: PathId): Future[Option[JobHistory]]
+  def statusFor(jobSpecId: JobId): Future[Option[JobHistory]]
 
   def list(filter: JobHistory => Boolean): Future[Iterable[JobHistory]]
 

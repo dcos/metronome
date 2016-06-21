@@ -3,7 +3,6 @@ package dcos.metronome.repository.impl.kv.marshaller
 import dcos.metronome.Protos
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.kv.EntityMarshaller
-import mesosphere.marathon.state.PathId
 import org.joda.time.DateTimeZone
 import org.slf4j.LoggerFactory
 
@@ -39,7 +38,7 @@ object JobSpecConversions {
       val builder = Protos.JobSpec.newBuilder()
 
       builder
-        .setId(jobSpec.id.toString())
+        .setId(jobSpec.id.toString)
         .addAllLabels(jobSpec.labels.toProto.asJava)
         .setRun(jobSpec.run.toProto)
         .addAllSchedules(jobSpec.schedules.toProto.asJava)
@@ -57,7 +56,7 @@ object JobSpecConversions {
       val description = if (proto.hasDescription) Some(proto.getDescription) else None
 
       JobSpec(
-        id = PathId(proto.getId),
+        id = JobId(proto.getId),
         description = description,
         labels = proto.getLabelsList.asScala.toModel,
         schedules = proto.getSchedulesList.asScala.toModel,

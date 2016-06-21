@@ -13,7 +13,6 @@ import dcos.metronome.repository.impl.InMemoryRepository
 import dcos.metronome.utils.test.Mockito
 import dcos.metronome.utils.time.FixedClock
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.state.PathId
 import org.joda.time.DateTime
 import org.scalatest._
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
@@ -78,7 +77,7 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     result should have size 2
 
     When("A non existing jobRun is queried")
-    actor ! GetActiveJobRuns(PathId("n/a"))
+    actor ! GetActiveJobRuns(JobId("n/a"))
 
     Then("An empty list is returned")
     expectMsg(Iterable.empty)
@@ -159,7 +158,7 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
   }
 
   class Fixture {
-    val id = PathId("/test")
+    val id = JobId("test")
     val jobSpec = JobSpec(id)
     val clock = new FixedClock(DateTime.parse("2016-06-01T08:50:12.000Z"))
 

@@ -6,7 +6,6 @@ import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.state.PathId
 import org.joda.time.{ DateTime, DateTimeZone }
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
@@ -25,10 +24,9 @@ package object models {
   implicit val unknownScheduleFormat: Format[UnknownSchedule] = Json.format[UnknownSchedule]
   implicit val unknownJobRunFormat: Format[UnknownJobRun] = Json.format[UnknownJobRun]
 
-  implicit lazy val PathIdFormat: Format[PathId] = Format(
-    //TODO: make this functionality available in Marathon
-    Reads.of[String](Reads.minLength[String](1)).map(s => PathId(s.split("[.]").toList, absolute = true)),
-    Writes[PathId] { id => JsString(id.path.mkString(".")) }
+  implicit lazy val JobIdFormat: Format[JobId] = Format(
+    Reads.of[String](Reads.minLength[String](1)).map(s => JobId(s)),
+    Writes[JobId] { id => JsString(id.toString) }
   )
 
   implicit val DateTimeFormat: Format[DateTime] = Format (
@@ -157,7 +155,7 @@ package object models {
   )(JobRunSpec.apply, unlift(JobRunSpec.unapply))
 
   implicit lazy val JobSpecFormat: Format[JobSpec] = (
-    (__ \ "id").format[PathId] ~
+    (__ \ "id").format[JobId] ~
     (__ \ "description").formatNullable[String] ~
     (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty) ~
     (__ \ "run").format[JobRunSpec]

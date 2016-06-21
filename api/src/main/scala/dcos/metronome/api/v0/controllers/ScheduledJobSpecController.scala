@@ -4,10 +4,9 @@ import dcos.metronome.JobSpecDoesNotExist
 import dcos.metronome.api.{ JsonSchema, UnknownJob, Authorization }
 import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.model.{ JobSpec, JobRunSpec, ScheduleSpec }
+import dcos.metronome.model.{ JobId, JobSpec, JobRunSpec, ScheduleSpec }
 import mesosphere.marathon.api.v2.json.Formats.FormatWithDefault
 import mesosphere.marathon.plugin.auth.{ UpdateRunSpec, CreateRunSpec, Authenticator, Authorizer }
-import mesosphere.marathon.state.PathId
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -28,7 +27,7 @@ class ScheduledJobSpecController(
     }
   }
 
-  def updateJob(id: PathId) = AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
+  def updateJob(id: JobId) = AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
     request.authorizedAsync(UpdateRunSpec) { jobSpec =>
       jobSpecService.updateJobSpec(id, _ => jobSpec).map(Ok(_)).recover {
         case ex: JobSpecDoesNotExist => NotFound(UnknownJob(id))
@@ -39,7 +38,7 @@ class ScheduledJobSpecController(
 
 object ScheduledJobSpecController {
   implicit lazy val JobSpecWithScheduleFormat: Format[JobSpec] = (
-    (__ \ "id").format[PathId] ~
+    (__ \ "id").format[JobId] ~
     (__ \ "description").formatNullable[String] ~
     (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty) ~
     (__ \ "schedules").formatNullable[Seq[ScheduleSpec]].withDefault(Seq.empty) ~

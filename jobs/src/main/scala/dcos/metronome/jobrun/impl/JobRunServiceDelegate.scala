@@ -4,8 +4,7 @@ import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
 import dcos.metronome.jobrun.{ JobRunConfig, JobRunService, StartedJobRun }
-import dcos.metronome.model.{ JobRun, JobRunId, JobSpec }
-import mesosphere.marathon.state.PathId
+import dcos.metronome.model.{ JobId, JobRun, JobRunId, JobSpec }
 
 import scala.concurrent.Future
 
@@ -29,7 +28,7 @@ private[jobrun] class JobRunServiceDelegate(
     actorRef.ask(KillJobRun(jobRunId)).mapTo[StartedJobRun]
   }
 
-  override def activeRuns(jobId: PathId): Future[Iterable[StartedJobRun]] = {
+  override def activeRuns(jobId: JobId): Future[Iterable[StartedJobRun]] = {
     actorRef.ask(GetActiveJobRuns(jobId)).mapTo[Iterable[StartedJobRun]]
   }
 

@@ -3,20 +3,19 @@ package dcos.metronome.history.impl
 import akka.actor.{ ActorLogging, ActorRef, Props, Actor }
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.history.JobHistoryConfig
-import dcos.metronome.model.{ JobRunInfo, JobRun, Event, JobHistory }
+import dcos.metronome.model._
 import dcos.metronome.repository.{ Repository, LoadContentOnStartup }
 import dcos.metronome.utils.time.Clock
-import mesosphere.marathon.state.PathId
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.Promise
 
-class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: Repository[PathId, JobHistory], val behavior: Behavior)
-    extends Actor with ActorLogging with LoadContentOnStartup[PathId, JobHistory] with ActorBehavior {
+class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: Repository[JobId, JobHistory], val behavior: Behavior)
+    extends Actor with ActorLogging with LoadContentOnStartup[JobId, JobHistory] with ActorBehavior {
   import JobHistoryServiceActor._
   import JobHistoryPersistenceActor._
 
-  val jobHistoryMap = TrieMap.empty[PathId, JobHistory].withDefault(JobHistory.empty)
+  val jobHistoryMap = TrieMap.empty[JobId, JobHistory].withDefault(JobHistory.empty)
   var persistenceActor: ActorRef = _
 
   override def preStart(): Unit = {
@@ -83,10 +82,10 @@ class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: R
 }
 
 object JobHistoryServiceActor {
-  case class GetJobHistory(id: PathId, promise: Promise[Option[JobHistory]])
+  case class GetJobHistory(id: JobId, promise: Promise[Option[JobHistory]])
   case class ListJobHistories(filter: JobHistory => Boolean, promise: Promise[Iterable[JobHistory]])
 
-  def props(config: JobHistoryConfig, clock: Clock, repo: Repository[PathId, JobHistory], behavior: Behavior): Props = {
+  def props(config: JobHistoryConfig, clock: Clock, repo: Repository[JobId, JobHistory], behavior: Behavior): Props = {
     Props(new JobHistoryServiceActor(config, clock, repo, behavior))
   }
 }

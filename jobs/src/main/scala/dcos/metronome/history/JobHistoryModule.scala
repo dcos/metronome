@@ -3,16 +3,15 @@ package dcos.metronome.history
 import akka.actor.{ ActorSystem, ActorRef }
 import dcos.metronome.behavior.Behavior
 import dcos.metronome.history.impl.{ JobHistoryServiceDelegate, JobHistoryServiceActor }
-import dcos.metronome.model.JobHistory
+import dcos.metronome.model.{ JobId, JobHistory }
 import dcos.metronome.repository.Repository
 import dcos.metronome.utils.time.Clock
-import mesosphere.marathon.state.PathId
 
 class JobHistoryModule(
     config:      JobHistoryConfig,
     actorSystem: ActorSystem,
     clock:       Clock,
-    repository:  Repository[PathId, JobHistory],
+    repository:  Repository[JobId, JobHistory],
     behavior:    Behavior
 ) {
 

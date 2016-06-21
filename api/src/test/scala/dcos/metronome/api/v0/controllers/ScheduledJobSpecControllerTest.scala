@@ -2,9 +2,8 @@ package dcos.metronome.api.v0.controllers
 
 import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
 import dcos.metronome.api.{ TestAuthFixture, MockApiComponents, OneAppPerTestWithComponents, UnknownJob }
-import dcos.metronome.model.{ CronSpec, JobSpec, ScheduleSpec }
+import dcos.metronome.model.{ JobId, CronSpec, JobSpec, ScheduleSpec }
 import mesosphere.marathon.core.plugin.PluginManager
-import mesosphere.marathon.state.PathId
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.PlaySpec
@@ -102,7 +101,7 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
       Then("A 404 is returned")
       status(response) mustBe NOT_FOUND
       contentType(response) mustBe Some("application/json")
-      contentAsJson(response) mustBe Json.toJson(UnknownJob(PathId("notexistent")))
+      contentAsJson(response) mustBe Json.toJson(UnknownJob(JobId("notexistent")))
     }
 
     "indicate a problem when sending invalid json" in {
@@ -144,9 +143,9 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
   val CronSpec(cron) = "* * * * *"
   val schedule1 = ScheduleSpec("id1", cron)
   val schedule2 = ScheduleSpec("id2", cron)
-  val jobSpec1 = JobSpec(PathId("spec1"), schedules = Seq(schedule1))
+  val jobSpec1 = JobSpec(JobId("spec1"), schedules = Seq(schedule1))
   val jobSpec1Json = Json.toJson(jobSpec1)
-  val jobSpec2 = JobSpec(PathId("spec2"), schedules = Seq(schedule1))
+  val jobSpec2 = JobSpec(JobId("spec2"), schedules = Seq(schedule1))
   val jobSpec2Json = Json.toJson(jobSpec2)
   val auth = new TestAuthFixture
 

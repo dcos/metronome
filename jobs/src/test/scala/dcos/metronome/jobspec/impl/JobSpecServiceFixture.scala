@@ -2,8 +2,7 @@ package dcos.metronome.jobspec.impl
 
 import dcos.metronome.{ JobSpecAlreadyExists, JobSpecDoesNotExist }
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.model.JobSpec
-import mesosphere.marathon.state.PathId
+import dcos.metronome.model.{ JobId, JobSpec }
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.Future
@@ -12,9 +11,9 @@ import scala.util.control.NonFatal
 object JobSpecServiceFixture {
 
   def simpleJobSpecService(): JobSpecService = new JobSpecService {
-    val specs = TrieMap.empty[PathId, JobSpec]
+    val specs = TrieMap.empty[JobId, JobSpec]
     import Future._
-    override def getJobSpec(id: PathId): Future[Option[JobSpec]] = successful(specs.get(id))
+    override def getJobSpec(id: JobId): Future[Option[JobSpec]] = successful(specs.get(id))
 
     override def createJobSpec(jobSpec: JobSpec): Future[JobSpec] = {
       specs.get(jobSpec.id) match {
@@ -26,7 +25,7 @@ object JobSpecServiceFixture {
       }
     }
 
-    override def updateJobSpec(id: PathId, update: (JobSpec) => JobSpec): Future[JobSpec] = {
+    override def updateJobSpec(id: JobId, update: (JobSpec) => JobSpec): Future[JobSpec] = {
       specs.get(id) match {
         case Some(spec) =>
           try {
@@ -44,7 +43,7 @@ object JobSpecServiceFixture {
       successful(specs.values.filter(filter))
     }
 
-    override def deleteJobSpec(id: PathId): Future[JobSpec] = {
+    override def deleteJobSpec(id: JobId): Future[JobSpec] = {
       specs.get(id) match {
         case Some(spec) =>
           specs -= id

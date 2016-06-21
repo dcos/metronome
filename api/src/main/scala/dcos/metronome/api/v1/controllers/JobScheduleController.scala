@@ -5,10 +5,10 @@ import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
 import dcos.metronome.api.v1.models.schema._
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.model.{ ScheduleSpec, JobSpec }
+import dcos.metronome.model.{ JobId, ScheduleSpec, JobSpec }
+import mesosphere.marathon.plugin.RunSpec
 import mesosphere.marathon.plugin.auth._
-import mesosphere.marathon.state.PathId
-import PathId._
+import JobId._
 import play.api.mvc.Result
 
 import scala.async.Async.{ async, await }
@@ -22,14 +22,14 @@ class JobScheduleController(
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-  def getSchedules(id: PathId) = AuthorizedAction.async { implicit request =>
+  def getSchedules(id: JobId) = AuthorizedAction.async { implicit request =>
     jobSpecService.getJobSpec(id).map {
       case Some(job) => request.authorized(ViewRunSpec, job, Ok(job.schedules))
       case None      => NotFound(UnknownJob(id))
     }
   }
 
-  def getSchedule(id: PathId, scheduleId: String) = AuthorizedAction.async { implicit request =>
+  def getSchedule(id: JobId, scheduleId: String) = AuthorizedAction.async { implicit request =>
     jobSpecService.getJobSpec(id).map {
       case Some(job) if job.schedule(scheduleId).isDefined => request.authorized(ViewRunSpec, job, Ok(job.schedule(scheduleId)))
       case Some(job) => NotFound(UnknownSchedule(scheduleId))
@@ -37,7 +37,7 @@ class JobScheduleController(
     }
   }
 
-  def createSchedule(id: PathId) = AuthorizedAction.async(validate.json[ScheduleSpec]) { implicit request =>
+  def createSchedule(id: JobId) = AuthorizedAction.async(validate.json[ScheduleSpec]) { implicit request =>
     def addSchedule(jobSpec: JobSpec) = {
       val scheduleId = request.body.id
       require(jobSpec.schedules.count(_.id == scheduleId) == 0, s"A schedule with id $scheduleId already exists")
@@ -54,7 +54,7 @@ class JobScheduleController(
     }
   }
 
-  def updateSchedule(id: PathId, scheduleId: String) = AuthorizedAction.async(validate.json[ScheduleSpec]) { implicit request =>
+  def updateSchedule(id: JobId, scheduleId: String) = AuthorizedAction.async(validate.json[ScheduleSpec]) { implicit request =>
     def changeSchedule(jobSpec: JobSpec) = {
       require(jobSpec.schedules.count(_.id == scheduleId) == 1, "Can only update an existing schedule")
       jobSpec.copy(schedules = request.body +: jobSpec.schedules.filterNot(_.id == scheduleId))
@@ -69,7 +69,7 @@ class JobScheduleController(
     }
   }
 
-  def deleteSchedule(id: PathId, scheduleId: String) = AuthorizedAction.async { implicit request =>
+  def deleteSchedule(id: JobId, scheduleId: String) = AuthorizedAction.async { implicit request =>
     def deleteSchedule(jobSpec: JobSpec) = {
       require(jobSpec.schedules.count(_.id == scheduleId) == 1, "Can only delete an existing schedule")
       jobSpec.copy(schedules = jobSpec.schedules.filterNot(_.id == scheduleId))
@@ -85,7 +85,7 @@ class JobScheduleController(
     }
   }
 
-  private def withJobSpec[R](id: PathId)(fn: JobSpec => Future[Result])(implicit request: AuthorizedRequest[R]): Future[Result] = {
+  private def withJobSpec[R](id: JobId)(fn: JobSpec => Future[Result])(implicit request: AuthorizedRequest[R]): Future[Result] = {
     async {
       await(jobSpecService.getJobSpec(id)) match {
         case Some(jobSpec) =>

@@ -5,9 +5,8 @@ import dcos.metronome.api.v1.models._
 import dcos.metronome.api.{ Authorization, UnknownJob, UnknownJobRun }
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.model.JobRunId
+import dcos.metronome.model.{ JobId, JobRunId }
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer, UpdateRunSpec, ViewRunSpec }
-import mesosphere.marathon.state.PathId
 
 import scala.async.Async.{ async, await }
 
@@ -24,11 +23,11 @@ class JobRunController(
     jobRunService.listRuns(request.isAllowed).map(Ok(_))
   }
 
-  def getJobRuns(id: PathId) = AuthorizedAction.async { implicit request =>
+  def getJobRuns(id: JobId) = AuthorizedAction.async { implicit request =>
     jobRunService.activeRuns(id).map(_.filter(request.isAllowed)).map(Ok(_))
   }
 
-  def getJobRun(id: PathId, runId: String) = AuthorizedAction.async { implicit request =>
+  def getJobRun(id: JobId, runId: String) = AuthorizedAction.async { implicit request =>
     async {
       await(jobRunService.getJobRun(JobRunId(id, runId))) match {
         case Some(run) => request.authorized(ViewRunSpec, run, Ok(run))
@@ -37,7 +36,7 @@ class JobRunController(
     }
   }
 
-  def killJobRun(id: PathId, runId: String) = AuthorizedAction.async { implicit request =>
+  def killJobRun(id: JobId, runId: String) = AuthorizedAction.async { implicit request =>
     async {
       await(jobSpecService.getJobSpec(id)) match {
         case Some(spec) =>
@@ -53,7 +52,7 @@ class JobRunController(
     }
   }
 
-  def triggerJob(id: PathId) = AuthorizedAction.async { implicit request =>
+  def triggerJob(id: JobId) = AuthorizedAction.async { implicit request =>
     async {
       await(jobSpecService.getJobSpec(id)) match {
         case Some(spec) =>

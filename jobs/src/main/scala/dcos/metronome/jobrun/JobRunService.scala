@@ -1,7 +1,6 @@
 package dcos.metronome.jobrun
 
-import dcos.metronome.model.{ JobRun, JobRunId, JobSpec }
-import mesosphere.marathon.state.PathId
+import dcos.metronome.model.{ JobId, JobRun, JobRunId, JobSpec }
 
 import scala.concurrent.Future
 
@@ -22,7 +21,7 @@ trait JobRunService {
     *
     * @return all active job runs.
     */
-  def activeRuns(jobSpecId: PathId): Future[Iterable[StartedJobRun]]
+  def activeRuns(jobSpecId: JobId): Future[Iterable[StartedJobRun]]
 
   /**
     * Get a specific job run by its id.
