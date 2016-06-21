@@ -12,8 +12,9 @@ import dcos.metronome.utils.glue.MarathonImplicits
 import dcos.metronome.utils.glue.MarathonImplicits.RunSpecId
 import dcos.metronome.utils.test.Mockito
 import dcos.metronome.utils.time.FixedClock
-import mesosphere.marathon.{ MarathonSchedulerDriverHolder, QueuedTaskInfoWrapper }
+import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
+import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedTaskInfo
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.tracker.TaskTracker
 import mesosphere.marathon.state.{ PathId, RunSpec, Timestamp }
@@ -371,11 +372,12 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val activeJobRun = new JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Active, clock.now(), None, Map.empty)
     val runSpecId = RunSpecId(activeJobRun.id)
     val runSpec: RunSpec = MarathonImplicits.jobRunToRunSpec(activeJobRun)
-    val queuedTaskInfo = new QueuedTaskInfoWrapper(
+    val queuedTaskInfo = new QueuedTaskInfo(
       runSpec = runSpec,
       inProgress = false,
       tasksLeftToLaunch = 0,
       finalTaskCount = 0,
+      tasksLost = 0,
       backOffUntil = Timestamp(0)
     )
     f.launchQueue.get(runSpecId) returns Some(queuedTaskInfo)
@@ -398,11 +400,12 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val activeJobRun = new JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Active, clock.now(), None, Map.empty)
     val runSpecId = RunSpecId(activeJobRun.id)
     val runSpec: RunSpec = MarathonImplicits.jobRunToRunSpec(activeJobRun)
-    val queuedTaskInfo = new QueuedTaskInfoWrapper(
+    val queuedTaskInfo = new QueuedTaskInfo(
       runSpec = runSpec,
       inProgress = true,
       tasksLeftToLaunch = 0,
       finalTaskCount = 1,
+      tasksLost = 0,
       backOffUntil = Timestamp(0)
     )
     launchQueue.get(runSpecId) returns Some(queuedTaskInfo)
