@@ -36,8 +36,8 @@ class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: R
     case Event.JobRunUpdate(run, _, _)       => //ignore
 
     //service events
-    case GetJobHistory(id, promise)          => promise.success(jobHistoryMap.get(id))
-    case ListJobHistories(filter, promise)   => promise.success(jobHistoryMap.values.filter(filter))
+    case GetJobHistory(id)                   => sender() ! jobHistoryMap.get(id)
+    case ListJobHistories(filter)            => sender() ! jobHistoryMap.values.filter(filter)
 
     //persistence events
     case JobHistoryCreated(_, jobHistory, _) => jobHistoryMap += jobHistory.jobSpecId -> jobHistory
@@ -82,8 +82,8 @@ class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: R
 }
 
 object JobHistoryServiceActor {
-  case class GetJobHistory(id: JobId, promise: Promise[Option[JobHistory]])
-  case class ListJobHistories(filter: JobHistory => Boolean, promise: Promise[Iterable[JobHistory]])
+  case class GetJobHistory(id: JobId)
+  case class ListJobHistories(filter: JobHistory => Boolean)
 
   def props(config: JobHistoryConfig, clock: Clock, repo: Repository[JobId, JobHistory], behavior: Behavior): Props = {
     Props(new JobHistoryServiceActor(config, clock, repo, behavior))

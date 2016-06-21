@@ -26,7 +26,12 @@ class JobsModule(
 
   lazy val schedulerRepositoriesModule = new SchedulerRepositoriesModule(config, repositoryModule)
 
-  lazy val schedulerModule: SchedulerModule = new SchedulerModule(config, actorSystem, clock, schedulerRepositoriesModule)
+  lazy val schedulerModule: SchedulerModule = new SchedulerModule(
+    config,
+    actorSystem,
+    clock,
+    schedulerRepositoriesModule
+  )
 
   lazy val jobRunModule = {
     val launchQueue = schedulerModule.launchQueueModule.launchQueue
@@ -45,8 +50,20 @@ class JobsModule(
     schedulerModule.leadershipModule
   )
 
-  lazy val jobHistoryModule = new JobHistoryModule(config, actorSystem, clock, repositoryModule.jobHistoryRepository, behaviorModule.behavior)
+  lazy val jobHistoryModule = new JobHistoryModule(
+    config,
+    actorSystem,
+    clock,
+    repositoryModule.jobHistoryRepository,
+    behaviorModule.behavior,
+    schedulerModule.leadershipModule
+  )
 
-  lazy val jobInfoModule = new JobInfoModule(jobSpecModule.jobSpecService, jobRunModule.jobRunService, behaviorModule.behavior, jobHistoryModule.jobHistoryService)
+  lazy val jobInfoModule = new JobInfoModule(
+    jobSpecModule.jobSpecService,
+    jobRunModule.jobRunService,
+    behaviorModule.behavior,
+    jobHistoryModule.jobHistoryService
+  )
 }
 

@@ -6,17 +6,20 @@ import dcos.metronome.history.impl.{ JobHistoryServiceDelegate, JobHistoryServic
 import dcos.metronome.model.{ JobId, JobHistory }
 import dcos.metronome.repository.Repository
 import dcos.metronome.utils.time.Clock
+import mesosphere.marathon.core.leadership.LeadershipModule
 
 class JobHistoryModule(
-    config:      JobHistoryConfig,
-    actorSystem: ActorSystem,
-    clock:       Clock,
-    repository:  Repository[JobId, JobHistory],
-    behavior:    Behavior
+    config:           JobHistoryConfig,
+    actorSystem:      ActorSystem,
+    clock:            Clock,
+    repository:       Repository[JobId, JobHistory],
+    behavior:         Behavior,
+    leadershipModule: LeadershipModule
 ) {
 
-  //TODO: start when elected
-  lazy val jobHistoryServiceActor: ActorRef = actorSystem.actorOf(JobHistoryServiceActor.props(config, clock, repository, behavior))
+  lazy val jobHistoryServiceActor: ActorRef = leadershipModule.startWhenLeader(
+    JobHistoryServiceActor.props(config, clock, repository, behavior), "JobHistoryServiceActor"
+  )
 
-  lazy val jobHistoryService: JobHistoryService = behavior(new JobHistoryServiceDelegate(jobHistoryServiceActor))
+  lazy val jobHistoryService: JobHistoryService = behavior(new JobHistoryServiceDelegate(jobHistoryServiceActor, config))
 }
