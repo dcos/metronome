@@ -16,10 +16,10 @@ case class JobSpec(
 ) extends RunSpec {
   def schedule(id: String): Option[ScheduleSpec] = schedules.find(_.id == id)
 
-  override def user: Option[String] = None
+  override def user: Option[String] = run.user
   override def acceptedResourceRoles: Option[Predef.Set[String]] = None
   override def secrets: Map[String, Secret] = Map.empty
-  override def env: Map[String, EnvVarValue] = Map.empty
+  override def env: Map[String, EnvVarValue] = mesosphere.marathon.state.EnvVarValue(run.env) // FIXME: yuck
 }
 
 object JobSpec {

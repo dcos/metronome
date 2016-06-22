@@ -12,13 +12,14 @@ import org.joda.time.DateTimeZone
 import play.api.ApplicationLoader.Context
 import play.api._
 import play.api.i18n._
-import play.api.libs.ws.ahc.{ AhcWSClient, AhcConfigBuilder, AhcWSClientConfig }
-import play.api.libs.ws.{ WSConfigParser, WSClient }
+import play.api.libs.ws.ahc.{ AhcConfigBuilder, AhcWSClient, AhcWSClientConfig }
+import play.api.libs.ws.{ WSClient, WSConfigParser }
 import play.api.mvc.EssentialFilter
 import play.api.routing.Router
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.sys.SystemProperties
 
 /**
   * Application loader that wires up the application dependencies using Macwire
@@ -86,8 +87,16 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     import ConfigurationImplicits._
 
     lazy val frameworkName: String = configuration.getString("metronome.framework.name").getOrElse("metronome")
-    lazy val master: String = configuration.getString("metronome.mesos.master.url").getOrElse("localhost:5050")
+    lazy val mesosMaster: String = configuration.getString("metronome.mesos.master.url").getOrElse("localhost:5050")
+    override lazy val mesosLeaderUiUrl: Option[String] = configuration.getString("metronome.mesos.leader.ui.url").orElse(scallopConf.mesosLeaderUiUrl.get)
+    lazy val mesosRole: Option[String] = configuration.getString("metronome.mesos.role")
+    lazy val mesosUser: Option[String] = configuration.getString("metronome.mesos.user").orElse(new SystemProperties().get("user.name"))
+    lazy val mesosExecutorDefault: String = configuration.getString("metronome.mesos.executor.default").getOrElse("//cmd")
+    lazy val mesosFailoverTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.mesos.failover.timeout").getOrElse(7.days)
+    lazy val mesosAuthenticationPrincipal: Option[String] = configuration.getString("metronome.mesos.authentication.principal")
+    lazy val mesosAuthenticationSecretsFile: Option[String] = configuration.getString("metronome.mesos.authentication.secret.file")
 
+    lazy val enableFeatures: Option[String] = configuration.getString("metronome.features.enable")
     lazy val pluginDir: Option[String] = configuration.getString("metronome.plugin.dir")
     lazy val pluginConf: Option[String] = configuration.getString("metronome.plugin.conf")
     override lazy val runHistoryCount: Int = configuration.getInt("metronome.history.count").getOrElse(10)
@@ -112,7 +121,8 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
       )
       val options = Map[String, Option[String]](
         "--framework_name" -> Some(frameworkName),
-        "--master" -> Some(master),
+        "--master" -> Some(mesosMaster),
+        "--mesos_leader_ui_url" -> mesosLeaderUiUrl,
         "--plugin_dir" -> pluginDir,
         "--plugin_conf" -> pluginConf,
         "--http_port" -> Some(httpPort.toString),
@@ -122,18 +132,28 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
         "--zk_session_timeout" -> Some(zkSessionTimeout.toMillis.toString),
         "--zk_timeout" -> Some(zkTimeout.toMillis.toString),
         "--zk_compression_threshold" -> Some(zkCompressionThreshold.toString),
-        "--mesos_user" -> Some("root")
+        "--mesos_user" -> mesosUser,
+        "--mesos_role" -> mesosRole,
+        "--executor" -> Some(mesosExecutorDefault),
+        "--enable_features" -> enableFeatures,
+        "--failover_timeout" -> Some(mesosFailoverTimeout.toMillis.toString),
+        "--leader_proxy_connection_timeout" -> Some(leaderProxyTimeout.toMillis.toString),
+        "--task_launch_timeout" -> Some(taskLaunchTimeout.toMillis.toString),
+        "--mesos_authentication_principal" -> mesosAuthenticationPrincipal,
+        "--mesos_authentication_secret_file" -> mesosAuthenticationSecretsFile,
+        "--env_vars_prefix" -> taskEnvVarsPrefix,
+        "--on_elected_prepare_timeout" -> Some(leaderPreparationTimeout.toMillis.toString)
       )
         .collect { case (name, Some(value)) => (name, value) }
         .flatMap { case (name, value) => Seq(name, value) }
       new AllConf(options.toSeq ++ flags.flatten)
     }
 
-    override lazy val mesosLeaderUiUrl: Option[String] = configuration.getString("metronome.mesos.leader.ui.url").orElse(scallopConf.mesosLeaderUiUrl.get)
-
     override lazy val reconciliationInterval: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.reconciliation.interval").getOrElse(15.minutes)
     override lazy val reconciliationTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.reconciliation.timeout").getOrElse(1.minute)
     override lazy val enableStoreCache: Boolean = configuration.getBoolean("metronome.scheduler.store.cache").getOrElse(true)
+    lazy val taskLaunchTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.task.launch.timeout").getOrElse(5.minutes)
+    lazy val taskEnvVarsPrefix: Option[String] = configuration.getString("metronome.scheduler.task.env.vars.prefix")
 
     override lazy val hostname: String = configuration.getString("metronome.leader.election.hostname").getOrElse(java.net.InetAddress.getLocalHost.getHostName)
     override lazy val leaderPreparationTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.leader.preparation.timeout").getOrElse(3.minutes)

@@ -18,4 +18,5 @@ trait SchedulerConfig extends ZkConfig {
   def reconciliationTimeout: FiniteDuration
   def maxActorStartupTime: FiniteDuration
   def enableStoreCache: Boolean
+  def mesosExecutorDefault: String
 }
