@@ -137,7 +137,7 @@ class JobRunServiceActor(
   }
 
   override def initialize(runs: List[JobRun]): Unit = {
-    // FIXME: we need to wait until the Reconciliation has finished!
+    // FIXME: we should to wait until the Reconciliation has finished!
     runs.foreach(startJobRun)
   }
 }

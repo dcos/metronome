@@ -4,11 +4,11 @@ import java.util.concurrent.CountDownLatch
 
 import akka.util.Timeout
 import dcos.metronome.migration.Migration
-import dcos.metronome.scheduler.{ PeriodicOperations, PrePostDriverCallback, SchedulerService }
+import dcos.metronome.scheduler.{ PeriodicOperations, PrePostDriverCallback, SchedulerConfig, SchedulerService }
 import mesosphere.marathon.core.election.{ ElectionCandidate, ElectionService }
 import mesosphere.marathon.core.leadership.LeadershipCoordinator
 import mesosphere.marathon.metrics.Metrics
-import mesosphere.marathon.{ MarathonConf, SchedulerDriverFactory }
+import mesosphere.marathon.SchedulerDriverFactory
 import org.apache.mesos.SchedulerDriver
 import org.slf4j.LoggerFactory
 
@@ -17,13 +17,12 @@ import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
 import scala.util.Failure
 
-// FIXME (wiring): use a generic conf, don't depend on MarathonConf
 /**
   * Wrapper class for the scheduler
   */
 private[scheduler] class SchedulerServiceImpl(
   leadershipCoordinator:  LeadershipCoordinator,
-  config:                 MarathonConf,
+  config:                 SchedulerConfig,
   electionService:        ElectionService,
   prePostDriverCallbacks: Seq[PrePostDriverCallback],
   driverFactory:          SchedulerDriverFactory,
@@ -37,7 +36,7 @@ private[scheduler] class SchedulerServiceImpl(
 
   private[this] val log = LoggerFactory.getLogger(getClass.getName)
 
-  implicit private[this] val zkTimeout = config.zkTimeoutDuration
+  implicit private[this] val zkTimeout = config.zkTimeout
   implicit private[this] val timeout: Timeout = 5.seconds
 
   private[this] val isRunningLatch = new CountDownLatch(1)
@@ -93,12 +92,12 @@ private[scheduler] class SchedulerServiceImpl(
     log.info(s"""Call preDriverStarts callbacks on ${prePostDriverCallbacks.mkString(", ")}""")
     Await.result(
       Future.sequence(prePostDriverCallbacks.map(_.preDriverStarts)),
-      config.onElectedPrepareTimeout().millis
+      config.leadershipPreparationTimeout
     )
     log.info("Finished preDriverStarts callbacks")
 
     // start all leadership coordination actors
-    Await.result(leadershipCoordinator.prepareForStart(), config.maxActorStartupTime().milliseconds)
+    Await.result(leadershipCoordinator.prepareForStart(), config.maxActorStartupTime)
 
     log.info("Creating new driver")
     driver = Some(driverFactory.createDriver())
@@ -126,7 +125,7 @@ private[scheduler] class SchedulerServiceImpl(
         electionService.abdicateLeadership(error = result.isFailure, reoffer = isRunningLatch.getCount > 0)
 
         log.info(s"Call postDriverRuns callbacks on ${prePostDriverCallbacks.mkString(", ")}")
-        Await.result(Future.sequence(prePostDriverCallbacks.map(_.postDriverTerminates)), config.zkTimeoutDuration)
+        Await.result(Future.sequence(prePostDriverCallbacks.map(_.postDriverTerminates)), config.zkTimeout)
         log.info(s"Finished postDriverRuns callbacks")
       }
     }

@@ -6,6 +6,8 @@ import dcos.metronome.model.{ JobId, CronSpec, JobSpec, ScheduleSpec }
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time.{ Millis, Span }
+import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context
 import play.api.libs.json._
@@ -299,6 +301,8 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       status(unauthorized) mustBe FORBIDDEN
     }
   }
+
+  override implicit def patienceConfig: PatienceConfig = PatienceConfig(timeout = scaled(Span(300, Millis)))
 
   val CronSpec(cron1) = "* * * * *"
   val CronSpec(cron2) = "1 2 3 4 5"

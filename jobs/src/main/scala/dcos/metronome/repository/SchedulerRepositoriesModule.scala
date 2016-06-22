@@ -7,7 +7,8 @@ import com.twitter.common.quantity.{ Amount, Time }
 import com.twitter.common.zookeeper.ZooKeeperClient
 import dcos.metronome.migration.Migration
 import dcos.metronome.migration.impl.MigrationImpl
-import dcos.metronome.{ JobsConfig, MetricsModule }
+import dcos.metronome.scheduler.SchedulerConfig
+import dcos.metronome.MetricsModule
 import mesosphere.marathon.Protos.MarathonTask
 import mesosphere.marathon.state.{ AppDefinition, AppRepository, EntityStoreCache, Group, GroupRepository, MarathonStore, MarathonTaskState, TaskRepository }
 import mesosphere.util.state.{ FrameworkId, PersistentStore }
@@ -17,22 +18,19 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 import scala.concurrent.{ Await, Future }
 
-// FIXME: use a dedicated conf object
-class SchedulerRepositoriesModule(config: JobsConfig, repositoryModule: RepositoryModule) {
+class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: RepositoryModule, metricsModule: MetricsModule) {
   import SchedulerRepositoriesModule._
 
-  private[this] lazy val metricsModule = new MetricsModule()
   private[this] lazy val metrics = metricsModule.metrics
-  private[this] lazy val marathonConf = config.scallopConf
 
   lazy val zk: ZooKeeperClient = {
     require(
-      marathonConf.zooKeeperSessionTimeout() < Integer.MAX_VALUE,
+      config.zkSessionTimeout.toMillis < Integer.MAX_VALUE,
       "ZooKeeper timeout too large!"
     )
 
     val client = new ZooKeeperLeaderElectionClient(
-      Amount.of(marathonConf.zooKeeperSessionTimeout().toInt, Time.MILLISECONDS),
+      Amount.of(config.zkSessionTimeout.toMillis.toInt, Time.MILLISECONDS),
       config.zkHostAddresses.asJavaCollection
     )
 
@@ -72,7 +70,7 @@ class SchedulerRepositoriesModule(config: JobsConfig, repositoryModule: Reposito
   )
   lazy val groupRepository: GroupRepository = new GroupRepository(
     groupStore,
-    marathonConf.zooKeeperMaxVersions.get,
+    maxVersions = None,
     metrics
   )
 
@@ -80,7 +78,7 @@ class SchedulerRepositoriesModule(config: JobsConfig, repositoryModule: Reposito
     val newState = () => new FrameworkId(UUID.randomUUID().toString)
     val prefix = "framework:"
     val marathonStore = new MarathonStore[FrameworkId](persistentStore, metrics, newState, prefix)
-    if (marathonConf.storeCache()) new EntityStoreCache[FrameworkId](marathonStore) else marathonStore
+    if (config.enableStoreCache) new EntityStoreCache[FrameworkId](marathonStore) else marathonStore
   }
 
   lazy val appStore = new MarathonStore[AppDefinition](
@@ -89,7 +87,7 @@ class SchedulerRepositoriesModule(config: JobsConfig, repositoryModule: Reposito
     prefix = "app:",
     newState = () => AppDefinition.apply()
   )
-  lazy val appRepository: AppRepository = new AppRepository(appStore, marathonConf.zooKeeperMaxVersions.get, metrics)
+  lazy val appRepository: AppRepository = new AppRepository(appStore, maxVersions = None, metrics)
 
   lazy val migration: Migration = new MigrationImpl(persistentStore)
 }

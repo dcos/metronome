@@ -34,7 +34,9 @@ class SchedulerModule(
     config:            SchedulerConfig,
     actorSystem:       ActorSystem,
     clock:             Clock,
-    persistenceModule: SchedulerRepositoriesModule
+    persistenceModule: SchedulerRepositoriesModule,
+    pluginModule:      PluginModule,
+    metricsModule:     MetricsModule
 ) {
 
   private[this] lazy val scallopConf: AllConf = config.scallopConf
@@ -42,7 +44,6 @@ class SchedulerModule(
     override def now(): Timestamp = Timestamp(clock.now())
   }
 
-  lazy val metricsModule = new MetricsModule()
   private[this] lazy val metrics = metricsModule.metrics
   private[this] lazy val random = Random
   private[this] lazy val shutdownHooks = ShutdownHooks()
@@ -98,8 +99,6 @@ class SchedulerModule(
       leadershipModule
     )
 
-  // TODO: JobsPlugins vs MarathonPlugins?!
-  private[this] lazy val pluginModule = new PluginModule(scallopConf)
   private[this] lazy val launcherModule: LauncherModule = {
     val taskCreationHandler: TaskCreationHandler = taskTrackerModule.taskCreationHandler
     val offerMatcher: OfferMatcher = StopOnFirstMatchingOfferMatcher(
@@ -163,7 +162,7 @@ class SchedulerModule(
 
   lazy val schedulerService: SchedulerService = new SchedulerServiceImpl(
     leadershipModule.coordinator(),
-    scallopConf,
+    config,
     electionModule.service,
     prePostDriverCallbacks,
     schedulerDriverFactory,

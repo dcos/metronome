@@ -2,7 +2,6 @@ package dcos.metronome
 
 import com.softwaremill.macwire._
 import controllers.Assets
-import dcos.metronome.scheduler.SchedulerModule
 import dcos.metronome.api.v1.LeaderProxyFilter
 import dcos.metronome.api.{ ApiConfig, ApiModule, ErrorHandler }
 import dcos.metronome.repository.impl.kv.ZkConfig
@@ -84,35 +83,30 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
   override def router: Router = apiModule.router
 
   lazy val config = new Object with JobsConfig with ApiConfig {
+    import ConfigurationImplicits._
 
-    lazy val master: String = "localhost:5050"
+    lazy val master: String = configuration.getString("mesos.master.url").getOrElse("localhost:5050")
 
     lazy val pluginDir: Option[String] = configuration.getString("app.plugin.dir")
     lazy val pluginConf: Option[String] = configuration.getString("app.plugin.conf")
-    lazy val runHistoryCount: Int = configuration.getInt("app.history.count").getOrElse(10)
-    lazy val withMetrics: Boolean = configuration.getBoolean("app.behavior.metrics").getOrElse(true)
+    override lazy val runHistoryCount: Int = configuration.getInt("app.history.count").getOrElse(10)
+    override lazy val withMetrics: Boolean = configuration.getBoolean("app.behavior.metrics").getOrElse(true)
 
-    lazy val disableHttp: Boolean = configuration.getBoolean("play.server.http.disableHttp").getOrElse(false)
-    lazy val httpPort: Int = configuration.getInt("play.server.http.port").getOrElse(9000)
-    lazy val httpsPort: Int = configuration.getInt("play.server.https.port").getOrElse(9443)
-    lazy val hostname: String = configuration.getString("app.hostname").getOrElse(java.net.InetAddress.getLocalHost.getHostName)
-    lazy val leaderProxyTimeout: Duration = configuration.getLong("app.leaderproxy.timeout").getOrElse(30000l).millis
+    override lazy val disableHttp: Boolean = configuration.getBoolean("play.server.http.disableHttp").getOrElse(false)
+    override lazy val httpPort: Int = configuration.getInt("play.server.http.port").getOrElse(9000)
+    override lazy val httpsPort: Int = configuration.getInt("play.server.https.port").getOrElse(9443)
+    override lazy val hostname: String = configuration.getString("app.hostname").getOrElse(java.net.InetAddress.getLocalHost.getHostName)
+    override lazy val leaderProxyTimeout: Duration = configuration.getFiniteDuration("app.leaderproxy.timeout").getOrElse(30.seconds)
 
-    lazy val askTimeout: FiniteDuration = configuration.getLong("app.akka.ask.timeout").getOrElse(10000l).millis
+    override lazy val askTimeout: FiniteDuration = configuration.getFiniteDuration("app.akka.ask.timeout").getOrElse(10.seconds)
 
     override lazy val zkURL: String = configuration.getString("app.zk.url").getOrElse(ZkConfig.DEFAULT_ZK_URL)
-    override lazy val zkSessionTimeout: FiniteDuration = configuration.getLong("app.zk.session_timeout")
-      .map(_.millis)
-      .getOrElse(ZkConfig.DEFAULT_ZK_SESSION_TIMEOUT)
-    override lazy val zkTimeout: FiniteDuration = configuration.getLong("app.zk.timeout")
-      .map(_.millis)
-      .getOrElse(ZkConfig.DEFAULT_ZK_TIMEOUT)
-    override lazy val zkCompressionEnabled: Boolean = configuration.getBoolean("app.zk.compression.enabled")
-      .getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_ENABLED)
-    override lazy val zkCompressionThreshold: Long = configuration.getLong("app.zk.compression.threshold")
-      .getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_THRESHOLD)
+    override lazy val zkSessionTimeout: FiniteDuration = configuration.getFiniteDuration("app.zk.session_timeout").getOrElse(ZkConfig.DEFAULT_ZK_SESSION_TIMEOUT)
+    override lazy val zkTimeout: FiniteDuration = configuration.getFiniteDuration("app.zk.timeout").getOrElse(ZkConfig.DEFAULT_ZK_TIMEOUT)
+    override lazy val zkCompressionEnabled: Boolean = configuration.getBoolean("app.zk.compression.enabled").getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_ENABLED)
+    override lazy val zkCompressionThreshold: Long = configuration.getLong("app.zk.compression.threshold").getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_THRESHOLD)
 
-    lazy val scallopConf: AllConf = {
+    override lazy val scallopConf: AllConf = {
       val flags = Seq[Option[String]](
         if (disableHttp) Some("--disable_http") else None,
         if (zkCompressionEnabled) Some("--zk_compression") else None
@@ -135,10 +129,22 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
       new AllConf(options.toSeq ++ flags.flatten)
     }
 
-    //TODO: those values need to be configured via play - not the other way around
-    lazy val mesosLeaderUiUrl: Option[String] = scallopConf.mesosLeaderUiUrl.get
+    override lazy val mesosLeaderUiUrl: Option[String] = configuration.getString("mesos.leader.ui.url").orElse(scallopConf.mesosLeaderUiUrl.get)
 
-    lazy val reconciliationInterval: FiniteDuration = configuration.getLong("scheduler.reconciliation.interval").getOrElse(15 * 60 * 1000L).milliseconds
-    lazy val reconciliationTimeout: FiniteDuration = configuration.getLong("scheduler.reconciliation.timeout").getOrElse(60 * 1000L).milliseconds
+    override lazy val reconciliationInterval: FiniteDuration = configuration.getFiniteDuration("scheduler.reconciliation.interval").getOrElse(15.minutes)
+    override lazy val reconciliationTimeout: FiniteDuration = configuration.getFiniteDuration("scheduler.reconciliation.timeout").getOrElse(1.minute)
+    override lazy val enableStoreCache: Boolean = configuration.getBoolean("scheduler.store.cache").getOrElse(true)
+
+    override lazy val leadershipPreparationTimeout: FiniteDuration = configuration.getFiniteDuration("leadership.preparation.timeout").getOrElse(3.minutes)
+
+    override lazy val maxActorStartupTime: FiniteDuration = configuration.getFiniteDuration("app.akka.actor.startup.max").getOrElse(10.seconds)
+
+  }
+
+}
+
+object ConfigurationImplicits {
+  implicit class Foo(val configuration: Configuration) extends AnyVal {
+    def getFiniteDuration(path: String): Option[FiniteDuration] = configuration.getLong(path).map(_.milliseconds)
   }
 }

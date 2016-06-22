@@ -6,6 +6,7 @@ import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
+import dcos.metronome.scheduler.TaskState
 import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
@@ -83,13 +84,9 @@ class JobRunExecutorActor(
   }
 
   def addTaskToLaunchQueue(): Unit = {
+    log.info("addTaskToLaunchQueue")
     import dcos.metronome.utils.glue.MarathonImplicits._
-    launchQueue.add(jobRun, count = 1)
-  }
-
-  def reconcileAndBecomeActive(): Unit = {
-    //TODO: fill reconciling logic here
-    context.become(active)
+    launchQueue.add(jobRun.toRunSpec, count = 1)
   }
 
   def becomeActive(update: TaskStateChangedEvent): Unit = {
@@ -102,13 +99,20 @@ class JobRunExecutorActor(
   }
 
   def updatedTasks(update: TaskStateChangedEvent): Map[Task.Id, JobRunTask] = {
+    // Note: there is a certain inaccuracy when we receive a finished task that's not in the Map
+    // This will be fault tolerant and still add it, but startedAt and completedAt will be the same
+    // in this case because we don't know the startedAt timestamp
+    def completedAt = if (update.taskState == TaskState.Finished) Some(update.timestamp) else None
     val updatedTask = jobRun.tasks.get(update.taskId).map { t =>
-      t.copy(completedAt = Some(update.timestamp))
+      t.copy(
+        completedAt = completedAt,
+        state = update.taskState
+      )
     }.getOrElse {
       JobRunTask(
         id = update.taskId,
         startedAt = update.timestamp,
-        completedAt = None,
+        completedAt = completedAt,
         state = update.taskState
       )
     }
@@ -133,6 +137,9 @@ class JobRunExecutorActor(
     jobRun.jobSpec.run.restart.policy match {
       case RestartPolicy.OnFailure if inTime =>
         log.info("still in time, launching another task")
+        jobRun = jobRun.copy(tasks = updatedTasks(update))
+        persistenceActor ! Update(_ => jobRun)
+        context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
         addTaskToLaunchQueue()
 
       case _ =>
