@@ -442,7 +442,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val updateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
     updateMsg.startedJobRun.jobRun.status shouldBe JobRunStatus.Active
     updateMsg.startedJobRun.jobRun.tasks should have size 1
-    updateMsg.startedJobRun.jobRun.tasks.head._2.state shouldBe TaskState.Failed
+    updateMsg.startedJobRun.jobRun.tasks.head._2.status shouldBe TaskState.Failed
     updateMsg.startedJobRun.jobRun.tasks.head._2.completedAt shouldBe None
 
     And("the jobRun is updated")

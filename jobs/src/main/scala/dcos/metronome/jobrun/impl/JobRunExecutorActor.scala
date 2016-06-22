@@ -106,14 +106,14 @@ class JobRunExecutorActor(
     val updatedTask = jobRun.tasks.get(update.taskId).map { t =>
       t.copy(
         completedAt = completedAt,
-        state = update.taskState
+        status = update.taskState
       )
     }.getOrElse {
       JobRunTask(
         id = update.taskId,
         startedAt = update.timestamp,
         completedAt = completedAt,
-        state = update.taskState
+        status = update.taskState
       )
     }
 
