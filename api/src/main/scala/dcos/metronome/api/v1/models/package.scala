@@ -194,7 +194,7 @@ package object models {
       "jobId" -> run.jobSpec.id,
       "status" -> run.status,
       "createdAt" -> run.createdAt,
-      "finishedAt" -> run.finishedAt,
+      "completedAt" -> run.completedAt,
       "tasks" -> run.tasks.values
     )
   }

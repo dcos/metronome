@@ -84,7 +84,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val updateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
     updateMsg.startedJobRun.jobRun.tasks should have size 1
     updateMsg.startedJobRun.jobRun.status shouldBe JobRunStatus.Success
-    updateMsg.startedJobRun.jobRun.finishedAt shouldEqual Some(statusUpdate.update.timestamp)
+    updateMsg.startedJobRun.jobRun.completedAt shouldEqual Some(statusUpdate.update.timestamp)
 
     And("The JobRun is reported successful")
     val finishedMsg = f.parent.expectMsgType[JobRunExecutorActor.Finished]
@@ -116,7 +116,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val updateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
     updateMsg.startedJobRun.jobRun.tasks should have size 1
     updateMsg.startedJobRun.jobRun.status shouldBe JobRunStatus.Failed
-    updateMsg.startedJobRun.jobRun.finishedAt shouldBe None
+    updateMsg.startedJobRun.jobRun.completedAt shouldBe Some(f.clock.now())
 
     And("The JobRun is reported failed")
     val failMsg = f.parent.expectMsgType[JobRunExecutorActor.Failed]

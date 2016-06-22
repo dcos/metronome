@@ -44,7 +44,7 @@ object JobRunConversions {
       val builder = Protos.JobRun.JobRunTask.newBuilder()
         .setId(task.id.idString)
         .setStartedAt(task.startedAt.getMillis)
-        .setState(task.state.toProto)
+        .setStatus(task.status.toProto)
       task.completedAt.foreach(t => builder.setCompletedAt(t.getMillis))
       builder.build()
     }
@@ -55,7 +55,7 @@ object JobRunConversions {
       Task.Id(proto.getId),
       new DateTime(proto.getStartedAt, DateTimeZone.UTC),
       if (proto.hasCompletedAt) Some(new DateTime(proto.getCompletedAt, DateTimeZone.UTC)) else None,
-      proto.getState.toModel
+      proto.getStatus.toModel
     )
   }
 
@@ -73,7 +73,7 @@ object JobRunConversions {
         .setStatus(jobRun.status.toProto)
         .setCreatedAt(jobRun.createdAt.getMillis)
 
-      jobRun.finishedAt.foreach(date => builder.setFinishedAt(date.getMillis))
+      jobRun.completedAt.foreach(date => builder.setFinishedAt(date.getMillis))
       jobRun.tasks.values.foreach(task => builder.addTasks(task.toProto))
       builder.build()
     }
@@ -88,7 +88,7 @@ object JobRunConversions {
         jobSpec = proto.getJobSpec.toModel,
         status = proto.getStatus.toModel,
         createdAt = new DateTime(proto.getCreatedAt, DateTimeZone.UTC),
-        finishedAt = if (proto.hasFinishedAt) Some(new DateTime(proto.getFinishedAt, DateTimeZone.UTC)) else None,
+        completedAt = if (proto.hasFinishedAt) Some(new DateTime(proto.getFinishedAt, DateTimeZone.UTC)) else None,
         tasks = proto.getTasksList.asScala.map(_.toModel).map(task => task.id -> task).toMap
       )
     }
@@ -103,10 +103,10 @@ object JobRunConversions {
   }
 
   implicit class TaskStateToProto(val taskState: TaskState) extends AnyVal {
-    def toProto: Protos.JobRun.JobRunTask.State = Protos.JobRun.JobRunTask.State.valueOf(TaskState.name(taskState))
+    def toProto: Protos.JobRun.JobRunTask.Status = Protos.JobRun.JobRunTask.Status.valueOf(TaskState.name(taskState))
   }
 
-  implicit class ProtoToTaskState(val proto: Protos.JobRun.JobRunTask.State) extends AnyVal {
+  implicit class ProtoToTaskState(val proto: Protos.JobRun.JobRunTask.Status) extends AnyVal {
     def toModel: TaskState = TaskState.names(proto.toString)
   }
 }

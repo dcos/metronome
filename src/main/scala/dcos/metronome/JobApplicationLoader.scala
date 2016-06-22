@@ -122,7 +122,8 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
         "--zk" -> Some(zkURL),
         "--zk_session_timeout" -> Some(zkSessionTimeout.toMillis.toString),
         "--zk_timeout" -> Some(zkTimeout.toMillis.toString),
-        "--zk_compression_threshold" -> Some(zkCompressionThreshold.toString)
+        "--zk_compression_threshold" -> Some(zkCompressionThreshold.toString),
+        "--mesos_user" -> Some("root")
       )
         .collect { case (name, Some(value)) => (name, value) }
         .flatMap { case (name, value) => Seq(name, value) }
