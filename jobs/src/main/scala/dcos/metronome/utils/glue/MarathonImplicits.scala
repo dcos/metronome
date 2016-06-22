@@ -3,6 +3,7 @@ package dcos.metronome.utils.glue
 import java.util.concurrent.TimeUnit
 
 import dcos.metronome.model._
+import dcos.metronome.scheduler.SchedulerConfig
 import mesosphere.marathon
 import mesosphere.marathon.core.readiness.ReadinessCheck
 import mesosphere.marathon.health.HealthCheck
@@ -71,7 +72,6 @@ object MarathonImplicits {
           `type` = mesos.Protos.ContainerInfo.Type.DOCKER,
           docker = Some(Container.Docker(
             image = dockerSpec.image
-          // FIXME (urgent): privileged, parameters, forcePullImage
           )),
           volumes = jobSpec.run.volumes.map(_.toMarathon)
         ))
