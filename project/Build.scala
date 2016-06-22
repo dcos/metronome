@@ -1,3 +1,7 @@
+import com.amazonaws.auth.{InstanceProfileCredentialsProvider, EnvironmentVariableCredentialsProvider}
+import com.typesafe.sbt.packager.universal.UniversalDeployPlugin
+import ohnosequences.sbt.SbtS3Resolver
+import ohnosequences.sbt.SbtS3Resolver._
 import play.sbt.routes.RoutesKeys
 import play.sbt.{ PlayLayoutPlugin, PlayScala }
 import sbt.Keys._
@@ -13,7 +17,7 @@ object Build extends sbt.Build {
     id = "metronome",
     base = file("."),
     dependencies = Seq(api, jobs),
-    settings = baseSettings ++ formatSettings ++ Seq(
+    settings = projectSettings ++ Seq(
       libraryDependencies ++= Seq(
         Dependency.macWireMacros,
         Dependency.macWireUtil,
@@ -21,13 +25,16 @@ object Build extends sbt.Build {
         Dependency.metrics
       )
     )
-  ).aggregate(api, jobs).enablePlugins(PlayScala).disablePlugins(PlayLayoutPlugin)
+  )
+    .aggregate(api, jobs)
+    .enablePlugins(PlayScala).disablePlugins(PlayLayoutPlugin)
+    .enablePlugins(UniversalDeployPlugin)
 
   lazy val api = Project(
     id = "api",
     base = file("api"),
     dependencies = Seq(jobs % "compile->compile;test->test"),
-    settings = baseSettings ++ formatSettings ++ Seq(
+    settings = projectSettings ++ Seq(
       RoutesKeys.routesImport ++= Seq("dcos.metronome.api.Binders._"),
       libraryDependencies ++= Seq(
         Dependency.playJson,
@@ -49,7 +56,7 @@ object Build extends sbt.Build {
   lazy val jobs = Project(
     id = "jobs",
     base = file("jobs"),
-    settings = baseSettings ++ formatSettings ++ PB.protobufSettings ++ Seq(
+    settings = projectSettings ++ PB.protobufSettings ++ Seq(
       libraryDependencies ++= Seq(
         Dependency.asyncAwait,
         Dependency.playJson,
@@ -65,6 +72,8 @@ object Build extends sbt.Build {
       )
     )
   )
+
+  lazy val projectSettings = baseSettings ++ formatSettings ++ publishSettings
 
   lazy val baseSettings = Seq(
     organization := "dcos",
@@ -101,6 +110,13 @@ object Build extends sbt.Build {
       .setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, true)
   )
 
+  lazy val publishSettings = S3Resolver.defaults ++ Seq(
+    publishTo := Some(s3resolver.value(
+      "Mesosphere Public Repo (S3)",
+      s3("downloads.mesosphere.io/maven")
+    )),
+    SbtS3Resolver.s3credentials := new EnvironmentVariableCredentialsProvider() | new InstanceProfileCredentialsProvider()
+  )
 
   object Dependency {
     object V {
