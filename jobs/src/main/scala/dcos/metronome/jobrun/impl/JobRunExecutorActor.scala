@@ -106,14 +106,14 @@ class JobRunExecutorActor(
     val updatedTask = jobRun.tasks.get(update.taskId).map { t =>
       t.copy(
         completedAt = completedAt,
-        state = update.taskState
+        status = update.taskState
       )
     }.getOrElse {
       JobRunTask(
         id = update.taskId,
         startedAt = update.timestamp,
         completedAt = completedAt,
-        state = update.taskState
+        status = update.taskState
       )
     }
 
@@ -143,7 +143,11 @@ class JobRunExecutorActor(
         addTaskToLaunchQueue()
 
       case _ =>
-        becomeFailing(jobRun.copy(status = JobRunStatus.Failed, tasks = updatedTasks(update)))
+        becomeFailing(jobRun.copy(
+          status = JobRunStatus.Failed,
+          tasks = updatedTasks(update),
+          completedAt = Some(clock.now())
+        ))
     }
   }
 
@@ -161,7 +165,7 @@ class JobRunExecutorActor(
   def becomeAborting(): Unit = {
     log.info(s"Execution of JobRun ${jobRun.id} has been aborted")
     // kill all running tasks
-    jobRun.tasks.values.filter(t => isActive(t.state)).foreach { t =>
+    jobRun.tasks.values.filter(t => isActive(t.status)).foreach { t =>
       driverHolder.driver.foreach(_.killTask(t.id.mesosTaskId))
     }
     launchQueue.purge(runSpecId)
@@ -190,7 +194,7 @@ class JobRunExecutorActor(
       tasks.foreach { task =>
         jobRun.tasks + (task.id -> task)
       }
-      if (tasks.exists(t => isActive(t.state))) {
+      if (tasks.exists(t => isActive(t.status))) {
         // the actor is already active, so don't transition to active, just switch
         context.become(active)
       } else {
@@ -226,7 +230,7 @@ class JobRunExecutorActor(
         becomeFinishing(jobRun.copy(
           status = JobRunStatus.Success,
           tasks = updatedTasks(update),
-          finishedAt = Some(update.timestamp)
+          completedAt = Some(update.timestamp)
         ))
 
       case ForwardStatusUpdate(update) if isFailed(update.taskState) =>
@@ -246,7 +250,7 @@ class JobRunExecutorActor(
         becomeFinishing(jobRun.copy(
           status = JobRunStatus.Success,
           tasks = updatedTasks(update),
-          finishedAt = Some(update.timestamp)
+          completedAt = Some(update.timestamp)
         ))
 
       case ForwardStatusUpdate(update) if isFailed(update.taskState) =>

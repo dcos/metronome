@@ -6,19 +6,19 @@ import mesosphere.marathon.core.task.Task.LaunchedEphemeral
 import org.joda.time.DateTime
 
 case class JobRun(
-  id:         JobRunId,
-  jobSpec:    JobSpec,
-  status:     JobRunStatus,
-  createdAt:  DateTime,
-  finishedAt: Option[DateTime],
-  tasks:      Map[Task.Id, JobRunTask]
+  id:          JobRunId,
+  jobSpec:     JobSpec,
+  status:      JobRunStatus,
+  createdAt:   DateTime,
+  completedAt: Option[DateTime],
+  tasks:       Map[Task.Id, JobRunTask]
 )
 
 case class JobRunTask(
   id:          Task.Id,
   startedAt:   DateTime,
   completedAt: Option[DateTime],
-  state:       TaskState
+  status:      TaskState
 )
 
 object JobRunTask {
@@ -29,7 +29,7 @@ object JobRunTask {
       id = task.taskId,
       startedAt = task.status.stagedAt.toDateTime,
       completedAt = None,
-      state = TaskState(task)
+      status = TaskState(task)
     )
   }
 }
