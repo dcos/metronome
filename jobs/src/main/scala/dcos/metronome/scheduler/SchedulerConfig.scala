@@ -8,8 +8,7 @@ import scala.concurrent.duration.FiniteDuration
 trait SchedulerConfig extends ZkConfig {
   def scallopConf: AllConf
   def leaderPreparationTimeout: FiniteDuration
-  def disableHttp: Boolean
-  def httpPort: Int
+  def httpPort: Option[Int]
   def httpsPort: Int
   def hostname: String
   def zkTimeout: FiniteDuration

@@ -15,7 +15,7 @@ class LeaderProxyFilter(ws: WSClient, electionService: ElectionService, config: 
   import scala.concurrent.ExecutionContext.Implicits.global
   val log = LoggerFactory.getLogger(getClass)
 
-  val localHostPort = config.hostname + (if (config.disableHttp) config.httpsPort else config.httpPort)
+  val localHostPort = config.hostname + config.httpPort.getOrElse(config.httpsPort)
   val localRoutes = Set("/ping", "/v1/metrics")
 
   override def apply(next: EssentialAction): EssentialAction = new EssentialAction {

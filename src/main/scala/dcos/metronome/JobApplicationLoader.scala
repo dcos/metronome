@@ -20,6 +20,7 @@ import play.api.routing.Router
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.sys.SystemProperties
+import scala.util.Try
 
 /**
   * Application loader that wires up the application dependencies using Macwire
@@ -102,8 +103,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     override lazy val runHistoryCount: Int = configuration.getInt("metronome.history.count").getOrElse(10)
     override lazy val withMetrics: Boolean = configuration.getBoolean("metronome.behavior.metrics").getOrElse(true)
 
-    override lazy val disableHttp: Boolean = configuration.getBoolean("play.server.http.disableHttp").getOrElse(false)
-    override lazy val httpPort: Int = configuration.getInt("play.server.http.port").getOrElse(9000)
+    override lazy val httpPort: Option[Int] = configuration.getString("play.server.http.port").flatMap(intString => Try(intString.toInt).toOption)
     override lazy val httpsPort: Int = configuration.getInt("play.server.https.port").getOrElse(9443)
 
     override lazy val askTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.akka.ask.timeout").getOrElse(10.seconds)
@@ -116,7 +116,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
     override lazy val scallopConf: AllConf = {
       val flags = Seq[Option[String]](
-        if (disableHttp) Some("--disable_http") else None,
+        if (httpPort.isEmpty) Some("--disable_http") else None,
         if (zkCompressionEnabled) Some("--zk_compression") else None
       )
       val options = Map[String, Option[String]](
@@ -125,7 +125,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
         "--mesos_leader_ui_url" -> mesosLeaderUiUrl,
         "--plugin_dir" -> pluginDir,
         "--plugin_conf" -> pluginConf,
-        "--http_port" -> Some(httpPort.toString),
+        "--http_port" -> httpPort.map(_.toString),
         "--https_port" -> Some(httpsPort.toString),
         "--hostname" -> Some(hostname),
         "--zk" -> Some(zkURL),
