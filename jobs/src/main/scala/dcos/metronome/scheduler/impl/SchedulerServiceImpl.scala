@@ -92,7 +92,7 @@ private[scheduler] class SchedulerServiceImpl(
     log.info(s"""Call preDriverStarts callbacks on ${prePostDriverCallbacks.mkString(", ")}""")
     Await.result(
       Future.sequence(prePostDriverCallbacks.map(_.preDriverStarts)),
-      config.leadershipPreparationTimeout
+      config.leaderPreparationTimeout
     )
     log.info("Finished preDriverStarts callbacks")
 

@@ -10,7 +10,7 @@ import dcos.metronome.migration.impl.MigrationImpl
 import dcos.metronome.scheduler.SchedulerConfig
 import dcos.metronome.MetricsModule
 import mesosphere.marathon.Protos.MarathonTask
-import mesosphere.marathon.state.{ AppDefinition, AppRepository, EntityStoreCache, Group, GroupRepository, MarathonStore, MarathonTaskState, TaskRepository }
+import mesosphere.marathon.state.{ AppDefinition, AppRepository, EntityStore, EntityStoreCache, Group, GroupRepository, MarathonStore, MarathonTaskState, TaskRepository }
 import mesosphere.util.state.{ FrameworkId, PersistentStore }
 import org.apache.zookeeper.KeeperException
 import org.slf4j.LoggerFactory
@@ -20,6 +20,10 @@ import scala.concurrent.{ Await, Future }
 
 class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: RepositoryModule, metricsModule: MetricsModule) {
   import SchedulerRepositoriesModule._
+
+  private[this] def directOrCachedStore[T <: mesosphere.marathon.state.MarathonState[_, T]](store: MarathonStore[T]): EntityStore[T] = {
+    if (config.enableStoreCache) new EntityStoreCache[T](store) else store
+  }
 
   private[this] lazy val metrics = metricsModule.metrics
 
@@ -53,40 +57,45 @@ class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: Rep
 
   private[this] lazy val persistentStore: PersistentStore = repositoryModule.zkStore
 
-  lazy val taskStore = new MarathonStore[MarathonTaskState](
-    persistentStore,
-    metrics,
-    prefix = "task:",
-    newState = () => MarathonTaskState(MarathonTask.newBuilder().setId(UUID.randomUUID().toString).build())
-  )
+  lazy val taskStore = directOrCachedStore {
+    new MarathonStore[MarathonTaskState](
+      persistentStore,
+      metrics,
+      prefix = "task:",
+      newState = () => MarathonTaskState(MarathonTask.newBuilder().setId(UUID.randomUUID().toString).build())
+    )
+  }
   lazy val taskRepository: TaskRepository = new TaskRepository(taskStore, metrics)
 
   // FIXME (wiring): we shouldn't need the groupRepo
-  lazy val groupStore = new MarathonStore[Group](
-    persistentStore,
-    metrics,
-    prefix = "group:",
-    newState = () => Group.empty
-  )
+  lazy val groupStore = directOrCachedStore {
+    new MarathonStore[Group](
+      persistentStore,
+      metrics,
+      prefix = "group:",
+      newState = () => Group.empty
+    )
+  }
   lazy val groupRepository: GroupRepository = new GroupRepository(
     groupStore,
     maxVersions = None,
     metrics
   )
 
-  lazy val frameworkIdStore = {
+  lazy val frameworkIdStore = directOrCachedStore {
     val newState = () => new FrameworkId(UUID.randomUUID().toString)
     val prefix = "framework:"
-    val marathonStore = new MarathonStore[FrameworkId](persistentStore, metrics, newState, prefix)
-    if (config.enableStoreCache) new EntityStoreCache[FrameworkId](marathonStore) else marathonStore
+    new MarathonStore[FrameworkId](persistentStore, metrics, newState, prefix)
   }
 
-  lazy val appStore = new MarathonStore[AppDefinition](
-    persistentStore,
-    metrics,
-    prefix = "app:",
-    newState = () => AppDefinition.apply()
-  )
+  lazy val appStore = directOrCachedStore {
+    new MarathonStore[AppDefinition](
+      persistentStore,
+      metrics,
+      prefix = "app:",
+      newState = () => AppDefinition.apply()
+    )
+  }
   lazy val appRepository: AppRepository = new AppRepository(appStore, maxVersions = None, metrics)
 
   lazy val migration: Migration = new MigrationImpl(persistentStore)

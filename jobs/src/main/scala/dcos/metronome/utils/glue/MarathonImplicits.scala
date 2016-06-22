@@ -71,7 +71,6 @@ object MarathonImplicits {
           `type` = mesos.Protos.ContainerInfo.Type.DOCKER,
           docker = Some(Container.Docker(
             image = dockerSpec.image
-          // FIXME (urgent): privileged, parameters, forcePullImage
           )),
           volumes = jobSpec.run.volumes.map(_.toMarathon)
         ))
@@ -96,7 +95,7 @@ object MarathonImplicits {
         cpus = jobSpec.run.cpus,
         mem = jobSpec.run.mem,
         disk = jobSpec.run.disk,
-        executor = "//cmd",
+        executor = "",
         constraints = jobSpec.run.placement.constraints.map(spec => spec.toProto).toSet,
         fetch = jobSpec.run.artifacts.map(_.toFetchUri),
         storeUrls = Seq.empty[String],
