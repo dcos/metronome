@@ -18,7 +18,6 @@ import org.scalatest._
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 
 import scala.concurrent.{ Future, Promise }
-import scala.collection.immutable.Seq
 
 class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteLike with BeforeAndAfterAll
     with GivenWhenThen with ScalaFutures with Matchers with Eventually with ImplicitSender with Mockito {
@@ -110,7 +109,23 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     val result = JobResult(startedRun.jobRun)
     actor ! Finished(result)
 
-    Then("The list of started job runs is returned")
+    Then("The job run is removed from the registry")
+    eventually(actor.underlyingActor.allJobRuns should have size 0)
+    eventually(actor.underlyingActor.allRunExecutors should have size 0)
+  }
+
+  test("An aborted job run will be removed from the registry") {
+    Given("An empty service")
+    val f = new Fixture
+    val actor = f.serviceActor
+    actor ! TriggerJobRun(f.jobSpec)
+    val startedRun = expectMsgClass(classOf[StartedJobRun])
+
+    When("The job aborted")
+    val result = JobResult(startedRun.jobRun)
+    actor ! Aborted(result)
+
+    Then("The job run is removed from the registry")
     eventually(actor.underlyingActor.allJobRuns should have size 0)
     eventually(actor.underlyingActor.allRunExecutors should have size 0)
   }
@@ -124,9 +139,9 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
 
     When("The job finished")
     val result = JobResult(startedRun.jobRun)
-    actor ! Aborted(result)
+    actor ! JobRunExecutorActor.Failed(result)
 
-    Then("The list of started job runs is returned")
+    Then("The job run is removed from the registry")
     eventually(actor.underlyingActor.allJobRuns should have size 0)
     eventually(actor.underlyingActor.allRunExecutors should have size 0)
   }

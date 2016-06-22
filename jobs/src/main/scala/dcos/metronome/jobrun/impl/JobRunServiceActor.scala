@@ -51,7 +51,8 @@ class JobRunServiceActor(
     // executor messages
     case JobRunUpdate(started)         => updateJobRun(started)
     case Finished(result)              => jobRunFinished(result)
-    case Aborted(result)               => jobRunAborted(result)
+    case Aborted(result)               => jobRunFailed(result)
+    case Failed(result)                => jobRunFailed(result)
 
     //event stream events
     case update: TaskStateChangedEvent => forwardStatusUpdate(update)
@@ -96,12 +97,13 @@ class JobRunServiceActor(
   }
 
   def jobRunFinished(result: JobResult): Unit = {
-    log.info("JobRunFinished")
+    log.info("JobRun finished")
     context.system.eventStream.publish(Event.JobRunFinished(result.jobRun))
     wipeJobRun(result.jobRun.id)
   }
 
-  def jobRunAborted(result: JobResult): Unit = {
+  def jobRunFailed(result: JobResult): Unit = {
+    log.info("JobRun failed or aborted")
     context.system.eventStream.publish(Event.JobRunFailed(result.jobRun))
     wipeJobRun(result.jobRun.id)
   }
@@ -112,6 +114,7 @@ class JobRunServiceActor(
       context.unwatch(executor)
       context.stop(executor)
       allRunExecutors -= id
+      log.debug("{} now shutdown and removed from registry.", executor)
     }
   }
 

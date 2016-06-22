@@ -299,22 +299,20 @@ class JobRunExecutorActor(
   }
 
   def aborting: Receive = around {
-    receiveKill orElse {
-      // We can't handle a successful deletion and a failure differently
-      case JobRunDeleted(_, persisted, _) =>
-        log.info(s"Execution of JobRun ${jobRun.id} was aborted")
-        val result = JobResult(jobRun)
-        context.parent ! Aborted(result)
-        promise.failure(JobRunFailed(result))
-        context.become(terminal)
+    // We can't handle a successful deletion and a failure differently
+    case JobRunDeleted(_, persisted, _) =>
+      log.info(s"Execution of JobRun ${jobRun.id} was aborted")
+      val result = JobResult(jobRun)
+      context.parent ! Aborted(result)
+      promise.failure(JobRunFailed(result))
+      context.become(terminal)
 
-      case PersistFailed(_, id, ex, _) =>
-        log.info(s"Execution of JobRun ${jobRun.id} was aborted and deleting failed")
-        val result = JobResult(jobRun)
-        context.parent ! Aborted(result)
-        promise.failure(JobRunFailed(result))
-        context.become(terminal)
-    }
+    case PersistFailed(_, id, ex, _) =>
+      log.info(s"Execution of JobRun ${jobRun.id} was aborted and deleting failed")
+      val result = JobResult(jobRun)
+      context.parent ! Aborted(result)
+      promise.failure(JobRunFailed(result))
+      context.become(terminal)
   }
 
   def terminal: Receive = around {
