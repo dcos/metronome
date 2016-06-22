@@ -103,8 +103,10 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     override lazy val runHistoryCount: Int = configuration.getInt("metronome.history.count").getOrElse(10)
     override lazy val withMetrics: Boolean = configuration.getBoolean("metronome.behavior.metrics").getOrElse(true)
 
-    override lazy val httpPort: Option[Int] = configuration.getString("play.server.http.port").flatMap(intString => Try(intString.toInt).toOption)
-    override lazy val httpsPort: Int = configuration.getInt("play.server.https.port").getOrElse(9443)
+    lazy val hostname: String = configuration.getString("metronome.leader.election.hostname").getOrElse(java.net.InetAddress.getLocalHost.getHostName)
+    lazy val httpPort: Option[Int] = configuration.getString("play.server.http.port").flatMap(intString => Try(intString.toInt).toOption)
+    lazy val httpsPort: Int = configuration.getInt("play.server.https.port").getOrElse(9443)
+    override lazy val hostnameWithPort: String = s"$hostname:${httpPort.getOrElse(httpsPort)}"
 
     override lazy val askTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.akka.ask.timeout").getOrElse(10.seconds)
 
@@ -155,7 +157,6 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     lazy val taskLaunchTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.task.launch.timeout").getOrElse(5.minutes)
     lazy val taskEnvVarsPrefix: Option[String] = configuration.getString("metronome.scheduler.task.env.vars.prefix")
 
-    override lazy val hostname: String = configuration.getString("metronome.leader.election.hostname").getOrElse(java.net.InetAddress.getLocalHost.getHostName)
     override lazy val leaderPreparationTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.leader.preparation.timeout").getOrElse(3.minutes)
     override lazy val leaderProxyTimeout: Duration = configuration.getFiniteDuration("metronome.leader.proxy.timeout").getOrElse(30.seconds)
 

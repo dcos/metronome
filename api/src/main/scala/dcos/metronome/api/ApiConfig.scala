@@ -4,9 +4,7 @@ import scala.concurrent.duration.Duration
 
 trait ApiConfig {
 
-  def httpPort: Option[Int]
-  def httpsPort: Int
-  def hostname: String
+  def hostnameWithPort: String
   def leaderProxyTimeout: Duration
 
 }

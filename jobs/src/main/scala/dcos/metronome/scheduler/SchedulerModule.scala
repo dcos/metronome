@@ -54,10 +54,8 @@ class SchedulerModule(
 
   lazy val schedulerDriverHolder: MarathonSchedulerDriverHolder = new MarathonSchedulerDriverHolder
 
-  private[this] lazy val hostPort: String = {
-    val port = config.httpPort.getOrElse(config.httpsPort)
-    "%s:%d".format(config.hostname, port)
-  }
+  private[this] lazy val hostPort: String = config.hostnameWithPort
+
   private[this] lazy val electionModule: ElectionModule = new ElectionModule(
     scallopConf,
     actorSystem,
