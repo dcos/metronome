@@ -8,10 +8,7 @@ import scala.concurrent.duration.FiniteDuration
 trait SchedulerConfig extends ZkConfig {
   def scallopConf: AllConf
   def leaderPreparationTimeout: FiniteDuration
-  def disableHttp: Boolean
-  def httpPort: Int
-  def httpsPort: Int
-  def hostname: String
+  def hostnameWithPort: String
   def zkTimeout: FiniteDuration
   def mesosLeaderUiUrl: Option[String]
   def reconciliationInterval: FiniteDuration
