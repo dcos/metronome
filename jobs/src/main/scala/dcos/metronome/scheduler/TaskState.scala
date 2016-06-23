@@ -14,7 +14,7 @@ object TaskState {
   case object Starting extends TaskState
   case object Running extends TaskState
   case object Finished extends TaskState
-  case object TemporarilyUnreachable extends TaskState
+  case object TemporarilyUnreachable extends TaskState // TODO: remove state or handle correctly
   case object Failed extends TaskState
   case object Killed extends TaskState
 
@@ -48,7 +48,7 @@ object TaskState {
       case MesosTaskState.TASK_ERROR    => TaskState.Failed
       case MesosTaskState.TASK_FAILED   => TaskState.Failed
       case MesosTaskState.TASK_FINISHED => TaskState.Finished
-      case MesosTaskState.TASK_KILLED   => TaskState.Failed
+      case MesosTaskState.TASK_KILLED   => TaskState.Killed
       case MesosTaskState.TASK_KILLING  => TaskState.Running
       case MesosTaskState.TASK_LOST     => TaskState.Failed
       case MesosTaskState.TASK_RUNNING  => TaskState.Running
