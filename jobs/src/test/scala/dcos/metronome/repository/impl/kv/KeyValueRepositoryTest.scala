@@ -20,11 +20,13 @@ class KeyValueRepositoryTest extends FunSuite with Matchers with Mockito {
   test("update") {
     val f = new Fixture
     val updatedModel = Model(JobId("/new/id"))
+    val key = f.pathResolver.toPath(f.model.id)
 
-    f.store.load(f.pathResolver.toPath(f.model.id)).returns(Future.successful(Some(f.storeEntity)))
+    f.store.load(key).returns(Future.successful(Some(f.storeEntity)))
     f.repository.update(f.model.id, _ => updatedModel)
 
-    verify(f.store).update(StoreEntity(updatedModel))
+    verify(f.store, timeout(1000)).load(key)
+    verify(f.store, timeout(1000)).update(StoreEntity(updatedModel))
   }
 
   test("get") {
