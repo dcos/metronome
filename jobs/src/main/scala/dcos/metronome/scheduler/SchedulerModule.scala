@@ -19,9 +19,10 @@ import mesosphere.marathon.core.matcher.manager.OfferMatcherManagerModule
 import mesosphere.marathon.core.matcher.reconcile.OfferMatcherReconciliationModule
 import mesosphere.marathon.core.plugin.PluginModule
 import mesosphere.marathon.core.task.bus.TaskBusModule
+import mesosphere.marathon.core.task.jobs.TaskJobsModule
 import mesosphere.marathon.core.task.tracker._
 import mesosphere.marathon.core.task.update.impl.TaskStatusUpdateProcessorImpl
-import mesosphere.marathon.core.task.update.impl.steps.{ ContinueOnErrorStep, PostToEventStreamStepImpl }
+import mesosphere.marathon.core.task.update.impl.steps.ContinueOnErrorStep
 import mesosphere.marathon.core.task.update.{ TaskStatusUpdateProcessor, TaskUpdateStep }
 import mesosphere.marathon.event.EventModule
 import mesosphere.marathon.state._
@@ -194,8 +195,20 @@ class SchedulerModule(
     taskOpFactory = launcherModule.taskOpFactory
   )
 
-  val reconciliationActor = leadershipModule.startWhenLeader(
+  leadershipModule.startWhenLeader(
     props = ReconciliationActor.props(schedulerDriverHolder, taskTrackerModule.taskTracker, config),
-    name = "reconciliation"
+    name = "reconciliationActor"
+  )
+
+  val taskJobsModule = new TaskJobsModule(config.scallopConf, leadershipModule, marathonClock)
+
+  taskJobsModule.expungeOverdueLostTasks(
+    taskTrackerModule.taskTracker, taskTrackerModule.stateOpProcessor
+  )
+
+  taskJobsModule.handleOverdueTasks(
+    taskTrackerModule.taskTracker,
+    taskTrackerModule.taskReservationTimeoutHandler,
+    schedulerDriverHolder
   )
 }
