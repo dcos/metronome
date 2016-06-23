@@ -5,7 +5,7 @@ import dcos.metronome.repository.impl.kv.ZkConfig
 import mesosphere.marathon.AllConf
 import play.api.Configuration
 
-import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.concurrent.duration._
 import scala.sys.SystemProperties
 import scala.util.Try
@@ -43,45 +43,53 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   override lazy val zkCompressionThreshold: Long = configuration.getLong("metronome.zk.compression.threshold").getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_THRESHOLD)
 
   override lazy val scallopConf: AllConf = {
-  val flags = Seq[Option[String]](
-  if (httpPort.isEmpty) Some("--disable_http") else None,
-  if (zkCompressionEnabled) Some("--zk_compression") else None
-  )
-  val options = Map[String, Option[String]](
-  "--framework_name" -> Some(frameworkName),
-  "--master" -> Some(mesosMaster),
-  "--mesos_leader_ui_url" -> mesosLeaderUiUrl,
-  "--plugin_dir" -> pluginDir,
-  "--plugin_conf" -> pluginConf,
-  "--http_port" -> httpPort.map(_.toString),
-  "--https_port" -> Some(httpsPort.toString),
-  "--hostname" -> Some(hostname),
-  "--zk" -> Some(zkURL),
-  "--zk_session_timeout" -> Some(zkSessionTimeout.toMillis.toString),
-  "--zk_timeout" -> Some(zkTimeout.toMillis.toString),
-  "--zk_compression_threshold" -> Some(zkCompressionThreshold.toString),
-  "--mesos_user" -> mesosUser,
-  "--mesos_role" -> mesosRole,
-  "--executor" -> Some(mesosExecutorDefault),
-  "--enable_features" -> enableFeatures,
-  "--failover_timeout" -> Some(mesosFailoverTimeout.toMillis.toString),
-  "--leader_proxy_connection_timeout" -> Some(leaderProxyTimeout.toMillis.toString),
-  "--task_launch_timeout" -> Some(taskLaunchTimeout.toMillis.toString),
-  "--mesos_authentication_principal" -> mesosAuthenticationPrincipal,
-  "--mesos_authentication_secret_file" -> mesosAuthenticationSecretsFile,
-  "--env_vars_prefix" -> taskEnvVarsPrefix,
-  "--on_elected_prepare_timeout" -> Some(leaderPreparationTimeout.toMillis.toString)
-  )
-  .collect { case (name, Some(value)) => (name, value) }
-  .flatMap { case (name, value) => Seq(name, value) }
-  new AllConf(options.toSeq ++ flags.flatten)
-}
+    val flags = Seq[Option[String]](
+      if (httpPort.isEmpty) Some("--disable_http") else None,
+      if (zkCompressionEnabled) Some("--zk_compression") else None
+    )
+    val options = Map[String, Option[String]](
+      "--framework_name" -> Some(frameworkName),
+      "--master" -> Some(mesosMaster),
+      "--mesos_leader_ui_url" -> mesosLeaderUiUrl,
+      "--plugin_dir" -> pluginDir,
+      "--plugin_conf" -> pluginConf,
+      "--http_port" -> httpPort.map(_.toString),
+      "--https_port" -> Some(httpsPort.toString),
+      "--hostname" -> Some(hostname),
+      "--zk" -> Some(zkURL),
+      "--zk_session_timeout" -> Some(zkSessionTimeout.toMillis.toString),
+      "--zk_timeout" -> Some(zkTimeout.toMillis.toString),
+      "--zk_compression_threshold" -> Some(zkCompressionThreshold.toString),
+      "--mesos_user" -> mesosUser,
+      "--mesos_role" -> mesosRole,
+      "--executor" -> Some(mesosExecutorDefault),
+      "--enable_features" -> enableFeatures,
+      "--failover_timeout" -> Some(mesosFailoverTimeout.toMillis.toString),
+      "--leader_proxy_connection_timeout" -> Some(leaderProxyTimeout.toMillis.toString),
+      "--task_launch_timeout" -> Some(taskLaunchTimeout.toMillis.toString),
+      "--task_launch_confirm_timeout" -> Some(taskLaunchConfirmTimeout.toMillis.toString),
+      "--mesos_authentication_principal" -> mesosAuthenticationPrincipal,
+      "--mesos_authentication_secret_file" -> mesosAuthenticationSecretsFile,
+      "--env_vars_prefix" -> taskEnvVarsPrefix,
+      "--on_elected_prepare_timeout" -> Some(leaderPreparationTimeout.toMillis.toString),
+      "--task_lost_expunge_gc" -> Some(taskLostExpungeGcTimeout.toMillis.toString),
+      "--task_lost_expunge_initial_delay" -> Some(taskLostExpungeInitialDelay.toMillis.toString),
+      "--task_lost_expunge_interval" -> Some(taskLostExpungeInterval.toMillis.toString)
+    )
+      .collect { case (name, Some(value)) => (name, value) }
+      .flatMap { case (name, value) => Seq(name, value) }
+    new AllConf(options.toSeq ++ flags.flatten)
+  }
 
   override lazy val reconciliationInterval: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.reconciliation.interval").getOrElse(15.minutes)
   override lazy val reconciliationTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.reconciliation.timeout").getOrElse(1.minute)
   override lazy val enableStoreCache: Boolean = configuration.getBoolean("metronome.scheduler.store.cache").getOrElse(true)
   lazy val taskLaunchTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.task.launch.timeout").getOrElse(5.minutes)
+  lazy val taskLaunchConfirmTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.task.launch.confirm.timeout").getOrElse(5.minutes)
   lazy val taskEnvVarsPrefix: Option[String] = configuration.getString("metronome.scheduler.task.env.vars.prefix")
+  lazy val taskLostExpungeGcTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.task.lost.expunge.gc").getOrElse(1.day)
+  lazy val taskLostExpungeInitialDelay: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.task.lost.expunge.initial.delay").getOrElse(5.minutes)
+  lazy val taskLostExpungeInterval: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.task.lost.expunge.interval").getOrElse(1.hour)
 
   override lazy val leaderPreparationTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.leader.preparation.timeout").getOrElse(3.minutes)
   override lazy val leaderProxyTimeout: Duration = configuration.getFiniteDuration("metronome.leader.proxy.timeout").getOrElse(30.seconds)
