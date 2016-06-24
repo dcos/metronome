@@ -32,6 +32,9 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   lazy val hostname: String = configuration.getString("metronome.leader.election.hostname").getOrElse(java.net.InetAddress.getLocalHost.getHostName)
   lazy val httpPort: Option[Int] = configuration.getString("play.server.http.port").flatMap(intString => Try(intString.toInt).toOption)
   lazy val httpsPort: Int = configuration.getInt("play.server.https.port").getOrElse(9443)
+  lazy val keyStorePath: Option[String] = configuration.getString("play.server.https.keyStore.path")
+  lazy val keyStorePassword: Option[String] = configuration.getString("play.server.https.keyStore.password")
+
   override lazy val hostnameWithPort: String = s"$hostname:${httpPort.getOrElse(httpsPort)}"
 
   override lazy val askTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.akka.ask.timeout").getOrElse(10.seconds)
@@ -42,6 +45,9 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   override lazy val zkCompressionEnabled: Boolean = configuration.getBoolean("metronome.zk.compression.enabled").getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_ENABLED)
   override lazy val zkCompressionThreshold: Long = configuration.getLong("metronome.zk.compression.threshold").getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_THRESHOLD)
 
+  lazy val httpScheme: String = httpPort.map(_=>"http").getOrElse("https")
+  lazy val webuiURL: String = configuration.getString("metronome.web.ui.url").getOrElse(s"$httpScheme://$hostnameWithPort")
+
   override lazy val scallopConf: AllConf = {
     val flags = Seq[Option[String]](
       if (httpPort.isEmpty) Some("--disable_http") else None,
@@ -51,10 +57,13 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       "--framework_name" -> Some(frameworkName),
       "--master" -> Some(mesosMaster),
       "--mesos_leader_ui_url" -> mesosLeaderUiUrl,
+      "--webui_url" -> Some(webuiURL),
       "--plugin_dir" -> pluginDir,
       "--plugin_conf" -> pluginConf,
       "--http_port" -> httpPort.map(_.toString),
       "--https_port" -> Some(httpsPort.toString),
+      "--ssl_keystore_path" -> keyStorePath,
+      "--ssl_keystore_password" -> keyStorePassword,
       "--hostname" -> Some(hostname),
       "--zk" -> Some(zkURL),
       "--zk_session_timeout" -> Some(zkSessionTimeout.toMillis.toString),
