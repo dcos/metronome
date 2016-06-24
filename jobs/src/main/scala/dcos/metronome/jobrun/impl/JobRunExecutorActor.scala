@@ -171,7 +171,10 @@ class JobRunExecutorActor(
     launchQueue.purge(runSpecId)
 
     // Abort the jobRun
-    jobRun = jobRun.copy(status = JobRunStatus.Failed)
+    jobRun = jobRun.copy(
+      status = JobRunStatus.Failed,
+      completedAt = Some(clock.now())
+    )
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
 
@@ -273,7 +276,10 @@ class JobRunExecutorActor(
 
       case PersistFailed(_, id, ex, _) =>
         log.info(s"Execution of JobRun ${jobRun.id} has been finished but deleting the jobRun failed")
-        jobRun = jobRun.copy(status = JobRunStatus.Failed)
+        jobRun = jobRun.copy(
+          status = JobRunStatus.Failed,
+          completedAt = Some(clock.now())
+        )
         val result = JobResult(jobRun)
         context.parent ! JobRunExecutorActor.Aborted(result)
         promise.failure(JobRunFailed(result))
@@ -354,6 +360,7 @@ object TaskStates {
 
   private[this] val active = Set[TaskState](TaskState.Staging, TaskState.Starting, TaskState.Running)
   def isActive(taskState: TaskState): Boolean = active(taskState)
-  def isFailed(taskState: TaskState): Boolean = taskState == TaskState.Failed
+  private[this] val failed = Set[TaskState](TaskState.Failed, TaskState.Killed)
+  def isFailed(taskState: TaskState): Boolean = failed(taskState)
   def isFinished(taskState: TaskState): Boolean = taskState == TaskState.Finished
 }

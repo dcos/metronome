@@ -33,8 +33,6 @@ class NotifyOfTaskStateOperationStep(eventBus: EventStream, clock: Clock) extend
   private[this] def taskState(taskChanged: TaskChanged): Option[TaskState] = {
     (taskChanged.stateOp, taskChanged.stateChange) match {
 
-      // FIXME: what if a task has been killed by the overdueTasksActor?
-
       // A Mesos status update disregarding the effect
       case (TaskStateOp.MesosUpdate(task, WithMesosStatus(mesosStatus), _), _) => Some(TaskState(mesosStatus))
 

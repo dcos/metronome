@@ -8,7 +8,6 @@ import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.impl.JobRunExecutorActor.ForwardStatusUpdate
 import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
-import dcos.metronome.utils.glue.MarathonImplicits
 import dcos.metronome.utils.glue.MarathonImplicits._
 import dcos.metronome.utils.test.Mockito
 import dcos.metronome.utils.time.FixedClock
@@ -22,7 +21,7 @@ import org.apache.mesos.SchedulerDriver
 import org.apache.mesos
 import org.joda.time.DateTime
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
-import org.scalatest.{ BeforeAndAfterAll, FunSuiteLike, GivenWhenThen, Matchers }
+import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, FunSuiteLike, GivenWhenThen, Matchers }
 
 import scala.concurrent.Promise
 import scala.concurrent.duration._
@@ -30,6 +29,7 @@ import scala.concurrent.duration._
 class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     with FunSuiteLike
     with BeforeAndAfterAll
+    with BeforeAndAfterEach
     with GivenWhenThen
     with ScalaFutures
     with Matchers
@@ -40,7 +40,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
   test("ForwardStatusUpdate STAGING with subsequent RUNNING") {
     Given("An executor with a JobRun in state Starting")
     val f = new Fixture
-    val (actor, _) = f.setupCreatingExecutorActor()
+    val (actor, _) = f.setupStartingExecutorActor()
 
     When("The actor receives a status update indicating the run is active")
     actor ! f.statusUpdate(TaskState.Staging)
@@ -60,8 +60,6 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
     And("No additional message is send because the job is still active")
     f.parent.expectNoMsg(500.millis)
-
-    system.stop(actor)
   }
 
   test("ForwardStatusUpdate FINISHED") {
@@ -92,8 +90,6 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
     And("the promise is completed")
     f.promise.isCompleted
-
-    system.stop(actor)
   }
 
   test("ForwardStatusUpdate FAILED") {
@@ -105,34 +101,42 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val statusUpdate = f.statusUpdate(TaskState.Failed)
     actor ! statusUpdate
 
-    Then("The launch queue is purged")
-    verify(f.launchQueue).purge(activeJobRun.id.toRunSpecId)
+    verifyFailureActions(activeJobRun, expectedTaskCount = 1, f)
+  }
 
-    And("The JobRun is deleted")
-    f.persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
-    f.persistenceActor.reply(JobRunPersistenceActor.JobRunDeleted(f.persistenceActor.ref, activeJobRun, ()))
+  Set(TaskState.Failed, TaskState.Killed) foreach { state =>
+    test(s"ForwardStatusUpdate $state in state Active") {
+      Given("An executor with a JobRun in state Active")
+      val f = new Fixture
+      val (actor, activeJobRun) = f.setupActiveExecutorActor()
 
-    And("The JobRun update is reported")
-    val updateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
-    updateMsg.startedJobRun.jobRun.tasks should have size 1
-    updateMsg.startedJobRun.jobRun.status shouldBe JobRunStatus.Failed
-    updateMsg.startedJobRun.jobRun.completedAt shouldBe Some(f.clock.now())
+      When(s"The actor receives a status update $state")
+      val statusUpdate = f.statusUpdate(state)
+      actor ! statusUpdate
 
-    And("The JobRun is reported failed")
-    val failMsg = f.parent.expectMsgType[JobRunExecutorActor.Failed]
-    failMsg.jobResult.jobRun.status shouldBe JobRunStatus.Failed
+      verifyFailureActions(activeJobRun, expectedTaskCount = 1, f)
+    }
+  }
 
-    And("the promise is completed")
-    f.promise.isCompleted
+  Set(TaskState.Failed, TaskState.Killed) foreach { state =>
+    test(s"ForwardStatusUpdate $state in state Starting") {
+      Given("An executor with a JobRun in state Starting")
+      val f = new Fixture
+      val (actor, activeJobRun) = f.setupStartingExecutorActor()
 
-    system.stop(actor)
+      When(s"The actor receives a status update $state")
+      val statusUpdate = f.statusUpdate(state)
+      actor ! statusUpdate
+
+      verifyFailureActions(activeJobRun, expectedTaskCount = 1, f)
+    }
   }
 
   // FIXME (urgent): test this in other states as well
   test("KillCurrentJobRun") {
-    Given("An executor with a JobRun in state Initial")
+    Given("An executor with a JobRun in state Starting")
     val f = new Fixture
-    val (actor, jobRun) = f.setupCreatingExecutorActor()
+    val (actor, jobRun) = f.setupStartingExecutorActor()
 
     When("The actor receives a KillCurrentJobRun")
     actor ! JobRunExecutorActor.KillCurrentJobRun
@@ -154,9 +158,6 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
     And("the promise is completed")
     f.promise.isCompleted
-
-    system.stop(actor)
-
   }
 
   test("Persistence failure is propagated during creating") {
@@ -188,15 +189,15 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     failMsg.jobResult.jobRun.status shouldBe JobRunStatus.Failed
 
     And("the promise fails")
-    f.promise.future.failed.futureValue shouldEqual JobRunFailed(JobResult(jobRun.copy(status = JobRunStatus.Failed)))
-
-    system.stop(actor)
+    f.promise.future.failed.futureValue shouldEqual JobRunFailed(JobResult(jobRun.copy(
+      status = JobRunStatus.Failed, completedAt = Some(f.clock.now())
+    )))
   }
 
   test("Persistence failure is propagated during starting") {
     Given("An executor with a JobRun in state Starting")
     val f = new Fixture
-    val (actor, jobRun) = f.setupCreatingExecutorActor()
+    val (actor, jobRun) = f.setupStartingExecutorActor()
 
     When("The actor receives a status update indicating the run is running")
     val statusUpdate = f.statusUpdate(TaskState.Running)
@@ -233,8 +234,6 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
     And("the promise fails")
     f.promise.future.failed.futureValue.getMessage shouldEqual JobRunFailed(JobResult(jobRun.copy(status = JobRunStatus.Failed))).getMessage
-
-    system.stop(actor)
   }
 
   test("Persistence failure is propagated during active") {
@@ -268,14 +267,12 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
     And("the promise fails")
     f.promise.future.failed.futureValue.getMessage shouldEqual JobRunFailed(JobResult(jobRun.copy(status = JobRunStatus.Failed))).getMessage
-
-    system.stop(actor)
   }
 
   test("Persistence failure is propagated during starting and deleting the jobRun also fails") {
     Given("An executor with a JobRun in state Starting")
     val f = new Fixture
-    val (actor, jobRun) = f.setupCreatingExecutorActor()
+    val (actor, jobRun) = f.setupStartingExecutorActor()
 
     When("The actor receives a status update indicating the run is finished")
     val statusUpdate = f.statusUpdate(TaskState.Running)
@@ -312,8 +309,6 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
     And("the promise fails")
     f.promise.future.failed.futureValue.getMessage shouldEqual JobRunFailed(JobResult(jobRun.copy(status = JobRunStatus.Failed))).getMessage
-
-    system.stop(actor)
   }
 
   test("Init of JobRun with JobRunStatus.Success") {
@@ -335,12 +330,12 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val f = new Fixture
 
     Given("a jobRun in status Failed")
-    val failedJobRun = new JobRun(JobRunId(f.defaultJobSpec), f.defaultJobSpec, JobRunStatus.Failed, f.clock.now(), None, Map.empty)
+    val failedJobRun = new JobRun(JobRunId(f.defaultJobSpec), f.defaultJobSpec, JobRunStatus.Failed, f.clock.now(), Some(f.clock.now()), Map.empty)
 
     When("an executor is initialized with the failed jobRun")
     f.executorActor(failedJobRun)
 
-    verifyFailureActions(failedJobRun, f)
+    verifyFailureActions(failedJobRun, expectedTaskCount = 0, f)
   }
 
   test("Init of JobRun with JobRunStatus.Active and nonexistent launchQueue") {
@@ -458,49 +453,46 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     And("the second task also fails")
     actor ! f.statusUpdate(TaskState.Failed)
 
-    verifyFailureActions(jobRun, f)
+    verifyFailureActions(jobRun, expectedTaskCount = 1, f)
   }
 
-  // FIXME (urgent): implement test
-  ignore("A task does not become active and is killed by the overdueTasksActor and eventually a new task is launched") {
-    // This should actually already be handled by the taskLauncherActor!
-    fail("Test not implemented!")
-  }
-
-  def mockTask(taskId: Task.Id, stagedAt: Timestamp, mesosState: mesos.Protos.TaskState): Task.LaunchedEphemeral = {
-    val status: Task.Status = mock[Task.Status]
-    status.stagedAt returns stagedAt
-    val mesosStatus: mesos.Protos.TaskStatus = mesos.Protos.TaskStatus.newBuilder()
-      .setState(mesosState)
-      .buildPartial()
-    val task = mock[Task.LaunchedEphemeral]
-    task.taskId returns taskId
-    task.status returns status
-    task.mesosStatus returns Some(mesosStatus)
-    task
-  }
-
-  def verifyFailureActions(jobRun: JobRun, f: Fixture): Unit = {
+  def verifyFailureActions(jobRun: JobRun, expectedTaskCount: Int, f: Fixture): Unit = {
     import f._
 
-    Then("the launch queue is purged")
+    Then("The launch queue is purged")
     verify(launchQueue, timeout(1000)).purge(jobRun.id.toRunSpecId)
 
-    And("the update is propagated")
-    val parentUpdate = parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
-    parentUpdate.startedJobRun.jobRun.status shouldBe JobRunStatus.Failed
+    And("The JobRun is deleted")
+    f.persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
+    f.persistenceActor.reply(JobRunPersistenceActor.JobRunDeleted(f.persistenceActor.ref, jobRun, ()))
 
-    And("the jobRun is deleted")
-    persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
-    persistenceActor.reply(JobRunPersistenceActor.JobRunDeleted(persistenceActor.ref, jobRun, ()))
+    And("The JobRun update is reported")
+    val updateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
+    updateMsg.startedJobRun.jobRun.tasks should have size expectedTaskCount.toLong
+    updateMsg.startedJobRun.jobRun.status shouldBe JobRunStatus.Failed
+    updateMsg.startedJobRun.jobRun.completedAt shouldBe Some(f.clock.now())
 
-    And("the jobRun termination is propagated as well")
-    val finishedMsg = parent.expectMsgType[JobRunExecutorActor.Failed]
-    finishedMsg.jobResult.jobRun.status shouldBe JobRunStatus.Failed
+    And("The JobRun is reported failed")
+    val failMsg = f.parent.expectMsgType[JobRunExecutorActor.Failed]
+    failMsg.jobResult.jobRun.status shouldBe JobRunStatus.Failed
+
+    And("the promise is completed")
+    f.promise.isCompleted
   }
 
   override protected def afterAll(): Unit = {
     shutdown()
+  }
+
+  override protected def afterEach(): Unit = {
+    import JobRunExecutorActorTest._
+    actor match {
+      case Some(actorRef) => system.stop(actorRef)
+      case _ =>
+        val msg = "The test didn't set a reference to the tested actor. Either make sure to set the ref" +
+          "so it can be stopped automatically, or move the test to a suite that doesn't test this actor."
+        fail(msg)
+    }
   }
 
   class Fixture {
@@ -527,25 +519,58 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val parent = TestProbe()
     val behaviour = BehaviorFixture.empty
     def executorActor(jobRun: JobRun) = {
-      TestActorRef(JobRunExecutorActor.props(jobRun, promise, persistenceActorFactory,
+      import JobRunExecutorActorTest._
+      val actorRef = TestActorRef(JobRunExecutorActor.props(jobRun, promise, persistenceActorFactory,
         launchQueue, taskTracker, driverHolder, clock, behaviour), parent.ref, "JobRunExecutor")
+      actor = Some(actorRef)
+      actorRef
     }
 
+    def mockTask(taskId: Task.Id, stagedAt: Timestamp, mesosState: mesos.Protos.TaskState): Task.LaunchedEphemeral = {
+      val status: Task.Status = mock[Task.Status]
+      status.stagedAt returns stagedAt
+      val mesosStatus: mesos.Protos.TaskStatus = mesos.Protos.TaskStatus.newBuilder()
+        .setState(mesosState)
+        .buildPartial()
+      val task = mock[Task.LaunchedEphemeral]
+      task.taskId returns taskId
+      task.status returns status
+      task.mesosStatus returns Some(mesosStatus)
+      task
+    }
+
+    /**
+      *  Setup an executor actor with a JobRun in status [[JobRunStatus.Initial]]
+      *
+      *  @return A tuple containing the ActorRef and the JobRun
+      */
     def setupInitialExecutorActor(): (ActorRef, JobRun) = {
       val startingJobRun = new JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Initial, clock.now(), None, Map.empty)
       val actorRef: ActorRef = executorActor(startingJobRun)
       (actorRef, startingJobRun)
     }
 
-    def setupCreatingExecutorActor(): (ActorRef, JobRun) = {
+    /**
+      * Setup an executor actor with a JobRun in status [[JobRunStatus.Starting]]
+      *
+      * @return A tuple containing the ActorRef and the JobRun
+      */
+    def setupStartingExecutorActor(): (ActorRef, JobRun) = {
       val startingJobRun = new JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Initial, clock.now(), None, Map.empty)
       val actorRef: ActorRef = executorActor(startingJobRun)
-      persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
+      val msg = persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
+      msg.jobRun.status shouldBe JobRunStatus.Starting
       persistenceActor.reply(JobRunPersistenceActor.JobRunCreated(persistenceActor.ref, startingJobRun, Unit))
       verify(launchQueue, timeout(1000)).add(any, any)
       (actorRef, startingJobRun)
     }
 
+    /**
+      * Setup an executor actor with a JobRun in status [[JobRunStatus.Active]]
+      *
+      * @param spec (Optional) the JobSpec to use if the default shouldn't be used
+      * @return A tuple containing the ActorRef and the JobRun
+      */
     def setupActiveExecutorActor(spec: Option[JobSpec] = None): (ActorRef, JobRun) = {
       val jobSpec = spec.getOrElse(defaultJobSpec)
       val startingJobRun = new JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Initial, clock.now(), None, Map.empty)
@@ -565,4 +590,8 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       (actorRef, startingJobRun)
     }
   }
+}
+
+object JobRunExecutorActorTest {
+  var actor: Option[ActorRef] = None
 }
