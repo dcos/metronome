@@ -15,7 +15,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
 
   lazy val frameworkName: String = configuration.getString("metronome.framework.name").getOrElse("metronome")
   lazy val mesosMaster: String = configuration.getString("metronome.mesos.master.url").getOrElse("localhost:5050")
-  override lazy val mesosLeaderUiUrl: Option[String] = configuration.getString("metronome.mesos.leader.ui.url").orElse(scallopConf.mesosLeaderUiUrl.get)
+  override lazy val mesosLeaderUiUrl: Option[String] = configuration.getString("metronome.mesos.leader.ui.url")
   lazy val mesosRole: Option[String] = configuration.getString("metronome.mesos.role")
   lazy val mesosUser: Option[String] = configuration.getString("metronome.mesos.user").orElse(new SystemProperties().get("user.name"))
   lazy val mesosExecutorDefault: String = configuration.getString("metronome.mesos.executor.default").getOrElse("//cmd")
