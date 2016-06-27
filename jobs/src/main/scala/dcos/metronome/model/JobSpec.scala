@@ -19,7 +19,7 @@ case class JobSpec(
   override def user: Option[String] = run.user
   override def acceptedResourceRoles: Option[Predef.Set[String]] = None
   override def secrets: Map[String, Secret] = Map.empty
-  override def env: Map[String, EnvVarValue] = mesosphere.marathon.state.EnvVarValue(run.env) // FIXME: yuck
+  override def env: Map[String, EnvVarValue] = mesosphere.marathon.state.EnvVarValue(run.env)
 }
 
 object JobSpec {

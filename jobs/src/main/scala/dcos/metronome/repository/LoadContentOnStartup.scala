@@ -8,7 +8,7 @@ import scala.util.{ Failure, Success }
 trait LoadContentOnStartup[Id, Model] extends Actor with Stash with ActorLogging {
   import LoadContentOnStartup._
 
-  //TODO (urgent): change me to zk ec
+  //TODO: change me to zk ec
   import context.dispatcher
 
   override def preStart(): Unit = {
