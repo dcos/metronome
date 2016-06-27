@@ -45,7 +45,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   override lazy val zkCompressionEnabled: Boolean = configuration.getBoolean("metronome.zk.compression.enabled").getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_ENABLED)
   override lazy val zkCompressionThreshold: Long = configuration.getLong("metronome.zk.compression.threshold").getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_THRESHOLD)
 
-  lazy val httpScheme: String = httpPort.map(_=>"http").getOrElse("https")
+  lazy val httpScheme: String = httpPort.map(_ => "http").getOrElse("https")
   lazy val webuiURL: String = configuration.getString("metronome.web.ui.url").getOrElse(s"$httpScheme://$hostnameWithPort")
 
   override lazy val scallopConf: AllConf = {
