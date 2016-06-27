@@ -67,7 +67,6 @@ class JobRunExecutorActor(
   }
 
   // Transitions
-  // TODO should we name those 'transitionToX' to make clear that it's a transition?
 
   def becomeCreating(): Unit = {
     log.info(s"Create JobRun ${jobRun.id} - become creating")
