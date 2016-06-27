@@ -1,4 +1,5 @@
 import com.amazonaws.auth.{InstanceProfileCredentialsProvider, EnvironmentVariableCredentialsProvider}
+import com.typesafe.sbt.packager
 import com.typesafe.sbt.packager.universal.UniversalDeployPlugin
 import ohnosequences.sbt.SbtS3Resolver
 import ohnosequences.sbt.SbtS3Resolver._
@@ -17,7 +18,7 @@ object Build extends sbt.Build {
     id = "metronome",
     base = file("."),
     dependencies = Seq(api, jobs),
-    settings = projectSettings ++ Seq(
+    settings = projectSettings ++ nativePackageSettings ++ Seq(
       libraryDependencies ++= Seq(
         Dependency.macWireMacros,
         Dependency.macWireUtil,
@@ -116,6 +117,10 @@ object Build extends sbt.Build {
       s3("downloads.mesosphere.io/maven")
     )),
     SbtS3Resolver.s3credentials := new EnvironmentVariableCredentialsProvider() | new InstanceProfileCredentialsProvider()
+  )
+
+  lazy val nativePackageSettings = Seq(
+    packager.Keys.bashScriptExtraDefines ++= IO.readLines(baseDirectory.value / "bin" / "extra.sh")
   )
 
   object Dependency {
