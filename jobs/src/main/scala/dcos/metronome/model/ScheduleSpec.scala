@@ -26,7 +26,7 @@ object ScheduleSpec {
   val DefaultTimeZone = DateTimeZone.UTC
   val DefaultStartingDeadline = 15.minutes
   val DefaultConcurrencyPolicy = ConcurrencyPolicy.Forbid
-  val DefaultEnabled = false
+  val DefaultEnabled = true
 
   implicit lazy val validScheduleSpec: Validator[ScheduleSpec] = validator[ScheduleSpec] { spec =>
     spec.startingDeadline >= 1.minute
