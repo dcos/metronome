@@ -1,7 +1,7 @@
 package dcos.metronome.api.v0.controllers
 
 import dcos.metronome.JobSpecDoesNotExist
-import dcos.metronome.api.{ JsonSchema, UnknownJob, Authorization }
+import dcos.metronome.api.{ ApiConfig, JsonSchema, UnknownJob, Authorization }
 import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobId, JobSpec, JobRunSpec, ScheduleSpec }
@@ -15,7 +15,8 @@ import scala.collection.immutable._
 class ScheduledJobSpecController(
     jobSpecService:    JobSpecService,
     val authenticator: Authenticator,
-    val authorizer:    Authorizer
+    val authorizer:    Authorizer,
+    val config:        ApiConfig
 ) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext

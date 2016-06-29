@@ -34,8 +34,8 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   lazy val httpsPort: Int = configuration.getInt("play.server.https.port").getOrElse(9443)
   lazy val keyStorePath: Option[String] = configuration.getString("play.server.https.keyStore.path")
   lazy val keyStorePassword: Option[String] = configuration.getString("play.server.https.keyStore.password")
-
-  override lazy val hostnameWithPort: String = s"$hostname:${httpPort.getOrElse(httpsPort)}"
+  def effectivePort = httpPort.getOrElse(httpsPort)
+  override lazy val hostnameWithPort: String = s"$hostname:$effectivePort"
 
   override lazy val askTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.akka.ask.timeout").getOrElse(10.seconds)
 

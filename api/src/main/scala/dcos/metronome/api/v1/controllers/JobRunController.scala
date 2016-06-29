@@ -2,7 +2,7 @@ package dcos.metronome.api.v1.controllers
 
 import dcos.metronome.JobRunDoesNotExist
 import dcos.metronome.api.v1.models._
-import dcos.metronome.api.{ Authorization, UnknownJob, UnknownJobRun }
+import dcos.metronome.api.{ ApiConfig, Authorization, UnknownJob, UnknownJobRun }
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobId, JobRunId }
@@ -14,7 +14,8 @@ class JobRunController(
     jobSpecService:    JobSpecService,
     jobRunService:     JobRunService,
     val authenticator: Authenticator,
-    val authorizer:    Authorizer
+    val authorizer:    Authorizer,
+    val config:        ApiConfig
 ) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext

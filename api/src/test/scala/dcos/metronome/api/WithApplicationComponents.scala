@@ -125,7 +125,9 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
 
   lazy val config: ApiConfig = new ApiConfig {
     override def leaderProxyTimeout: Duration = 30.seconds
-    override def hostnameWithPort: String = "localhost:9000"
+    override def hostnameWithPort: String = s"$hostname:$effectivePort"
+    override def hostname: String = "localhost"
+    override def effectivePort: Int = 9000
   }
 
   override def router: Router = apiModule.router

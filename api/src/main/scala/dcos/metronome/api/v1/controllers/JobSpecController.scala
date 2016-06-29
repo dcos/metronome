@@ -2,7 +2,7 @@ package dcos.metronome.api.v1.controllers
 
 import dcos.metronome.api.v1.models._
 import dcos.metronome.api.v1.models.schema._
-import dcos.metronome.api.{ ErrorDetail, Authorization, UnknownJob }
+import dcos.metronome.api.{ ApiConfig, ErrorDetail, Authorization, UnknownJob }
 import dcos.metronome.jobinfo.JobInfo.Embed
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobrun.JobRunService
@@ -21,7 +21,8 @@ class JobSpecController(
     jobRunService:     JobRunService,
     jobInfoService:    JobInfoService,
     val authenticator: Authenticator,
-    val authorizer:    Authorizer
+    val authorizer:    Authorizer,
+    val config:        ApiConfig
 ) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
