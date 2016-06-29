@@ -6,7 +6,6 @@ import dcos.metronome.api.v1.models._
 import dcos.metronome.api.v1.models.schema._
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobId, ScheduleSpec, JobSpec }
-import mesosphere.marathon.plugin.RunSpec
 import mesosphere.marathon.plugin.auth._
 import JobId._
 import play.api.mvc.Result
@@ -17,7 +16,8 @@ import scala.concurrent.Future
 class JobScheduleController(
     jobSpecService:    JobSpecService,
     val authenticator: Authenticator,
-    val authorizer:    Authorizer
+    val authorizer:    Authorizer,
+    val config:        ApiConfig
 ) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext

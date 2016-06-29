@@ -49,6 +49,7 @@ trait Authorization extends RestController {
 
   def authenticator: Authenticator
   def authorizer: Authorizer
+  def config: ApiConfig
 
   //play default execution context
   import play.api.libs.concurrent.Execution.Implicits._
@@ -64,7 +65,7 @@ trait Authorization extends RestController {
   class AuthorizedActionBuilder(authorize: Option[Identity] = None) extends ActionBuilder[AuthorizedRequest] {
 
     def invokeBlock[A](request: Request[A], block: AuthorizedRequest[A] => Future[Result]) = {
-      val facade = PluginFacade.withRequest(request)
+      val facade = PluginFacade.withRequest(request, config)
       def notAuthenticated = PluginFacade.withResponse(authenticator.handleNotAuthenticated(facade, _))
       authenticator.authenticate(facade).flatMap {
         case Some(identity) => block(AuthorizedRequest(identity, request, authorizer))
@@ -76,17 +77,16 @@ trait Authorization extends RestController {
 
 object PluginFacade {
 
-  def withRequest(request: RequestHeader): HttpRequest = new HttpRequest {
+  def withRequest(request: RequestHeader, config: ApiConfig): HttpRequest = new HttpRequest {
     override def method: String = request.method
     override def requestPath: String = request.path
     override def header(name: String): Seq[String] = request.headers.getAll(name)
     override def cookie(name: String): Option[String] = request.cookies.get(name).map(_.value)
     override def queryParam(name: String): Seq[String] = request.getQueryString(name).toSeq
     override def remoteAddr: String = request.remoteAddress
-    // TODO: how to get correct values here
-    override def remotePort: Int = 0
-    override def localPort: Int = 9443
-    override def localAddr: String = "127.0.0.1"
+    override def remotePort: Int = 0 //not available
+    override def localPort: Int = config.effectivePort
+    override def localAddr: String = config.hostname
   }
 
   def withResponse(fn: HttpResponse => Unit): Result = {
