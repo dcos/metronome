@@ -79,14 +79,14 @@ object PluginFacade {
   def withRequest(request: RequestHeader): HttpRequest = new HttpRequest {
     override def method: String = request.method
     override def requestPath: String = request.path
-    override def remoteAddr: String = request.remoteAddress
     override def header(name: String): Seq[String] = request.headers.getAll(name)
     override def cookie(name: String): Option[String] = request.cookies.get(name).map(_.value)
     override def queryParam(name: String): Seq[String] = request.getQueryString(name).toSeq
-    // TODO: implement these
-    override def remotePort: Int = ???
-    override def localPort: Int = ???
-    override def localAddr: String = ???
+    override def remoteAddr: String = request.remoteAddress
+    // TODO: how to get correct values here
+    override def remotePort: Int = 0
+    override def localPort: Int = 9443
+    override def localAddr: String = "127.0.0.1"
   }
 
   def withResponse(fn: HttpResponse => Unit): Result = {
