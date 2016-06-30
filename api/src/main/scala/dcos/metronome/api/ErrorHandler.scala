@@ -20,7 +20,7 @@ class ErrorHandler extends HttpErrorHandler {
 
   override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {
     log.error(s"Error serving ${request.path}", exception)
-    val json = Json.obj("message" -> exception.getMessage, "requestPath" -> request.path)
+    val json = Json.obj("requestPath" -> request.path)
     Future.successful(Results.Status(INTERNAL_SERVER_ERROR)(json))
   }
 }
