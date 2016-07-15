@@ -1,0 +1,22 @@
+#%RAML 0.8
+
+title: Metronome REST
+version: 0.1
+mediaType: application/json
+baseUri: http://localhost:9000
+schemas:
+  - JobSpec: !include v1/schema/jobspec.schema.json
+  - ScheduleSpec: !include v1/schema/schedulespec.schema.json
+
+traits: !include traits.raml
+
+# considered ofthen used endpoints in alphabetical order
+/v1/jobs: !include v1/jobs.raml
+/v1/metrics: !include v1/metrics.raml
+
+# no real API endpoints
+/ping: !include general/ping.raml
+
+
+
+

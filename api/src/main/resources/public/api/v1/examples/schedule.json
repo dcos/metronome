@@ -1,0 +1,8 @@
+{
+  "id": "everyminute",
+  "cron": "* * * * *",
+  "concurrencyPolicy": "ALLOW",
+  "enabled": true,
+  "startingDeadlineSeconds": 60,
+  "timezone": "America/Chicago"
+}

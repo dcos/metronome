@@ -1,0 +1,17 @@
+
+- secured:
+    responses:
+      401:
+        description: Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request.
+        body:
+          application/json:
+            example: |
+              { "message": "Invalid username or password." }
+      403:
+        description: Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action.
+        body:
+          application/json:
+            example: |
+              { "message": "Not Authorized to perform this action!" }
+
+
