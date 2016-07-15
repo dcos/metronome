@@ -1,10 +1,45 @@
-# jobs
+# Metronome
 
-## Production
-One way to compile the project for production is using typesafe activator. Play will then use `application.conf` in order to setup the server:
+Metronome is a [Apache Mesos](http://mesos.apache.org) framework for scheduled jobs.
 
-    activator clean stage
 
-Staged version can then be found in `target\universal\stage\bin\jobs`. You need to provide a secret in order to start the server `-Dplay.crypto.secret="changeme"`.
+## Documentation
 
-`application.conf` provides a possibility to set up HTTPS, where you can define the keystore to use. You can disable HTTP by providing `-Dhttp.port=disabled` to your arguments.
+Metronome documentation is available on the [Metronome GitHub pages site](http://dcos.github.io/metronome/).
+
+
+## Getting Started
+
+Get familiar with Metronome and try out this step by step guide [Getting Started](https://dcos.github.io/metronome/docs/getting_started.html).
+
+## Contributing
+
+We heartily welcome external contributions to Metronome's code base and documentation.
+Please see our [Contributor Guidelines](https://dcos.github.io/metronome/docs/contributing.html) 
+
+
+### Building from Source
+
+To build Metronome from source, check out this repo and use sbt to build a universal package:
+
+        git clone https://github.com/dcos/metronome.git
+        cd metronome
+        sbt universal:packageBin
+
+
+### Running in Development Mode
+
+Mesos local mode allows you to run Metronome without launching a full Mesos
+cluster. It is meant for experimentation and not recommended for production
+use. Note that you still need to run ZooKeeper for storing state. The following
+command launches Metronome on Mesos in *local mode*. 
+
+    ./bin/metronome -Dmetronome.mesos.master.url=local
+
+
+## Help
+
+Have you found an issue? Feel free to report it using our [Issues](https://github.com/dcos/metronome/issues) page.
+In order to speed up response times, we ask you to provide as much
+information on how to reproduce the problem as possible. 
+
