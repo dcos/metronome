@@ -1,0 +1,337 @@
+get:
+  description:
+    Get the list of all jobs.
+  is: [ secured ]
+  queryParameters:
+    embed:
+      required: false
+      description:
+        Embeds nested resources that match the supplied path.
+        You can specify this parameter multiple times with different values.
+
+        - <code>activeRuns</code> embed all current active runs of this job<br/>
+
+        - <code>schedules</code> embed all schedules assigned to this job<br/>
+
+        - <code>history</code> embed history information, attached to this job<br/>
+
+      enum: [ activeRuns, schedules, history ]
+      repeat: true
+      example: activeRuns
+  responses:
+    200:
+      description: "The list of jobs."
+      body:
+        application/json:
+          example: !include examples/job_list.json
+
+post:
+  description:
+    Create a new job.
+  is: [ secured ]
+  body:
+    application/json:
+      example: !include examples/job.json
+      schema: JobSpec
+  responses:
+    201:
+      description: The job has been created.
+      body:
+        application/json:
+          example: !include examples/job.json
+    422:
+      description: The given entity can not be processed due to validation errors.
+      body:
+        application/json:
+          example: |
+            {
+              "message": "Object is not valid",
+              "details": [
+                {
+                  "path": "/mem",
+                  "errors": [
+                    "is less than than 32"
+                  ]
+                }
+              ]
+            }
+
+
+/{jobId}:
+
+  ###
+  # Get a specific job
+  #
+  get:
+    description:
+      Get the job with id `jobId`.
+      You can specify optional embed arguments to get more embedded information.
+    is: [ secured ]
+    queryParameters:
+      embed:
+        required: false
+        description:
+          Embeds nested resources that match the supplied path.
+          You can specify this parameter multiple times with different values.
+
+          - <code>activeRuns</code> embed all current active runs of this job<br/>
+
+          - <code>schedules</code> embed all schedules assigned to this job<br/>
+
+          - <code>history</code> embed history information associated with this job<br/>
+
+        enum: [ activeRuns, schedules, history ]
+        repeat: true
+        example: activeRuns
+    responses:
+      200:
+        body:
+          application/json:
+            example: !include examples/job.json
+      404:
+        description: No job found for given `jobId`.
+        body:
+          application/json:
+            example: |
+              { "message": "Job 'not_existent' does not exist" }
+
+  ###
+  # Update a specific job
+  #
+  put:
+    description:
+      Update an existing job.
+    is: [ secured ]
+    body:
+      application/json:
+        example: !include examples/job.json
+        schema: JobSpec
+    responses:
+      404:
+        description: No job found for given `jobId`.
+        body:
+          application/json:
+            example: |
+              { "message": "Job 'not_existent' does not exist" }
+      422:
+        description: The given entity can not be processed due to validation errors.
+        body:
+          application/json:
+            example: |
+              {
+                "message": "Object is not valid",
+                "details": [
+                  {
+                    "path": "/mem",
+                    "errors": [
+                      "is less than 32"
+                    ]
+                  }
+                ]
+              }
+
+
+
+  ###
+  # Delete a specific job
+  #
+  delete:
+    description: Delete a job. All data about that job will be deleted.
+    is: [ secured ]
+    responses:
+      404:
+        description: No job found for given `jobId`.
+        body:
+          application/json:
+            example: |
+              {"message":"Job 'not-existing' does not exist"}
+
+  /schedules:
+    ###
+    # Get all schedules
+    #
+    get:
+      description:
+        Get the list of all schedules for this jobId.
+      is: [ secured ]
+      responses:
+        200:
+          description: "The list of schedules for this job"
+          body:
+            application/json:
+              example: !include examples/schedule_list.json
+
+    ###
+    # Create a schedule
+    #
+    post:
+      description:
+        Create a new schedule.
+      is: [ secured ]
+      body:
+        application/json:
+          example: !include examples/schedule.json
+          schema: ScheduleSpec
+      responses:
+        201:
+          description: The schedule has been created.
+          body:
+            application/json:
+              example: !include examples/schedule.json
+        422:
+          description: The given entity can not be processed due to validation errors.
+          body:
+            application/json:
+              example: |
+                {
+                  "message": "Object is not valid",
+                  "details": [
+                    {
+                      "path": "/mem",
+                      "errors": [
+                        "is less than than 32"
+                      ]
+                    }
+                  ]
+                }
+
+
+    /{scheduleId}:
+
+      ###
+      # Get a specific schedule
+      #
+      get:
+        description:
+          Get the schedule for job `jobId` with schedule `scheduleId`.
+        is: [ secured ]
+        responses:
+          200:
+            body:
+              application/json:
+                example: !include examples/schedule.json
+                schema: ScheduleSpec
+          404:
+            description: No schedule found for given`scheduleId`.
+            body:
+              application/json:
+                example: |
+                  { "message": "Schedule 'not_existent' does not exist" }
+
+      ###
+      # Update a specific schedule
+      #
+      put:
+        description:
+          Replaces an existing schedule.
+        is: [ secured ]
+        body:
+          application/json:
+            example: !include examples/schedule.json
+            schema: ScheduleSpec
+        responses:
+          404:
+            description: No schedule found with this `scheduleId`.
+            body:
+              application/json:
+                example: |
+                  { "message": "Schedule 'not_existent' does not exist" }
+          422:
+            description: The given entity can not be processed due to validation errors.
+            body:
+              application/json:
+                example: |
+                  {
+                    "message": "Object is not valid",
+                    "details": [
+                      {
+                        "path": "/mem",
+                        "errors": [
+                          "is less than 32"
+                        ]
+                      }
+                    ]
+                  }
+
+      ###
+      # Delete a specific schedule
+      #
+      delete:
+        description: Destroy a schedule.
+        is: [ secured ]
+        responses:
+          404:
+            description: No schedule found for given `id`.
+            body:
+              application/json:
+                example: |
+                  {"message":"Schedule 'not-existing' does not exist"}
+
+
+  /runs:
+    ###
+    # Get all runs
+    #
+    get:
+      description:
+        Get the list of all runs for this jobId.
+      is: [ secured ]
+      responses:
+        200:
+          description: "The list of runs for this job"
+          body:
+            application/json:
+              example: !include examples/run_list.json
+
+    ###
+    # Trigger a run
+    #
+    post:
+      description:
+        Trigger a new job run
+      is: [ secured ]
+      responses:
+        201:
+          description: The job run has been created.
+          body:
+            application/json:
+              example: !include examples/run.json
+
+    /{runId}:
+
+      ###
+      # Get a specific job run
+      #
+      get:
+        description:
+          Get the job run for job `jobId` with id `runId`.
+        is: [ secured ]
+        responses:
+          200:
+            body:
+              application/json:
+                example: !include examples/run.json
+          404:
+            description: No run found for given `runId`.
+            body:
+              application/json:
+                example: |
+                  { "message": "JobRun 'not_existent' does not exist" }
+
+
+      /action/stop:
+
+        ###
+        # Stop a specific job run
+        #
+        post:
+          description: Stop an existing job run
+          is: [ secured ]
+          responses:
+            404:
+              description: No run found for given`runId`.
+              body:
+                application/json:
+                  example: |
+                    {"message":"JobRun 'not-existing' does not exist"}
+

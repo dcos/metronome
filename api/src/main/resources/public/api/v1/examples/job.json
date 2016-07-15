@@ -1,0 +1,52 @@
+{
+  "description": "Example Application",
+  "id": "prod.example.app",
+  "labels": {
+    "location": "olympus",
+    "owner": "zeus"
+  },
+  "run": {
+    "artifacts": [
+      {
+        "uri": "http://foo.test.com/application.zip",
+        "extract": true,
+        "executable": true,
+        "cache": false
+      }
+    ],
+    "cmd": "nuke --dry --master local",
+    "args": ["nuke", "--dry", "--master", "local"],
+    "cpus": 1.5,
+    "mem": 32,
+    "disk": 128,
+    "docker": {
+      "image": "foo/bla:test"
+    },
+    "env": {
+      "MON": "test",
+      "CONNECT": "direct"
+    },
+    "maxLaunchDelay": 3600,
+    "placement": {
+      "constraints": [
+        {
+          "attribute": "rack",
+          "operator": "EQ",
+          "value": "rack-2"
+        }
+      ]
+    },
+    "restart": {
+      "activeDeadlineSeconds": 120,
+      "policy": "NEVER"
+    },
+    "user": "root",
+    "volumes": [
+      {
+        "containerPath": "/mnt/test",
+        "hostPath": "/etc/guest",
+        "mode": "RW"
+      }
+    ]
+  }
+}

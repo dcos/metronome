@@ -46,5 +46,5 @@ object ScheduledJobSpecController {
     (__ \ "run").format[JobRunSpec]
   )(JobSpec.apply, unlift(JobSpec.unapply))
 
-  implicit lazy val JobSpecSchema: JsonSchema[JobSpec] = JsonSchema.fromResource("/public/api/schema/v0/jobspec_v0.schema.json")
+  implicit lazy val JobSpecSchema: JsonSchema[JobSpec] = JsonSchema.fromResource("/public/api/v0/schema/jobspec_v0.schema.json")
 }

@@ -1,0 +1,46 @@
+[
+  {
+    "description": "Send summary every day",
+    "id": "prod.email.summary",
+    "labels": {},
+    "run": {
+      "artifacts": [],
+      "cmd": "sendSummary",
+      "cpus": 0.1,
+      "disk": 0,
+      "env": {},
+      "maxLaunchDelay": 3600,
+      "mem": 32,
+      "placement": {
+        "constraints": []
+      },
+      "restart": {
+        "activeDeadlineSeconds": 120,
+        "policy": "NEVER"
+      },
+      "volumes": []
+    }
+  },
+  {
+    "description": "DB cleaner",
+    "id": "cleanDb --force",
+    "labels": {},
+    "run": {
+      "artifacts": [],
+      "cmd": "false",
+      "cpus": 0.1,
+      "disk": 0,
+      "env": {},
+      "maxLaunchDelay": 3600,
+      "mem": 32,
+      "placement": {
+        "constraints": []
+      },
+      "restart": {
+        "activeDeadlineSeconds": 120,
+        "policy": "NEVER"
+      },
+      "volumes": []
+    }
+  }
+]
