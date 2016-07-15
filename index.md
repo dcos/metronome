@@ -1,11 +1,11 @@
 ---
-title: Chron Service for DC/OS
+title: Cron Service for DC/OS
 ---
 
 <div class="jumbotron text-center">
   <h1>Metronome</h1>
   <p class="lead">
-    Chron Service for DC/OS
+    Cron Service for DC/OS
   </p>
 </div>
 
