@@ -16,7 +16,7 @@ sass:
   style: :compressed
 
 baseurl: "/metronome"
-highlighter: pygments
+highlighter: rouge
 lsi: false
 markdown: kramdown
 safe: true
