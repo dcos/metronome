@@ -179,7 +179,7 @@ post:
             application/json:
               example: !include examples/schedule.json
         422:
-          description: The entity send can not be preocessed, since there are validation errors
+          description: The given entity can not be processed due to validation errors.
           body:
             application/json:
               example: |
@@ -237,7 +237,7 @@ post:
                 example: |
                   { "message": "Schedule 'not_existent' does not exist" }
           422:
-            description: The entity send can not be preocessed, since there are validation errors
+            description: The given entity can not be processed due to validation errors.
             body:
               application/json:
                 example: |
