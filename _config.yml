@@ -1,0 +1,23 @@
+defaults:
+  -
+    scope:
+      path: ""
+    values:
+      layout: default
+  -
+    scope:
+      path: "docs"
+    values:
+      layout: docs
+      tab: docs
+
+sass:
+  sass_dir: _sass
+  style: :compressed
+
+baseurl: "/metronome"
+highlighter: pygments
+lsi: false
+markdown: kramdown
+safe: true
+source: .
