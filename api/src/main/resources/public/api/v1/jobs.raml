@@ -40,7 +40,7 @@ post:
         application/json:
           example: !include examples/job.json
     422:
-      description: The entity send can not be preocessed, since there are validation errors
+      description: The given entity can not be processed due to validation errors.
       body:
         application/json:
           example: |
@@ -65,7 +65,7 @@ post:
   get:
     description:
       Get the job with id `jobId`.
-      You can specify optional embed arguments, to get more embedded information.
+      You can specify optional embed arguments to get more embedded information.
     is: [ secured ]
     queryParameters:
       embed:
@@ -78,7 +78,7 @@ post:
 
           - <code>schedules</code> embed all schedules assigned to this job<br/>
 
-          - <code>history</code> embed history information, attached to this job<br/>
+          - <code>history</code> embed history information associated with this job<br/>
 
         enum: [ activeRuns, schedules, history ]
         repeat: true
@@ -89,7 +89,7 @@ post:
           application/json:
             example: !include examples/job.json
       404:
-        description: No job found with this `jobId`.
+        description: No job found for given `jobId`.
         body:
           application/json:
             example: |
@@ -100,7 +100,7 @@ post:
   #
   put:
     description:
-      Replaces an existing job.
+      Update an existing job.
     is: [ secured ]
     body:
       application/json:
@@ -108,13 +108,13 @@ post:
         schema: JobSpec
     responses:
       404:
-        description: No job found with this `jobId`.
+        description: No job found for given `jobId`.
         body:
           application/json:
             example: |
               { "message": "Job 'not_existent' does not exist" }
       422:
-        description: The entity send can not be preocessed, since there are validation errors
+        description: The given entity can not be processed due to validation errors.
         body:
           application/json:
             example: |
@@ -136,11 +136,11 @@ post:
   # Delete a specific job
   #
   delete:
-    description: Destroy a job. All data about that job will be deleted.
+    description: Delete a job. All data about that job will be deleted.
     is: [ secured ]
     responses:
       404:
-        description: No job with this id known.
+        description: No job found for given `jobId`.
         body:
           application/json:
             example: |
@@ -212,7 +212,7 @@ post:
                 example: !include examples/schedule.json
                 schema: ScheduleSpec
           404:
-            description: No schedule found with this `scheduleId`.
+            description: No schedule found for given`scheduleId`.
             body:
               application/json:
                 example: |
@@ -261,7 +261,7 @@ post:
         is: [ secured ]
         responses:
           404:
-            description: No schedule with this id known.
+            description: No schedule found for given `id`.
             body:
               application/json:
                 example: |
@@ -312,7 +312,7 @@ post:
               application/json:
                 example: !include examples/run.json
           404:
-            description: No run found with this `runId`.
+            description: No run found for given `runId`.
             body:
               application/json:
                 example: |
@@ -322,16 +322,16 @@ post:
       /action/stop:
 
         ###
-        # Delete a specific schedule
+        # Stop a specific job run
         #
         post:
-          description: Kill an existing job run
+          description: Stop an existing job run
           is: [ secured ]
           responses:
             404:
-              description: No run with this id known.
+              description: No run found for given`runId`.
               body:
                 application/json:
                   example: |
-                    {"message":"Schedule 'not-existing' does not exist"}
+                    {"message":"JobRun 'not-existing' does not exist"}
 
