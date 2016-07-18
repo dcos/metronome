@@ -48,7 +48,7 @@ class JobSpecController(
     }
   }
 
-  def updateJob(id: JobId) = AuthorizedAction.async(validate.jsonWith[JobSpec](_.copy(id = id))) { implicit request =>
+  def updateJob(id: JobId) = AuthorizedAction.async(validate.jsonWithValidator(JobSpec.validJobSpecWithId(id))) { implicit request =>
     request.authorizedAsync(UpdateRunSpec) { jobSpec =>
       def updateJob(job: JobSpec): JobSpec = jobSpec.copy(schedules = job.schedules)
       jobSpecService.updateJobSpec(id, updateJob).map(Ok(_)).recover {

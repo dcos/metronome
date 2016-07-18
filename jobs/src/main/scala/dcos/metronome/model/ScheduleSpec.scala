@@ -28,6 +28,11 @@ object ScheduleSpec {
   val DefaultConcurrencyPolicy = ConcurrencyPolicy.Forbid
   val DefaultEnabled = true
 
+  def validScheduleSpecWithId(id: String) = validator[ScheduleSpec] { spec =>
+    spec.id is equalTo(id)
+    spec is validScheduleSpec
+  }
+
   implicit lazy val validScheduleSpec: Validator[ScheduleSpec] = validator[ScheduleSpec] { spec =>
     spec.startingDeadline >= 1.minute
   }
