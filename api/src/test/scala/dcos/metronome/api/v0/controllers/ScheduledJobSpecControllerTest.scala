@@ -92,6 +92,21 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
       contentAsJson(response) mustBe updateJson
     }
 
+    "update a specific existing job with a different id" in {
+      Given("A job with schedule")
+      route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(jobSpec1Json)).get.futureValue
+
+      When("An existing job is updated")
+      val expectedJson = Json.toJson(jobSpec1.copy(schedules = Seq(schedule2)))
+      val sendJson = Json.toJson(jobSpec1.copy(id = JobId("ignore.me"), schedules = Seq(schedule2)))
+      val response = route(app, FakeRequest(PUT, s"/v0/scheduled-jobs/${jobSpec1.id}").withJsonBody(sendJson)).get
+
+      Then("The job is updated")
+      status(response) mustBe OK
+      contentType(response) mustBe Some("application/json")
+      contentAsJson(response) mustBe expectedJson
+    }
+
     "give a 404 for a non existing job" in {
       Given("No job")
 

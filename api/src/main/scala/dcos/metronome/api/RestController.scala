@@ -17,7 +17,12 @@ class RestController extends Controller {
   }
 
   object validate extends BodyParsers {
+
     def json[A](implicit reader: Reads[A], schema: JsonSchema[A], validator: Validator[A]): BodyParser[A] = {
+      jsonWith[A](identity)
+    }
+
+    def jsonWith[A](fn: A => A)(implicit reader: Reads[A], schema: JsonSchema[A], validator: Validator[A]): BodyParser[A] = {
       BodyParser("json reader and validator") { request =>
         import play.api.libs.iteratee.Execution.Implicits.trampoline
 
@@ -28,7 +33,7 @@ class RestController extends Controller {
 
         def readObject(jsValue: JsValue): Either[Result, A] = {
           jsValue.validate(reader) match {
-            case JsSuccess(value, _) => validateObject(value)
+            case JsSuccess(value, _) => validateObject(fn(value))
             case error: JsError      => Left(UnprocessableEntity(Json.toJson(error)))
           }
         }

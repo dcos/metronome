@@ -188,6 +188,21 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       contentAsJson(response) mustBe updateJson
     }
 
+    "update a specific existing job with a different id" in {
+      Given("A job spec")
+      route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec1Json)).get.futureValue
+
+      When("The job gets updated")
+      val expectedJson = Json.toJson(jobSpec1.copy(labels = Map("a" -> "b")))
+      val sendJson = Json.toJson(jobSpec1.copy(id = JobId("ignore.me"), labels = Map("a" -> "b")))
+      val response = route(app, FakeRequest(PUT, s"/v1/jobs/${jobSpec1.id}").withJsonBody(sendJson)).get
+
+      Then("The job is updated")
+      status(response) mustBe OK
+      contentType(response) mustBe Some("application/json")
+      contentAsJson(response) mustBe expectedJson
+    }
+
     "give a 404 for a non existing job" in {
       Given("No job")
 
