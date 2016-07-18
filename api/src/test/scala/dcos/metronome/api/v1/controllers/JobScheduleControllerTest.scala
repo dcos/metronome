@@ -207,6 +207,20 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       contentAsJson(response) mustBe updateJson
     }
 
+    "update a specific existing schedule wit a different id" in {
+      Given("A job with an existing schedule")
+      route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
+      route(app, FakeRequest(POST, s"/v1/jobs/$specId/schedules").withJsonBody(schedule1Json)).get.futureValue
+
+      When("The schedule is updated")
+      val expectedJson = Json.toJson(schedule1.copy(cron = cron2))
+      val sendJson = Json.toJson(schedule1.copy(id = "ignore.me", cron = cron2))
+      val response = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/${schedule1.id}").withJsonBody(sendJson)).get
+
+      Then("A validation problem is indicated")
+      status(response) mustBe UNPROCESSABLE_ENTITY //as long as we support only one schedule this will fail, update if we change this restriction
+    }
+
     "give a 404 for a non existing schedule" in {
       Given("A job")
       route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
