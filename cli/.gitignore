@@ -1,0 +1,16 @@
+.tox
+# override parent block "*.i??" for IDEA
+!tox.ini
+
+build
+dist
+env
+
+**/*.pyc
+dcos_metronome.egg-info/
+
+dcos-metronome.iml
+.DS_Store
+.cache
+*.swp
+*.py.swp
