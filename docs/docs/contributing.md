@@ -11,7 +11,7 @@ Confused about our documentation? Run into a
 pitfall that others also might run into? Help us making the Metronome documentation great.
  
 The documentation published [here](https://dcos.github.io/metronome/) is
-generated from the '/docs' directory of this repository.
+generated from the /docs directory of this repository.
 
 If you just want to correct a spelling mistake or improve the wording of a sentence, browse
 the markdown files [here](https://github.com/dcos/metronome/tree/master/docs) and use the edit
