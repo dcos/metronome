@@ -1,6 +1,6 @@
 # Metronome
 
-Metronome is a [Apache Mesos](http://mesos.apache.org) framework for scheduled jobs.
+Metronome is an [Apache Mesos](http://mesos.apache.org) framework for scheduled jobs.
 
 
 ## Documentation
@@ -10,7 +10,7 @@ Metronome documentation is available on the [Metronome GitHub pages site](http:/
 
 ## Getting Started
 
-Get familiar with Metronome and try out this step by step guide [Getting Started](https://dcos.github.io/metronome/docs/getting_started.html).
+Get familiar with Metronome with this step-by-step guide [Getting Started](https://dcos.github.io/metronome/docs/getting_started.html).
 
 ## Contributing
 
@@ -40,6 +40,5 @@ command launches Metronome on Mesos in *local mode*.
 ## Help
 
 Have you found an issue? Feel free to report it using our [Issues](https://github.com/dcos/metronome/issues) page.
-In order to speed up response times, we ask you to provide as much
-information on how to reproduce the problem as possible. 
+In order to speed up response times, please provide as much information on how to reproduce the problem as possible. 
 
