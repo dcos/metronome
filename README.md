@@ -10,12 +10,12 @@ Metronome documentation is available on the [Metronome GitHub pages site](http:/
 
 ## Getting Started
 
-Get familiar with Metronome with this step-by-step guide [Getting Started](https://dcos.github.io/metronome/docs/getting_started.html).
+Get familiar with Metronome with this step-by-step [Getting Started](https://dcos.github.io/metronome/docs/getting_started.html) guide.
 
 ## Contributing
 
 We heartily welcome external contributions to Metronome's codebase and documentation.
-Please see our [Contributor Guidelines](https://dcos.github.io/metronome/docs/contributing.html) 
+Please see our [Contributor Guidelines](https://dcos.github.io/metronome/docs/contributing.html).
 
 
 ### Building from Source
