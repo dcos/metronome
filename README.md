@@ -14,7 +14,7 @@ Get familiar with Metronome with this step-by-step guide [Getting Started](https
 
 ## Contributing
 
-We heartily welcome external contributions to Metronome's code base and documentation.
+We heartily welcome external contributions to Metronome's codebase and documentation.
 Please see our [Contributor Guidelines](https://dcos.github.io/metronome/docs/contributing.html) 
 
 
