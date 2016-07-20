@@ -1,0 +1,29 @@
+---
+layout: default
+---
+
+<div class="row">
+    <div class="col-sm-3">
+
+        <h5>Welcome</h5>
+        <ul class="list-unstyled">
+            <li><a href="{{ site.baseurl }}/docs/"> Overview </a></li>
+            <li><a href="{{ site.baseurl }}/docs/getting_started.html"> Getting Started </a></li>
+            <li><a href="{{ site.baseurl }}/docs/recipes.html">Recipes</a></li>
+        </ul>
+
+        <h5>Development</h5>
+        <ul class="list-unstyled">
+            <li><a href="{{ site.baseurl }}/docs/contributing.html">Contributor Guidelines</a></li>
+        </ul>
+
+        <h5>Reference</h5>
+        <ul class="list-unstyled">
+            <li><a href="{{ site.baseurl }}/docs/generated/api.html">REST API Reference</a></li>
+        </ul>
+    </div>
+
+    <div class="col-sm-9">
+        {{ content }}
+    </div>
+</div>
