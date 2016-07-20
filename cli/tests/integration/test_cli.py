@@ -17,7 +17,7 @@ from common import exec_command
 
 def test_help():
     returncode, stdout, stderr = exec_command(
-        ['dcos-metronome', 'metronome', '--help'])
+        ['dcos-job', 'job', '--help'])
 
     assert returncode == 0
     assert stdout.startswith(b"Usage:")

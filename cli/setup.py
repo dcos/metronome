@@ -16,7 +16,7 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-from dcos_metronome import version
+from dcos_job import version
 
 
 here = path.abspath(path.dirname(__file__))
@@ -26,14 +26,14 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='dcos-metronome',
+    name='dcos-job',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
     version=version.version,
 
-    description='DCOS Metronome Command Line Interface',
+    description='DCOS Job Command Line Interface',
     long_description=long_description,
 
     # The project's main homepage.
@@ -71,7 +71,7 @@ setup(
     ],
 
     # What does your project relate to?
-    keywords='dcos command metronome mesosphere',
+    keywords='dcos command job metronome mesosphere',
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
@@ -103,8 +103,8 @@ setup(
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
-        'dcos_metronome': [
-            'data/config-schema/metronome.json'
+        'dcos_job': [
+            'data/config-schema/job.json'
         ]
     },
 
@@ -119,7 +119,7 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'dcos-metronome=dcos_metronome.cli:main',
+            'dcos-job=dcos_job.cli:main',
         ],
     },
 )

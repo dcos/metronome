@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y \
 && pip install pip --upgrade \
 && pip install pyinstaller
 
-ADD . /dcos-metronome
-WORKDIR /dcos-metronome
+ADD . /dcos-job
+WORKDIR /dcos-job
 RUN make clean env packages
 
 RUN make binary

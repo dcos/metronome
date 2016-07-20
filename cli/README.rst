@@ -27,7 +27,7 @@ Setup
 
 #. Call the CLI code directly::
 
-    python dcos_metronome/cli.py metronome help
+    dcos-job job --help
 
 Binary:
 -----------
@@ -46,7 +46,7 @@ Create Binary:
 Run Binary:
 ###########
 
-#. Update `PATH` to have the dcos-metronome binary. The created binary is is in folder `dist`::
+#. Update `PATH` to have the dcos-job binary. The created binary is is in folder `dist`::
 
    PATH=/path/to/binary:$PATH
 

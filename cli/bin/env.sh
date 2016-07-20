@@ -17,7 +17,7 @@
 BASEDIR=`dirname $0`/..
 
 if [ ! -d "$BASEDIR/env" ]; then
-    virtualenv -q $BASEDIR/env --prompt='(dcos-metronome) '
+    virtualenv -q $BASEDIR/env --prompt='(dcos-job) '
     echo "Virtualenv created."
 fi
 

@@ -7,9 +7,9 @@ dist
 env
 
 **/*.pyc
-dcos_metronome.egg-info/
+dcos_job.egg-info/
 
-dcos-metronome.iml
+*.iml
 .DS_Store
 .cache
 *.swp

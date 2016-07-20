@@ -34,24 +34,24 @@ docker-check() {
 if [ "$(uname)" == "Darwin" ]; then
     # Do something under Mac OS X platform
     mkdir -p dist/darwin
-    mv dist/dcos-metronome dist/darwin
-    shasum -a 256 dist/darwin/dcos-metronome | awk '{print $1}' > dist/darwin/dcos-metronome.sha
+    mv dist/dcos-job dist/darwin
+    shasum -a 256 dist/darwin/dcos-job | awk '{print $1}' > dist/darwin/dcos-job.sha
     echo "Darin Build Complete!"
 
     # linux build on a darwin plaform if docker runs
     docker-check
-    docker rmi -f metronome-binary || true
-    docker rm metronome-binary || true
-    docker build -f binary/Dockerfile.linux-binary -t metronome-binary .
-    docker run --name metronome-binary metronome-binary
+    docker rmi -f job-binary || true
+    docker rm job-binary || true
+    docker build -f binary/Dockerfile.linux-binary -t job-binary .
+    docker run --name job-binary job-binary
     mkdir -p dist/linux
-    docker cp metronome-binary:/dcos-metronome/dist/linux dist/
+    docker cp job-binary:/dcos-job/dist/linux dist/
 
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
       # Do something under GNU/Linux platform  #statements
       mkdir -p dist/linux
-      mv dist/dcos-metronome dist/linux
-      sha256sum dist/linux/dcos-metronome | awk '{print $1}' > dist/linux/dcos-metronome.sha
+      mv dist/dcos-job dist/linux
+      sha256sum dist/linux/dcos-job | awk '{print $1}' > dist/linux/dcos-job.sha
       echo "Linux Build Complete"
 fi
 
