@@ -26,7 +26,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   lazy val enableFeatures: Option[String] = configuration.getString("metronome.features.enable")
   lazy val pluginDir: Option[String] = configuration.getString("metronome.plugin.dir")
   lazy val pluginConf: Option[String] = configuration.getString("metronome.plugin.conf")
-  override lazy val runHistoryCount: Int = configuration.getInt("metronome.history.count").getOrElse(10)
+  override lazy val runHistoryCount: Int = configuration.getInt("metronome.history.count").getOrElse(1000)
   override lazy val withMetrics: Boolean = configuration.getBoolean("metronome.behavior.metrics").getOrElse(true)
 
   lazy val hostname: String = configuration.getString("metronome.leader.election.hostname").getOrElse(java.net.InetAddress.getLocalHost.getHostName)
