@@ -110,15 +110,14 @@ class JobSpecServiceActor(
   def jobSpecUpdated(jobSpec: JobSpec, delegate: ActorRef): Unit = {
     allJobs += jobSpec.id -> jobSpec
     inFlightChanges -= jobSpec.id
-    scheduleActor(jobSpec).foreach { scheduler =>
-      //TODO: create actors for every schedule, not only head option
-      jobSpec.schedules.headOption match {
-        case Some(schedule) if schedule.enabled => scheduler ! JobSpecSchedulerActor.UpdateJobSpec(jobSpec)
-        case _ =>
-          //the updated spec does not have an enabled schedule
-          context.unwatch(scheduler)
-          context.stop(scheduler)
-          scheduleActors -= jobSpec.id
+    scheduleActor(jobSpec) foreach { scheduler =>
+      if (jobSpec.schedules.exists(_.enabled)) {
+        scheduler ! JobSpecSchedulerActor.UpdateJobSpec(jobSpec)
+      } else {
+        //the updated spec does not have an enabled schedule
+        context.unwatch(scheduler)
+        context.stop(scheduler)
+        scheduleActors -= jobSpec.id
       }
     }
     context.system.eventStream.publish(Event.JobSpecUpdated(jobSpec))
@@ -159,16 +158,18 @@ class JobSpecServiceActor(
   }
 
   def scheduleActor(jobSpec: JobSpec): Option[ActorRef] = {
-    //TODO: create actors for every schedule, not only head option
-    def newActor: Option[ActorRef] = jobSpec.schedules.headOption match {
-      case Some(schedule) if schedule.enabled =>
+    def newActor: Option[ActorRef] = {
+      if (jobSpec.schedules.exists(_.enabled)) {
         val ref = context.actorOf(schedulerActorFactory(jobSpec), s"scheduler:${jobSpec.id.safePath}")
         context.watch(ref)
         scheduleActors += jobSpec.id -> ref
+
         Some(ref)
-      case _ => // Nothing to do since the schedule is disabled
+      } else {
         None
+      }
     }
+
     scheduleActors.get(jobSpec.id) orElse newActor
   }
 
