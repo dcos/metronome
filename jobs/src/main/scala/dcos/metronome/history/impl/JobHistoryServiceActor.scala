@@ -8,7 +8,6 @@ import dcos.metronome.repository.{ Repository, LoadContentOnStartup }
 import dcos.metronome.utils.time.Clock
 
 import scala.collection.concurrent.TrieMap
-import scala.concurrent.Promise
 
 class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: Repository[JobId, JobHistory], val behavior: Behavior)
     extends Actor with ActorLogging with LoadContentOnStartup[JobId, JobHistory] with ActorBehavior {
@@ -22,6 +21,7 @@ class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: R
     super.preStart()
     persistenceActor = context.actorOf(JobHistoryPersistenceActor.props(repo, behavior))
     context.system.eventStream.subscribe(self, classOf[Event.JobRunEvent])
+    context.system.eventStream.subscribe(self, classOf[Event.JobSpecDeleted])
   }
 
   override def postStop(): Unit = {
@@ -34,6 +34,7 @@ class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: R
     case Event.JobRunFinished(run, _, _)     => finished(run)
     case Event.JobRunFailed(run, _, _)       => failed(run)
     case Event.JobRunUpdate(run, _, _)       => //ignore
+    case Event.JobSpecDeleted(spec, _, _)    => deleteHistoryFor(spec)
 
     //service events
     case GetJobHistory(id)                   => sender() ! jobHistoryMap.get(id)
@@ -70,6 +71,11 @@ class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: R
       failedRuns = runHistory(run, jobHistory.failedRuns)
     )
     persistenceActor ! Update(run.id.jobId, update)
+  }
+
+  def deleteHistoryFor(jobSpec: JobSpec): Unit = {
+    log.debug(s"Delete history for: ${jobSpec.id} since the job spec has been deleted.")
+    persistenceActor ! Delete(jobSpec.id, jobHistoryMap(jobSpec.id))
   }
 
   def runHistory(run: JobRun, seq: Seq[JobRunInfo]): Seq[JobRunInfo] = {
