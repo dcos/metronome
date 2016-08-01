@@ -155,6 +155,8 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
 
     When("An existing jobRun is queried")
     actor ! KillJobRun(startedRun.jobRun.id)
+    //signal the run is aborted
+    actor ! Aborted(JobResult(startedRun.jobRun))
 
     Then("The list of started job runs is returned")
     expectMsg(startedRun)

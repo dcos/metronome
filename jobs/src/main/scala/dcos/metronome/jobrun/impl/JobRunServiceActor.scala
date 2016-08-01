@@ -37,6 +37,7 @@ class JobRunServiceActor(
 
   private[impl] val allJobRuns = TrieMap.empty[JobRunId, StartedJobRun]
   private[impl] val allRunExecutors = TrieMap.empty[JobRunId, ActorRef]
+  private[impl] val actorsWaitingForKill = TrieMap.empty[JobRunId, Set[ActorRef]].withDefaultValue(Set.empty)
 
   override def receive: Receive = around {
     // api messages
@@ -92,7 +93,7 @@ class JobRunServiceActor(
     log.info(s"Request kill of job run $id")
     withJobExecutor(id) { (executor, run) =>
       executor ! KillCurrentJobRun
-      sender() ! run
+      actorsWaitingForKill += id -> (actorsWaitingForKill(id) + sender())
     }
   }
 
@@ -109,6 +110,7 @@ class JobRunServiceActor(
   }
 
   def wipeJobRun(id: JobRunId): Unit = {
+    val jobRun = allJobRuns(id)
     allJobRuns -= id
     allRunExecutors.get(id).foreach { executor =>
       context.unwatch(executor)
@@ -116,6 +118,8 @@ class JobRunServiceActor(
       allRunExecutors -= id
       log.debug("{} now shutdown and removed from registry.", executor)
     }
+    //send all actors waiting for kill the jobRun
+    actorsWaitingForKill.remove(id).foreach(_.foreach(_ ! jobRun))
   }
 
   def forwardStatusUpdate(update: TaskStateChangedEvent): Unit = {
