@@ -1,7 +1,7 @@
 package dcos.metronome.api.v0.controllers
 
-import dcos.metronome.JobSpecDoesNotExist
-import dcos.metronome.api.{ ApiConfig, JsonSchema, UnknownJob, Authorization }
+import dcos.metronome.{ JobSpecAlreadyExists, JobSpecDoesNotExist }
+import dcos.metronome.api._
 import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobId, JobSpec, JobRunSpec, ScheduleSpec }
@@ -24,7 +24,11 @@ class ScheduledJobSpecController(
 
   def createJob = AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
     request.authorizedAsync(CreateRunSpec) { jobSpec =>
-      jobSpecService.createJobSpec(jobSpec).map(Created(_))
+      jobSpecService.createJobSpec(jobSpec)
+        .map(Created(_))
+        .recover {
+          case JobSpecAlreadyExists(id) => Conflict(ErrorDetail("Job with this id already exists"))
+        }
     }
   }
 
