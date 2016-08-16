@@ -155,6 +155,38 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
     }
   }
 
+  "Artifacts and user are correctly deserialized" in {
+    Given("a json with artifacts")
+    val json = Json.parse(
+      """
+        |{
+        |  "id": "test-user-override",
+        |  "run": {
+        |    "artifacts": [
+        |      {
+        |        "uri": "https://dcos.io/assets/images/logos/mesosphere.svg"
+        |      }
+        |    ],
+        |    "cmd": "whoami && printf 'iamme' | tee file && sleep 1000",
+        |    "cpus": 0.01,
+        |    "mem": 32,
+        |    "disk": 0,
+        |    "user": "nobody"
+        |  }
+        |}
+      """.stripMargin
+    )
+    val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(json)).get
+
+    Then("The job is created")
+    status(response) mustBe CREATED
+    contentType(response) mustBe Some("application/json")
+
+    val jobSpec = contentAsJson(response).as[JobSpec]
+    jobSpec.run.artifacts.head.uri mustBe "https://dcos.io/assets/images/logos/mesosphere.svg"
+    jobSpec.run.user mustBe Some("nobody")
+  }
+
   val CronSpec(cron) = "* * * * *"
   val schedule1 = ScheduleSpec("id1", cron)
   val schedule2 = ScheduleSpec("id2", cron)

@@ -35,7 +35,7 @@ package object models {
   )
 
   implicit lazy val ArtifactFormat: Format[Artifact] = (
-    (__ \ "url").format[String] ~
+    (__ \ "uri").format[String] ~
     (__ \ "extract").formatNullable[Boolean].withDefault(true) ~
     (__ \ "executable").formatNullable[Boolean].withDefault(false) ~
     (__ \ "cache").formatNullable[Boolean].withDefault(false)
