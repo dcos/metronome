@@ -15,7 +15,7 @@ class JobInfoServiceImpl(jobSpecService: JobSpecService, jobRunService: JobRunSe
   override def selectJob(jobSpecId: JobId, selector: JobSpecSelector, embed: Set[Embed])(implicit ec: ExecutionContext): Future[Option[JobInfo]] = {
     async {
       val runOption = if (embed(Embed.ActiveRuns)) Some(await(jobRunService.activeRuns(jobSpecId))) else None
-      val historyOption = if (embed(Embed.History)) await(jobHistoryService.statusFor(jobSpecId)) else None
+      val historyOption = if (embed(Embed.History)) await(jobHistoryService.statusFor(jobSpecId)).orElse(Some(JobHistory.empty(jobSpecId))) else None
       await(jobSpecService.getJobSpec(jobSpecId)).filter(selector.matches).map { jobSpec =>
         JobInfo(jobSpec, schedulesOption(jobSpec, embed), runOption, historyOption)
       }
@@ -36,8 +36,10 @@ class JobInfoServiceImpl(jobSpecService: JobSpecService, jobRunService: JobRunSe
           await(jobHistoryService.list(history => allIds(history.jobSpecId))).map(history => history.jobSpecId -> history).toMap
         else
           Map.empty[JobId, JobHistory]
+      def history(id: JobId): Option[JobHistory] =
+        if (embed(Embed.History)) histories.get(id).orElse(Some(JobHistory.empty(id))) else None
       specs.map { spec =>
-        JobInfo(spec, schedulesOption(spec, embed), runs.get(spec.id), histories.get(spec.id))
+        JobInfo(spec, schedulesOption(spec, embed), runs.get(spec.id), history(spec.id))
       }
     }
   }
