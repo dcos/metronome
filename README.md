@@ -5,7 +5,7 @@ Metronome is an [Apache Mesos](http://mesos.apache.org) framework for scheduled 
 
 ## Documentation
 
-Metronome documentation is available on the [Metronome GitHub pages site](http://dcos.github.io/metronome/).
+Metronome documentation is available on the [DC/OS documentation site](https://dcos.io/docs/1.8/usage/jobs).
 
 
 ## Getting Started
