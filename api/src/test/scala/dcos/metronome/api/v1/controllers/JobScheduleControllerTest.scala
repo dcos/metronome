@@ -45,7 +45,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       contentAsString(response) must include("A schedule with id id1 already exists")
     }
 
-    "can not create more than one job schedule per job (only temporary limitation)" in {
+    "can create more than one job schedule per job" in {
       Given("A job")
       route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
       route(app, FakeRequest(POST, s"/v1/jobs/$specId/schedules").withJsonBody(schedule1Json)).get.futureValue
@@ -54,9 +54,9 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       val response = route(app, FakeRequest(POST, s"/v1/jobs/$specId/schedules").withJsonBody(schedule2Json)).get
 
       Then("The schedule is created")
-      status(response) mustBe CONFLICT
+      status(response) mustBe CREATED
       contentType(response) mustBe Some("application/json")
-      contentAsString(response) must include("Only one schedule supported at the moment")
+      contentAsJson(response) mustBe schedule2Json
     }
 
     "not found if the job id is not known" in {
