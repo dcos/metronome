@@ -106,6 +106,20 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
     result.map(_.history.get).toSet should be(Set(f.history1, f.history2))
   }
 
+  test("Status embed option will render embedded historyShort info") {
+    Given("A repo with 2 specs and 2 runs")
+    val f = new Fixture
+
+    When("The job info is fetched")
+    val result = f.jobInfoService.selectJobs(JobSpecSelector.all, Set(Embed.HistorySummary)).futureValue
+
+    Then("The extended info is rendered for active runs")
+    result should have size 2
+    result.foreach(_.schedules should be(empty))
+    result.foreach(_.activeRuns should be(empty))
+    result.map(_.historySummary.get).toSet should be(Set(f.historySummary1, f.historySummary2))
+  }
+
   class Fixture {
     val clock = new FixedClock(DateTime.now)
     val CronSpec(cron) = "* * * * *"
@@ -117,6 +131,8 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
 
     val history1 = JobHistory(spec1.id, 23, 23, Some(clock.now()), Some(clock.now()), Seq.empty, Seq.empty)
     val history2 = JobHistory(spec2.id, 23, 23, Some(clock.now()), Some(clock.now()), Seq.empty, Seq.empty)
+    val historySummary1 = JobHistorySummary(history1)
+    val historySummary2 = JobHistorySummary(history2)
 
     val specService = JobSpecServiceFixture.simpleJobSpecService()
     val runService = JobRunServiceFixture.simpleJobRunService()

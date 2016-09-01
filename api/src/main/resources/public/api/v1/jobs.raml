@@ -15,7 +15,9 @@ get:
 
         - <code>history</code> embed history information, attached to this job<br/>
 
-      enum: [ activeRuns, schedules, history ]
+        - <code>historySummary</code> embed history summary information, attached to this job<br/>
+
+      enum: [ activeRuns, schedules, history, historySummary ]
       repeat: true
       example: activeRuns
   responses:
@@ -78,9 +80,9 @@ post:
 
           - <code>schedules</code> embed all schedules assigned to this job<br/>
 
-          - <code>history</code> embed history information associated with this job<br/>
+          - <code>historySummary</code> embed history summary information, attached to this job<br/>
 
-        enum: [ activeRuns, schedules, history ]
+        enum: [ activeRuns, schedules, history, historySummary ]
         repeat: true
         example: activeRuns
     responses:

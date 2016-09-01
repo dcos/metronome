@@ -2,6 +2,20 @@ package dcos.metronome.model
 
 import org.joda.time.{ DateTimeZone, DateTime }
 
+case class JobHistorySummary(
+  jobSpecId:     JobId,
+  successCount:  Long,
+  failureCount:  Long,
+  lastSuccessAt: Option[DateTime],
+  lastFailureAt: Option[DateTime]
+)
+object JobHistorySummary {
+  def apply(h: JobHistory): JobHistorySummary = {
+    JobHistorySummary(h.jobSpecId, h.successCount, h.failureCount, h.lastSuccessAt, h.lastFailureAt)
+  }
+  def empty(id: JobId): JobHistorySummary = JobHistorySummary(id, 0, 0, None, None)
+}
+
 case class JobHistory(
   jobSpecId:      JobId,
   successCount:   Long,
