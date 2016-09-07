@@ -114,8 +114,8 @@ package object models {
   }
 
   implicit lazy val ConstraintSpecFormat: Format[ConstraintSpec] = (
-    (__ \ "attr").format[String] ~
-    (__ \ "op").format[Operator] ~
+    (__ \ "attribute").format[String] ~
+    (__ \ "operator").format[Operator] ~
     (__ \ "value").formatNullable[String]
   )(ConstraintSpec.apply, unlift(ConstraintSpec.unapply))
 
