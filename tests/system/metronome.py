@@ -274,7 +274,7 @@ class Client(object):
         :rtype: requests.Response
         """
 
-        path_template = 'v1/{}/{{}}'.format(resource_type)
+        path_template = 'v1/{}/{}'.format(resource_type)
         path = self._job_id_path_format(path_template, resource_id)
         params = self._force_params(force)
         return self._rpc.http_req(
