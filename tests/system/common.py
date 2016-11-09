@@ -1,7 +1,7 @@
 
 
 def job_no_schedule(id='pikachu', cmd='sleep 10000'):
-    job = {
+    return {
         'id': id,
         'description': 'electrifying rodent',
         'run': {
@@ -11,11 +11,10 @@ def job_no_schedule(id='pikachu', cmd='sleep 10000'):
             'disk': 0
         }
     }
-    return job
 
 
 def schedule():
-    sch = {
+    return {
         "concurrencyPolicy": "ALLOW",
         "cron": "20 0 * * *",
         "enabled": True,
@@ -24,4 +23,3 @@ def schedule():
         "startingDeadlineSeconds": 900,
         "timezone": "UTC"
     }
-    return sch
