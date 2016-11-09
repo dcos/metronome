@@ -9,6 +9,7 @@ import metronome
 import time
 import uuid
 
+
 def test_add_job():
     client = metronome.create_client()
     with job(job_no_schedule()):
@@ -16,10 +17,11 @@ def test_add_job():
         response = client.get_job(job_id)
         assert response.get('id') == job_id
 
+
 def test_remove_job():
     client = metronome.create_client()
     client.add_job(job_no_schedule('remove-job'))
-    assert client.remove_job('remove-job') == None
+    assert client.remove_job('remove-job') is None
     job_exists = False
     try:
         client.get_job('remove-job')
@@ -27,6 +29,7 @@ def test_remove_job():
     except:
         pass
     assert not job_exists, "Job exists"
+
 
 def test_list_jobs():
     client = metronome.create_client()
@@ -46,11 +49,13 @@ def test_update_job():
         client.update_job('update-job', job_json)
         assert client.get_job('update-job')['description'] == 'updated description'
 
+
 def test_add_schedule():
     client = metronome.create_client()
     with job(job_no_schedule('schedule')):
         client.add_schedule('schedule', schedule())
         assert client.get_schedule('schedule', 'nightly')['cron'] == '20 0 * * *'
+
 
 def test_update_schedule():
     client = metronome.create_client()
@@ -74,6 +79,7 @@ def test_run_job():
         time.sleep(2)
         assert len(client.get_runs(job_id)) == 1
 
+
 def test_get_job_run():
     client = metronome.create_client()
     job_id = uuid.uuid4().hex
@@ -84,6 +90,7 @@ def test_get_job_run():
         run = client.get_run(job_id, run_id)
         assert run['id'] == run_id
         assert run['status'] == 'ACTIVE'
+
 
 def test_stop_job_run():
     client = metronome.create_client()
@@ -115,8 +122,9 @@ def test_remove_schedule():
 
 def remove_jobs():
     client = metronome.create_client()
-    for job in  client.get_jobs():
+    for job in client.get_jobs():
         client.remove_job(job['id'])
+
 
 def setup_module(module):
     agents = get_private_agents()

@@ -14,9 +14,6 @@ def job_no_schedule(id='pikachu', cmd='sleep 10000'):
     return job
 
 
-def job_with_schedule():
-    pass
-
 def schedule():
     sch = {
         "concurrencyPolicy": "ALLOW",

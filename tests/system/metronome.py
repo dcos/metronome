@@ -11,6 +11,7 @@ from six.moves import urllib
 from dcos import config, cosmospackage, http, util
 from dcos.errors import DCOSException, DCOSHTTPException
 
+
 logger = util.get_logger(__name__)
 
 
