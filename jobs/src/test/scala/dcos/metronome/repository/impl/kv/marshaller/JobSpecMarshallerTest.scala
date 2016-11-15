@@ -55,7 +55,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers {
         id = "my-schedule",
         cron = CronSpec("* * * * *"),
         timeZone = DateTimeZone.UTC,
-        concurrencyPolicy = ConcurrencyPolicy.Allow,
+        concurrencyPolicy = ConcurrencyPolicy.Forbid,
         enabled = true
       )),
       run = runSpec
