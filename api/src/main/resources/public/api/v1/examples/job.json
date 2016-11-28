@@ -8,7 +8,7 @@
   "run": {
     "artifacts": [
       {
-        "uri": "http://foo.test.com/application.zip",
+        "uri": "http://foo.example.com/application.zip",
         "extract": true,
         "executable": true,
         "cache": false
