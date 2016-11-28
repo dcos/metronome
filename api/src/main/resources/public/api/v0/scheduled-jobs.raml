@@ -1,0 +1,71 @@
+
+post:
+  description:
+    Create a new job together with schedules.
+  is: [ secured ]
+  body:
+    application/json:
+      example: !include examples/job.json
+      schema: ScheduledJobSpec
+  responses:
+    201:
+      description: The job has been created.
+      body:
+        application/json:
+          example: !include examples/job.json
+    422:
+      description: The given entity can not be processed due to validation errors.
+      body:
+        application/json:
+          example: |
+            {
+              "message": "Object is not valid",
+              "details": [
+                {
+                  "path": "/mem",
+                  "errors": [
+                    "is less than than 32"
+                  ]
+                }
+              ]
+            }
+
+
+/{jobId}:
+
+  ###
+  # Update a specific job
+  #
+  put:
+    description:
+      Update an existing job together with all schedules.
+      If you want to update the job without changing the schedules, use the /v1/jobs endpoint.
+    is: [ secured ]
+    body:
+      application/json:
+        example: !include examples/job.json
+        schema: ScheduledJobSpec
+    responses:
+      404:
+        description: No job found for given `jobId`.
+        body:
+          application/json:
+            example: |
+              { "message": "Job 'not_existent' does not exist" }
+      422:
+        description: The given entity can not be processed due to validation errors.
+        body:
+          application/json:
+            example: |
+              {
+                "message": "Object is not valid",
+                "details": [
+                  {
+                    "path": "/mem",
+                    "errors": [
+                      "is less than 32"
+                    ]
+                  }
+                ]
+              }
+

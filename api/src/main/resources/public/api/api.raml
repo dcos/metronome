@@ -6,6 +6,7 @@ mediaType: application/json
 baseUri: http://localhost:9000
 schemas:
   - JobSpec: !include v1/schema/jobspec.schema.json
+  - ScheduledJobSpec: !include v0/schema/jobspec_v0.schema.json
   - ScheduleSpec: !include v1/schema/schedulespec.schema.json
 
 traits: !include traits.raml
@@ -13,6 +14,7 @@ traits: !include traits.raml
 # considered often used endpoints in alphabetical order
 /v1/jobs: !include v1/jobs.raml
 /v1/metrics: !include v1/metrics.raml
+/v0/scheduled-jobs: !include v0/scheduled-jobs.raml
 
 # no real API endpoints
 /ping: !include general/ping.raml
