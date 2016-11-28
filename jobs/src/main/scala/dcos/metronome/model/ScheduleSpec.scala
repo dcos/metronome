@@ -25,7 +25,7 @@ case class ScheduleSpec(
 object ScheduleSpec {
   val DefaultTimeZone = DateTimeZone.UTC
   val DefaultStartingDeadline = 15.minutes
-  val DefaultConcurrencyPolicy = ConcurrencyPolicy.Forbid
+  val DefaultConcurrencyPolicy = ConcurrencyPolicy.Allow
   val DefaultEnabled = true
 
   implicit lazy val validScheduleSpec: Validator[ScheduleSpec] = validator[ScheduleSpec] { spec =>
