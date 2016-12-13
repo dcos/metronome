@@ -9,9 +9,3 @@ title: Cron Service for DC/OS
   </p>
 </div>
 
-## Overview
-
-## Features
-
-## Examples
-
