@@ -5,6 +5,9 @@ REPO_DIR="$DOCS_DIR/../.."
 GH_PAGES_NAME="metronome-gh-pages"
 GH_PAGES_DIR="$REPO_DIR/$GH_PAGES_NAME"
 
+# fail on error
+set -e
+
 # clone as separate repo
 cd $REPO_DIR;
 rm -fr "$GH_PAGES_NAME"
@@ -23,4 +26,6 @@ raml2html "$DOCS_DIR/../api/src/main/resources/public/api/api.raml" > "$GH_PAGES
 cd $GH_PAGES_DIR;
 git add .
 git commit -m "Docs synced"
+
+echo "Changes synced but not pushed - you need to push the commit"
 

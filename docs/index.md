@@ -2,7 +2,8 @@
 title: Metronome
 ---
 
-# Overview
+# Metronome
 
+This site includes only contributor guidelines and the REST API reference.
 
-_Coming soon ..._
+View the full documentation in the Jobs section of the [the DC/OS documentation site](https://dcos.io/docs/1.8/usage/jobs/).
