@@ -12,6 +12,10 @@ Metronome documentation is available on the [DC/OS documentation site](https://d
 
 Get familiar with Metronome with this step-by-step [Getting Started](https://dcos.github.io/metronome/docs/getting_started.html) guide.
 
+## API Reference
+
+Consult the full [Metronome REST API reference](http://dcos.github.io/metronome/docs/generated/api.html).
+
 ## Contributing
 
 We heartily welcome external contributions to Metronome's codebase and documentation.
