@@ -123,12 +123,33 @@ def test_remove_schedule():
 def remove_jobs():
     client = metronome.create_client()
     for job in client.get_jobs():
-        client.remove_job(job['id'])
+        client.remove_job(job['id'], True)
+
+
+def test_job_constraints():
+    client = metronome.create_client()
+    host = get_private_ip()
+    job_id = uuid.uuid4().hex
+    job_def = job_no_schedule(job_id)
+    pin_to_host(job_def, host)
+    with job(job_def):
+        # on the same node 3x
+        for i in range(3):
+            client.run_job(job_id)
+            time.sleep(2)
+            assert len(client.get_runs(job_id)) == 1
+            run_id = client.get_runs(job_id)[0]['id']
+            task = get_job_tasks(job_id, run_id)[0]
+            task_ip = task['statuses'][0]['container_status']['network_infos'][0]['ip_addresses'][0]['ip_address']
+            assert task_ip == host
+            client.kill_run(job_id, run_id)
+
+        assert len(client.get_runs(job_id)) == 0
 
 
 def setup_module(module):
     agents = get_private_agents()
-    if len(agents) < 1:
+    if len(agents) < 2:
         assert False, "Incorrect Agent count"
     remove_jobs()
 

@@ -1,3 +1,7 @@
+import metronome
+
+
+from shakedown import *
 
 
 def job_no_schedule(id='pikachu', cmd='sleep 10000'):
@@ -23,3 +27,44 @@ def schedule():
         "startingDeadlineSeconds": 900,
         "timezone": "UTC"
     }
+
+
+def pin_to_host(job_def, host):
+    job_def['run']['placement'] = {
+        "constraints": [{
+            "attribute": "hostname",
+            "operator": "LIKE",
+            "value": host
+        }]
+    }
+
+
+def get_private_ip():
+    agents = get_private_agents()
+    for agent in agents:
+            return agent
+
+
+def constraints(name, operator, value=None):
+    constraints = [name, operator]
+    if value is not None:
+        constraints.append(value)
+    return constraints
+
+
+# this should be migrated to metronome cli
+def get_job_tasks(job_id, run_id):
+    client = metronome.create_client()
+    run = client.get_run(job_id, run_id)
+    taskids = []
+    for task in run['tasks']:
+        taskids.append(task['id'])
+
+    job_tasks = []
+    all_job_tasks = get_service_tasks('metronome')
+    for task in all_job_tasks:
+        for taskid in taskids:
+            if taskid == task['id']:
+                job_tasks.append(task)
+
+    return job_tasks
