@@ -39,6 +39,12 @@ def pin_to_host(job_def, host):
     }
 
 
+def add_docker_image(job_def, image='busybox'):
+    job_def['run']['docker'] = {
+        "image": image
+    }
+
+
 def get_private_ip():
     agents = get_private_agents()
     for agent in agents:

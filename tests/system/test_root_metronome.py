@@ -147,6 +147,17 @@ def test_job_constraints():
         assert len(client.get_runs(job_id)) == 0
 
 
+def test_docker_job():
+    client = metronome.create_client()
+    job_id = uuid.uuid4().hex
+    job_def = job_no_schedule(job_id)
+    add_docker_image(job_def)
+    with job(job_def):
+        client.run_job(job_id)
+        time.sleep(2)
+        assert len(client.get_runs(job_id)) == 1
+
+
 def setup_module(module):
     agents = get_private_agents()
     if len(agents) < 2:
