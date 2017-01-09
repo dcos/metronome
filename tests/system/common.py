@@ -1,7 +1,5 @@
-import metronome
-
-
 from shakedown import *
+from dcos import metronome
 
 
 def job_no_schedule(id='pikachu', cmd='sleep 10000'):

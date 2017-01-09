@@ -3,9 +3,8 @@
 from common import *
 import contextlib
 from shakedown import *
-from dcos import *
+from dcos import metronome
 
-import metronome
 import time
 import uuid
 
