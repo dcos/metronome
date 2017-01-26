@@ -217,11 +217,9 @@
           "concurrencyPolicy": {
             "type": "string",
             "enum": [
-              "ALLOW",
-              "FORBID",
-              "REPLACE"
+              "ALLOW"
             ],
-            "description": "Defines the behavior if a job is started, before the current job has finished. ALLOW will launch a new job, FORBIF will not start a new job and replace will kill the current running job, before the new one is started"
+            "description": "Defines the behavior if a job is started, before the current job has finished. ALLOW will launch a new job, even if there is an existing run."
           },
           "enabled": {
             "type": "boolean",
