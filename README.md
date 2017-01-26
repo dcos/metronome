@@ -16,7 +16,7 @@ Get familiar with Metronome with this step-by-step [Getting Started](https://dco
 
 Consult the full [Metronome REST API reference](http://dcos.github.io/metronome/docs/generated/api.html).
 
-An unofficial Go client library, [metronome-client](https://github.com/mindsratch/metronome-client) has been created for the v1 API.
+An unofficial Go client library, [metronome-client](https://github.com/mindscratch/metronome-client) has been created for the v1 API.
 
 ## Contributing
 
