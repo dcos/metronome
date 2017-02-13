@@ -4,6 +4,7 @@ from common import *
 import contextlib
 from shakedown import *
 from dcos import metronome
+from retrying import retry
 
 import time
 import uuid
@@ -88,7 +89,7 @@ def test_get_job_run():
         run_id = client.get_runs(job_id)[0]['id']
         run = client.get_run(job_id, run_id)
         assert run['id'] == run_id
-        assert run['status'] == 'ACTIVE'
+        assert run['status'] in ['ACTIVE', 'INITIAL']
 
 
 def test_stop_job_run():
@@ -138,9 +139,13 @@ def test_job_constraints():
             time.sleep(2)
             assert len(client.get_runs(job_id)) == 1
             run_id = client.get_runs(job_id)[0]['id']
-            task = get_job_tasks(job_id, run_id)[0]
-            task_ip = task['statuses'][0]['container_status']['network_infos'][0]['ip_addresses'][0]['ip_address']
-            assert task_ip == host
+
+            @retry(wait_fixed=1000, stop_max_delay=5000)
+            def check_tasks():
+                task = get_job_tasks(job_id, run_id)[0]
+                task_ip = task['statuses'][0]['container_status']['network_infos'][0]['ip_addresses'][0]['ip_address']
+                assert task_ip == host
+
             client.kill_run(job_id, run_id)
 
         assert len(client.get_runs(job_id)) == 0
