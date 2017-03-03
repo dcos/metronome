@@ -86,6 +86,39 @@ def test_disable_schedule():
         assert len(runs) == 1
 
 
+def test_disable_schedule_recovery_from_master_bounce():
+    """ Confirms that a schedule runs when enabled but then stops firing
+        when the schedule is disabled.
+    """
+    client = metronome.create_client()
+    job_json = job_no_schedule('schedule-disabled')
+    job_id = job_json['id']
+    with job(job_json):
+        # indent
+        job_schedule = schedule()
+        job_schedule['cron'] = '* * * * *'  # every minute
+        client.add_schedule(job_id, job_schedule)
+
+        # sleep until we run
+        time.sleep(timedelta(minutes=1.1).total_seconds())
+        runs = client.get_runs(job_id)
+        assert len(runs) == 1
+
+        # update enabled = False
+        job_schedule['enabled'] = False
+        client.update_schedule(job_id, 'nightly', job_schedule)
+
+        # bounce master
+        shakedown.restart_master_node()
+        shakedown.wait_for_mesos_endpoint()
+
+        # wait for the next run
+        time.sleep(timedelta(minutes=1.5).total_seconds())
+        runs = client.get_runs(job_id)
+        # make sure there is still only 1
+        assert len(runs) == 1
+
+
 def test_update_schedule():
     client = metronome.create_client()
     with job(job_no_schedule('schedule')):
