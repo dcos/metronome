@@ -8,6 +8,15 @@ Metronome is an [Apache Mesos](http://mesos.apache.org) framework for scheduled 
 Metronome documentation is available on the [DC/OS documentation site](https://dcos.io/docs/1.8/usage/jobs).
 
 
+## Announcement
+Dear Metronome Community,
+
+We have been tracking issues in multiple places, which has made it hard for us to prioritize, and consolidate duplicates.
+
+In order to address these challenges, on March 6th we will be converting all GitHub issues to public JIRA tickets in Mesosphere's on-premise JIRA instance that anyone will be able to view and add to using GitHub SSO. This will not only help the Marathon/Metronome teams, it will increase transparency, allowing the community to check on sprints and the order of the ticket backlog.
+
+Please have a look here for more information: https://groups.google.com/forum/#!topic/marathon-framework/khtvf-ifnp8
+
 ## Getting Started
 
 Get familiar with Metronome with this step-by-step [Getting Started](https://dcos.github.io/metronome/docs/getting_started.html) guide.
