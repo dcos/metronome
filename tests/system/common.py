@@ -21,7 +21,6 @@ def schedule():
         "cron": "20 0 * * *",
         "enabled": True,
         "id": "nightly",
-        "nextRunAt": "2016-07-26T00:20:00.000+0000",
         "startingDeadlineSeconds": 900,
         "timezone": "UTC"
     }

@@ -1,14 +1,14 @@
 """Metronome 'Job' System Integration Tests"""
 
-from common import *
 import contextlib
-from shakedown import *
-from dcos import metronome
-from retrying import retry
-
+import shakedown
 import time
 import uuid
 
+from common import add_docker_image, get_private_ip, job_no_schedule, pin_to_host, schedule
+from dcos import metronome
+from retrying import retry
+from datetime import timedelta
 
 def test_add_job():
     client = metronome.create_client()
@@ -55,6 +55,35 @@ def test_add_schedule():
     with job(job_no_schedule('schedule')):
         client.add_schedule('schedule', schedule())
         assert client.get_schedule('schedule', 'nightly')['cron'] == '20 0 * * *'
+
+
+def test_disable_schedule():
+    """ Confirms that a schedule runs when enabled but then stops firing
+        when the schedule is disabled.
+    """
+    client = metronome.create_client()
+    job_json = job_no_schedule('schedule-disabled')
+    job_id = job_json['id']
+    with job(job_json):
+        # indent
+        job_schedule = schedule()
+        job_schedule['cron'] = '* * * * *'  # every minute
+        client.add_schedule(job_id, job_schedule)
+
+        # sleep until we run
+        time.sleep(timedelta(minutes=1.1).total_seconds())
+        runs = client.get_runs(job_id)
+        assert len(runs) == 1
+
+        # update enabled = False
+        job_schedule['enabled'] = False
+        client.update_schedule(job_id, 'nightly', job_schedule)
+
+        # wait for the next run
+        time.sleep(timedelta(minutes=1.5).total_seconds())
+        runs = client.get_runs(job_id)
+        # make sure there is still only 1
+        assert len(runs) == 1
 
 
 def test_update_schedule():
@@ -163,7 +192,7 @@ def test_docker_job():
 
 
 def setup_module(module):
-    agents = get_private_agents()
+    agents = shakedown.get_private_agents()
     if len(agents) < 2:
         assert False, "Incorrect Agent count"
     remove_jobs()
