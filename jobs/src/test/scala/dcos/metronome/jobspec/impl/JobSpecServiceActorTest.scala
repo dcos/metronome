@@ -3,16 +3,16 @@ package dcos.metronome.jobspec.impl
 import java.io.IOException
 import java.util.concurrent.LinkedBlockingDeque
 
-import akka.actor.{ Status, Actor, Props, ActorSystem }
+import akka.actor.{ Actor, ActorSystem, Props, Status }
 import akka.testkit._
 import akka.pattern.ask
 import akka.util.Timeout
 import dcos.metronome.behavior.BehaviorFixture
-import dcos.metronome.{ JobSpecDoesNotExist, JobSpecChangeInFlight, JobSpecAlreadyExists }
-import dcos.metronome.model.{ JobId, JobSpec }
+import dcos.metronome.{ JobSpecAlreadyExists, JobSpecChangeInFlight, JobSpecDoesNotExist }
+import dcos.metronome.model.{ CronSpec, JobId, JobSpec, ScheduleSpec }
 import dcos.metronome.repository.impl.InMemoryRepository
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
-import org.scalatest.{ Matchers, GivenWhenThen, BeforeAndAfterAll, FunSuiteLike }
+import org.scalatest.{ BeforeAndAfterAll, FunSuiteLike, GivenWhenThen, Matchers }
 
 import scala.concurrent.duration._
 
@@ -235,6 +235,20 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     expectMsg(Status.Failure(exception))
     eventually(service.underlyingActor.inFlightChanges should have size 0)
     service.underlyingActor.allJobs should have size 1
+  }
+
+  test("A disabled jobSpec will not be started") {
+    import scala.collection.immutable.Seq
+    Given("A disabled jobSpec")
+    val f = new Fixture
+    val disabledJobSpec = JobSpec(JobId("disabled"), schedules = Seq(ScheduleSpec(id = "minutely", cron = CronSpec("*/1 * * * *"), enabled = false)))
+    val service = f.jobSpecService
+
+    When("A disabled job is added")
+    val maybeRef = service.underlyingActor.addJobSpec(disabledJobSpec)
+
+    Then("It does not create a JobSpecSchedulerActor")
+    maybeRef should be(None)
   }
 
   implicit val timeout: Timeout = 3.seconds
