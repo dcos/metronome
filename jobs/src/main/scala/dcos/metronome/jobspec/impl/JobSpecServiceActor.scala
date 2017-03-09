@@ -95,7 +95,7 @@ class JobSpecServiceActor(
     }
   }
 
-  def addJobSpec(jobSpec: JobSpec): Unit = {
+  def addJobSpec(jobSpec: JobSpec): Option[ActorRef] = {
     allJobs += jobSpec.id -> jobSpec
     inFlightChanges -= jobSpec.id
     scheduleActor(jobSpec)
@@ -160,11 +160,14 @@ class JobSpecServiceActor(
 
   def scheduleActor(jobSpec: JobSpec): Option[ActorRef] = {
     //TODO: create actors for every schedule, not only head option
-    def newActor: Option[ActorRef] = jobSpec.schedules.headOption.map { schedule =>
-      val ref = context.actorOf(schedulerActorFactory(jobSpec), s"scheduler:${jobSpec.id.safePath}")
-      context.watch(ref)
-      scheduleActors += jobSpec.id -> ref
-      ref
+    def newActor: Option[ActorRef] = jobSpec.schedules.headOption match {
+      case Some(schedule) if schedule.enabled =>
+        val ref = context.actorOf(schedulerActorFactory(jobSpec), s"scheduler:${jobSpec.id.safePath}")
+        context.watch(ref)
+        scheduleActors += jobSpec.id -> ref
+        Some(ref)
+      case _ => // Nothing to do since the schedule is disabled
+        None
     }
     scheduleActors.get(jobSpec.id) orElse newActor
   }
