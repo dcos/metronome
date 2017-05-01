@@ -18,6 +18,10 @@ class RestController extends Controller {
 
   object validate extends BodyParsers {
 
+    def jsonWithValidator[A](validator: Validator[A])(implicit reader: Reads[A], schema: JsonSchema[A]): BodyParser[A] = {
+      json[A](reader, schema, validator)
+    }
+
     def json[A](implicit reader: Reads[A], schema: JsonSchema[A], validator: Validator[A]): BodyParser[A] = {
       jsonWith[A](identity)
     }

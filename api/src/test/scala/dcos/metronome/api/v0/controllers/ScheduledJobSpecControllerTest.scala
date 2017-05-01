@@ -97,21 +97,21 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
       route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(jobSpec1Json)).get.futureValue
 
       When("An existing job is updated")
-      val expectedJson = Json.toJson(jobSpec1.copy(schedules = Seq(schedule2)))
       val sendJson = Json.toJson(jobSpec1.copy(id = JobId("ignore.me"), schedules = Seq(schedule2)))
       val response = route(app, FakeRequest(PUT, s"/v0/scheduled-jobs/${jobSpec1.id}").withJsonBody(sendJson)).get
 
       Then("The job is updated")
-      status(response) mustBe OK
+      status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
-      contentAsJson(response) mustBe expectedJson
+      contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))
     }
 
     "give a 404 for a non existing job" in {
       Given("No job")
 
       When("A non existing job is updated")
-      val response = route(app, FakeRequest(PUT, s"/v0/scheduled-jobs/notexistent").withJsonBody(jobSpec1Json)).get
+      val sendJson = Json.toJson(jobSpec1.copy(id = JobId("notexistent")))
+      val response = route(app, FakeRequest(PUT, s"/v0/scheduled-jobs/notexistent").withJsonBody(sendJson)).get
 
       Then("A 404 is returned")
       status(response) mustBe NOT_FOUND

@@ -28,6 +28,11 @@ object JobSpec {
   val DefaultSchedule = Seq.empty[ScheduleSpec]
   val DefaultRunSpec = JobRunSpec()
 
+  def validJobSpecWithId(id: JobId) = validator[JobSpec] { jobSpec =>
+    jobSpec.id is equalTo(id)
+    jobSpec is validJobSpec
+  }
+
   implicit lazy val validJobSpec: Validator[JobSpec] = validator[JobSpec] { jobSpec =>
     jobSpec.id is valid
     jobSpec.schedules is every(valid)

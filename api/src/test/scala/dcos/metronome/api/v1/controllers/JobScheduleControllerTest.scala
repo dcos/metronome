@@ -226,7 +226,8 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
 
       When("A non existing job us")
-      val response = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/notexistent").withJsonBody(schedule1Json)).get
+      val scheduleJson = Json.toJson(schedule1.copy(id = "notexistent"))
+      val response = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/notexistent").withJsonBody(scheduleJson)).get
 
       Then("A 404 is sent")
       status(response) mustBe NOT_FOUND
@@ -255,14 +256,14 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
 
       When("we do a request without authorization")
       auth.authorized = false
-      val forbidden = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/notexistent").withJsonBody(schedule1Json)).get
+      val forbidden = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/${schedule1.id}").withJsonBody(schedule1Json)).get
 
       Then("an unauthorized response is send")
       status(forbidden) mustBe UNAUTHORIZED
 
       When("we do a request without authentication")
       auth.authenticated = false
-      val unauthorized = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/notexistent").withJsonBody(schedule1Json)).get
+      val unauthorized = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/${schedule1.id}").withJsonBody(schedule1Json)).get
 
       Then("a forbidden response is send")
       status(unauthorized) mustBe FORBIDDEN
