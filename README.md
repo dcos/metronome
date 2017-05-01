@@ -45,7 +45,7 @@ To build Metronome from source, check out this repo and use sbt to build a unive
 Mesos local mode allows you to run Metronome without launching a full Mesos
 cluster. It is meant for experimentation and not recommended for production
 use. Note that you still need to run ZooKeeper for storing state. The following
-command launches Metronome on Mesos in *local mode*. 
+command launches Metronome on Mesos in *local mode*.
 
     ./bin/metronome -Dmetronome.mesos.master.url=local
 
@@ -53,5 +53,9 @@ command launches Metronome on Mesos in *local mode*.
 ## Help
 
 Have you found an issue? Feel free to report it using our [Issues](https://github.com/dcos/metronome/issues) page.
-In order to speed up response times, please provide as much information on how to reproduce the problem as possible. 
+In order to speed up response times, please provide as much information on how to reproduce the problem as possible.
 
+`application.conf` provides a possibility to set up HTTPS, where you can define the keystore to use. You can disable HTTP by providing `-Dhttp.port=disabled` to your arguments.
+
+## CLI
+Metronome provides a DCOS CLI subcommands to interact with metronome via the DCOS CLI.   The project is under the `./cli` folder.  Details on how to use or test the subcommands are in it's [README.rst](cli/README.rst).
