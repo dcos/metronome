@@ -1,14 +1,21 @@
 """Metronome 'Job' System Integration Tests"""
 
 import contextlib
-import shakedown
-import time
 import uuid
+import time
+
+from datetime import timedelta
+
+import shakedown
+import pytest
 
 from common import add_docker_image, get_private_ip, job_no_schedule, pin_to_host, schedule
 from dcos import metronome
 from retrying import retry
-from datetime import timedelta
+from shakedown import dcos_version_less_than
+
+pytestmark = [pytest.mark.skipif("dcos_version_less_than('1.8')")]
+
 
 def test_add_job():
     client = metronome.create_client()
