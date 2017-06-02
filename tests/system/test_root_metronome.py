@@ -6,10 +6,11 @@ import time
 
 from datetime import timedelta
 
+import common
 import shakedown
 import pytest
 
-from common import add_docker_image, get_private_ip, job_no_schedule, pin_to_host, schedule
+from common import job_no_schedule, schedule
 from dcos import metronome
 from retrying import retry
 from shakedown import dcos_version_less_than
@@ -69,8 +70,8 @@ def test_disable_schedule():
         when the schedule is disabled.
     """
     client = metronome.create_client()
-    job_json = job_no_schedule('schedule-disabled')
-    job_id = job_json['id']
+    job_id = 'schedule-disabled-{}'.format(uuid.uuid4().hex)
+    job_json = job_no_schedule(job_id)
     with job(job_json):
         # indent
         job_schedule = schedule()
@@ -80,7 +81,11 @@ def test_disable_schedule():
         # sleep until we run
         time.sleep(timedelta(minutes=1.1).total_seconds())
         runs = client.get_runs(job_id)
-        assert len(runs) == 1
+        run_count = len(runs)
+        # there is a race condition where this could be 1 or 2
+        # both are ok... what matters is that after disabled, that there are
+        # no more
+        assert run_count > 0
 
         # update enabled = False
         job_schedule['enabled'] = False
@@ -89,8 +94,8 @@ def test_disable_schedule():
         # wait for the next run
         time.sleep(timedelta(minutes=1.5).total_seconds())
         runs = client.get_runs(job_id)
-        # make sure there is still only 1
-        assert len(runs) == 1
+        # make sure there are no more than the original count
+        assert len(runs) == run_count
 
 
 def test_disable_schedule_recovery_from_master_bounce():
@@ -98,8 +103,8 @@ def test_disable_schedule_recovery_from_master_bounce():
         when the schedule is disabled.
     """
     client = metronome.create_client()
-    job_json = job_no_schedule('schedule-disabled')
-    job_id = job_json['id']
+    job_id = 'schedule-disabled-{}'.format(uuid.uuid4().hex)
+    job_json = job_no_schedule(job_id)
     with job(job_json):
         # indent
         job_schedule = schedule()
@@ -109,21 +114,25 @@ def test_disable_schedule_recovery_from_master_bounce():
         # sleep until we run
         time.sleep(timedelta(minutes=1.1).total_seconds())
         runs = client.get_runs(job_id)
-        assert len(runs) == 1
+        run_count = len(runs)
+        # there is a race condition where this could be 1 or 2
+        # both are ok... what matters is that after disabled, that there are
+        # no more
+        assert run_count > 0
 
         # update enabled = False
         job_schedule['enabled'] = False
         client.update_schedule(job_id, 'nightly', job_schedule)
 
-        # bounce master
+        # # bounce master
         shakedown.restart_master_node()
-        shakedown.wait_for_mesos_endpoint()
+        common.wait_for_mesos_endpoint(timedelta(minutes=10).total_seconds())
 
         # wait for the next run
         time.sleep(timedelta(minutes=1.5).total_seconds())
         runs = client.get_runs(job_id)
-        # make sure there is still only 1
-        assert len(runs) == 1
+        # make sure there are no more than the original count
+        assert len(runs) == run_count
 
 
 def test_update_schedule():
@@ -197,10 +206,10 @@ def remove_jobs():
 
 def test_job_constraints():
     client = metronome.create_client()
-    host = get_private_ip()
+    host = common.get_private_ip()
     job_id = uuid.uuid4().hex
     job_def = job_no_schedule(job_id)
-    pin_to_host(job_def, host)
+    common.pin_to_host(job_def, host)
     with job(job_def):
         # on the same node 3x
         for i in range(3):
@@ -224,7 +233,7 @@ def test_docker_job():
     client = metronome.create_client()
     job_id = uuid.uuid4().hex
     job_def = job_no_schedule(job_id)
-    add_docker_image(job_def)
+    common.add_docker_image(job_def)
     with job(job_def):
         client.run_job(job_id)
         time.sleep(2)

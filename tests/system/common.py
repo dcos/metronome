@@ -1,4 +1,9 @@
-from shakedown import *
+""" Commons for Metronome """
+
+from datetime import timedelta
+
+import shakedown
+
 from dcos import metronome
 
 
@@ -43,7 +48,7 @@ def add_docker_image(job_def, image='busybox'):
 
 
 def get_private_ip():
-    agents = get_private_agents()
+    agents = shakedown.get_private_agents()
     for agent in agents:
             return agent
 
@@ -71,3 +76,10 @@ def get_job_tasks(job_id, run_id):
                 job_tasks.append(task)
 
     return job_tasks
+
+
+def wait_for_mesos_endpoint(timeout_sec=timedelta(minutes=5).total_seconds()):
+    """Checks the service url if available it returns true, on expiration
+    it returns false"""
+
+    return shakedown.time_wait(lambda: shakedown.mesos_available_predicate(), timeout_seconds=timeout_sec)
