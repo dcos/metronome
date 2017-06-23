@@ -1,9 +1,13 @@
-
 # The content of this file will be added to the metronome start script
 
 if [ -n "${TLS_TRUSTSTORE-}" ]; then
     echo "add trust store: -Djavax.net.ssl.trustStore=$TLS_TRUSTSTORE"
     addJava "-Djavax.net.ssl.trustStore=$TLS_TRUSTSTORE"
+fi
+
+if [ -n "${JVM_SECURITY_PROPERTIES_FILE_PATH-}" ]; then
+    echo "add -Djava.security.properties=${JVM_SECURITY_PROPERTIES_FILE_PATH}"
+    addJava "-Djava.security.properties=${JVM_SECURITY_PROPERTIES_FILE_PATH}"
 fi
 
 # Define default thread pool size
