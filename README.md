@@ -81,7 +81,7 @@ command launches Metronome on Mesos in *local mode*.
      ]
 }
  ```
- This job will sleep every day at midnight and will land on the host defined by `<host-name>` which could be the hostname or IP of a node in the cluster.  If you don't care where it lands in the cluster remove the `placement
+ This job will sleep every day at midnight and will land on the host defined by `<host-name>` which could be the hostname or IP of a node in the cluster.  If you don't care where it lands in the cluster remove the `placement`
 element.
 
 ## Help
