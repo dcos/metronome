@@ -45,13 +45,46 @@ To build Metronome from source, check out this repo and use sbt to build a unive
 Mesos local mode allows you to run Metronome without launching a full Mesos
 cluster. It is meant for experimentation and not recommended for production
 use. Note that you still need to run ZooKeeper for storing state. The following
-command launches Metronome on Mesos in *local mode*. 
+command launches Metronome on Mesos in *local mode*.
 
     ./bin/metronome -Dmetronome.mesos.master.url=local
 
 
+ ## Example Job with Placement Constraint
+
+ ```
+ {
+    "id": "sample-job",
+    "description": "A sample job that sleeps",
+    "run": {
+	"cmd": "sleep 1000",
+	"cpus": 0.01,
+	"mem": 32,
+	"disk": 0,
+	"placement": {
+	    "constraints": [
+		{
+		    "attribute": "hostname",
+		    "operator": "LIKE",
+		    "value": "<host-name>"
+		}
+	    ]
+	}
+    },
+    "schedules": [
+         {
+             "id": "sample-schedule",
+             "enabled": true,
+             "cron": "0 0 * * *",
+             "concurrencyPolicy": "ALLOW"
+         }
+     ]
+}
+ ```
+ This job will sleep every day at midnight and will land on the host defined by `<host-name>` which could be the hostname or IP of a node in the cluster.  If you don't care where it lands in the cluster remove the `placement`
+element.
+
 ## Help
 
 Have you found an issue? Feel free to report it using our [Issues](https://github.com/dcos/metronome/issues) page.
-In order to speed up response times, please provide as much information on how to reproduce the problem as possible. 
-
+In order to speed up response times, please provide as much information on how to reproduce the problem as possible.
