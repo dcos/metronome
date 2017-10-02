@@ -18,19 +18,6 @@ class CronSpecFormatTest extends FunSuite with Mockito with Matchers {
     Json.toJson(spec).as[CronSpec] shouldEqual spec
   }
 
-  test("Every minute alternate") {
-    val redundantCronString = "*/1 * * * *"
-    val correctCronString = "* * * * *"
-    CronSpec.isValid(redundantCronString) shouldBe true
-    CronSpec.isValid(correctCronString) shouldBe true
-
-    val spec = CronSpec(redundantCronString)
-    // the */1 is actually redundant and will be 'fixed' by the parser
-    spec.toString shouldEqual correctCronString
-
-    Json.toJson(spec).as[CronSpec].toString shouldEqual correctCronString
-  }
-
   test("Every 2 minutes") {
     val cronString = "*/2 * * * *"
     CronSpec.isValid(cronString) shouldBe true
