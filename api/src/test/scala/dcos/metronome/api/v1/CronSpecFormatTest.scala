@@ -1,8 +1,13 @@
 package dcos.metronome.api.v1
 
+import java.time.{ LocalDateTime, Month, ZoneId }
+import java.util.Date
+
 import dcos.metronome.api.v1.models._
 import dcos.metronome.model.CronSpec
 import dcos.metronome.utils.test.Mockito
+import it.sauronsoftware.cron4j.Predictor
+import org.joda.time.DateTime
 import org.scalatest.{ FunSuite, Matchers }
 import play.api.libs.json.Json
 
@@ -59,5 +64,82 @@ class CronSpecFormatTest extends FunSuite with Mockito with Matchers {
     spec.toString shouldEqual cronString
 
     Json.toJson(spec).as[CronSpec] shouldEqual spec
+  }
+
+  test("First Monday Of The Month") {
+    val cronString = "0 9 1-7 * 1"
+
+    val spec = CronSpec(cronString)
+    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+
+    val nextCronDate = spec.nextExecution(currentDateTime)
+
+    nextCronDate shouldEqual new DateTime(2017, 11, 6, 9, 0)
+  }
+
+  test("Each weekday the first week Of The Month") {
+    val cronString = "0 9 1-7 * 1-5"
+
+    val spec = CronSpec(cronString)
+    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+
+    val nextCronDate = spec.nextExecution(currentDateTime)
+
+    nextCronDate shouldEqual new DateTime(2017, 10, 3, 9, 0)
+  }
+
+  test("Each weekend day the first week Of The Month") {
+    val cronString = "0 9 1-7 * 6-7"
+
+    val spec = CronSpec(cronString)
+    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+
+    val nextCronDate = spec.nextExecution(currentDateTime)
+
+    nextCronDate shouldEqual new DateTime(2017, 10, 7, 9, 0)
+  }
+
+  test("Each weekday the second week Of The Month") {
+    val cronString = "0 9 8-14 * 1-5"
+
+    val spec = CronSpec(cronString)
+    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+
+    val nextCronDate = spec.nextExecution(currentDateTime)
+
+    nextCronDate shouldEqual new DateTime(2017, 10, 9, 9, 0)
+  }
+
+  test("Each weekend day the fourth week Of The Month") {
+    val cronString = "0 9 22-28 * 6-7"
+
+    val spec = CronSpec(cronString)
+    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+
+    val nextCronDate = spec.nextExecution(currentDateTime)
+
+    nextCronDate shouldEqual new DateTime(2017, 10, 22, 9, 0)
+  }
+
+  test("Each day on a wednesday") {
+    val cronString = "* * * * 3"
+
+    val spec = CronSpec(cronString)
+    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+
+    val nextCronDate = spec.nextExecution(currentDateTime)
+
+    nextCronDate shouldEqual new DateTime(2017, 10, 4, 0, 0)
+  }
+
+  test("Each day slash of 1 on a wednesday") {
+    val cronString = "* * */1 * 3"
+
+    val spec = CronSpec(cronString)
+    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+
+    val nextCronDate = spec.nextExecution(currentDateTime)
+
+    nextCronDate shouldEqual new DateTime(2017, 10, 4, 0, 0)
   }
 }
