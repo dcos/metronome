@@ -1,12 +1,8 @@
 package dcos.metronome.api.v1
 
-import java.time.{ LocalDateTime, Month, ZoneId }
-import java.util.Date
-
 import dcos.metronome.api.v1.models._
 import dcos.metronome.model.CronSpec
 import dcos.metronome.utils.test.Mockito
-import it.sauronsoftware.cron4j.Predictor
 import org.joda.time.DateTime
 import org.scalatest.{ FunSuite, Matchers }
 import play.api.libs.json.Json

@@ -49,10 +49,10 @@ object CronSpec {
       .withDayOfMonth()
       .supportsHash().supportsL().supportsW().and()
       .withMonth().and()
-      .withDayOfWeek()
-      .withIntMapping(7, 0) //we support non-standard non-zero-based numbers!
+      .withDayOfWeek().withValidRange(0, 7).withMondayDoWValue(1).withIntMapping(7, 0) //we support non-standard non-zero-based numbers!
       .supportsHash().supportsL().supportsW().and()
       .withYear().optional().and()
+      .matchDayOfWeekAndDayOfMonth() // the regular UNIX cron definition permits matching either DoW or DoM
       .instance()
 
   def isValid(cronString: String): Boolean = unapply(cronString).isDefined
