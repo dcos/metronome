@@ -4,7 +4,8 @@ import com.cronutils.model.definition.{ CronDefinition, CronDefinitionBuilder }
 import com.cronutils.model.time.ExecutionTime
 import com.cronutils.model.Cron
 import com.cronutils.parser.CronParser
-import org.joda.time.DateTime
+import org.joda.time.{ DateTime, DateTimeZone }
+import org.threeten.bp.{ Instant, ZoneId, ZonedDateTime }
 
 import scala.util.control.NonFatal
 
@@ -12,9 +13,23 @@ class CronSpec(val cron: Cron) {
 
   private[this] lazy val executionTime: ExecutionTime = ExecutionTime.forCron(cron)
 
-  def nextExecution(from: DateTime): DateTime = executionTime.nextExecution(from)
+  def nextExecution(from: DateTime): DateTime = {
+    val fromDateTime: ZonedDateTime = jodaToThreetenTime(from)
+    threetenToJodaTime(executionTime.nextExecution(fromDateTime).get())
+  }
 
-  def lastExecution(from: DateTime): DateTime = executionTime.lastExecution(from)
+  def lastExecution(from: DateTime): DateTime = {
+    val fromDateTime: ZonedDateTime = jodaToThreetenTime(from)
+    threetenToJodaTime(executionTime.lastExecution(fromDateTime).get())
+  }
+
+  private def threetenToJodaTime(from: ZonedDateTime): DateTime = {
+    new DateTime(from.toInstant().toEpochMilli(), DateTimeZone.forID(from.getZone().getId()))
+  }
+
+  private def jodaToThreetenTime(from: DateTime): ZonedDateTime = {
+    ZonedDateTime.ofInstant(Instant.ofEpochMilli(from.getMillis()), ZoneId.of(from.getZone().getID))
+  }
 
   override def hashCode(): Int = cron.hashCode()
 
@@ -37,8 +52,7 @@ object CronSpec {
       .withDayOfWeek()
       .withIntMapping(7, 0) //we support non-standard non-zero-based numbers!
       .supportsHash().supportsL().supportsW().and()
-      .withYear().and()
-      .lastFieldOptional()
+      .withYear().optional().and()
       .instance()
 
   def isValid(cronString: String): Boolean = unapply(cronString).isDefined
