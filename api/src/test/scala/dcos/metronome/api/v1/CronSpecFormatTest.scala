@@ -4,10 +4,21 @@ import dcos.metronome.api.v1.models._
 import dcos.metronome.model.CronSpec
 import dcos.metronome.utils.test.Mockito
 import org.joda.time.DateTime
-import org.scalatest.{ FunSuite, Matchers }
+import org.scalatest.{ BeforeAndAfterAll, FunSuite, Matchers }
+import org.threeten.bp.zone.{ TzdbZoneRulesProvider, ZoneRulesProvider }
 import play.api.libs.json.Json
 
-class CronSpecFormatTest extends FunSuite with Mockito with Matchers {
+class CronSpecFormatTest extends FunSuite with Mockito with Matchers with BeforeAndAfterAll {
+
+  override def beforeAll(): Unit = {
+    try {
+      val tzUrl = ClassLoader.getSystemResource("org/threeten/bp/TZDB.dat")
+      val tzProvider = new TzdbZoneRulesProvider(tzUrl)
+      ZoneRulesProvider.registerProvider(tzProvider)
+    } catch {
+      case e: Throwable => println(s"TimeZone DB already loaded! Exception: $e")
+    }
+  }
 
   test("Every minute") {
     val cronString = "* * * * *"
