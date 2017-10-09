@@ -45,6 +45,7 @@ object Build extends sbt.Build {
         Dependency.macWireUtil,
         Dependency.macWireProxy,
         Dependency.yaml,
+        Dependency.Test.threeten,
         Dependency.cronUtils,
         Dependency.metrics,
         Dependency.jsonValidate,
@@ -65,6 +66,7 @@ object Build extends sbt.Build {
         Dependency.macWireMacros,
         Dependency.macWireUtil,
         Dependency.macWireProxy,
+        Dependency.Test.threeten,
         Dependency.cronUtils,
         Dependency.akka,
         Dependency.metrics,
@@ -157,6 +159,7 @@ object Build extends sbt.Build {
     object Test {
       val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"
       val scalatestPlay = "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % "test"
+      val threeten = "org.threeten" % "threetenbp" % "1.3.3" % "test"
       val akkaTestKit = "com.typesafe.akka" %%  "akka-testkit" % V.Akka % "test"
       val mockito = "org.mockito" % "mockito-core" % V.Mockito % "test"
     }
