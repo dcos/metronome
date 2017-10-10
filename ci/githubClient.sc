@@ -12,7 +12,7 @@ import upickle._
 
 /**
  * Makes a POST request to GitHub's API with path and body.
- * E.g. "repos/mesosphere/marathon/pulls/5513/reviews" would post the body as a
+ * E.g. "repos/dcos/metronome/pulls/5513/reviews" would post the body as a
  * comment.
  *
  * @param path The API path. See path in
@@ -42,7 +42,7 @@ def comment(pullNumber: String, msg: String, event: String = "COMMENT"): Unit = 
     "body"  -> Js.Str(msg),
     "event" -> Js.Str(event)
     )
-  val path = s"repos/mesosphere/marathon/pulls/$pullNumber/reviews"
+  val path = s"repos/dcos/metronome/pulls/$pullNumber/reviews"
   execute(path, request.toString)
 }
 
@@ -91,7 +91,7 @@ def collectTestResults(): Js.Arr = {
  * @param pullNumber The pull request of the build.
  * @param buildUrl A link back to the build on Jenkins.
  * @param buildTag Identifies build.
- * @param maybeArtifact A description of the Marathon binary that has been uploaded.
+ * @param maybeArtifact A description of the Metronome binary that has been uploaded.
  *    It's None when now package was uploaded.
  */
 def reportSuccess(
@@ -122,8 +122,8 @@ def reportSuccess(
     |
     |See details at [$buildTag]($buildUrl).
     |
-    |You can create a DC/OS with your patched Marathon by creating a new pull
-    |request with the following changes in [buildinfo.json](https://github.com/dcos/dcos/blob/master/packages/marathon/buildinfo.json):
+    |You can create a DC/OS with your patched Metronome by creating a new pull
+    |request with the following changes in [buildinfo.json](https://github.com/dcos/dcos/blob/master/packages/metronome/buildinfo.json):
     |
     |$buildinfoDiff
     |
