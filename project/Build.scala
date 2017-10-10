@@ -133,7 +133,7 @@ object Build extends sbt.Build {
       val MacWire = "2.2.2"
       val Marathon = "1.2.0-RC1"
       val Play = "2.5.3"
-      val CronUtils = "6.0.3"
+      val CronUtils = "6.0.4"
       val Threeten = "1.3.3"
       val WixAccord = "0.5"
       val Akka = "2.3.15"
