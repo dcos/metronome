@@ -19,3 +19,5 @@ project/plugins/project/
 
 # python
 *.pyc
+
+sandboxes.tar.gz
