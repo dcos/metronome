@@ -46,6 +46,7 @@ object Build extends sbt.Build {
         Dependency.macWireProxy,
         Dependency.yaml,
         Dependency.cronUtils,
+        Dependency.threeten,
         Dependency.metrics,
         Dependency.jsonValidate,
         Dependency.Test.scalatest,
@@ -65,6 +66,7 @@ object Build extends sbt.Build {
         Dependency.macWireMacros,
         Dependency.macWireUtil,
         Dependency.macWireProxy,
+        Dependency.threeten,
         Dependency.cronUtils,
         Dependency.akka,
         Dependency.metrics,
@@ -131,7 +133,8 @@ object Build extends sbt.Build {
       val MacWire = "2.2.2"
       val Marathon = "1.2.0-RC1"
       val Play = "2.5.3"
-      val CronUtils = "4.1.0"
+      val CronUtils = "6.0.4"
+      val Threeten = "1.3.3"
       val WixAccord = "0.5"
       val Akka = "2.3.15"
       val Mockito = "2.0.54-beta"
@@ -148,7 +151,8 @@ object Build extends sbt.Build {
     val macWireProxy = "com.softwaremill.macwire" %% "proxy" % V.MacWire
     val marathon = "mesosphere.marathon" %% "marathon" % V.Marathon exclude("com.typesafe.play", "*") exclude("mesosphere.marathon", "ui") exclude("mesosphere", "chaos") exclude("org.apache.hadoop", "hadoop-hdfs") exclude("org.apache.hadoop", "hadoop-common") exclude("org.eclipse.jetty", "*")
     val marathonPlugin = "mesosphere.marathon" %% "plugin-interface" % V.Marathon
-    val cronUtils = "com.cronutils" % "cron-utils" % V.CronUtils
+    val cronUtils = "com.cronutils" % "cron-utils" % V.CronUtils exclude("org.threeten", "threetenbp")
+    val threeten = "org.threeten" % "threetenbp" % V.Threeten
     val wixAccord = "com.wix" %% "accord-core" % V.WixAccord
     val akka = "com.typesafe.akka" %%  "akka-actor" % V.Akka
     val metrics = "nl.grons" %% "metrics-scala" % V.Metrics
