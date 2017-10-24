@@ -8,7 +8,7 @@ ansiColor('gnome-terminal') {
             sh "bin/install-protobuf.sh"
             sh "PATH=\$PATH:\$HOME/protobuf/bin sbt clean test"
         } finally {
-            junit(allowEmptyResults: true, testResults: 'target/test-reports/*.xml')
+            junit(allowEmptyResults: true, testResults: '*/target/test-reports/*.xml')
         }
       }
     }
