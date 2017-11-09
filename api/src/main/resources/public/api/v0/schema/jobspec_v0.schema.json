@@ -205,7 +205,7 @@
             "type": "string",
             "description": "Cron based schedule string."
           },
-          "timeZone": {
+          "timezone": {
             "type": "string",
             "description": "IANA based time zone string. See http://www.iana.org/time-zones for a list of available time zones."
           },
