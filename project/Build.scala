@@ -131,7 +131,7 @@ object Build extends sbt.Build {
       val AsyncAwait = "0.9.6-RC2"
       val ScalaTest = "2.1.7"
       val MacWire = "2.2.2"
-      val Marathon = "1.2.0-RC1"
+      val Marathon = "1.3.0"
       val Play = "2.5.3"
       val CronUtils = "6.0.4"
       val Threeten = "1.3.3"

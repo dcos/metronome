@@ -3,6 +3,7 @@ package dcos.metronome
 import dcos.metronome.api.ApiConfig
 import dcos.metronome.repository.impl.kv.ZkConfig
 import mesosphere.marathon.AllConf
+import mesosphere.marathon.core.task.termination.TaskKillConfig
 import play.api.Configuration
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
@@ -105,6 +106,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
 
   override lazy val maxActorStartupTime: FiniteDuration = configuration.getFiniteDuration("metronome.akka.actor.startup.max").getOrElse(10.seconds)
 
+  override def taskKillConfig = new TaskKillConfig {}
 }
 
 private[this] object ConfigurationImplicits {
