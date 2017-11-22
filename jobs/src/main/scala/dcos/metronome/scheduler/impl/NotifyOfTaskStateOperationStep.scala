@@ -34,7 +34,6 @@ class NotifyOfTaskStateOperationStep(eventBus: EventStream, clock: Clock) extend
 
       // A Mesos status update disregarding the effect
       case (TaskStateOp.MesosUpdate(task, marathonTaskStatus, mesosStatus, _), _) => Some(TaskState(mesosStatus))
-      //              case (TaskStateOp.MesosUpdate(task, marathonTaskStatus, mesosStatus, _)) => Some(TaskState(mesosStatus))
 
       // a new launched task
       case (TaskStateOp.LaunchEphemeral(_), TaskStateChange.Update(_, _)) => Some(TaskState.Created)
