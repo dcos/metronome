@@ -128,14 +128,14 @@ object Build extends sbt.Build {
   object Dependency {
     object V {
       // Test deps versions
-      val AsyncAwait = "0.9.6-RC2"
-      val ScalaTest = "2.1.7"
+      val AsyncAwait = "0.9.7"
+      val ScalaTest = "2.2.6"
       val MacWire = "2.2.2"
       val Marathon = "1.3.0"
-      val Play = "2.5.3"
+      val Play = "2.5.18"
       val CronUtils = "6.0.4"
       val Threeten = "1.3.3"
-      val WixAccord = "0.5"
+      val WixAccord = "0.7.1"
       val Akka = "2.3.15"
       val Mockito = "2.0.54-beta"
       val Metrics = "3.5.4_a2.3"
