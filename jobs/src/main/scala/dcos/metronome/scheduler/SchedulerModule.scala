@@ -129,7 +129,7 @@ class SchedulerModule(
     val stateOpProcessor: TaskStateOpProcessor = taskTrackerModule.stateOpProcessor
     val offerProcessor: OfferProcessor = launcherModule.offerProcessor
     val taskStatusProcessor: TaskStatusUpdateProcessor = new TaskStatusUpdateProcessorImpl(
-      metrics, marathonClock, taskTracker, stateOpProcessor, schedulerDriverHolder, taskKillService
+      metrics, marathonClock, taskTracker, stateOpProcessor, schedulerDriverHolder, taskKillService, eventBus
     )
     val leaderInfo = config.mesosLeaderUiUrl match {
       case someUrl @ Some(_) => ConstMesosLeaderInfo(someUrl)
