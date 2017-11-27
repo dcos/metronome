@@ -21,3 +21,4 @@ project/plugins/project/
 *.pyc
 
 sandboxes.tar.gz
+.DS_Store
