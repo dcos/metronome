@@ -21,11 +21,17 @@ val PACKAGE_DIR: Path = pwd / 'target / 'universal
  * Compile Metronome and run unit and integration tests followed by scapegoat.
  */
 @main
-def compileAndTest(): Unit = utils.stage("Compile and Test") {
+def compileAndTest(logFileName: String): Unit = utils.stage("Compile and Test") {
 
-  def run(cmd: String *) = utils.runWithTimeout(1.hour)(cmd)
+  def run(cmd: String *) = utils.runWithTimeout(1.hour, logFileName)(cmd)
 
   run("sbt", "clean", "test")
+}
+
+@main
+def checkSystemIntegrationTests(logFileName: String): Unit = {
+  def run(cmd: String *) = utils.runWithTimeout(30.minutes, logFileName)(cmd)
+  run("flake8", "--count", "--max-line-length=120", "tests/system", "src/test/python")
 }
 
 @main
@@ -124,8 +130,9 @@ def asPullRequest(run: => (String, Option[awsClient.Artifact])): Unit = {
 @main
 def run(): (String, Option[awsClient.Artifact]) = {
 
+  val logFileName = s"ci-${sys.env.getOrElse("BUILD_TAG", "run")}.log"
   try {
-    compileAndTest()
+    compileAndTest(logFileName)
   } finally {
     zipSandboxLogs()    // Try to archive logs in any case
   }
