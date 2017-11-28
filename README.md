@@ -5,7 +5,7 @@ Metronome is an [Apache Mesos](http://mesos.apache.org) framework for scheduled 
 
 ## Documentation
 
-Metronome documentation is available on the [DC/OS documentation site](https://dcos.io/docs/1.8/usage/jobs).
+Metronome documentation is available on the [DC/OS documentation site](https://dcos.io/docs/1.10/deploying-jobs/).
 
 
 ## Issue Tracking
@@ -39,6 +39,7 @@ To build Metronome from source, check out this repo and use sbt to build a unive
         cd metronome
         sbt universal:packageBin
 
+In order to build from source you will need protobuf version 2.6.1.  This can be installed by executing the `./bin/install-protobuf.sh`.   This will install protobuf to `$HOME/protobuf`.    You will need `$HOME/protobuf/bin` in your path ( `export PATH=~/protobuf/bin:$PATH`).
 
 ### Running in Development Mode
 
@@ -47,7 +48,7 @@ cluster. It is meant for experimentation and not recommended for production
 use. Note that you still need to run ZooKeeper for storing state. The following
 command launches Metronome on Mesos in *local mode*.
 
-    ./bin/metronome -Dmetronome.mesos.master.url=local
+    sbt run
 
 
  ## Example Job with Placement Constraint

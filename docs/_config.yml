@@ -19,5 +19,9 @@ baseurl: "/metronome"
 highlighter: rouge
 lsi: false
 markdown: kramdown
+kramdown:
+  extensions: [with_toc_data, tables]
 safe: true
 source: .
+exclude: [vendor/bundle]
+repository: dcos/metronome
