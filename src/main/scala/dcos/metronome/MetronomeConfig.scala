@@ -48,7 +48,6 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
 
   lazy val killChunkSize: Int = configuration.getInt("metronome.killtask.kill_chunk_size").getOrElse(100)
   lazy val killRetryTimeout: Long = configuration.getLong("metronome.killtask.kill_retry_timeout").getOrElse(10.seconds.toMillis)
-  lazy val killRetryMax: Int = configuration.getInt("metronome.killtask.kill_retry_max").getOrElse(5)
 
   lazy val httpScheme: String = httpPort.map(_ => "http").getOrElse("https")
   lazy val webuiURL: String = configuration.getString("metronome.web.ui.url").getOrElse(s"$httpScheme://$hostnameWithPort")
@@ -90,8 +89,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       "--task_lost_expunge_initial_delay" -> Some(taskLostExpungeInitialDelay.toMillis.toString),
       "--task_lost_expunge_interval" -> Some(taskLostExpungeInterval.toMillis.toString),
       "--kill_chunk_size" -> Some(killChunkSize.toString),
-      "--kill_retry_timeout" -> Some(killRetryTimeout.toString),
-      "--kill_retry_max" -> Some(killRetryMax.toString)
+      "--kill_retry_timeout" -> Some(killRetryTimeout.toString)
     )
       .collect { case (name, Some(value)) => (name, value) }
       .flatMap { case (name, value) => Seq(name, value) }
