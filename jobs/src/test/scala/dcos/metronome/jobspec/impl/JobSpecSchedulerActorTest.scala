@@ -1,13 +1,13 @@
 package dcos.metronome.jobspec.impl
 
 import akka.actor.ActorSystem
-import akka.testkit.{ TestActorRef, ImplicitSender, TestKit }
+import akka.testkit.{ ImplicitSender, TestActorRef, TestKit }
 import dcos.metronome.behavior.BehaviorFixture
 import dcos.metronome.jobrun.JobRunService
-import dcos.metronome.model.{ JobId, CronSpec, JobSpec, ScheduleSpec }
+import dcos.metronome.model.{ CronSpec, JobId, JobSpec, ScheduleSpec }
 import dcos.metronome.utils.test.Mockito
 import dcos.metronome.utils.time.FixedClock
-import org.joda.time.DateTime
+import org.joda.time.{ DateTime, DateTimeZone }
 import org.scalatest._
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 
@@ -66,6 +66,22 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
     system.stop(actor)
   }
 
+  test("If the next scheduled time is on a TZ boundary") {
+    Given("A job scheduling actor")
+    val f = new DaylightSavingFixture
+    val actor = f.scheduleActor
+    // this is 1:01am CST
+    val nextRun = DateTime.parse("2018-01-13T14:01:00.000Z")
+
+    When("The actor is created")
+    actor ! StartJob
+
+    Then("The next run is rescheduled")
+    eventually(actor.underlyingActor.scheduledAt should be(Some(nextRun)))
+    actor.underlyingActor.nextSchedule should be (defined)
+    system.stop(actor)
+  }
+
   override protected def afterAll(): Unit = {
     shutdown()
   }
@@ -76,6 +92,17 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
     val id = JobId("/test")
     val jobSpec = JobSpec(id).copy(schedules = Seq(ScheduleSpec("every_minute", cron = everyMinute)))
     val clock = new FixedClock(DateTime.parse("2016-06-01T08:50:12.000Z"))
+    val behavior = BehaviorFixture.empty
+    val jobRunService = mock[JobRunService]
+    def scheduleActor = TestActorRef[JobSpecSchedulerActor](JobSpecSchedulerActor.props(jobSpec, clock, jobRunService, behavior))
+  }
+
+  class DaylightSavingFixture {
+    val CronSpec(everyMinute) = "* * * * *"
+    val id = JobId("/daylight")
+    val jobSpec = JobSpec(id).copy(schedules = Seq(ScheduleSpec("every_minute", cron = everyMinute, timeZone = DateTimeZone.forID("Pacific/Fiji"))))
+    // 01:59am CDT 2017-11-05 was end of daylight saving time
+    val clock = new FixedClock(DateTime.parse("2018-01-13T13:59Z"))
     val behavior = BehaviorFixture.empty
     val jobRunService = mock[JobRunService]
     def scheduleActor = TestActorRef[JobSpecSchedulerActor](JobSpecSchedulerActor.props(jobSpec, clock, jobRunService, behavior))

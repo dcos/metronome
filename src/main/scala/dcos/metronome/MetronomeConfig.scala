@@ -3,6 +3,7 @@ package dcos.metronome
 import dcos.metronome.api.ApiConfig
 import dcos.metronome.repository.impl.kv.ZkConfig
 import mesosphere.marathon.AllConf
+import mesosphere.marathon.core.task.termination.TaskKillConfig
 import play.api.Configuration
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
@@ -45,6 +46,10 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   override lazy val zkCompressionEnabled: Boolean = configuration.getBoolean("metronome.zk.compression.enabled").getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_ENABLED)
   override lazy val zkCompressionThreshold: Long = configuration.getLong("metronome.zk.compression.threshold").getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_THRESHOLD)
 
+  lazy val killChunkSize: Int = configuration.getInt("metronome.killtask.kill_chunk_size").getOrElse(100)
+  lazy val killRetryTimeout: Long = configuration.getLong("metronome.killtask.kill_retry_timeout").getOrElse(10.seconds.toMillis)
+  lazy val killRetryMax: Int = configuration.getInt("metronome.killtask.kill_retry_max").getOrElse(5)
+
   lazy val httpScheme: String = httpPort.map(_ => "http").getOrElse("https")
   lazy val webuiURL: String = configuration.getString("metronome.web.ui.url").getOrElse(s"$httpScheme://$hostnameWithPort")
 
@@ -83,7 +88,10 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       "--on_elected_prepare_timeout" -> Some(leaderPreparationTimeout.toMillis.toString),
       "--task_lost_expunge_gc" -> Some(taskLostExpungeGcTimeout.toMillis.toString),
       "--task_lost_expunge_initial_delay" -> Some(taskLostExpungeInitialDelay.toMillis.toString),
-      "--task_lost_expunge_interval" -> Some(taskLostExpungeInterval.toMillis.toString)
+      "--task_lost_expunge_interval" -> Some(taskLostExpungeInterval.toMillis.toString),
+      "--kill_chunk_size" -> Some(killChunkSize.toString),
+      "--kill_retry_timeout" -> Some(killRetryTimeout.toString),
+      "--kill_retry_max" -> Some(killRetryMax.toString)
     )
       .collect { case (name, Some(value)) => (name, value) }
       .flatMap { case (name, value) => Seq(name, value) }
@@ -105,6 +113,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
 
   override lazy val maxActorStartupTime: FiniteDuration = configuration.getFiniteDuration("metronome.akka.actor.startup.max").getOrElse(10.seconds)
 
+  override def taskKillConfig: TaskKillConfig = scallopConf
 }
 
 private[this] object ConfigurationImplicits {

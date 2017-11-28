@@ -4,7 +4,6 @@ import akka.event.EventStream
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.scheduler.TaskState
 import dcos.metronome.utils.time.Clock
-import mesosphere.marathon.core.task.bus.MarathonTaskStatus.WithMesosStatus
 import mesosphere.marathon.core.task.bus.TaskChangeObservables.TaskChanged
 import mesosphere.marathon.core.task.update.TaskUpdateStep
 import mesosphere.marathon.core.task.{ TaskStateChange, TaskStateOp }
@@ -34,7 +33,7 @@ class NotifyOfTaskStateOperationStep(eventBus: EventStream, clock: Clock) extend
     (taskChanged.stateOp, taskChanged.stateChange) match {
 
       // A Mesos status update disregarding the effect
-      case (TaskStateOp.MesosUpdate(task, WithMesosStatus(mesosStatus), _), _) => Some(TaskState(mesosStatus))
+      case (TaskStateOp.MesosUpdate(_, _, mesosStatus, _), _) => Some(TaskState(mesosStatus))
 
       // a new launched task
       case (TaskStateOp.LaunchEphemeral(_), TaskStateChange.Update(_, _)) => Some(TaskState.Created)
@@ -46,7 +45,7 @@ class NotifyOfTaskStateOperationStep(eventBus: EventStream, clock: Clock) extend
       case (_, TaskStateChange.Update(task, _)) if task.mesosStatus.isDefined => Some(TaskState(task.mesosStatus.get))
 
       // Whatever lead to a TaskStateChange.Update if we have no mesosStatus
-      case (_, TaskStateChange.Update(task, _)) => Some(TaskState.Created)
+      case (_, TaskStateChange.Update(_, _)) => Some(TaskState.Created)
 
       // Whatever
       case _ => None

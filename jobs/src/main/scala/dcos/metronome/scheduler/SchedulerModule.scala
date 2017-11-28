@@ -3,7 +3,7 @@ package dcos.metronome.scheduler
 import akka.actor.{ ActorRefFactory, ActorSystem }
 import akka.event.EventStream
 import dcos.metronome.repository.SchedulerRepositoriesModule
-import dcos.metronome.scheduler.impl.{ NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor, SchedulerCallbacksImpl, SchedulerServiceImpl }
+import dcos.metronome.scheduler.impl.{ NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor, SchedulerServiceImpl }
 import dcos.metronome.utils.time.Clock
 import dcos.metronome.MetricsModule
 import mesosphere.marathon._
@@ -20,11 +20,11 @@ import mesosphere.marathon.core.matcher.reconcile.OfferMatcherReconciliationModu
 import mesosphere.marathon.core.plugin.PluginModule
 import mesosphere.marathon.core.task.bus.TaskBusModule
 import mesosphere.marathon.core.task.jobs.TaskJobsModule
+import mesosphere.marathon.core.task.termination.{ TaskKillService, TaskTerminationModule }
 import mesosphere.marathon.core.task.tracker._
 import mesosphere.marathon.core.task.update.impl.TaskStatusUpdateProcessorImpl
 import mesosphere.marathon.core.task.update.impl.steps.ContinueOnErrorStep
 import mesosphere.marathon.core.task.update.{ TaskStatusUpdateProcessor, TaskUpdateStep }
-import mesosphere.marathon.event.EventModule
 import mesosphere.marathon.state._
 import mesosphere.util.state._
 
@@ -50,8 +50,7 @@ class SchedulerModule(
   private[this] lazy val shutdownHooks = ShutdownHooks()
   private[this] lazy val actorsModule = new ActorsModule(shutdownHooks, actorSystem)
 
-  private[this] lazy val eventModule: EventModule = new EventModule(scallopConf)
-  private[this] lazy val eventBus: EventStream = eventModule.provideEventBus(actorSystem)
+  private[this] lazy val eventBus: EventStream = actorSystem.eventStream
 
   lazy val schedulerDriverHolder: MarathonSchedulerDriverHolder = new MarathonSchedulerDriverHolder
 
@@ -115,18 +114,27 @@ class SchedulerModule(
     timeout = config.zkTimeout,
     key = "id"
   )
+
+  private[this] lazy val taskTerminationModule: TaskTerminationModule = new TaskTerminationModule(
+    taskTrackerModule,
+    leadershipModule,
+    schedulerDriverHolder,
+    config.taskKillConfig,
+    marathonClock
+  )
+  lazy val taskKillService: TaskKillService = taskTerminationModule.taskKillService
+
   private[this] lazy val scheduler: MarathonScheduler = {
     val taskTracker: TaskTracker = taskTrackerModule.taskTracker
     val stateOpProcessor: TaskStateOpProcessor = taskTrackerModule.stateOpProcessor
     val offerProcessor: OfferProcessor = launcherModule.offerProcessor
     val taskStatusProcessor: TaskStatusUpdateProcessor = new TaskStatusUpdateProcessorImpl(
-      metrics, marathonClock, taskTracker, stateOpProcessor, schedulerDriverHolder
+      metrics, marathonClock, taskTracker, stateOpProcessor, schedulerDriverHolder, taskKillService, eventBus
     )
     val leaderInfo = config.mesosLeaderUiUrl match {
       case someUrl @ Some(_) => ConstMesosLeaderInfo(someUrl)
       case None              => new MutableMesosLeaderInfo
     }
-    val schedulerCallbacks: SchedulerCallbacks = new SchedulerCallbacksImpl(electionModule.service)
 
     new MarathonScheduler(
       eventBus,
@@ -136,8 +144,7 @@ class SchedulerModule(
       frameworkIdUtil,
       leaderInfo,
       actorSystem,
-      scallopConf,
-      schedulerCallbacks
+      scallopConf
     )
   }
 
@@ -209,6 +216,6 @@ class SchedulerModule(
   taskJobsModule.handleOverdueTasks(
     taskTrackerModule.taskTracker,
     taskTrackerModule.taskReservationTimeoutHandler,
-    schedulerDriverHolder
+    taskKillService
   )
 }

@@ -5,8 +5,8 @@ import java.util.concurrent.TimeUnit
 import dcos.metronome.model._
 import dcos.metronome.scheduler.SchedulerConfig
 import mesosphere.marathon
+import mesosphere.marathon.core.health.HealthCheck
 import mesosphere.marathon.core.readiness.ReadinessCheck
-import mesosphere.marathon.health.HealthCheck
 import mesosphere.marathon.state.{ AppDefinition, Container, EnvVarValue, FetchUri, PathId, PortDefinition, RunSpec, Secret, UpgradeStrategy }
 
 import scala.collection.immutable.Seq
@@ -68,11 +68,8 @@ object MarathonImplicits {
   implicit class JobSpecToContainer(val jobSpec: JobSpec) extends AnyVal {
     def toContainer: Option[Container] = {
       jobSpec.run.docker match {
-        case Some(dockerSpec) => Some(Container(
-          `type` = mesos.Protos.ContainerInfo.Type.DOCKER,
-          docker = Some(Container.Docker(
-            image = dockerSpec.image
-          )),
+        case Some(dockerSpec) => Some(Container.Docker(
+          image = dockerSpec.image,
           volumes = jobSpec.run.volumes.map(_.toMarathon)
         ))
         case _ => None
