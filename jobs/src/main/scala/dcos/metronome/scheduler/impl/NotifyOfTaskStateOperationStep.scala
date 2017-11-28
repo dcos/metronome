@@ -33,7 +33,7 @@ class NotifyOfTaskStateOperationStep(eventBus: EventStream, clock: Clock) extend
     (taskChanged.stateOp, taskChanged.stateChange) match {
 
       // A Mesos status update disregarding the effect
-      case (TaskStateOp.MesosUpdate(task, marathonTaskStatus, mesosStatus, _), _) => Some(TaskState(mesosStatus))
+      case (TaskStateOp.MesosUpdate(_, _, mesosStatus, _), _) => Some(TaskState(mesosStatus))
 
       // a new launched task
       case (TaskStateOp.LaunchEphemeral(_), TaskStateChange.Update(_, _)) => Some(TaskState.Created)
@@ -45,7 +45,7 @@ class NotifyOfTaskStateOperationStep(eventBus: EventStream, clock: Clock) extend
       case (_, TaskStateChange.Update(task, _)) if task.mesosStatus.isDefined => Some(TaskState(task.mesosStatus.get))
 
       // Whatever lead to a TaskStateChange.Update if we have no mesosStatus
-      case (_, TaskStateChange.Update(task, _)) => Some(TaskState.Created)
+      case (_, TaskStateChange.Update(_, _)) => Some(TaskState.Created)
 
       // Whatever
       case _ => None
