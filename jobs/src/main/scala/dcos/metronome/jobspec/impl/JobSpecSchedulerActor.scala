@@ -62,7 +62,8 @@ class JobSpecSchedulerActor(
       val from = lastScheduledAt.getOrElse(now)
       val nextTime = schedule.nextExecution(from)
       scheduledAt = Some(nextTime)
-      val in = Seconds.secondsBetween(now, nextTime).getSeconds.seconds
+      // 60 secs is the smallest unit of reschedule time for cron
+      val in = Seconds.secondsBetween(now, nextTime).getSeconds.seconds.max(60.seconds)
       nextSchedule = Some(context.system.scheduler.scheduleOnce(in, self, StartJob))
       log.info(s"Spec ${spec.id}: next run is scheduled for: $nextTime (in $in)")
     }
