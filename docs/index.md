@@ -10,11 +10,10 @@ title: Cron Service for DC/OS
 </div>
 
 ## Documentation
-Metronome documentation lives on the [DC/OS docs site](https://dcos.io/docs/1.8/usage/jobs/).
+Metronome documentation lives on the [DC/OS docs site](https://dcos.io/docs/1.10/deploying-jobs/).
 
 ## Contributing
 Learn how to [contribute to the Metronome project]({{ site.baseurl }}/docs/contributing.html).
 
 ## API Reference
 Use the [Metronome REST API]({{ site.baseurl }}/docs/generated/api.html)
-
