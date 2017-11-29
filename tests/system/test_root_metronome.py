@@ -13,9 +13,8 @@ import pytest
 from common import job_no_schedule, schedule
 from dcos import metronome
 from retrying import retry
-from shakedown import dcos_version_less_than
 
-pytestmark = [pytest.mark.skipif("dcos_version_less_than('1.8')")]
+pytestmark = [pytest.mark.skipif("shakedown.dcos_version_less_than('1.8')")]
 
 
 def test_add_job():
@@ -34,7 +33,7 @@ def test_remove_job():
     try:
         client.get_job('remove-job')
         job_exists = True
-    except:
+    except Exception:
         pass
     assert not job_exists, "Job exists"
 
@@ -193,7 +192,7 @@ def test_remove_schedule():
         try:
             client.get_schedule('schedule', 'nightly')
             schedule_exists = True
-        except:
+        except Exception:
             pass
         assert not schedule_exists, "Schedule exists"
 
@@ -220,7 +219,7 @@ def test_job_constraints():
 
             @retry(wait_fixed=1000, stop_max_delay=5000)
             def check_tasks():
-                task = get_job_tasks(job_id, run_id)[0]
+                task = common.get_job_tasks(job_id, run_id)[0]
                 task_ip = task['statuses'][0]['container_status']['network_infos'][0]['ip_addresses'][0]['ip_address']
                 assert task_ip == host
 
