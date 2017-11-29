@@ -137,7 +137,7 @@ object Build extends sbt.Build {
       val CronUtils = "6.0.4"
       val Threeten = "1.3.3"
       val WixAccord = "0.7.1"
-      val Akka = "2.4.7"
+      val Akka = "2.4.20"
       val Mockito = "2.0.54-beta"
       val Metrics = "3.5.4_a2.3"
       val JsonValidate = "0.7.0"
