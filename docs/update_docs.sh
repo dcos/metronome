@@ -11,7 +11,7 @@ set -e
 # clone as separate repo
 cd $REPO_DIR;
 rm -fr "$GH_PAGES_NAME"
-git clone https://github.com/dcos/metronome.git $GH_PAGES_NAME;
+git clone git@github.com:dcos/metronome.git $GH_PAGES_NAME;
 
 # switch branch
 cd $GH_PAGES_DIR;
@@ -28,4 +28,3 @@ git add .
 git commit -m "Docs synced"
 
 echo "Changes synced but not pushed - you need to push the commit"
-

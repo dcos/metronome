@@ -1,23 +1,22 @@
-# Metronome [![Issues](https://img.shields.io/badge/Issues-JIRA-ff69b4.svg?style=flat)](https://jira.mesosphere.com/projects/MARATHON/issues/)
+# Metronome [![Issues](https://img.shields.io/badge/Issues-JIRA-ff69b4.svg?style=flat)](https://jira.mesosphere.com/browse/DCOS_OSS-1490?jql=text%20~%20%22metronome%22)
 
 Metronome is an [Apache Mesos](http://mesos.apache.org) framework for scheduled jobs.
 
 
 ## Documentation
 
-Metronome documentation is available on the [DC/OS documentation site](https://dcos.io/docs/1.10/deploying-jobs/).
+Metronome documentation is available on the [Metronome Project Site](https://dcos.github.io/metronome/) or [DC/OS documentation site](https://dcos.io/docs/1.10/deploying-jobs/).
 
 
 ## Issue Tracking
 We have been tracking issues in multiple places, which has made it hard for us to prioritize, and consolidate duplicates.
 
-In order to address these challenges, on March 6th we will be converting all GitHub issues to public JIRA tickets in Mesosphere's [on-premise JIRA instance](https://jira.mesosphere.com/projects/MARATHON/issues/) that anyone will be able to view and add to using GitHub SSO. This will not only help the Marathon/Metronome teams, it will increase transparency, allowing the community to check on sprints and the order of the ticket backlog. Issues for Metronome are tracked in project Marathon, so please make sure to choose component `metronome` when creating issues.
+In order to address these challenges, on March 6th we will be converting all GitHub issues to public JIRA tickets in Mesosphere's [on-premise JIRA instance](https://jira.mesosphere.com/browse/DCOS_OSS-1490?jql=text%20~%20%22metronome%22) that anyone will be able to view and add to using GitHub SSO. This will not only help the Marathon/Metronome teams, it will increase transparency, allowing the community to check on sprints and the order of the ticket backlog. Issues for Metronome are tracked in project Marathon, so please make sure to choose component `metronome` when creating issues.
 
-Please have a look here for more information: https://groups.google.com/forum/#!topic/marathon-framework/khtvf-ifnp8
 
 ## Getting Started
 
-Get familiar with Metronome with this step-by-step [Getting Started](https://dcos.github.io/metronome/docs/getting_started.html) guide.
+Get familiar with Metronome with this step-by-step [Getting Started](https://dcos.io/docs/1.10/deploying-jobs/) guide.
 
 ## API Reference
 
@@ -87,5 +86,5 @@ element.
 
 ## Help
 
-Have you found an issue? Feel free to report it using our [Issues](https://github.com/dcos/metronome/issues) page.
+Have you found an issue? Feel free to report it using our [Issues](https://jira.mesosphere.com/browse/DCOS_OSS-1490?jql=text%20~%20%22metronome%22) page.
 In order to speed up response times, please provide as much information on how to reproduce the problem as possible.
