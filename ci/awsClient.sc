@@ -96,6 +96,7 @@ def uploadFileAndSha(uploadFile: Path, s3path: S3Path): Artifact = {
   upload(uploadFile, s3path)
   println(s"Sha1 for file: ${uploadFile}")
   %('cat, shaFile)
+  println("")
   upload(shaFile, s3path)
   Artifact(s3path / uploadFile.last, read(shaFile))
 }

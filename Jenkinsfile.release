@@ -26,10 +26,11 @@ ansiColor('xterm') {
         ]) {
           sshagent (credentials: ['0f7ec9c9-99b2-4797-9ed5-625572d5931d']) {
             sh "bin/install-protobuf.sh"
-            sh "git checkout $params.gitsha"
-            sh "PATH=\$PATH:\$HOME/protobuf/bin sudo -E sbt clean test"
-            sh "PATH=\$PATH:\$HOME/protobuf/bin sudo -E sbt universal:packageZipTarball"
-            sh "ci/pipeline uploadTarballToS3 $params.version releases/$version"
+            sh """PATH=\$PATH:\$HOME/protobuf/bin ci/pipeline release $params.version $params.gitsha"""
+            // sh "git checkout $params.gitsha"
+            // sh "PATH=\$PATH:\$HOME/protobuf/bin sbt clean test"
+            // sh "PATH=\$PATH:\$HOME/protobuf/bin sbt universal:packageZipTarball"
+            // sh "ci/pipeline uploadTarballToS3 $params.version releases/$params.version"
           }
         }
       } finally {

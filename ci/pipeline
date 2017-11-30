@@ -41,7 +41,7 @@ def checkSystemIntegrationTests(logFileName: String): Unit = {
  */
 @main
 def zipSandboxLogs(logFileName: String = "ci.log"): Unit = {
-  Try(%("tar", "-zcf", "sandboxes.tar.gz", "sandboxes"))
+  println(s"zipping file: $logFileName")
   Try(%("tar", "-zcf", s"$logFileName.tar.gz", "--remove-files", logFileName))
 }
 
@@ -69,20 +69,21 @@ def uploadTarballToS3(version: String, buildLocation: String): Option[awsClient.
 @main
 def createPackages(): String = utils.stage("Package") {
   val result = %%('sbt, "universal:packageZipTarball", "version")
-
   // Regex is for version:
   // starting with random chars, match $number$dot$number$dot$number followed by optional alpha numberic chars plus `-`
   // ending with random characters
   // we need to regex this string because we do have colored output in the `sbt version` command
-  val VersionLineRegex = "^.*(\\d+\\.\\d+\\.\\d+[-A-Za-z\\d]+).*$".r
+  val VersionLineRegex = "^.*(\\d+\\.\\d+\\.\\d+).*$".r
 
   // Nothing is what it seems. This is a poor man's way to extract the version
   // from sbt's console output until we run our Ammonite scripts in sbt.
+
+
   val version = result.out.lines.last match {
     case VersionLineRegex(v) => v
     case _ =>
         val commit = %%('git, "log", "--pretty=format:%h", "-n1").out.lines.last
-        s"unkown version in commit $commit"
+        s"unknown version in commit $commit"
   }
   println(s"Built tarballs for Metronome $version.")
   version
@@ -169,7 +170,7 @@ def jenkins(): Unit = {
  * @param gitSha The git commit sha.  This can be shorthand (ex. 0e1)
  */
 @main
-def release(requestVersion: String, gitSha: String, latest: Boolean = false): Unit = {
+def release(requestVersion: String, gitSha: String): Unit = {
 
   val tagVersion = s"v$requestVersion"
 

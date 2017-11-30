@@ -6,6 +6,7 @@ import dcos.metronome.model.{ JobId, JobRunStatus, JobSpec }
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context
 import play.api.libs.json._
@@ -13,6 +14,8 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
 class JobRunControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with ScalaFutures with GivenWhenThen with BeforeAndAfter {
+
+  implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
   "POST /jobs/{id}/runs" should {
     "create a job run when posting to the runs endpoint" in {
