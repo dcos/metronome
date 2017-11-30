@@ -28,15 +28,15 @@ class JobSpecSchedulerActor(
   private[impl] var schedules = TrieMap.empty[ScheduleSpec, ScheduleActions]
 
   override def preStart(): Unit = {
-    spec.schedules.foreach(scheduleNextRun(_))
+    spec.schedules.foreach(scheduleNextRun)
   }
 
   override def postStop(): Unit = {
-    spec.schedules.foreach(cancelSchedule(_))
+    spec.schedules.foreach(cancelSchedule)
   }
 
   override def receive: Receive = around {
-    case StartJob(s)            => runJob(s)
+    case StartJob(scheduleSpec) => runJob(scheduleSpec)
     case UpdateJobSpec(newSpec) => updateSpec(newSpec)
   }
 
@@ -51,10 +51,10 @@ class JobSpecSchedulerActor(
     val updateableSchedules = schedules.keys.filter(newSpec.schedules.contains(_)).toSet
 
     // Cancel all removed schedules
-    deletedSchedules.foreach(cancelSchedule(_))
+    deletedSchedules.foreach(cancelSchedule)
 
     // Initialize all new schedules
-    newSchedules.foreach(scheduleNextRun(_))
+    newSchedules.foreach(scheduleNextRun)
 
     // Update existing schedules if necessary
     updateableSchedules.foreach { updateableSchedule =>
@@ -71,29 +71,28 @@ class JobSpecSchedulerActor(
     }
   }
 
-  def runJob(s: ScheduleSpec): Unit = {
-    log.info(s"Start next run of schedule ${s.id} of job ${spec.id}, which was scheduled for ${schedules.get(s).map(_.scheduledAt)}")
+  def runJob(scheduleSpec: ScheduleSpec): Unit = {
+    log.info(s"Start next run of schedule ${scheduleSpec.id} of job ${spec.id}, which was scheduled for ${schedules.get(scheduleSpec).map(_.scheduledAt)}")
     runService.startJobRun(spec)
-    scheduleNextRun(s)
+    scheduleNextRun(scheduleSpec)
   }
 
-  def scheduleNextRun(s: ScheduleSpec): Unit = {
-    val scheduleActionsOpt = schedules.get(s)
-    val c = scheduleActionsOpt.map(_.cancellable)
+  def scheduleNextRun(scheduleSpec: ScheduleSpec): Unit = {
+    val scheduleActionsOpt = schedules.get(scheduleSpec)
     val scheduledAt = scheduleActionsOpt.map(_.scheduledAt)
 
-    cancelSchedule(s)
+    cancelSchedule(scheduleSpec)
 
     val now = clock.now()
     val lastScheduledAt = scheduledAt
     val from = lastScheduledAt.getOrElse(now)
 
-    val nextTime = s.nextExecution(from)
+    val nextTime = scheduleSpec.nextExecution(from)
     val in = Seconds.secondsBetween(now, nextTime).getSeconds.seconds
 
-    schedules += s -> ScheduleActions(context.system.scheduler.scheduleOnce(in, self, StartJob), nextTime)
+    schedules += scheduleSpec -> ScheduleActions(context.system.scheduler.scheduleOnce(in, self, StartJob), nextTime)
 
-    log.info(s"Spec ${spec.id}: next run of scheduler ${s.id} is scheduled for: $nextTime (in $in)")
+    log.info(s"Spec ${spec.id}: next run of scheduler ${scheduleSpec.id} is scheduled for: $nextTime (in $in)")
   }
 
   def cancelSchedule(s: ScheduleSpec): Unit = {
