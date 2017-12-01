@@ -1,0 +1,28 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "http://example.com/example.json",
+  "type": "object",
+  "properties": {
+    "version": {
+      "$id": "/properties/version",
+      "type": "string",
+      "title": "The Version Schema.",
+      "description": "Provides the build version of Metronome.",
+      "default": "",
+      "examples": [
+        "0.3.0"
+      ]
+    },
+    "lib-version": {
+      "$id": "/properties/lib-version",
+      "type": "string",
+      "title": "The Lib-version Schema.",
+      "description": "Provides the underlying Marathon lib version.",
+      "default": "",
+      "examples": [
+        "1.3.13"
+      ]
+    }
+  }
+}

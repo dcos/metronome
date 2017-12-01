@@ -25,8 +25,8 @@ class ApplicationController(metrics: Metrics) extends RestController {
 
     val infoJson = Json.toJson(
       Map(
-        "verison" -> MetronomeBuildInfo.version,
-        "lib-verison" -> MetronomeBuildInfo.marathonVersion
+        "version" -> MetronomeBuildInfo.version,
+        "lib-version" -> MetronomeBuildInfo.marathonVersion
       )
     )
     Ok(infoJson).as(ContentTypes.JSON)
