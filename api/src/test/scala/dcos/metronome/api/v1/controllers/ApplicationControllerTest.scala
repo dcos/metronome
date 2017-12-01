@@ -2,6 +2,7 @@ package dcos.metronome.api.v1.controllers
 
 import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents }
 import org.scalatestplus.play.PlaySpec
+import org.scalatest.Matchers._
 import play.api.ApplicationLoader.Context
 import play.api.libs.json.{ JsString, JsDefined }
 import play.api.test.FakeRequest
@@ -24,6 +25,16 @@ class ApplicationControllerTest extends PlaySpec with OneAppPerTestWithComponent
       status(metrics) mustBe OK
       contentType(metrics) mustBe Some("application/json")
       contentAsJson(metrics) \ "version" mustBe JsDefined(JsString("3.0.0"))
+    }
+  }
+
+  "info" should {
+    "send verison info" in {
+      val info = route(app, FakeRequest(GET, "/info")).get
+      status(info) mustBe OK
+      contentType(info) mustBe Some("application/json")
+      (contentAsJson(info) \ "version").as[String] should include regex "\\d+.\\d+.\\d+".r
+      (contentAsJson(info) \ "libVersion").as[String] should include regex "\\d+.\\d+.\\d+".r
     }
   }
 

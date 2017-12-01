@@ -10,6 +10,9 @@ import scala.io.Source
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success, Try }
 
+/**
+  * Provides build information details regarding Metronome and Marathon at runtime.
+  */
 case object MetronomeBuildInfo {
   private val metronomeJar = "\\bmesosphere\\.metronome\\.metronome-[0-9.]+".r
 
