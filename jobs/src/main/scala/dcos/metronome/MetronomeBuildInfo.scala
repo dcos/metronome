@@ -22,7 +22,7 @@ case object MetronomeBuildInfo {
       1
     }) match {
       case Success(v) => v.replace("\"", "").trim
-      case Failure(e) => "undefined"
+      case Failure(e) => "0.0.0"
     }
     version
   }
