@@ -120,7 +120,7 @@ def isMasterBuild(): Boolean = {
  * @return True if build is for pull request.
  */
 def isPullRequest(): Boolean = {
-  val pr = """marathon-pipelines/PR-(\d+)""".r
+  val pr = """metronome-pipelines/PR-(\d+)""".r
   sys.env.get("JOB_NAME").collect { case pr(_) => true }.getOrElse(false)
 }
 

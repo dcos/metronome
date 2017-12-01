@@ -18,7 +18,7 @@ import $file.utils
 val PACKAGE_DIR: Path = pwd / 'target / 'universal
 
 /**
- * Compile Metronome and run unit and integration tests followed by scapegoat.
+ * Compile Metronome and run unit.
  */
 @main
 def compileAndTest(logFileName: String): Unit = utils.stage("Compile and Test") {
@@ -26,12 +26,14 @@ def compileAndTest(logFileName: String): Unit = utils.stage("Compile and Test") 
   def run(cmd: String *) = utils.runWithTimeout(1.hour, logFileName)(cmd)
 
   run("sbt", "clean", "test")
+
+  checkSystemIntegrationTests(logFileName)
 }
 
 @main
 def checkSystemIntegrationTests(logFileName: String): Unit = {
   def run(cmd: String *) = utils.runWithTimeout(30.minutes, logFileName)(cmd)
-  run("flake8", "--count", "--max-line-length=120", "tests/system", "src/test/python")
+  run("flake8", "--count", "--max-line-length=120", "tests/system")
 }
 
 /**
@@ -47,7 +49,7 @@ def zipSandboxLogs(logFileName: String = "ci.log"): Unit = {
 
 @main
 /**
- * Upload Metronome tgz tarballs and its cha1 checksum to S3.
+ * Upload Metronome tgz tarballs and its sha1 checksum to S3.
  *
  * @param version The version to upload.
  * @param buildLocation subfolder location to upload tarball to. Example: "builds", "release"
@@ -73,14 +75,14 @@ def createPackages(): String = utils.stage("Package") {
   // starting with random chars, match $number$dot$number$dot$number followed by optional alpha numberic chars plus `-`
   // ending with random characters
   // we need to regex this string because we do have colored output in the `sbt version` command
-  val VersionLineRegex = "^.*(\\d+\\.\\d+\\.\\d+).*$".r
+  val versionLineRegex = "^.*(\\d+\\.\\d+\\.\\d+).*$".r
 
   // Nothing is what it seems. This is a poor man's way to extract the version
   // from sbt's console output until we run our Ammonite scripts in sbt.
 
 
   val version = result.out.lines.last match {
-    case VersionLineRegex(v) => v
+    case versionLineRegex(v) => v
     case _ =>
         val commit = %%('git, "log", "--pretty=format:%h", "-n1").out.lines.last
         s"unknown version in commit $commit"
