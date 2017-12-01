@@ -29,12 +29,12 @@ case object MetronomeBuildInfo {
     * first matching file for the first JAR in the class path. Instead, we need to enumerate through all of the
     * manifests, and find the one that applies to the Metronome application jar.
     */
-  lazy val ManifestPath: List[java.net.URL] =
+  lazy val manifestPath: List[java.net.URL] =
     getClass().getClassLoader().getResources("META-INF/MANIFEST.MF").filter { manifest =>
       metronomeJar.findFirstMatchIn(manifest.getPath).nonEmpty
     }.toList
 
-  lazy val manifest: Option[Manifest] = ManifestPath match {
+  lazy val manifest: Option[Manifest] = manifestPath match {
     case Nil => None
     case List(file) =>
       val mf = new Manifest()
