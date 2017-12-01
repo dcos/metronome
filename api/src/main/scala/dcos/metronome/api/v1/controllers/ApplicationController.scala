@@ -5,10 +5,12 @@ import java.util.concurrent.TimeUnit
 
 import com.codahale.metrics.json.MetricsModule
 import com.fasterxml.jackson.databind.ObjectMapper
+import dcos.metronome.MetronomeBuildInfo
 import dcos.metronome.api.RestController
 import dcos.metronome.behavior.Metrics
 import mesosphere.marathon.io.IO
 import play.api.http.ContentTypes
+import play.api.libs.json.Json
 import play.api.mvc.Action
 
 class ApplicationController(metrics: Metrics) extends RestController {
@@ -18,6 +20,18 @@ class ApplicationController(metrics: Metrics) extends RestController {
   )
 
   def ping = Action { Ok("pong") }
+
+  def info = Action {
+
+    val infoJson = Json.toJson(
+      Map(
+        "verison" -> MetronomeBuildInfo.version,
+        "lib-verison" -> MetronomeBuildInfo.marathonVersion
+      )
+    )
+    Ok(infoJson).as(ContentTypes.JSON)
+
+  }
 
   def showMetrics = Action {
     val metricsJsonString = IO.using(new StringWriter()) { writer =>
