@@ -1,5 +1,6 @@
 package dcos.metronome.api.v1
 
+import dcos.metronome.MetronomeInfo
 import dcos.metronome.api._
 import dcos.metronome.jobinfo.JobInfo
 import dcos.metronome.jobrun.StartedJobRun
@@ -235,4 +236,6 @@ package object models {
       }
     )
   }
+
+  implicit lazy val MetronomeInfoWrites: Writes[MetronomeInfo] = Json.writes[MetronomeInfo]
 }

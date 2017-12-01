@@ -14,10 +14,10 @@
         "0.3.0"
       ]
     },
-    "lib-version": {
-      "$id": "/properties/lib-version",
+    "libVersion": {
+      "$id": "/properties/libVersion",
       "type": "string",
-      "title": "The Lib-version Schema.",
+      "title": "The LibVersion Schema.",
       "description": "Provides the underlying Marathon lib version.",
       "default": "",
       "examples": [
