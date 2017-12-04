@@ -159,7 +159,7 @@ def jenkins(): Unit = {
 /**
  * Executes the Community Release which includes:
  *
- *  1. tarball with version details
+ *  1. tarball with version details 
  *  Unlike the marathon build, the version details are currently expected to be
  * in the metronome project.   When a rev sha is provided for the build, the version
  * of that build will be checked against the requestedVersion number.  It will fail
