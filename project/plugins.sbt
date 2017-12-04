@@ -24,5 +24,3 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.0.4")
 addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.0.0")
 
 addSbtPlugin("com.github.gseitz" % "sbt-protobuf" % "0.5.2")
-
-addSbtPlugin("com.sksamuel.scapegoat" %% "sbt-scapegoat" % "1.0.4")
