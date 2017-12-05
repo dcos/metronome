@@ -1,3 +1,25 @@
+# Version 0.3.0
+
+Diff [0.2.4-0.3.0](https://github.com/dcos/metronome/compare/v0.2.4...v0.3.0)
+
+## Features
+
+* Upgraded to a released version of Marathon Lib [v1.3.13](https://github.com/mesosphere/marathon/releases/tag/v1.3.13)
+* Updates to dependencies (including an Akka update to fix [schedule time wrap around bug](https://github.com/akka/akka/issues/20424))
+* Added `/info` end point for metronome version information
+
+## Bugs and Tracking
+
+* #150 Added `/info` endpoint
+* [MARATHON_EE-1717](https://jira.mesosphere.com/browse/MARATHON_EE-1717) 60s min between reschedules
+* [MARATHON_EE-1725](https://jira.mesosphere.com/browse/MARATHON_EE-1725)
+* [MARATHON_EE-1726](https://jira.mesosphere.com/browse/MARATHON_EE-1726) Upgrade Marathon libraries and dependencies
+
+
+## Download
+
+https://s3.amazonaws.com/downloads.mesosphere.io/metronome/releases/0.3.0/metronome-0.3.0.tgz
+sha: f1a85ee638bc5b31dcd5594da4e84ca3e7a36451
 
 # Version 0.2.4
 
