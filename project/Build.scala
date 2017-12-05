@@ -82,7 +82,7 @@ object Build extends sbt.Build {
     organization := "dcos",
     scalaVersion := "2.11.8",
     crossScalaVersions := Seq(scalaVersion.value),
-    scalacOptions in Compile ++= Seq(
+    scalacOptions in (Compile, doc) ++= Seq(
       "-encoding", "UTF-8",
       "-target:jvm-1.8",
       "-deprecation",
@@ -91,7 +91,8 @@ object Build extends sbt.Build {
       "-Xlog-reflective-calls",
       "-Xlint",
       "-Yno-adapted-args",
-      "-Ywarn-numeric-widen"
+      "-Ywarn-numeric-widen",
+      "-no-link-warnings" // Suppresses problems with Scaladoc @throws links
     ),
     javacOptions in Compile ++= Seq("-encoding", "UTF-8", "-source", "1.8", "-target", "1.8", "-Xlint:unchecked", "-Xlint:deprecation"),
     resolvers ++= Seq(
@@ -136,7 +137,7 @@ object Build extends sbt.Build {
       val CronUtils = "6.0.4"
       val Threeten = "1.3.3"
       val WixAccord = "0.7.1"
-      val Akka = "2.4.7"
+      val Akka = "2.4.20"
       val Mockito = "2.0.54-beta"
       val Metrics = "3.5.4_a2.3"
       val JsonValidate = "0.7.0"

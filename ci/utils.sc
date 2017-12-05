@@ -6,7 +6,20 @@ import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.FiniteDuration
 import scala.util.control.NonFatal
+import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
+import $file.provision
+
+val timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+
+def ciLogFile(name: String): File = {
+  val log = new File(name)
+  if (!log.exists())
+    log.createNewFile()
+  log
+}
 
 // Color definitions
 object Colors {
@@ -28,12 +41,18 @@ def printHr(color: String, character: String = "*", length: Int = 80): Unit = {
   printWithColor(s"${character * length}\n", color)
 }
 
+def printCurrentTime() = {
+  val date = LocalDateTime.now()
+  printWithColor(s"Started at: ${date.format(timeFormatter)}\n", Colors.BrightBlue)
+}
+
 def printStageTitle(name: String): Unit = {
   val indent = (80 - name.length) / 2
   print("\n")
   print(" " * indent)
   printWithColor(s"$name\n", Colors.BrightBlue)
   printHr(Colors.BrightBlue)
+  printCurrentTime()
 }
 
 case class BuildException(val cmd: String, val exitValue: Int, private val cause: Throwable = None.orNull)
@@ -55,19 +74,20 @@ def stage[T](name: String)(block: => T): T = {
  * Run a process with given commands and time out it runs too long.
  *
  * @param timeout The maximum time to wait.
+ * @param logFileName Name of file which collects all logs.
  * @param commands The commands that are executed in a process. E.g. "sbt",
  *  "compile".
  */
-def runWithTimeout(timeout: FiniteDuration)(commands: Seq[String]): Unit = {
+def runWithTimeout(timeout: FiniteDuration, logFileName: String)(commands: Seq[String]): Unit = {
 
   val builder = new java.lang.ProcessBuilder()
   val buildProcess = builder
     .directory(new java.io.File(pwd.toString))
     .command(commands.asJava)
     .inheritIO()
+    .redirectOutput(ProcessBuilder.Redirect.appendTo(ciLogFile(logFileName)))
     .start()
 
-  try {
     val exited = buildProcess.waitFor(timeout.length, timeout.unit)
 
     if (exited) {
@@ -82,55 +102,11 @@ def runWithTimeout(timeout: FiniteDuration)(commands: Seq[String]): Unit = {
       val cmd = commands.mkString(" ")
       throw new java.util.concurrent.TimeoutException(s"'$cmd' timed out after $timeout.")
     }
-  } finally {
-    // This also cleans forked SBT processes.
-    killStaleTestProcesses()
-  }
 }
 
-/**
- * Kill stale processes from previous pipeline runs.
- */
-@main
-def killStaleTestProcesses(): Unit = {
-  def protectedProcess(proc: String): Boolean =
-    Vector("slave.jar", "grep", "amm", "ci/pipeline").exists(proc.contains)
-
-  def eligibleProcess(proc: String): Boolean =
-    Vector("app_mock", "mesos", "java").exists(proc.contains)
-
-  def processesToKill() = %%('ps, 'aux).out.lines.filter { proc =>
-    eligibleProcess(proc) && !protectedProcess(proc)
-  }
-
-  val leaks = processesToKill()
-
-  if (leaks.isEmpty) {
-    println("No leaked processes detected")
-  } else {
-    println("This requires root permissions. If you run this on a workstation it'll kill more than you expect.\n")
-    println(s"Will kill:")
-    leaks.foreach( p => println(s"  $p"))
-
-    val pidPattern = """([^\s]+)\s+([^\s]+)\s+.*""".r
-
-    val pids = leaks.map {
-      case pidPattern(_, pid) => pid
-    }
-
-    println(s"Running 'sudo kill -9 ${pids.mkString(" ")}")
-
-    // We use %% to avoid exceptions. It is not important if the kill fails.
-    try { %%('sudo, 'kill, "-9", pids) }
-    catch { case e => println(s"Could not kill stale process.") }
-
-    // Print stale processes if any exist to see what couldn't be killed:
-    val undead = processesToKill()
-    if (undead.nonEmpty) {
-      println("Couldn't kill some leaked processes:")
-      undead.foreach( p => println(s"  $p"))
-    }
-  }
+def withCleanUp[T](block: => T): T = {
+  try { block }
+  finally { provision.killStaleTestProcesses() }
 }
 
 /**
@@ -144,6 +120,19 @@ def isMasterBuild(): Boolean = {
  * @return True if build is for pull request.
  */
 def isPullRequest(): Boolean = {
-  val pr = """marathon-pipelines/PR-(\d+)""".r
+  val pr = """metronome-pipelines/PR-(\d+)""".r
   sys.env.get("JOB_NAME").collect { case pr(_) => true }.getOrElse(false)
+}
+
+def priorPatchVersion(tag: String): Option[String] = {
+  val Array(major, minor, patch) = tag.replace("v", "").split('.').take(3).map(_.toInt)
+  if (patch == 0)
+    None
+  else
+    Some(s"v${major}.${minor}.${patch - 1}")
+}
+
+def escapeCmdArg(cmd: String): String = {
+  val subbed = cmd.replace("'", "\\'").replace("\n", "\\n")
+  s"""$$'${subbed}'"""
 }

@@ -18,46 +18,48 @@ import $file.utils
 val PACKAGE_DIR: Path = pwd / 'target / 'universal
 
 /**
- * Compile Metronome and run unit and integration tests followed by scapegoat.
+ * Compile Metronome and run unit.
  */
 @main
-def compileAndTest(): Unit = utils.stage("Compile and Test") {
+def compileAndTest(logFileName: String): Unit = utils.stage("Compile and Test") {
 
-  def run(cmd: String *) = utils.runWithTimeout(1.hour)(cmd)
+  def run(cmd: String *) = utils.runWithTimeout(1.hour, logFileName)(cmd)
 
   run("sbt", "clean", "test")
+
+  checkSystemIntegrationTests(logFileName)
 }
 
 @main
-def zipSandboxLogs(): Unit = {
-  Try(%("tar", "-zcf", "sandboxes.tar.gz", "sandboxes"))
+def checkSystemIntegrationTests(logFileName: String): Unit = {
+  def run(cmd: String *) = utils.runWithTimeout(30.minutes, logFileName)(cmd)
+  run("flake8", "--count", "--max-line-length=120", "tests/system")
+}
+
+/**
+ * Compresses sandboxes and logs.
+ *
+ * @param logFileName Name of log file.
+ */
+@main
+def zipSandboxLogs(logFileName: String = "ci.log"): Unit = {
+  println(s"zipping file: $logFileName")
+  Try(%("tar", "-zcf", s"$logFileName.tar.gz", "--remove-files", logFileName))
 }
 
 @main
 /**
- * Upload Metronome tgz tarballs and its cha1 checksum to S3.
+ * Upload Metronome tgz tarballs and its sha1 checksum to S3.
  *
+ * @param version The version to upload.
+ * @param buildLocation subfolder location to upload tarball to. Example: "builds", "release"
  * @return Artifact description if it was uploaded.
  */
-def uploadTarballToS3(): Option[awsClient.Artifact] = utils.stage("Upload Packages") {
+def uploadTarballToS3(version: String, buildLocation: String): Option[awsClient.Artifact] = utils.stage("Upload Packages") {
   import scala.collection.breakOut
 
   PACKAGE_DIR.toIO.listFiles.filter(f => f.getName.endsWith(".tgz"))
-    .headOption.flatMap(file => awsClient.archiveArtifact(Path(file)))
-}
-
-@main
-/**
- * Packages Metronome and uploads its artifacts alongside sha1 checksum to S3.
- *
- * @return Version and artifact description of Metronome build.
- */
-def createAndUploadPackages(): (String, Option[awsClient.Artifact]) = {
-  val version = createPackages()
-  val artifact = uploadTarballToS3()
-
-  createDocker()
-  (version, artifact)
+    .headOption.flatMap(file => awsClient.archiveArtifact(Path(file), awsClient.s3PathFor(buildLocation)))
 }
 
 /**
@@ -69,32 +71,31 @@ def createAndUploadPackages(): (String, Option[awsClient.Artifact]) = {
 @main
 def createPackages(): String = utils.stage("Package") {
   val result = %%('sbt, "universal:packageZipTarball", "version")
-
   // Regex is for version:
   // starting with random chars, match $number$dot$number$dot$number followed by optional alpha numberic chars plus `-`
   // ending with random characters
   // we need to regex this string because we do have colored output in the `sbt version` command
-  val VersionLineRegex = "^.*(\\d+\\.\\d+\\.\\d+[-A-Za-z\\d]+).*$".r
+  val versionLineRegex = "^.*(\\d+\\.\\d+\\.\\d+).*$".r
 
   // Nothing is what it seems. This is a poor man's way to extract the version
   // from sbt's console output until we run our Ammonite scripts in sbt.
+
+
   val version = result.out.lines.last match {
-    case VersionLineRegex(v) => v
+    case versionLineRegex(v) => v
     case _ =>
         val commit = %%('git, "log", "--pretty=format:%h", "-n1").out.lines.last
-        s"unkown version in commit $commit"
+        s"unknown version in commit $commit"
   }
   println(s"Built tarballs for Metronome $version.")
   version
 }
 
 /**
- * Create Docker, rpm and deb packages.
+ * While 'sbt, "docker:publishLocal" will create a docker.  The project is NOT setup
+ * properly (proper naming "mesosphere/metronome") nor do we currently support metronome
+ * in the universe.
  */
-@main
-def createDocker(): Unit = utils.stage("Package Docker Image, Debian and RedHat Packages") {
-  %('sbt, "docker:publishLocal")
-}
 
 /**
  * The pipeline target for GitHub pull request builds. It wraps other targets
@@ -122,17 +123,16 @@ def asPullRequest(run: => (String, Option[awsClient.Artifact])): Unit = {
  * @return Version and artifact description of Metronome build.
  */
 @main
-def run(): (String, Option[awsClient.Artifact]) = {
+def build(): String = {
 
+  val logFileName = s"ci-${sys.env.getOrElse("BUILD_TAG", "run")}.log"
   try {
-    compileAndTest()
+    compileAndTest(logFileName)
   } finally {
-    zipSandboxLogs()    // Try to archive logs in any case
+    zipSandboxLogs(logFileName)    // Try to archive logs in any case
   }
-
-  val (version, maybeArtifact) = createAndUploadPackages()
-
-  (version, maybeArtifact)
+  val version = createPackages()
+  version
 }
 
 /**
@@ -143,8 +143,46 @@ def run(): (String, Option[awsClient.Artifact]) = {
 @main
 def jenkins(): Unit = {
   if(utils.isPullRequest) {
-    asPullRequest { run() }
+    asPullRequest {
+      val version = build()
+      // Uploads
+      val artifact = uploadTarballToS3(version, "builds")
+      (version, artifact)
+    }
   } else {
-    run()
+    val version = build()
+    uploadTarballToS3(version, "builds")
   }
+}
+
+
+/**
+ * Executes the Community Release which includes:
+ *
+ *  1. tarball with version details 
+ *  Unlike the marathon build, the version details are currently expected to be
+ * in the metronome project.   When a rev sha is provided for the build, the version
+ * of that build will be checked against the requestedVersion number.  It will fail
+ * the build if the version does not match.    However this has the potential of
+ * being more error prone in that multiple commits could build the same version.  So
+ * the build will also fail if the S3 location is currently occupied by a version build.
+ * Human cleanup of release folder is required in order to rebuild a version.
+ *
+ * @param requestVersion The version attempting to be released 0.3.0
+ * @param gitSha The git commit sha.  This can be shorthand (ex. 0e1)
+ */
+@main
+def release(requestVersion: String, gitSha: String): Unit = {
+
+  val tagVersion = s"v$requestVersion"
+
+  println(s"Releasing version: $requestVersion")
+  %('git, "checkout", gitSha)
+
+  val version = build()
+  if(version != requestVersion) {
+    throw new IllegalStateException(s"Build version: $version does NOT match requested version: $requestVersion")
+  }
+
+  uploadTarballToS3(version, s"releases/$version")
 }

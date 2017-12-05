@@ -69,7 +69,7 @@ def get_job_tasks(job_id, run_id):
         taskids.append(task['id'])
 
     job_tasks = []
-    all_job_tasks = get_service_tasks('metronome')
+    all_job_tasks = shakedown.get_service_tasks('metronome')
     for task in all_job_tasks:
         for taskid in taskids:
             if taskid == task['id']:
