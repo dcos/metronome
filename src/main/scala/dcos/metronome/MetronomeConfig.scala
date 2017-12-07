@@ -21,7 +21,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   lazy val mesosUser: Option[String] = configuration.getString("metronome.mesos.user").orElse(new SystemProperties().get("user.name"))
   lazy val mesosExecutorDefault: String = configuration.getString("metronome.mesos.executor.default").getOrElse("//cmd")
   lazy val mesosFailoverTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.mesos.failover.timeout").getOrElse(7.days)
-  lazy val mesosAuthentication: Boolean = configuration.getBoolean("metronome.mesos.authentication").getOrElse(false)
+  lazy val mesosAuthentication: Boolean = configuration.getBoolean("metronome.mesos.authentication.enabled").getOrElse(false)
   lazy val mesosAuthenticationPrincipal: Option[String] = configuration.getString("metronome.mesos.authentication.principal")
   lazy val mesosAuthenticationSecretsFile: Option[String] = configuration.getString("metronome.mesos.authentication.secret.file")
 
