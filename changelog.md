@@ -1,6 +1,6 @@
-# Version 0.3.0
+# Version 0.3.1
 
-Diff [0.2.4-0.3.0](https://github.com/dcos/metronome/compare/v0.2.4...v0.3.0)
+Diff [0.2.4-0.3.1](https://github.com/dcos/metronome/compare/v0.2.4...v0.3.1)
 
 ## Features
 
@@ -18,8 +18,8 @@ Diff [0.2.4-0.3.0](https://github.com/dcos/metronome/compare/v0.2.4...v0.3.0)
 
 ## Download
 
-https://s3.amazonaws.com/downloads.mesosphere.io/metronome/releases/0.3.0/metronome-0.3.0.tgz
-sha: f1a85ee638bc5b31dcd5594da4e84ca3e7a36451
+https://s3.amazonaws.com/downloads.mesosphere.io/metronome/releases/0.3.1/metronome-0.3.1.tgz
+sha: f6fd3d48a889ea19cb13dfd908a82e53c03ffab1
 
 # Version 0.2.4
 
