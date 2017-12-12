@@ -136,6 +136,7 @@ object RunSpecConversions {
       runSpec.args.foreach { args => builder.addAllArguments(args.asJava) }
       runSpec.user.foreach(builder.setUser)
       runSpec.docker.foreach { docker => builder.setDocker(docker.toProto) }
+      runSpec.taskKillGracePeriodSeconds.foreach { killGracePeriod => builder.setTaskKillGracePeriodSeconds(killGracePeriod.toMillis) }
 
       builder.build()
     }
