@@ -1,4 +1,4 @@
-# Metronome [![Issues](https://img.shields.io/badge/Issues-JIRA-ff69b4.svg?style=flat)](https://jira.mesosphere.com/browse/DCOS_OSS-1490?jql=text%20~%20%22metronome%22)
+# Metronome [![Issues](https://img.shields.io/badge/Issues-JIRA-ff69b4.svg?style=flat)](https://jira.mesosphere.com/projects/METRONOME/)
 
 Metronome is an [Apache Mesos](http://mesos.apache.org) framework for scheduled jobs.
 
@@ -9,10 +9,7 @@ Metronome documentation is available on the [Metronome Project Site](https://dco
 
 
 ## Issue Tracking
-We have been tracking issues in multiple places, which has made it hard for us to prioritize, and consolidate duplicates.
-
-In order to address these challenges, on March 6th we will be converting all GitHub issues to public JIRA tickets in Mesosphere's [on-premise JIRA instance](https://jira.mesosphere.com/browse/DCOS_OSS-1490?jql=text%20~%20%22metronome%22) that anyone will be able to view and add to using GitHub SSO. This will not only help the Marathon/Metronome teams, it will increase transparency, allowing the community to check on sprints and the order of the ticket backlog. Issues for Metronome are tracked in project Marathon, so please make sure to choose component `metronome` when creating issues.
-
+Metronome issues are tracked as JIRA tickets in Mesosphere's [on-premise JIRA instance](https://jira.mesosphere.com/projects/METRONOME/) that anyone is able to view and add to using GitHub SSO.
 
 ## Getting Started
 
