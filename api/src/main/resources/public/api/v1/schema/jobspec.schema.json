@@ -87,6 +87,10 @@
             "image": {
               "type": "string",
               "documentation": "The docker repository image name."
+            },
+            "forcePullImage": {
+              "type": "boolean",
+              "documentation": "The containerizer will pull the image from the registry even if the image is already downloaded on the agent."
             }
           },
           "required": ["image"]
