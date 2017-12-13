@@ -180,7 +180,7 @@ message JobSpec {
     // AND taskKillGracePeriodSeconds
     // https://github.com/mesosphere/marathon/blob/releases/1.3/docs/docs/rest-api/public/api/v2/schema/AppDefinition.json
     // int64 in mesos and int32 in marathon... going with int64
-    optional int64 taskKillGracePeriodSeconds = 14;
+    optional int64 TaskKillGracePeriodSeconds = 14;
   }
   optional RunSpec run = 6;
 }

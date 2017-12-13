@@ -136,7 +136,7 @@ object RunSpecConversions {
       runSpec.args.foreach { args => builder.addAllArguments(args.asJava) }
       runSpec.user.foreach(builder.setUser)
       runSpec.docker.foreach { docker => builder.setDocker(docker.toProto) }
-      runSpec.taskKillGracePeriodSeconds.foreach { killGracePeriod => builder.setTaskKillGracePeriodSeconds(killGracePeriod.toMillis) }
+      runSpec.taskKillGracePeriodSeconds.foreach { killGracePeriod => builder.setTaskKillGracePeriodSeconds(killGracePeriod.toSeconds) }
 
       builder.build()
     }
@@ -150,6 +150,7 @@ object RunSpecConversions {
       val args = if (runSpec.getArgumentsCount == 0) None else Some(runSpec.getArgumentsList.asScala.toList)
       val user = if (runSpec.hasUser) Some(runSpec.getUser) else None
       val docker = if (runSpec.hasDocker) Some(runSpec.getDocker.toModel) else None
+      val taskKillGracePeriodSeconds = if (runSpec.hasTaskKillGracePeriodSeconds) Some(Duration(runSpec.getTaskKillGracePeriodSeconds, SECONDS)) else None
 
       JobRunSpec(
         cpus = runSpec.getCpus,
@@ -164,7 +165,8 @@ object RunSpecConversions {
         cmd = cmd,
         args = args,
         user = user,
-        docker = docker
+        docker = docker,
+        taskKillGracePeriodSeconds = taskKillGracePeriodSeconds
       )
     }
   }
