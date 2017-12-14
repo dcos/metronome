@@ -456,6 +456,30 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     verifyFailureActions(jobRun, expectedTaskCount = 1, f)
   }
 
+  test("taskKillGracePeriodSeconds is passed to Marathon when launching task") {
+    import org.mockito.ArgumentCaptor
+
+    val f = new Fixture
+
+    Given("a jobRunSpec with taskKillGracePeriodSeconds")
+    val jobSpec = JobSpec(
+      id = JobId("/test"),
+      run = JobRunSpec(taskKillGracePeriodSeconds = Some(10 seconds))
+    )
+    val (_, jobRun) = f.setupInitialExecutorActor(Some(jobSpec))
+
+    And("a new task is launched")
+    val msg = f.persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
+    msg.jobRun.status shouldBe JobRunStatus.Starting
+    f.persistenceActor.reply(JobRunPersistenceActor.JobRunCreated(f.persistenceActor.ref, jobRun, Unit))
+    import org.mockito.ArgumentCaptor
+    val argument: ArgumentCaptor[RunSpec] = ArgumentCaptor.forClass(classOf[RunSpec])
+
+    And("RunSpec is submitted to LaunchQueue with correct taskKillGracePeriod")
+    verify(f.launchQueue, atLeast(1)).add(argument.capture(), any)
+    argument.getValue.taskKillGracePeriod shouldBe Some(10 seconds)
+  }
+
   def verifyFailureActions(jobRun: JobRun, expectedTaskCount: Int, f: Fixture): Unit = {
     import f._
 
@@ -544,8 +568,9 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       *
       *  @return A tuple containing the ActorRef and the JobRun
       */
-    def setupInitialExecutorActor(): (ActorRef, JobRun) = {
-      val startingJobRun = new JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Initial, clock.now(), None, Map.empty)
+    def setupInitialExecutorActor(spec: Option[JobSpec] = None): (ActorRef, JobRun) = {
+      val jobSpec = spec.getOrElse(defaultJobSpec)
+      val startingJobRun = new JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Initial, clock.now(), None, Map.empty)
       val actorRef: ActorRef = executorActor(startingJobRun)
       (actorRef, startingJobRun)
     }
