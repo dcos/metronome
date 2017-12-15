@@ -15,6 +15,7 @@ import play.api.libs.json.{ Json, _ }
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.collection.immutable.Seq
+import scala.concurrent.duration
 
 package object models {
 
@@ -139,6 +140,14 @@ package object models {
     (__ \ "activeDeadlineSeconds").formatNullable[Duration]
   ) (RestartSpec.apply, unlift(RestartSpec.unapply))
 
+  implicit lazy val FiniteDurationFormat: Format[FiniteDuration] = new Format[FiniteDuration] {
+    override def writes(o: FiniteDuration): JsValue = JsNumber(o.toSeconds)
+    override def reads(json: JsValue): JsResult[FiniteDuration] = json match {
+      case JsNumber(value) => JsSuccess(Duration(value.toLong, SECONDS))
+      case invalid         => JsError(s"'$invalid' is not a valid duration. ")
+    }
+  }
+
   implicit lazy val RunSpecFormat: Format[JobRunSpec] = (
     (__ \ "cpus").formatNullable[Double].withDefault(JobRunSpec.DefaultCpus) ~
     (__ \ "mem").formatNullable[Double].withDefault(JobRunSpec.DefaultMem) ~
@@ -152,7 +161,8 @@ package object models {
     (__ \ "maxLaunchDelay").formatNullable[Duration].withDefault(JobRunSpec.DefaultMaxLaunchDelay) ~
     (__ \ "docker").formatNullable[DockerSpec] ~
     (__ \ "volumes").formatNullable[Seq[Volume]].withDefault(JobRunSpec.DefaultVolumes) ~
-    (__ \ "restart").formatNullable[RestartSpec].withDefault(JobRunSpec.DefaultRestartSpec)
+    (__ \ "restart").formatNullable[RestartSpec].withDefault(JobRunSpec.DefaultRestartSpec) ~
+    (__ \ "taskKillGracePeriodSeconds").formatNullable[FiniteDuration]
   )(JobRunSpec.apply, unlift(JobRunSpec.unapply))
 
   implicit lazy val JobSpecFormat: Format[JobSpec] = (

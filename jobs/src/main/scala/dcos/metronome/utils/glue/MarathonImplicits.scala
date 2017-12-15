@@ -105,7 +105,7 @@ object MarathonImplicits {
         container = jobSpec.toContainer,
         healthChecks = Set.empty[HealthCheck],
         readinessChecks = Seq.empty[ReadinessCheck],
-        taskKillGracePeriod = None,
+        taskKillGracePeriod = jobSpec.run.taskKillGracePeriodSeconds,
         dependencies = Set.empty[PathId],
         upgradeStrategy = UpgradeStrategy(minimumHealthCapacity = 0.0, maximumOverCapacity = 1.0),
         labels = jobSpec.labels,

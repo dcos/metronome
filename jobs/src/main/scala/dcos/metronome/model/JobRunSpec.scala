@@ -6,19 +6,20 @@ import scala.collection.immutable._
 case class Artifact(uri: String, extract: Boolean = true, executable: Boolean = false, cache: Boolean = false)
 
 case class JobRunSpec(
-  cpus:           Double              = JobRunSpec.DefaultCpus,
-  mem:            Double              = JobRunSpec.DefaultMem,
-  disk:           Double              = JobRunSpec.DefaultDisk,
-  cmd:            Option[String]      = JobRunSpec.DefaultCmd,
-  args:           Option[Seq[String]] = JobRunSpec.DefaultArgs,
-  user:           Option[String]      = JobRunSpec.DefaultUser,
-  env:            Map[String, String] = JobRunSpec.DefaultEnv,
-  placement:      PlacementSpec       = JobRunSpec.DefaultPlacement,
-  artifacts:      Seq[Artifact]       = JobRunSpec.DefaultArtifacts,
-  maxLaunchDelay: Duration            = JobRunSpec.DefaultMaxLaunchDelay,
-  docker:         Option[DockerSpec]  = JobRunSpec.DefaultDocker,
-  volumes:        Seq[Volume]         = JobRunSpec.DefaultVolumes,
-  restart:        RestartSpec         = JobRunSpec.DefaultRestartSpec
+  cpus:                       Double                 = JobRunSpec.DefaultCpus,
+  mem:                        Double                 = JobRunSpec.DefaultMem,
+  disk:                       Double                 = JobRunSpec.DefaultDisk,
+  cmd:                        Option[String]         = JobRunSpec.DefaultCmd,
+  args:                       Option[Seq[String]]    = JobRunSpec.DefaultArgs,
+  user:                       Option[String]         = JobRunSpec.DefaultUser,
+  env:                        Map[String, String]    = JobRunSpec.DefaultEnv,
+  placement:                  PlacementSpec          = JobRunSpec.DefaultPlacement,
+  artifacts:                  Seq[Artifact]          = JobRunSpec.DefaultArtifacts,
+  maxLaunchDelay:             Duration               = JobRunSpec.DefaultMaxLaunchDelay,
+  docker:                     Option[DockerSpec]     = JobRunSpec.DefaultDocker,
+  volumes:                    Seq[Volume]            = JobRunSpec.DefaultVolumes,
+  restart:                    RestartSpec            = JobRunSpec.DefaultRestartSpec,
+  taskKillGracePeriodSeconds: Option[FiniteDuration] = JobRunSpec.DefaultTaskKillGracePeriodSeconds
 )
 
 object JobRunSpec {
@@ -35,5 +36,6 @@ object JobRunSpec {
   val DefaultDocker = None
   val DefaultVolumes = Seq.empty[Volume]
   val DefaultRestartSpec = RestartSpec()
+  val DefaultTaskKillGracePeriodSeconds = None
 }
 
