@@ -1,8 +1,8 @@
 package dcos.metronome.api.v1.controllers
 
 import dcos.metronome.api.v1.models._
-import dcos.metronome.api.{ TestAuthFixture, MockApiComponents, OneAppPerTestWithComponents, UnknownJob }
-import dcos.metronome.model.{ JobId, CronSpec, JobSpec, ScheduleSpec }
+import dcos.metronome.api._
+import dcos.metronome.model.{ CronSpec, JobId, JobSpec, ScheduleSpec }
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
@@ -169,6 +169,17 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
 
       Then("a forbidden response is send")
       status(unauthorized) mustBe FORBIDDEN
+    }
+  }
+
+  "POST /jobs/{id}" should {
+    "end as 404 invalid request with error message" in {
+      Given("An invalid request")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs/${jobSpec1.id}").withJsonBody(jobSpec1Json)).get
+
+      Then("404 response with a message is returned")
+      status(response) mustBe NOT_FOUND
+      contentAsJson(response) \ "message" mustBe JsDefined(JsString(ErrorHandler.noRouteHandlerMessage))
     }
   }
 
