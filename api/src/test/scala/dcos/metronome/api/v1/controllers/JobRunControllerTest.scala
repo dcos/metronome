@@ -98,6 +98,45 @@ class JobRunControllerTest extends PlaySpec with OneAppPerTestWithComponents[Moc
       Then("a forbidden response is send")
       status(unauthorized) mustBe FORBIDDEN
     }
+
+    "responses auth in runs show up in request for specific instance" in {
+      Given("A job with a run")
+      route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
+      val run = route(app, FakeRequest(POST, s"/v1/jobs/$specId/runs")).get
+      val runId = (contentAsJson(run) \ "id").as[String]
+
+      When("A specific run is requested")
+      val instanceResponse = route(app, FakeRequest(GET, s"/v1/jobs/$specId/runs/$runId")).get
+      val runsResponse = route(app, FakeRequest(GET, s"/v1/jobs/$specId/runs")).get
+
+      Then("A specific run is returned")
+      status(instanceResponse) mustBe OK
+      contentType(instanceResponse) mustBe Some("application/json")
+      (contentAsJson(instanceResponse) \ "id").as[String] mustBe runId
+
+      status(runsResponse) mustBe OK
+      contentType(runsResponse) mustBe Some("application/json")
+      contentAsJson(runsResponse).as[JsArray].value.size mustBe 1
+    }
+
+    "responses not auth in runs do not show up in request for specific instance" in {
+      Given("A job with a run")
+      route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
+      val run = route(app, FakeRequest(POST, s"/v1/jobs/$specId/runs")).get
+      val runId = (contentAsJson(run) \ "id").as[String]
+
+      When("A specific run is requested")
+      auth.authorized = false
+      val instanceResponse = route(app, FakeRequest(GET, s"/v1/jobs/$specId/runs/$runId")).get
+      val runsResponse = route(app, FakeRequest(GET, s"/v1/jobs/$specId/runs")).get
+
+      Then("A specific run is returned")
+      status(instanceResponse) mustBe UNAUTHORIZED
+
+      status(runsResponse) mustBe OK
+      contentType(runsResponse) mustBe Some("application/json")
+      contentAsJson(runsResponse).as[JsArray].value.size mustBe 0
+    }
   }
 
   "GET /jobs/{id}/runs/{runId}" should {
