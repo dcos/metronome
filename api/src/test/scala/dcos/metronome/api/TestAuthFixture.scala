@@ -34,7 +34,7 @@ class TestAuthFixture extends Mockito with Status {
       action:    AuthorizedAction[Resource],
       resource:  Resource
     ): Boolean = {
-      authorized && authFn(resource)
+      authFn(resource) && authorized
     }
   }
 
