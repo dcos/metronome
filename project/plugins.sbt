@@ -1,7 +1,7 @@
 resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 
 // The Play plugin
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.5.3")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.5.18")
 
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.8.2")
 
@@ -24,3 +24,5 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.0.4")
 addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.0.0")
 
 addSbtPlugin("com.github.gseitz" % "sbt-protobuf" % "0.5.2")
+
+addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0-RC13")
