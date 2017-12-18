@@ -37,5 +37,5 @@ class ErrorHandler extends HttpErrorHandler {
 }
 
 object ErrorHandler {
-  val noRouteHandlerMessage = "Unsupported route, no handler found."
+  val noRouteHandlerMessage = "Unknown route."
 }
