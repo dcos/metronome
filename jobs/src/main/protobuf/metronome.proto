@@ -173,6 +173,14 @@ message JobSpec {
       optional int64 activeDeadline = 2;
     }
     optional RestartSpec restart = 13;
+
+    // mesos kill policy https://github.com/apache/mesos/blob/master/include/mesos/mesos.proto#L625
+    // for some reason referred to as taskKillGracePeriod in marathon.
+    // https://github.com/mesosphere/marathon/blob/releases/1.3/src/main/scala/mesosphere/marathon/state/AppDefinition.scala#L79
+    // AND taskKillGracePeriodSeconds
+    // https://github.com/mesosphere/marathon/blob/releases/1.3/docs/docs/rest-api/public/api/v2/schema/AppDefinition.json
+    // int64 in mesos and int32 in marathon... going with int64
+    optional int64 task_kill_grace_period_seconds = 14;
   }
   optional RunSpec run = 6;
 }

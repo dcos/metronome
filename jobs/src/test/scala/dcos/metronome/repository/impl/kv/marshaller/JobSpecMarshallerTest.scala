@@ -44,7 +44,8 @@ class JobSpecMarshallerTest extends FunSuite with Matchers {
       volumes = Seq(
         Volume(containerPath = "/var/log", hostPath = "/sandbox/task1/var/log", mode = Mode.RW)
       ),
-      restart = RestartSpec(policy = RestartPolicy.OnFailure, activeDeadline = Some(15.days))
+      restart = RestartSpec(policy = RestartPolicy.OnFailure, activeDeadline = Some(15.days)),
+      taskKillGracePeriodSeconds = Some(10 seconds)
     )
 
     val jobSpec = JobSpec(
