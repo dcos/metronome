@@ -31,7 +31,7 @@ class JobRunController(
   def getJobRun(id: JobId, runId: String) = AuthorizedAction.async { implicit request =>
     async {
       await(jobRunService.getJobRun(JobRunId(id, runId))) match {
-        case Some(run) => request.authorized(ViewRunSpec, run, Ok(run))
+        case Some(run) => request.authorized(ViewRunSpec, run.jobRun.jobSpec, Ok(run))
         case None      => NotFound(UnknownJobRun(id, runId))
       }
     }
