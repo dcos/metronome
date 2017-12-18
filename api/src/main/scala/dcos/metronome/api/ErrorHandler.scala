@@ -15,7 +15,8 @@ class ErrorHandler extends HttpErrorHandler {
 
   override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] = {
     log.debug(s"Client Error on path ${request.path}. Message: $message Status: $statusCode")
-    val json = Json.obj("message" -> escape(message), "requestPath" -> escape(request.path))
+    val outputMessage = if (statusCode == NOT_FOUND) { ErrorHandler.noRouteHandlerMessage } else { message }
+    val json = Json.obj("message" -> escape(outputMessage), "requestPath" -> escape(request.path))
     Future.successful(Results.Status(statusCode)(json))
   }
 
@@ -33,4 +34,8 @@ class ErrorHandler extends HttpErrorHandler {
     * To prevent possible interpretation of the message: all strings get HTML escaped
     */
   private def escape(msg: String): String = HtmlFormat.escape(msg).body
+}
+
+object ErrorHandler {
+  val noRouteHandlerMessage = "Unknown route."
 }
