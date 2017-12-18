@@ -457,7 +457,6 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
   }
 
   test("taskKillGracePeriodSeconds is passed to Marathon when launching task") {
-    import org.mockito.ArgumentCaptor
 
     val f = new Fixture
 
@@ -478,6 +477,29 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     And("RunSpec is submitted to LaunchQueue with correct taskKillGracePeriod")
     verify(f.launchQueue, atLeast(1)).add(argument.capture(), any)
     argument.getValue.taskKillGracePeriod shouldBe Some(10 seconds)
+  }
+
+  test("forcePullImage is passed to Marathon when launching task") {
+
+    val f = new Fixture
+
+    Given("a jobRunSpec with forcePullImage")
+    val jobSpec = JobSpec(
+      id = JobId("/test"),
+      run = JobRunSpec(docker = Some(DockerSpec("image", forcePullImage = true)))
+    )
+    val (_, jobRun) = f.setupInitialExecutorActor(Some(jobSpec))
+
+    And("a new task is launched")
+    val msg = f.persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
+    msg.jobRun.status shouldBe JobRunStatus.Starting
+    f.persistenceActor.reply(JobRunPersistenceActor.JobRunCreated(f.persistenceActor.ref, jobRun, Unit))
+    import org.mockito.ArgumentCaptor
+    val argument: ArgumentCaptor[RunSpec] = ArgumentCaptor.forClass(classOf[RunSpec])
+
+    And("RunSpec is submitted to LaunchQueue with correct taskKillGracePeriod")
+    verify(f.launchQueue, atLeast(1)).add(argument.capture(), any)
+    argument.getValue.container.get.docker().get.forcePullImage shouldBe true
   }
 
   def verifyFailureActions(jobRun: JobRun, expectedTaskCount: Int, f: Fixture): Unit = {

@@ -4,7 +4,7 @@ import dcos.metronome.api.v1.models._
 import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents, TestAuthFixture, UnknownJob, ErrorHandler }
 import dcos.metronome.model._
 import mesosphere.marathon.core.plugin.PluginManager
-import org.scalatest.{BeforeAndAfter, GivenWhenThen}
+import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context
