@@ -497,7 +497,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     import org.mockito.ArgumentCaptor
     val argument: ArgumentCaptor[RunSpec] = ArgumentCaptor.forClass(classOf[RunSpec])
 
-    And("RunSpec is submitted to LaunchQueue with correct taskKillGracePeriod")
+    And("RunSpec is submitted to LaunchQueue with forcePullImage")
     verify(f.launchQueue, atLeast(1)).add(argument.capture(), any)
     argument.getValue.container.get.docker().get.forcePullImage shouldBe true
   }
