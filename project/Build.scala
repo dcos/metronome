@@ -16,7 +16,8 @@ import scalariform.formatter.preferences._
 object Build extends sbt.Build {
 
   val pbSettings = PB.projectSettings ++ Seq(
-    (version in ProtobufConfig) := "3.3.0"
+    (version in ProtobufConfig) := "3.3.0",
+    PB.Keys.protobufProtoc := "/root/protobuf/bin/protoc"
   )
   lazy val metronome = Project(
     id = "metronome",
