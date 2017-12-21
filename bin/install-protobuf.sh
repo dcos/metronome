@@ -12,6 +12,7 @@ if [ ! -d "$HOME/protoc" ]; then
   unzip -d protoc-3.3.0 -a protoc-3.3.0.zip
   mv -v ./protoc-3.3.0 ~/protoc
   rm protoc-3.3.0.zip
+  export PATH=~/protoc/bin:$PATH
 else
   echo "Using already installed protoc."
 fi
