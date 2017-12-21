@@ -1,17 +1,20 @@
 #!/bin/sh
+
+VERSION="${1:-3.3.0}"
+
 set -e
 # check to see if protobuf folder is empty
-download_url='https://github.com/google/protobuf/releases/download/v3.3.0/protoc-3.3.0-linux-x86_64.zip'
-unamestr=`uname`
-echo $unamestr
-if [ "$unamestr" == 'Darwin' ]; then
-   download_url='https://github.com/google/protobuf/releases/download/v3.3.0/protoc-3.3.0-osx-x86_64.zip'
+DOWNLOAD_URL="https://github.com/google/protobuf/releases/download/v$VERSION/protoc-$VERSION-linux-x86_64.zip"
+PLATFORM=`uname`
+echo $PLATFORM
+if [ "$PLATFORM" == 'Darwin' ]; then
+   DOWNLOAD_URL="https://github.com/google/protobuf/releases/download/v$VERSION/protoc-$VERSION-osx-x86_64.zip"
 fi
 if [ ! -d "$HOME/protobuf" ]; then
-  curl -L -o protoc-3.3.0.zip $download_url
-  unzip -d protoc-3.3.0 -a protoc-3.3.0.zip
-  mv -v ./protoc-3.3.0 ~/protobuf
-  rm protoc-3.3.0.zip
+  curl -L -o protoc.zip ${DOWNLOAD_URL}
+  unzip -d protoc -a protoc.zip
+  mv -v ./protoc ~/protobuf
+  rm protoc.zip
 else
   echo "Using already installed protoc."
 fi
