@@ -12,6 +12,7 @@ if [ ! -d "$HOME/protoc" ]; then
   unzip -d protoc-3.3.0 -a protoc-3.3.0.zip
   mv -v ./protoc-3.3.0 ~/protobuf
   rm protoc-3.3.0.zip
+  ls ~/protobuf/bin/
 else
   echo "Using already installed protoc."
 fi
