@@ -142,6 +142,11 @@ message JobSpec {
 
     message DockerSpec {
       optional string image = 1;
+      // With this flag set to true, the docker containerizer will
+      // pull the docker image from the registry even if the image
+      // is already downloaded on the agent.
+      optional bool force_pull_image = 2;
+
     }
     optional DockerSpec docker = 11;
 

@@ -279,12 +279,12 @@ object RunSpecConversions {
 
   implicit class DockerSpecToProto(val dockerSpec: DockerSpec) extends AnyVal {
     def toProto: Protos.JobSpec.RunSpec.DockerSpec = {
-      Protos.JobSpec.RunSpec.DockerSpec.newBuilder().setImage(dockerSpec.image).build()
+      Protos.JobSpec.RunSpec.DockerSpec.newBuilder().setImage(dockerSpec.image).setForcePullImage(dockerSpec.forcePullImage).build()
     }
   }
 
   implicit class ProtoToDockerSpec(val dockerSpec: Protos.JobSpec.RunSpec.DockerSpec) extends AnyVal {
-    def toModel: DockerSpec = DockerSpec(image = dockerSpec.getImage)
+    def toModel: DockerSpec = DockerSpec(image = dockerSpec.getImage, forcePullImage = dockerSpec.getForcePullImage)
   }
 
   implicit class EnvironmentToProto(val environment: Map[String, String]) extends AnyVal {

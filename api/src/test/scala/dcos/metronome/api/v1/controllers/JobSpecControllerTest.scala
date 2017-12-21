@@ -307,7 +307,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
 
   import scala.concurrent.duration._
 
-  def spec(id: String) = JobSpec(JobId(id), run = JobRunSpec(taskKillGracePeriodSeconds = Some(10 seconds)))
+  def spec(id: String) = JobSpec(JobId(id), run = JobRunSpec(taskKillGracePeriodSeconds = Some(10 seconds), docker = Some(DockerSpec("image", forcePullImage = true))))
   val CronSpec(cron) = "* * * * *"
   val schedule1 = ScheduleSpec("id1", cron)
   val jobSpec1 = spec("spec1")
