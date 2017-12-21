@@ -12,7 +12,8 @@ if [ ! -d "$HOME/protobuf" ]; then
   unzip -d protoc-3.3.0 -a protoc-3.3.0.zip
   mv -v ./protoc-3.3.0 ~/protobuf
   rm protoc-3.3.0.zip
-  ls ~/protobuf/bin/
+  export PATH=~/protobuf/bin:$PATH
+  protoc
 else
   echo "Using already installed protoc."
 fi
