@@ -10,9 +10,8 @@ fi
 if [ ! -d "$HOME/protoc" ]; then
   curl -L -o protoc-3.3.0.zip $download_url
   unzip -d protoc-3.3.0 -a protoc-3.3.0.zip
-  mv -v ./protoc-3.3.0 ~/protoc
+  mv -v ./protoc-3.3.0 ~/protobuf
   rm protoc-3.3.0.zip
-  export PATH=~/protoc/bin:$PATH
 else
   echo "Using already installed protoc."
 fi
