@@ -22,3 +22,5 @@ project/plugins/project/
 
 sandboxes.tar.gz
 .DS_Store
+protobuf-*/
+*.tar.gz

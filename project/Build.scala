@@ -8,12 +8,16 @@ import play.sbt.{ PlayLayoutPlugin, PlayScala }
 import sbt.Keys._
 import sbt._
 import sbtprotobuf.{ ProtobufPlugin => PB }
+import sbtprotobuf.ProtobufPlugin.Keys.ProtobufConfig
 import com.typesafe.sbt.SbtScalariform._
 import scalariform.formatter.preferences._
 
 
 object Build extends sbt.Build {
 
+  val pbSettings = PB.projectSettings ++ Seq(
+    (version in ProtobufConfig) := "3.3.0"
+  )
   lazy val metronome = Project(
     id = "metronome",
     base = file("."),
@@ -58,7 +62,7 @@ object Build extends sbt.Build {
   lazy val jobs = Project(
     id = "jobs",
     base = file("jobs"),
-    settings = projectSettings ++ PB.protobufSettings ++ Seq(
+    settings = projectSettings ++ pbSettings ++ Seq(
       libraryDependencies ++= Seq(
         Dependency.asyncAwait,
         Dependency.playJson,
