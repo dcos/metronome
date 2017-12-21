@@ -4,7 +4,7 @@ set -e
 download_url='https://github.com/google/protobuf/releases/download/v3.3.0/protoc-3.3.0-linux-x86_32.zip'
 unamestr=`uname`
 echo $unamestr
-if [[ "$unamestr" == 'Darwin' ]]; then
+if [ "$unamestr" == 'Darwin' ]; then
    download_url='https://github.com/google/protobuf/releases/download/v3.3.0/protoc-3.3.0-osx-x86_64.zip'
 fi
 if [ ! -d "$HOME/protoc" ]; then
