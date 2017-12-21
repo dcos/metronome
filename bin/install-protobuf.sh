@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 # check to see if protobuf folder is empty
-download_url='https://github.com/google/protobuf/releases/download/v3.3.0/protoc-3.3.0-linux-x86_32.zip'
+download_url='https://github.com/google/protobuf/releases/download/v3.3.0/protoc-3.3.0-linux-x86_64.zip'
 unamestr=`uname`
 echo $unamestr
 if [ "$unamestr" == 'Darwin' ]; then
@@ -14,8 +14,7 @@ if [ ! -d "$HOME/protobuf" ]; then
   rm protoc-3.3.0.zip
   export PATH=~/protobuf/bin:$PATH
   ls -l ~/protobuf/bin
+  ~/protobuf/bin/protoc
 else
   echo "Using already installed protoc."
 fi
-
-~/protobuf/bin/protoc
