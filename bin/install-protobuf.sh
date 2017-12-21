@@ -14,7 +14,6 @@ if [ ! -d "$HOME/protobuf" ]; then
   rm protoc-3.3.0.zip
   export PATH=~/protobuf/bin:$PATH
   ls -l ~/protobuf/bin
-  ~/protobuf/bin/protoc
 else
   echo "Using already installed protoc."
 fi
