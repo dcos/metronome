@@ -45,6 +45,8 @@ class JobRunExecutorActor(
   val runSpecId = jobRun.id.toPathId
 
   override def preStart(): Unit = {
+    scheduleStartingDeadlineTimeout()
+    
     jobRun.status match {
       case JobRunStatus.Initial => becomeCreating()
 
