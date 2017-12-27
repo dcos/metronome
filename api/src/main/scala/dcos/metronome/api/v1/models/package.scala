@@ -6,7 +6,9 @@ import dcos.metronome.jobinfo.JobInfo
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
+import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedTaskInfo
 import mesosphere.marathon.core.task.Task
+import mesosphere.marathon.state.RunSpec
 import org.joda.time.{ DateTime, DateTimeZone }
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
@@ -248,4 +250,13 @@ package object models {
   }
 
   implicit lazy val MetronomeInfoWrites: Writes[MetronomeInfo] = Json.writes[MetronomeInfo]
+
+  implicit lazy val QueuedTaskInfoWrites: Writes[QueuedTaskInfo] = new Writes[QueuedTaskInfo] {
+    override def writes(o: QueuedTaskInfo): JsValue = Json.obj(
+      "app" -> o.runSpec.toString,
+      "toLaunch" -> o.tasksLeftToLaunch,
+      "backoff" -> o.backOffUntil.toDateTime
+    )
+  }
+
 }

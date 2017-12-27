@@ -3,6 +3,8 @@ GET /ping dcos.metronome.api.v1.controllers.ApplicationController.ping
 GET /info dcos.metronome.api.v1.controllers.ApplicationController.info
 GET /v1/metrics dcos.metronome.api.v1.controllers.ApplicationController.showMetrics
 
+GET /v1/deployments dcos.metronome.api.v1.controllers.QueueController.queue
+
 # Job routes
 GET /v1/jobs dcos.metronome.api.v1.controllers.JobSpecController.listJobs(embed: Set[Embed] ?= Set.empty[Embed])
 POST /v1/jobs dcos.metronome.api.v1.controllers.JobSpecController.createJob
