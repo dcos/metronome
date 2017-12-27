@@ -1,9 +1,10 @@
 package dcos.metronome
 package jobrun
 
-import dcos.metronome.model.{ JobId, JobRun, JobRunId, JobSpec }
+import dcos.metronome.model.{JobId, JobRun, JobRunId, JobSpec}
 
 import scala.concurrent.Future
+import scala.concurrent.duration.Duration
 
 /**
   * The JobRunService can be used to start JobRuns, kill started JobRuns and list active JobRuns.
@@ -40,7 +41,7 @@ trait JobRunService {
     * @param jobSpec the specification to run.
     * @return the started job run
     */
-  def startJobRun(jobSpec: JobSpec): Future[StartedJobRun]
+  def startJobRun(jobSpec: JobSpec, startingDeadline: Option[Duration] = None): Future[StartedJobRun]
 
   /**
     * Kill a given job run by the given job run id.

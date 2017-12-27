@@ -3,24 +3,26 @@ package jobrun.impl
 
 import akka.actor._
 import dcos.metronome.JobRunDoesNotExist
-import dcos.metronome.behavior.{ ActorBehavior, Behavior }
+import dcos.metronome.behavior.{ActorBehavior, Behavior}
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
-import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
+import dcos.metronome.repository.{LoadContentOnStartup, Repository}
 import dcos.metronome.utils.time.Clock
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.Promise
+import scala.concurrent.duration.Duration
 
 /**
   * Knows and manages all active JobRunExecutors.
   */
 class JobRunServiceActor(
-  clock:           Clock,
-  executorFactory: (JobRun, Promise[JobResult]) => Props,
-  val repo:        Repository[JobRunId, JobRun], //TODO: remove the repo
-  val behavior:    Behavior) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash with ActorBehavior {
+    clock:           Clock,
+    executorFactory: (JobRun, Option[Duration], Promise[JobResult]) => Props,
+    val repo:        Repository[JobRunId, JobRun], //TODO: remove the repo
+    val behavior:    Behavior
+) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash with ActorBehavior {
 
   import JobRunExecutorActor._
   import JobRunServiceActor._
@@ -47,7 +49,7 @@ class JobRunServiceActor(
     case KillJobRun(id)                => killJobRun(id)
 
     // trigger messages
-    case TriggerJobRun(spec)           => triggerJobRun(spec)
+    case TriggerJobRun(spec, startingDeadline)           => triggerJobRun(spec, startingDeadline)
 
     // executor messages
     case JobRunUpdate(started)         => updateJobRun(started)
@@ -61,19 +63,19 @@ class JobRunServiceActor(
 
   def runsForJob(jobId: JobId): Iterable[StartedJobRun] = allJobRuns.values.filter(_.jobRun.id.jobId == jobId)
 
-  def triggerJobRun(spec: JobSpec): Unit = {
+  def triggerJobRun(spec: JobSpec, startingDeadline: Option[Duration]): Unit = {
     log.info(s"Trigger new JobRun for JobSpec: $spec")
     val jobRun = new JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.now(), None, Map.empty)
-    val startedJobRun = startJobRun(jobRun)
+    val startedJobRun = startJobRun(jobRun, startingDeadline)
     sender() ! startedJobRun
   }
 
-  def startJobRun(jobRun: JobRun): StartedJobRun = {
+  def startJobRun(jobRun: JobRun, startingDeadline: Option[Duration]): StartedJobRun = {
     log.info(s"Start new JobRun: ${jobRun.id}")
     val resultPromise = Promise[JobResult]()
 
     // create new executor and store reference
-    val executor = context.actorOf(executorFactory(jobRun, resultPromise), s"executor:${jobRun.id}")
+    val executor = context.actorOf(executorFactory(jobRun, startingDeadline, resultPromise), s"executor:${jobRun.id}")
     context.watch(executor)
     allRunExecutors += jobRun.id -> executor
 
@@ -155,11 +157,11 @@ object JobRunServiceActor {
   case class GetJobRun(id: JobRunId)
   case class GetActiveJobRuns(jobId: JobId)
   case class KillJobRun(id: JobRunId)
-  case class TriggerJobRun(jobSpec: JobSpec)
+  case class TriggerJobRun(jobSpec: JobSpec, startingDeadline: Option[Duration])
 
   def props(
     clock:           Clock,
-    executorFactory: (JobRun, Promise[JobResult]) => Props,
+    executorFactory: (JobRun, Option[Duration], Promise[JobResult]) => Props,
     repo:            Repository[JobRunId, JobRun],
     behavior:        Behavior): Props = Props(new JobRunServiceActor(clock, executorFactory, repo, behavior))
 

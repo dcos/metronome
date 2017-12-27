@@ -4,10 +4,11 @@ package jobrun.impl
 import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
-import dcos.metronome.jobrun.{ JobRunConfig, JobRunService, StartedJobRun }
-import dcos.metronome.model.{ JobId, JobRun, JobRunId, JobSpec }
+import dcos.metronome.jobrun.{JobRunConfig, JobRunService, StartedJobRun}
+import dcos.metronome.model.{JobId, JobRun, JobRunId, JobSpec}
 
 import scala.concurrent.Future
+import scala.concurrent.duration.Duration
 
 private[jobrun] class JobRunServiceDelegate(
   config:   JobRunConfig,
@@ -32,7 +33,7 @@ private[jobrun] class JobRunServiceDelegate(
     actorRef.ask(GetActiveJobRuns(jobId)).mapTo[Iterable[StartedJobRun]]
   }
 
-  override def startJobRun(jobSpec: JobSpec): Future[StartedJobRun] = {
-    actorRef.ask(TriggerJobRun(jobSpec)).mapTo[StartedJobRun]
+  override def startJobRun(jobSpec: JobSpec, startingDeadline: Option[Duration] = None): Future[StartedJobRun] = {
+    actorRef.ask(TriggerJobRun(jobSpec, startingDeadline)).mapTo[StartedJobRun]
   }
 }
