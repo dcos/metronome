@@ -1,10 +1,10 @@
 package dcos.metronome
 package jobrun
 
-import akka.actor.{ActorContext, ActorSystem, Props}
+import akka.actor.{ ActorContext, ActorSystem, Props }
 import dcos.metronome.behavior.Behavior
-import dcos.metronome.jobrun.impl.{JobRunExecutorActor, JobRunPersistenceActor, JobRunServiceActor, JobRunServiceDelegate}
-import dcos.metronome.model.{JobResult, JobRun, JobRunId}
+import dcos.metronome.jobrun.impl.{ JobRunExecutorActor, JobRunPersistenceActor, JobRunServiceActor, JobRunServiceDelegate }
+import dcos.metronome.model.{ JobResult, JobRun, JobRunId }
 import dcos.metronome.repository.Repository
 import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.MarathonSchedulerDriverHolder

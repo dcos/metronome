@@ -2,11 +2,11 @@ package dcos.metronome
 package jobspec.impl
 
 import akka.actor._
-import dcos.metronome.behavior.{ActorBehavior, Behavior}
+import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.jobrun.JobRunService
-import dcos.metronome.model.{JobSpec, ScheduleSpec}
+import dcos.metronome.model.{ JobSpec, ScheduleSpec }
 import dcos.metronome.utils.time.Clock
-import org.joda.time.{DateTime, Seconds}
+import org.joda.time.{ DateTime, Seconds }
 
 import scala.concurrent.duration._
 
@@ -36,7 +36,7 @@ class JobSpecSchedulerActor(
   }
 
   override def receive: Receive = around {
-    case StartJob(schedule)               => runJob(schedule)
+    case StartJob(schedule)     => runJob(schedule)
     case UpdateJobSpec(newSpec) => updateSpec(newSpec)
   }
 

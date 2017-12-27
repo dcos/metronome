@@ -1,12 +1,12 @@
 package dcos.metronome
 package jobrun.impl
 
-import akka.actor.{Actor, ActorContext, ActorLogging, ActorRef, Props, Stash}
-import dcos.metronome.{JobRunFailed, UnexpectedTaskState}
-import dcos.metronome.behavior.{ActorBehavior, Behavior}
+import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Stash }
+import dcos.metronome.{ JobRunFailed, UnexpectedTaskState }
+import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.model.{JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy}
+import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
 import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.MarathonSchedulerDriverHolder
@@ -38,6 +38,9 @@ class JobRunExecutorActor(
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
   import TaskStates._
+  import context.dispatcher
+
+  private[impl] var startingDeadlineTimer: Option[Cancellable] = None
 
   lazy val persistenceActor = persistenceActorRefFactory(run.id, context)
   var jobRun: JobRun = run
@@ -46,7 +49,7 @@ class JobRunExecutorActor(
 
   override def preStart(): Unit = {
     scheduleStartingDeadlineTimeout()
-    
+
     jobRun.status match {
       case JobRunStatus.Initial => becomeCreating()
 
@@ -95,7 +98,7 @@ class JobRunExecutorActor(
       val now = clock.now()
       val from = run.createdAt.plus(deadline.toMillis)
       val timeout = Seconds.secondsBetween(now, from).getSeconds.seconds
-      context.system.scheduler.scheduleOnce(timeout, self, StartTimeout)
+      startingDeadlineTimer = Some(context.system.scheduler.scheduleOnce(timeout, self, StartTimeout))
     }
   }
 
@@ -106,12 +109,18 @@ class JobRunExecutorActor(
   }
 
   def becomeActive(update: TaskStateChangedEvent): Unit = {
+    cancelStartingDeadline()
     jobRun = jobRun.copy(status = JobRunStatus.Active, tasks = updatedTasks(update))
     persistenceActor ! Update(_ => jobRun)
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
 
     log.debug("become active")
     context.become(active)
+  }
+
+  def cancelStartingDeadline(): Unit = {
+    startingDeadlineTimer.foreach { c => if (!c.isCancelled) c.cancel() }
+    startingDeadlineTimer = None
   }
 
   def updatedTasks(update: TaskStateChangedEvent): Map[Task.Id, JobRunTask] = {

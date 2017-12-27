@@ -1,7 +1,7 @@
 package dcos.metronome
 package jobrun
 
-import dcos.metronome.model.{JobId, JobRun, JobRunId, JobSpec}
+import dcos.metronome.model.{ JobId, JobRun, JobRunId, JobSpec }
 
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration

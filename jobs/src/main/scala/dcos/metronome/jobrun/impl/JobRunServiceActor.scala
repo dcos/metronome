@@ -3,11 +3,11 @@ package jobrun.impl
 
 import akka.actor._
 import dcos.metronome.JobRunDoesNotExist
-import dcos.metronome.behavior.{ActorBehavior, Behavior}
+import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
-import dcos.metronome.repository.{LoadContentOnStartup, Repository}
+import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
 import dcos.metronome.utils.time.Clock
 
 import scala.collection.concurrent.TrieMap
@@ -43,22 +43,22 @@ class JobRunServiceActor(
 
   override def receive: Receive = around {
     // api messages
-    case ListRuns(filter)              => sender() ! allJobRuns.values.filter(startedJobRun => filter(startedJobRun.jobRun))
-    case GetJobRun(id)                 => sender() ! allJobRuns.get(id)
-    case GetActiveJobRuns(specId)      => sender() ! runsForJob(specId)
-    case KillJobRun(id)                => killJobRun(id)
+    case ListRuns(filter)                      => sender() ! allJobRuns.values.filter(startedJobRun => filter(startedJobRun.jobRun))
+    case GetJobRun(id)                         => sender() ! allJobRuns.get(id)
+    case GetActiveJobRuns(specId)              => sender() ! runsForJob(specId)
+    case KillJobRun(id)                        => killJobRun(id)
 
     // trigger messages
-    case TriggerJobRun(spec, startingDeadline)           => triggerJobRun(spec, startingDeadline)
+    case TriggerJobRun(spec, startingDeadline) => triggerJobRun(spec, startingDeadline)
 
     // executor messages
-    case JobRunUpdate(started)         => updateJobRun(started)
-    case Finished(result)              => jobRunFinished(result)
-    case Aborted(result)               => jobRunFailed(result)
-    case Failed(result)                => jobRunFailed(result)
+    case JobRunUpdate(started)                 => updateJobRun(started)
+    case Finished(result)                      => jobRunFinished(result)
+    case Aborted(result)                       => jobRunFailed(result)
+    case Failed(result)                        => jobRunFailed(result)
 
     //event stream events
-    case update: TaskStateChangedEvent => forwardStatusUpdate(update)
+    case update: TaskStateChangedEvent         => forwardStatusUpdate(update)
   }
 
   def runsForJob(jobId: JobId): Iterable[StartedJobRun] = allJobRuns.values.filter(_.jobRun.id.jobId == jobId)

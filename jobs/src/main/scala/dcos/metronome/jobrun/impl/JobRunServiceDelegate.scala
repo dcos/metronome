@@ -4,8 +4,8 @@ package jobrun.impl
 import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
-import dcos.metronome.jobrun.{JobRunConfig, JobRunService, StartedJobRun}
-import dcos.metronome.model.{JobId, JobRun, JobRunId, JobSpec}
+import dcos.metronome.jobrun.{ JobRunConfig, JobRunService, StartedJobRun }
+import dcos.metronome.model.{ JobId, JobRun, JobRunId, JobSpec }
 
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
