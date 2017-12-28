@@ -8,16 +8,14 @@ import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedTaskInfo
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.state.RunSpec
 import org.joda.time.{ DateTime, DateTimeZone }
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.{ Json, _ }
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration._
 import scala.collection.immutable.Seq
-import scala.concurrent.duration
+import scala.concurrent.duration._
 
 package object models {
 
@@ -253,10 +251,22 @@ package object models {
 
   implicit lazy val QueuedTaskInfoWrites: Writes[QueuedTaskInfo] = new Writes[QueuedTaskInfo] {
     override def writes(o: QueuedTaskInfo): JsValue = Json.obj(
-      "app" -> o.runSpec.toString,
+      "app" -> o.runSpec.id.toString,
       "toLaunch" -> o.tasksLeftToLaunch,
       "backoff" -> o.backOffUntil.toDateTime
     )
   }
 
+  def queuedTaskInfoMap(id: String, queuedTaskList: Seq[QueuedTaskInfo]): JsValue = {
+    Json.obj(
+      "jobID" -> id,
+      "runs" -> queuedTaskList
+    )
+  }
+
+  implicit lazy val QueuedTaskInfoMapWrites: Writes[Map[String, Seq[QueuedTaskInfo]]] = new Writes[Map[String, Seq[QueuedTaskInfo]]] {
+    override def writes(o: Map[String, Seq[QueuedTaskInfo]]): JsValue = {
+      Json.toJson(o.map { case (k, v) => queuedTaskInfoMap(k, v) })
+    }
+  }
 }
