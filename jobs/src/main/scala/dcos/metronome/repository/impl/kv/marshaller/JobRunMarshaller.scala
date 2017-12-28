@@ -1,6 +1,8 @@
 package dcos.metronome
 package repository.impl.kv.marshaller
 
+import java.util.concurrent.TimeUnit
+
 import dcos.metronome.Protos
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.kv.EntityMarshaller
@@ -10,6 +12,7 @@ import org.joda.time.{ DateTime, DateTimeZone }
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration.Duration
 
 object JobRunMarshaller extends EntityMarshaller[JobRun] {
   val log = LoggerFactory.getLogger(JobRunMarshaller.getClass)
@@ -75,6 +78,7 @@ object JobRunConversions {
 
       jobRun.completedAt.foreach(date => builder.setFinishedAt(date.getMillis))
       jobRun.tasks.values.foreach(task => builder.addTasks(task.toProto))
+      jobRun.startingDeadline.foreach(d => builder.setStartingDeadlineSeconds(d.toSeconds))
       builder.build()
     }
   }
@@ -89,7 +93,12 @@ object JobRunConversions {
         status = proto.getStatus.toModel,
         createdAt = new DateTime(proto.getCreatedAt, DateTimeZone.UTC),
         completedAt = if (proto.hasFinishedAt) Some(new DateTime(proto.getFinishedAt, DateTimeZone.UTC)) else None,
-        tasks = proto.getTasksList.asScala.map(_.toModel).map(task => task.id -> task).toMap)
+        startingDeadline = if (proto.hasStartingDeadlineSeconds)
+        Some(Duration(proto.getStartingDeadlineSeconds, TimeUnit.SECONDS))
+      else
+        None,
+        tasks = proto.getTasksList.asScala.map(_.toModel).map(task => task.id -> task).toMap
+      )
     }
   }
 

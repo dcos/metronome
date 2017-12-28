@@ -19,7 +19,7 @@ import scala.concurrent.duration.Duration
   */
 class JobRunServiceActor(
     clock:           Clock,
-    executorFactory: (JobRun, Option[Duration], Promise[JobResult]) => Props,
+    executorFactory: (JobRun, Promise[JobResult]) => Props,
     val repo:        Repository[JobRunId, JobRun], //TODO: remove the repo
     val behavior:    Behavior
 ) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash with ActorBehavior {
@@ -65,17 +65,17 @@ class JobRunServiceActor(
 
   def triggerJobRun(spec: JobSpec, startingDeadline: Option[Duration]): Unit = {
     log.info(s"Trigger new JobRun for JobSpec: $spec")
-    val jobRun = new JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.now(), None, Map.empty)
-    val startedJobRun = startJobRun(jobRun, startingDeadline)
+    val jobRun = JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.now(), None, startingDeadline, Map.empty)
+    val startedJobRun = startJobRun(jobRun)
     sender() ! startedJobRun
   }
 
-  def startJobRun(jobRun: JobRun, startingDeadline: Option[Duration]): StartedJobRun = {
+  def startJobRun(jobRun: JobRun): StartedJobRun = {
     log.info(s"Start new JobRun: ${jobRun.id}")
     val resultPromise = Promise[JobResult]()
 
     // create new executor and store reference
-    val executor = context.actorOf(executorFactory(jobRun, startingDeadline, resultPromise), s"executor:${jobRun.id}")
+    val executor = context.actorOf(executorFactory(jobRun, resultPromise), s"executor:${jobRun.id}")
     context.watch(executor)
     allRunExecutors += jobRun.id -> executor
 
@@ -147,7 +147,7 @@ class JobRunServiceActor(
 
   override def initialize(runs: List[JobRun]): Unit = {
     // FIXME: we should to wait until the Reconciliation has finished!
-    runs.foreach(startJobRun)
+    runs.foreach(r => startJobRun(r))
   }
 }
 
@@ -161,7 +161,7 @@ object JobRunServiceActor {
 
   def props(
     clock:           Clock,
-    executorFactory: (JobRun, Option[Duration], Promise[JobResult]) => Props,
+    executorFactory: (JobRun, Promise[JobResult]) => Props,
     repo:            Repository[JobRunId, JobRun],
     behavior:        Behavior): Props = Props(new JobRunServiceActor(clock, executorFactory, repo, behavior))
 

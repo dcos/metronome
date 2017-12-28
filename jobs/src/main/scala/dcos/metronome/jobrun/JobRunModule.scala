@@ -28,10 +28,10 @@ class JobRunModule(
 
   import com.softwaremill.macwire._
 
-  private[this] def executorFactory(jobRun: JobRun, startingDeadline: Option[Duration], promise: Promise[JobResult]): Props = {
+  private[this] def executorFactory(jobRun: JobRun, promise: Promise[JobResult]): Props = {
     val persistenceActorFactory = (id: JobRunId, context: ActorContext) =>
       context.actorOf(JobRunPersistenceActor.props(id, jobRunRepository, behavior))
-    JobRunExecutorActor.props(jobRun, startingDeadline, promise, persistenceActorFactory,
+    JobRunExecutorActor.props(jobRun, promise, persistenceActorFactory,
       launchQueue, taskTracker, driverHolder, clock, behavior)
   }
 
