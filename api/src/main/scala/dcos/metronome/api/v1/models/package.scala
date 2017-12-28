@@ -8,6 +8,7 @@ import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedTaskInfo
 import mesosphere.marathon.core.task.Task
+import mesosphere.marathon.state.RunSpec
 import org.joda.time.{ DateTime, DateTimeZone }
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
@@ -249,11 +250,25 @@ package object models {
 
   implicit lazy val MetronomeInfoWrites: Writes[MetronomeInfo] = Json.writes[MetronomeInfo]
 
+  implicit lazy val MarathonRunSpecWrites: Writes[RunSpec] = new Writes[RunSpec] {
+    override def writes(runSpec: RunSpec): JsValue = Json.obj(
+      "cpu" -> runSpec.cpus,
+      "mem" -> runSpec.mem,
+      "cmd" -> runSpec.cmd,
+      "container" -> runSpec.container.toString,
+      "args" -> runSpec.args,
+      "env" -> runSpec.env.toString(),
+      "constraints" -> runSpec.constraints.toString(),
+      "roles" -> runSpec.acceptedResourceRoles
+    )
+  }
+
   implicit lazy val QueuedTaskInfoWrites: Writes[QueuedTaskInfo] = new Writes[QueuedTaskInfo] {
-    override def writes(o: QueuedTaskInfo): JsValue = Json.obj(
-      "app" -> o.runSpec.id.toString,
-      "toLaunch" -> o.tasksLeftToLaunch,
-      "backoff" -> o.backOffUntil.toDateTime
+    override def writes(taskInfo: QueuedTaskInfo): JsValue = Json.obj(
+      "runid" -> taskInfo.runSpec.id.toString,
+      "toLaunch" -> taskInfo.tasksLeftToLaunch,
+      "backoff" -> taskInfo.backOffUntil.toDateTime,
+      "runspec" -> taskInfo.runSpec
     )
   }
 
@@ -265,8 +280,8 @@ package object models {
   }
 
   implicit lazy val QueuedTaskInfoMapWrites: Writes[Map[String, Seq[QueuedTaskInfo]]] = new Writes[Map[String, Seq[QueuedTaskInfo]]] {
-    override def writes(o: Map[String, Seq[QueuedTaskInfo]]): JsValue = {
-      Json.toJson(o.map { case (k, v) => queuedTaskInfoMap(k, v) })
+    override def writes(taskInfoMap: Map[String, Seq[QueuedTaskInfo]]): JsValue = {
+      Json.toJson(taskInfoMap.map { case (k, v) => queuedTaskInfoMap(k, v) })
     }
   }
 }
