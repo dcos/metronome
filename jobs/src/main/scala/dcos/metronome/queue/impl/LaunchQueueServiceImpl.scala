@@ -1,9 +1,9 @@
 package dcos.metronome.queue.impl
 
-import dcos.metronome.queue.QueueService
+import dcos.metronome.queue.LaunchQueueService
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 
-class QueueServiceImpl(launchQueue: LaunchQueue) extends QueueService {
+class LaunchQueueServiceImpl(launchQueue: LaunchQueue) extends LaunchQueueService {
 
   override def list(): Iterable[LaunchQueue.QueuedTaskInfo] = {
     launchQueue.list

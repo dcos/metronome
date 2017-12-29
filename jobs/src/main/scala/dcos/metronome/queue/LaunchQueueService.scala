@@ -6,7 +6,7 @@ import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedTaskInfo
   * Provides access to the underlying list of tasks in the launch queue.
   *
   */
-trait QueueService {
+trait LaunchQueueService {
 
   def list(): Iterable[QueuedTaskInfo]
 

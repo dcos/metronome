@@ -1,0 +1,22 @@
+[
+  {
+    "jobID":"fatjob",
+    "runs":[
+      {
+        "runid":"/fatjob/20171227205732lcnXA",
+        "toLaunch":1,
+        "backoff":"2017-12-29T18:39:15.526+0000",
+        "runspec":{
+          "cpu":10,
+          "mem":128,
+          "cmd":"hostname; sleep 300; echo 'done'",
+          "container":"None",
+          "args":null,
+          "env":"Map()",
+          "constraints":"Set()",
+          "roles":null
+        }
+      }
+    ]
+  }
+]

@@ -6,7 +6,7 @@ import dcos.metronome.behavior.BehaviorModule
 import dcos.metronome.jobinfo.JobInfoModule
 import dcos.metronome.jobrun.JobRunModule
 import dcos.metronome.jobspec.JobSpecModule
-import dcos.metronome.queue.QueueModule
+import dcos.metronome.queue.LaunchQueueModule
 import dcos.metronome.repository.{ RepositoryModule, SchedulerRepositoriesModule }
 import dcos.metronome.scheduler.SchedulerModule
 import dcos.metronome.utils.time.Clock
@@ -71,6 +71,6 @@ class JobsModule(
     jobHistoryModule.jobHistoryService
   )
 
-  lazy val queueModule = new QueueModule(schedulerModule.launchQueueModule.launchQueue)
+  lazy val queueModule = new LaunchQueueModule(schedulerModule.launchQueueModule.launchQueue)
 }
 
