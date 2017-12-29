@@ -8,7 +8,8 @@ import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedTaskInfo
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.state.RunSpec
+import mesosphere.marathon.plugin.PathId
+import mesosphere.marathon.state.{ RunSpec, Timestamp }
 import org.joda.time.{ DateTime, DateTimeZone }
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
@@ -263,24 +264,31 @@ package object models {
     )
   }
 
-  implicit lazy val QueuedTaskInfoWrites: Writes[QueuedTaskInfo] = new Writes[QueuedTaskInfo] {
-    override def writes(taskInfo: QueuedTaskInfo): JsValue = Json.obj(
-      "runid" -> taskInfo.runSpec.id.toString,
-      "toLaunch" -> taskInfo.tasksLeftToLaunch,
-      "backoff" -> taskInfo.backOffUntil.toDateTime,
-      "runspec" -> taskInfo.runSpec
+  implicit lazy val TimestampWrites: Writes[Timestamp] = new Writes[Timestamp] {
+    override def writes(timestamp: Timestamp): JsValue = {
+      JsString(timestamp.toString())
+    }
+  }
+
+  implicit lazy val QueuedTaskInfoWrites: Writes[QueuedJobRunInfo] = new Writes[QueuedJobRunInfo] {
+    override def writes(runInfo: QueuedJobRunInfo): JsValue = Json.obj(
+      "id" -> JsString(runInfo.id.toString()),
+      "tasksLost" -> runInfo.tasksLost,
+      "backOffUntil" -> runInfo.backOffUntil,
+      "roles" -> runInfo.acceptedResourceRoles,
+      "runSpec" -> runInfo.run
     )
   }
 
-  def queuedTaskInfoMap(id: String, queuedTaskList: Seq[QueuedTaskInfo]): JsValue = {
+  def queuedTaskInfoMap(job: String, queuedTaskList: Seq[QueuedJobRunInfo]): JsValue = {
     Json.obj(
-      "jobID" -> id,
+      "job" -> job,
       "runs" -> queuedTaskList
     )
   }
 
-  implicit lazy val QueuedTaskInfoMapWrites: Writes[Map[String, Seq[QueuedTaskInfo]]] = new Writes[Map[String, Seq[QueuedTaskInfo]]] {
-    override def writes(taskInfoMap: Map[String, Seq[QueuedTaskInfo]]): JsValue = {
+  implicit lazy val QueuedJobRunMapWrites: Writes[Map[String, Seq[QueuedJobRunInfo]]] = new Writes[Map[String, Seq[QueuedJobRunInfo]]] {
+    override def writes(taskInfoMap: Map[String, Seq[QueuedJobRunInfo]]): JsValue = {
       Json.toJson(taskInfoMap.map { case (k, v) => queuedTaskInfoMap(k, v) })
     }
   }

@@ -1,21 +1,47 @@
 [
   {
-    "jobID":"fatjob",
+    "job":"fatjob2",
     "runs":[
       {
-        "runid":"/fatjob/20171227205732lcnXA",
-        "toLaunch":1,
-        "backoff":"2017-12-29T18:39:15.526+0000",
-        "runspec":{
-          "cpu":10,
-          "mem":128,
-          "cmd":"hostname; sleep 300; echo 'done'",
-          "container":"None",
-          "args":null,
-          "env":"Map()",
-          "constraints":"Set()",
-          "roles":null
-        }
+        "backOffUntil":"2017-12-29T23:14:46.758Z",
+        "id":"/fatjob2/201712292252589GUpy",
+        "roles":[
+          "*"
+        ],
+        "runSpec":{
+          "artifacts":[
+
+          ],
+          "cmd":"nuke --dry --master local",
+          "cpus":10,
+          "disk":128,
+          "docker":{
+            "forcePullImage":false,
+            "image":"foo/bla:test"
+          },
+          "env":{
+
+          },
+          "maxLaunchDelay":3600,
+          "mem":32,
+          "placement":{
+            "constraints":[
+              {
+                "attribute":"rack",
+                "operator":"EQ",
+                "value":"rack-2"
+              }
+            ]
+          },
+          "restart":{
+            "policy":"NEVER"
+          },
+          "user":"root",
+          "volumes":[
+
+          ]
+        },
+        "tasksLost":0
       }
     ]
   }

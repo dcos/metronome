@@ -85,6 +85,8 @@ class JobRunExecutorActor(
   def addTaskToLaunchQueue(): Unit = {
     log.info("addTaskToLaunchQueue")
     import dcos.metronome.utils.glue.MarathonImplicits._
+    println("*** Launch ***")
+    println(jobRun.toRunSpec)
     launchQueue.add(jobRun.toRunSpec, count = 1)
   }
 

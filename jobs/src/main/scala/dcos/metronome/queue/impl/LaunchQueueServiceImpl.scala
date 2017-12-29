@@ -1,15 +1,17 @@
 package dcos.metronome.queue.impl
 
+import dcos.metronome.jobrun.impl.QueuedJobRunConverter.QueuedTaskInfoToQueuedJobRunInfo
+import dcos.metronome.model.QueuedJobRunInfo
 import dcos.metronome.queue.LaunchQueueService
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 
 class LaunchQueueServiceImpl(launchQueue: LaunchQueue) extends LaunchQueueService {
 
-  override def list(): Iterable[LaunchQueue.QueuedTaskInfo] = {
-    launchQueue.list
+  override def list(): scala.collection.immutable.Seq[QueuedJobRunInfo] = {
+    launchQueue.list.map(_.toModel)
   }
 
-  override def listGroupByJobId(): Map[String, scala.collection.immutable.Seq[LaunchQueue.QueuedTaskInfo]] = {
-    launchQueue.list.groupBy(_.runSpec.id.root)
+  override def listGroupByJobId(): scala.collection.immutable.Map[String, scala.collection.immutable.Seq[QueuedJobRunInfo]] = {
+    this.list().groupBy(_.jobid)
   }
 }
