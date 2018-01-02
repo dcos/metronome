@@ -8,6 +8,6 @@ import play.api.mvc.Action
 class LaunchQueueController(queueService: LaunchQueueService) extends RestController {
 
   def queue() = Action {
-    Ok(QueuedJobRunMapWrites.writes(queueService.listGroupByJobId()))
+    Ok(QueuedJobRunMapWrites.writes(queueService.list.groupBy(_.jobid)))
   }
 }
