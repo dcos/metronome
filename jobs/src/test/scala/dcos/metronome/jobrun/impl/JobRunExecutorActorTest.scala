@@ -486,7 +486,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     Given("a jobRunSpec with forcePullImage")
     val jobSpec = JobSpec(
       id = JobId("/test"),
-      run = JobRunSpec(docker = Some(DockerSpec("image", forcePullImage = true)))
+      run = JobRunSpec(docker = Some(DockerSpec("image", forcePullImage = Some(true))))
     )
     val (_, jobRun) = f.setupInitialExecutorActor(Some(jobSpec))
 
