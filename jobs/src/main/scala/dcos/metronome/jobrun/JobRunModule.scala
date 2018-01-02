@@ -32,7 +32,7 @@ class JobRunModule(
     val persistenceActorFactory = (id: JobRunId, context: ActorContext) =>
       context.actorOf(JobRunPersistenceActor.props(id, jobRunRepository, behavior))
     JobRunExecutorActor.props(jobRun, promise, persistenceActorFactory,
-      launchQueue, taskTracker, driverHolder, clock, behavior)
+      launchQueue, taskTracker, driverHolder, clock, behavior)(actorSystem.scheduler)
   }
 
   val jobRunServiceActor = leadershipModule.startWhenLeader(

@@ -3,7 +3,7 @@ package jobrun.impl
 
 import akka.actor.{ ActorContext, ActorRef, ActorSystem }
 import akka.testkit.{ ImplicitSender, TestActorRef, TestKit, TestProbe }
-import dcos.metronome.JobRunFailed
+import dcos.metronome.{ JobRunFailed, SimulatedScheduler }
 import dcos.metronome.behavior.BehaviorFixture
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.impl.JobRunExecutorActor.ForwardStatusUpdate
@@ -22,6 +22,7 @@ import org.apache.mesos.SchedulerDriver
 import org.apache.mesos
 import org.joda.time.DateTime
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
+import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, FunSuiteLike, GivenWhenThen, Matchers }
 
 import scala.concurrent.Promise
@@ -37,6 +38,8 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     with Eventually
     with ImplicitSender
     with Mockito {
+
+  private implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
   test("ForwardStatusUpdate STAGING with subsequent RUNNING") {
     Given("An executor with a JobRun in state Starting")
@@ -503,17 +506,19 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val jobSpec = JobSpec(
       id = JobId("/test")
     )
-    val (actor, jobRun) = f.setupInitialExecutorActor(Some(jobSpec), Some(1 second))
+    val startingDeadline = Some(1 second)
+    val (actor, jobRun) = f.setupInitialExecutorActor(Some(jobSpec), startingDeadline)
+    f.persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
 
     When("starting deadline is computed")
     within(5 seconds) {
       actor.underlyingActor.startingDeadlineTimer.isDefined should be(true)
     }
-    Thread.sleep(2000)
     When("nothing happened until timeout is reached")
-    within(2 second, 5 seconds) {
-      Then("job will become failed")
-      verifyFailureActions(jobRun, 1, f)
+    f.clock += startingDeadline.get
+    Then("job will become failed")
+    eventually {
+      verifyAbortedActions(jobRun, 0, f)
     }
   }
 
@@ -535,6 +540,30 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
     And("The JobRun is reported failed")
     val failMsg = f.parent.expectMsgType[JobRunExecutorActor.Failed]
+    failMsg.jobResult.jobRun.status shouldBe JobRunStatus.Failed
+
+    And("the promise is completed")
+    f.promise.isCompleted
+  }
+
+  def verifyAbortedActions(jobRun: JobRun, expectedTaskCount: Int, f: Fixture): Unit = {
+    import f._
+
+    Then("The launch queue is purged")
+    verify(launchQueue, timeout(1000)).purge(jobRun.id.toRunSpecId)
+
+    And("The JobRun is deleted")
+    f.persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
+    f.persistenceActor.reply(JobRunPersistenceActor.JobRunDeleted(f.persistenceActor.ref, jobRun, ()))
+
+    And("The JobRun update is reported")
+    val updateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
+    updateMsg.startedJobRun.jobRun.tasks should have size expectedTaskCount.toLong
+    updateMsg.startedJobRun.jobRun.status shouldBe JobRunStatus.Failed
+    updateMsg.startedJobRun.jobRun.completedAt shouldBe Some(f.clock.now())
+
+    And("The JobRun is reported failed")
+    val failMsg = f.parent.expectMsgType[JobRunExecutorActor.Aborted]
     failMsg.jobResult.jobRun.status shouldBe JobRunStatus.Failed
 
     And("the promise is completed")
@@ -577,6 +606,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val persistenceActorFactory: (JobRunId, ActorContext) => ActorRef = (_, context) => persistenceActor.ref
     val promise: Promise[JobResult] = Promise[JobResult]
     val parent = TestProbe()
+    implicit val scheduler = new SimulatedScheduler(clock)
     val behaviour = BehaviorFixture.empty
     def executorActor(jobRun: JobRun, startingDeadline: Option[Duration] = None): TestActorRef[JobRunExecutorActor] = {
       import JobRunExecutorActorTest._

@@ -1,7 +1,7 @@
 package dcos.metronome
 package jobrun.impl
 
-import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Stash }
+import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Scheduler, Stash }
 import dcos.metronome.{ JobRunFailed, UnexpectedTaskState }
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.eventbus.TaskStateChangedEvent
@@ -33,7 +33,7 @@ class JobRunExecutorActor(
     driverHolder:               MarathonSchedulerDriverHolder,
     clock:                      Clock,
     val behavior:               Behavior
-) extends Actor with Stash with ActorLogging with ActorBehavior {
+)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorBehavior {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
   import TaskStates._
@@ -380,7 +380,7 @@ object JobRunExecutorActor {
       launchQueue, taskTracker, driverHolder, clock, behavior))
 =======
     behavior:                   Behavior
-  ): Props = Props(
+  )(implicit scheduler: Scheduler): Props = Props(
     new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
       launchQueue, taskTracker, driverHolder, clock, behavior)
   )
