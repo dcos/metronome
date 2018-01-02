@@ -71,7 +71,7 @@ object MarathonImplicits {
         case Some(dockerSpec) => Some(Container.Docker(
           image = dockerSpec.image,
           volumes = jobSpec.run.volumes.map(_.toMarathon),
-          forcePullImage = dockerSpec.forcePullImage
+          forcePullImage = dockerSpec.forcePullImage.getOrElse(false)
         ))
         case _ => None
       }
