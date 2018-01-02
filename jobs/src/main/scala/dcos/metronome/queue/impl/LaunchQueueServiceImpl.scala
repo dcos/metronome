@@ -12,6 +12,6 @@ class LaunchQueueServiceImpl(launchQueue: LaunchQueue) extends LaunchQueueServic
   }
 
   override def listGroupByJobId(): scala.collection.immutable.Map[String, scala.collection.immutable.Seq[QueuedJobRunInfo]] = {
-    this.list().groupBy(_.jobid)
+    list().groupBy(_.jobid)
   }
 }

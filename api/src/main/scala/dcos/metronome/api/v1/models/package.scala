@@ -253,7 +253,7 @@ package object models {
 
   implicit lazy val MarathonRunSpecWrites: Writes[RunSpec] = new Writes[RunSpec] {
     override def writes(runSpec: RunSpec): JsValue = Json.obj(
-      "cpu" -> runSpec.cpus,
+      "cpus" -> runSpec.cpus,
       "mem" -> runSpec.mem,
       "cmd" -> runSpec.cmd,
       "container" -> runSpec.container.toString,

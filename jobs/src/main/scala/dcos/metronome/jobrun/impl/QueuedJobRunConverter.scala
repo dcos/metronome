@@ -29,7 +29,7 @@ object QueuedJobRunConverter {
     }.toList
   }
 
-  implicit class MarathonCotainerToDockerSpec(val container: Option[Container]) extends AnyVal {
+  implicit class MarathonContainerToDockerSpec(val container: Option[Container]) extends AnyVal {
 
     def toModel: Option[DockerSpec] = {
       if (container.isEmpty || container.get.docker().isEmpty)
