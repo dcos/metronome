@@ -133,7 +133,10 @@ package object models {
 
   implicit lazy val VolumeFormat: Format[Volume] = Json.format[Volume]
 
-  implicit lazy val DockerSpecFormat: Format[DockerSpec] = Json.format[DockerSpec]
+  implicit lazy val DockerSpecFormat: Format[DockerSpec] = (
+    (__ \ "image").format[String] ~
+    (__ \ "forcePullImage").formatNullable[Boolean].withDefault(false)
+  ) (DockerSpec.apply, unlift(DockerSpec.unapply))
 
   implicit lazy val RestartSpecFormat: Format[RestartSpec] = (
     (__ \ "policy").formatNullable[RestartPolicy].withDefault(RestartSpec.DefaultRestartPolicy) ~
