@@ -1,6 +1,8 @@
 package dcos.metronome
 package jobrun.impl
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.{ ActorContext, ActorRef, ActorSystem }
 import akka.testkit.{ ImplicitSender, TestActorRef, TestKit, TestProbe }
 import dcos.metronome.{ JobRunFailed, SimulatedScheduler }
@@ -25,7 +27,7 @@ import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, FunSuiteLike, GivenWhenThen, Matchers }
 
-import scala.concurrent.Promise
+import scala.concurrent.{ Promise, duration }
 import scala.concurrent.duration._
 
 class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
@@ -511,12 +513,53 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     f.persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
 
     When("starting deadline is computed")
-    within(5 seconds) {
+    eventually {
       actor.underlyingActor.startingDeadlineTimer.isDefined should be(true)
     }
     When("nothing happened until timeout is reached")
     f.clock += startingDeadline.get
     Then("job will become failed")
+    eventually {
+      verifyAbortedActions(jobRun, 0, f)
+    }
+  }
+
+  test("startingDeadline is cancelled when job is started") {
+    import scala.concurrent.duration._
+    val f = new Fixture
+
+    Given("a jobRunSpec with startingDeadline")
+    val jobSpec = JobSpec(
+      id = JobId("/test")
+    )
+    val startingDeadline = Some(1 second)
+    val (actor, jobRun) = f.setupActiveExecutorActor(Some(jobSpec))
+
+    When("starting deadline does not exist for active job")
+    eventually {
+      actor.underlyingActor.startingDeadlineTimer.isDefined should be(false)
+    }
+  }
+
+  test("works correctly for negative starting deadline") {
+    import scala.concurrent.duration._
+    val f = new Fixture
+
+    Given("a jobRunSpec with startingDeadline")
+    val jobSpec = JobSpec(
+      id = JobId("/test")
+    )
+    val startingDeadline = Some(1 second)
+    Given("a job run created one hour before now")
+    f.clock += Duration(-1, TimeUnit.HOURS)
+    val (actor, jobRun) = f.setupInitialExecutorActor(Some(jobSpec), startingDeadline)
+
+    When("starting deadline is computed")
+    eventually {
+      actor.underlyingActor.startingDeadlineTimer.isDefined should be(true)
+    }
+
+    Then("job will fail immediately")
     eventually {
       verifyAbortedActions(jobRun, 0, f)
     }
@@ -662,10 +705,10 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       * @param spec (Optional) the JobSpec to use if the default shouldn't be used
       * @return A tuple containing the ActorRef and the JobRun
       */
-    def setupActiveExecutorActor(spec: Option[JobSpec] = None): (ActorRef, JobRun) = {
+    def setupActiveExecutorActor(spec: Option[JobSpec] = None, startingDeadline: Option[Duration] = None): (TestActorRef[JobRunExecutorActor], JobRun) = {
       val jobSpec = spec.getOrElse(defaultJobSpec)
       val startingJobRun = JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Initial, clock.now(), None, None, Map.empty)
-      val actorRef: ActorRef = executorActor(startingJobRun)
+      val actorRef: TestActorRef[JobRunExecutorActor] = executorActor(startingJobRun, startingDeadline)
       persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
       persistenceActor.reply(JobRunPersistenceActor.JobRunCreated(persistenceActor.ref, startingJobRun, Unit))
       verify(launchQueue, timeout(1000)).add(any, any)
