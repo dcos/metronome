@@ -67,6 +67,16 @@ object QueuedJobRunConverter {
     }
   }
 
+  def toModel(taskInfo: QueuedTaskInfo): QueuedJobRunInfo = {
+    QueuedJobRunInfo(
+      id = taskInfo.runSpec.id,
+      tasksLost = taskInfo.tasksLost,
+      backOffUntil = taskInfo.backOffUntil,
+      run = taskInfo.runSpec.toModel,
+      acceptedResourceRoles = Some(taskInfo.runSpec.acceptedResourceRoles.getOrElse(Set("*")))
+    )
+  }
+
   implicit class QueuedTaskInfoToQueuedJobRunInfo(val taskInfo: QueuedTaskInfo) extends AnyVal {
 
     def toModel: QueuedJobRunInfo = {

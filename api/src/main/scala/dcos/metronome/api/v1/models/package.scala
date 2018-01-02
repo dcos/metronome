@@ -287,8 +287,8 @@ package object models {
     )
   }
 
-  implicit lazy val QueuedJobRunMapWrites: Writes[Map[String, Seq[QueuedJobRunInfo]]] = new Writes[Map[String, Seq[QueuedJobRunInfo]]] {
-    override def writes(taskInfoMap: Map[String, Seq[QueuedJobRunInfo]]): JsValue = {
+  object JsonConverters {
+    def queueToJson(taskInfoMap: Map[String, Seq[QueuedJobRunInfo]]): JsValue = {
       Json.toJson(taskInfoMap.map { case (k, v) => queuedTaskInfoMap(k, v) })
     }
   }
