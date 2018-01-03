@@ -35,6 +35,6 @@ class LaunchQueueControllerTest extends PlaySpec with OneAppPerTestWithComponent
   }
 
   override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context) {
-    override lazy val queueService = queueServiceMock
+    override lazy val queueService: LaunchQueueService = queueServiceMock
   }
 }
