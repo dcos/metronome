@@ -1,5 +1,7 @@
 package dcos.metronome.api.v1.controllers
 
+import java.time.{ Clock, Instant, ZoneOffset }
+
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
 import dcos.metronome.model.{ CronSpec, JobId, JobSpec, ScheduleSpec }
@@ -317,10 +319,17 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
   }
 
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
+
+  val mockedClock = Clock.fixed(Instant.now, ZoneOffset.UTC)
+
   val CronSpec(cron1) = "* * * * *"
   val CronSpec(cron2) = "1 2 3 4 5"
-  val schedule1 = ScheduleSpec("id1", cron1)
-  val schedule2 = ScheduleSpec("id2", cron2)
+  val schedule1 = new ScheduleSpec("id1", cron1) {
+    override def clock = mockedClock
+  }
+  val schedule2 = new ScheduleSpec("id2", cron2) {
+    override def clock = mockedClock
+  }
   val schedule1Json = Json.toJson(schedule1)
   val schedule2Json = Json.toJson(schedule2)
   val specId = JobId("spec")
@@ -337,4 +346,3 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
     override lazy val pluginManager: PluginManager = auth.pluginManager
   }
 }
-

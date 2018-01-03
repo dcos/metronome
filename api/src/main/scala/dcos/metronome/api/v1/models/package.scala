@@ -103,7 +103,7 @@ package object models {
       new Writes[ScheduleSpec] {
         override def writes(o: ScheduleSpec): JsValue =
           ScheduleSpecFormatBasic.writes(o).as[JsObject] ++
-            Json.obj("nextRunAt" -> o.nextExecution(DateTime.now(o.timeZone)))
+            Json.obj("nextRunAt" -> o.nextExecution())
       }
     )
   }
