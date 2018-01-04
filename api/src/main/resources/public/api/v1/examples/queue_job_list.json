@@ -1,9 +1,13 @@
 [
   {
-    "job": "jobid",
+    "jobId": "jobId",
     "runs": [
-      "/jobid/20180103214014JIT0Y",
-      "/jobid/20180103214004BPuOB"
+      {
+        "runId": "/jobId/20180103214004BPuOB"
+      },
+      {
+        "runId": "/jobId/20180103214014JIT0Y"
+      }
     ]
   }
 ]
