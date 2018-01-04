@@ -1,4 +1,5 @@
-package dcos.metronome.history
+package dcos.metronome
+package history
 
 import dcos.metronome.model.{ JobId, JobHistory }
 

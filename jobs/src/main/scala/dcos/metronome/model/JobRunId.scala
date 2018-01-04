@@ -1,4 +1,5 @@
-package dcos.metronome.model
+package dcos.metronome
+package model
 
 import mesosphere.marathon.state.PathId
 import org.joda.time.format.DateTimeFormat

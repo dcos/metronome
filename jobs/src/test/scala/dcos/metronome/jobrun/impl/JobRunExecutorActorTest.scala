@@ -1,4 +1,5 @@
-package dcos.metronome.jobrun.impl
+package dcos.metronome
+package jobrun.impl
 
 import akka.actor.{ ActorContext, ActorRef, ActorSystem }
 import akka.testkit.{ ImplicitSender, TestActorRef, TestKit, TestProbe }

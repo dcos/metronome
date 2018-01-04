@@ -1,4 +1,5 @@
-package dcos.metronome.repository.impl.kv
+package dcos.metronome
+package repository.impl.kv
 
 import dcos.metronome.model.JobId
 import org.scalatest.{ FunSuite, Matchers }

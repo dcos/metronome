@@ -1,4 +1,5 @@
-package dcos.metronome.model
+package dcos.metronome
+package model
 
 sealed trait RestartPolicy
 object RestartPolicy {

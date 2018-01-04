@@ -1,4 +1,5 @@
-package dcos.metronome.scheduler
+package dcos.metronome
+package scheduler
 
 /** Wraps operations that shall be periodically scheduled  during leadership */
 trait PeriodicOperations {

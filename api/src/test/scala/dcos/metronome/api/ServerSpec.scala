@@ -1,4 +1,5 @@
-package dcos.metronome.api
+package dcos.metronome
+package api
 
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{ Millis, Second, Span }
@@ -28,4 +29,3 @@ class ServerSpec extends PlaySpec
     }
   }
 }
-

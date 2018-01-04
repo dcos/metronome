@@ -1,4 +1,5 @@
-package dcos.metronome.migration
+package dcos.metronome
+package migration
 
 /** Handles the state migration */
 trait Migration {

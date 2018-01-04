@@ -1,4 +1,5 @@
-package dcos.metronome.history
+package dcos.metronome
+package history
 
 import akka.actor.{ ActorRef, ActorSystem }
 import dcos.metronome.behavior.Behavior

@@ -1,4 +1,5 @@
-package dcos.metronome.jobrun
+package dcos.metronome
+package jobrun
 
 import dcos.metronome.model.{ JobId, JobRun, JobRunId, JobSpec }
 

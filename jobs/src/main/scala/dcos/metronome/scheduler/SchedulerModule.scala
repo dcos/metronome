@@ -1,4 +1,5 @@
-package dcos.metronome.scheduler
+package dcos.metronome
+package scheduler
 
 import akka.actor.{ ActorRefFactory, ActorSystem }
 import akka.event.EventStream

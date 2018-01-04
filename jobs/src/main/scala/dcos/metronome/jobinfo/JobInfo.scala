@@ -1,4 +1,5 @@
-package dcos.metronome.jobinfo
+package dcos.metronome
+package jobinfo
 
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
@@ -42,4 +43,3 @@ object JobInfo {
     JobInfo(spec.id, spec.description, spec.labels, spec.run, schedules, runs, history, summary)
   }
 }
-

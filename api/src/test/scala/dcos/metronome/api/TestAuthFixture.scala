@@ -1,4 +1,5 @@
-package dcos.metronome.api
+package dcos.metronome
+package api
 
 import dcos.metronome.utils.test.Mockito
 import mesosphere.marathon.core.plugin.{ PluginDefinitions, PluginManager }

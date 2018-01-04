@@ -1,4 +1,5 @@
-package dcos.metronome.api.v1
+package dcos.metronome
+package api.v1
 
 import akka.util.ByteString
 import dcos.metronome.api.ApiConfig
@@ -61,4 +62,3 @@ object LeaderProxyFilter {
   val HEADER_VIA = "X-VIA"
   val HEADER_LEADER = "X-LEADER"
 }
-

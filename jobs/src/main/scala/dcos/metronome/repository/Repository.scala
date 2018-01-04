@@ -1,4 +1,5 @@
-package dcos.metronome.repository
+package dcos.metronome
+package repository
 
 import dcos.metronome.PersistenceFailed
 import mesosphere.marathon.StoreCommandFailedException
@@ -67,4 +68,3 @@ trait Repository[Id, Model] {
     */
   def delete(id: Id): Future[Boolean]
 }
-

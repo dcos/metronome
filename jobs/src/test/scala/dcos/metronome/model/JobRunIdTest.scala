@@ -1,4 +1,5 @@
-package dcos.metronome.model
+package dcos.metronome
+package model
 
 import dcos.metronome.utils.test.Mockito
 import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }

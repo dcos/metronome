@@ -1,4 +1,5 @@
-package dcos.metronome.jobspec.impl
+package dcos.metronome
+package jobspec.impl
 
 import akka.actor.ActorSystem
 import akka.testkit._

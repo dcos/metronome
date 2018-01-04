@@ -1,4 +1,5 @@
-package dcos.metronome.scheduler.impl
+package dcos.metronome
+package scheduler.impl
 
 import java.util.concurrent.CountDownLatch
 

@@ -1,4 +1,5 @@
-package dcos.metronome.model
+package dcos.metronome
+package model
 
 import scala.concurrent.duration.Duration
 
@@ -11,4 +12,3 @@ object RestartSpec {
   val DefaultRestartPolicy = RestartPolicy.Never
   val DefaultActiveDeadline = None
 }
-

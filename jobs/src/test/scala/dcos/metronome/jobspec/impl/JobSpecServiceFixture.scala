@@ -1,4 +1,5 @@
-package dcos.metronome.jobspec.impl
+package dcos.metronome
+package jobspec.impl
 
 import dcos.metronome.{ JobSpecAlreadyExists, JobSpecDoesNotExist }
 import dcos.metronome.jobspec.JobSpecService

@@ -1,4 +1,5 @@
-package dcos.metronome.scheduler
+package dcos.metronome
+package scheduler
 
 import dcos.metronome.utils.test.Mockito
 import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }

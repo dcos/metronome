@@ -1,4 +1,5 @@
-package dcos.metronome.jobrun
+package dcos.metronome
+package jobrun
 
 import akka.actor.{ ActorContext, ActorSystem, Props }
 import dcos.metronome.behavior.Behavior

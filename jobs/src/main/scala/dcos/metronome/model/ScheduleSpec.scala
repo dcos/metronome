@@ -1,4 +1,5 @@
-package dcos.metronome.model
+package dcos.metronome
+package model
 
 import java.time.Clock
 
@@ -38,4 +39,3 @@ object ScheduleSpec {
     spec.startingDeadline >= 1.minute
   }
 }
-

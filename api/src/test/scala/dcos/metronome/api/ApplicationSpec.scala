@@ -1,4 +1,5 @@
-package dcos.metronome.api
+package dcos.metronome
+package api
 
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context

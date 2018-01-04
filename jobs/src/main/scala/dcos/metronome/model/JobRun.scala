@@ -1,4 +1,5 @@
-package dcos.metronome.model
+package dcos.metronome
+package model
 
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.task.Task
@@ -64,4 +65,3 @@ object JobRunStatus {
   def unapply(name: String): Option[JobRunStatus] = names.get(name)
   def isDefined(name: String): Boolean = names.contains(name)
 }
-

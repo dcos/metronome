@@ -1,4 +1,5 @@
-package dcos.metronome.repository
+package dcos.metronome
+package repository
 
 import akka.actor.{ Stash, ActorLogging, Actor, ActorRef }
 import dcos.metronome.behavior.ActorBehavior

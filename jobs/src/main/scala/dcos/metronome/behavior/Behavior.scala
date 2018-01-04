@@ -1,4 +1,5 @@
-package dcos.metronome.behavior
+package dcos.metronome
+package behavior
 
 import scala.reflect.ClassTag
 
@@ -37,4 +38,3 @@ trait Behavior {
     */
   def config: BehaviorConfig
 }
-

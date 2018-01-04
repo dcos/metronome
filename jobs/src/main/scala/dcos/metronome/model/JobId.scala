@@ -1,4 +1,5 @@
-package dcos.metronome.model
+package dcos.metronome
+package model
 
 import com.wix.accord._
 import com.wix.accord.dsl._

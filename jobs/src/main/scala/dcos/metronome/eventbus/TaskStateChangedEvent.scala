@@ -1,4 +1,5 @@
-package dcos.metronome.eventbus
+package dcos.metronome
+package eventbus
 
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.task.Task

@@ -1,4 +1,5 @@
-package dcos.metronome.api.v1.controllers
+package dcos.metronome
+package api.v1.controllers
 
 import java.io.StringWriter
 import java.util.concurrent.TimeUnit

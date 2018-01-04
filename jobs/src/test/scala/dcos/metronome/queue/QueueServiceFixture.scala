@@ -1,4 +1,5 @@
-package dcos.metronome.queue
+package dcos.metronome
+package queue
 
 import dcos.metronome.model.QueuedJobRunInfo
 import dcos.metronome.queue.impl.LaunchQueueServiceImpl

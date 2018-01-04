@@ -1,4 +1,5 @@
-package dcos.metronome.model
+package dcos.metronome
+package model
 
 import com.cronutils.model.definition.{ CronDefinition, CronDefinitionBuilder }
 import com.cronutils.model.time.ExecutionTime

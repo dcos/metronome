@@ -1,4 +1,5 @@
-package dcos.metronome.scheduler.impl
+package dcos.metronome
+package scheduler.impl
 
 import akka.actor.{ FSM, Props }
 import dcos.metronome.scheduler.SchedulerConfig

@@ -1,4 +1,5 @@
-package dcos.metronome.repository.impl.kv.marshaller
+package dcos.metronome
+package repository.impl.kv.marshaller
 
 import dcos.metronome.Protos
 import dcos.metronome.model._

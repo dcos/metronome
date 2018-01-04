@@ -1,4 +1,5 @@
-package dcos.metronome.api
+package dcos.metronome
+package api
 
 import com.softwaremill.macwire._
 import controllers.Assets

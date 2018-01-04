@@ -1,4 +1,5 @@
-package dcos.metronome.api
+package dcos.metronome
+package api
 
 import org.slf4j.LoggerFactory
 import play.api.http.HttpErrorHandler
