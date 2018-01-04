@@ -15,16 +15,18 @@ import play.api.routing.Router
 import router.Routes
 import com.softwaremill.macwire._
 import dcos.metronome.behavior.Metrics
+import dcos.metronome.queue.LaunchQueueService
 
 class ApiModule(
-    config:           ApiConfig,
-    jobSpecService:   JobSpecService,
-    jobRunService:    JobRunService,
-    jobInfoService:   JobInfoService,
-    pluginManager:    PluginManager,
-    httpErrorHandler: HttpErrorHandler,
-    metrics:          Metrics,
-    assets:           Assets
+    config:             ApiConfig,
+    jobSpecService:     JobSpecService,
+    jobRunService:      JobRunService,
+    jobInfoService:     JobInfoService,
+    pluginManager:      PluginManager,
+    httpErrorHandler:   HttpErrorHandler,
+    metrics:            Metrics,
+    assets:             Assets,
+    launchQueueService: LaunchQueueService
 ) {
 
   lazy val applicationController = wire[ApplicationController]
@@ -42,6 +44,8 @@ class ApiModule(
   lazy val authorizer: Authorizer = authModule.authorizer
 
   lazy val authenticator: Authenticator = authModule.authenticator
+
+  lazy val launchQueueController = wire[LaunchQueueController]
 
   lazy val router: Router = {
     // add the prefix string in local scope for the Routes constructor

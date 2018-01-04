@@ -38,6 +38,7 @@ class JobRunController(
   }
 
   def killJobRun(id: JobId, runId: String) = AuthorizedAction.async { implicit request =>
+
     async {
       await(jobSpecService.getJobSpec(id)) match {
         case Some(spec) =>

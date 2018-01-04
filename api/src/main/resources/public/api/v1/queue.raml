@@ -1,0 +1,10 @@
+get:
+  description:
+    Get the list of all jobs in the launch queue
+  is: [ secured ]
+  responses:
+    200:
+      description: The list of jobs in the launch queue.
+      body:
+        application/json:
+          example: !include examples/queue_job_list.json

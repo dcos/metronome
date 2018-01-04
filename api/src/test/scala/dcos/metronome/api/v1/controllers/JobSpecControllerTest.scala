@@ -1,11 +1,12 @@
 package dcos.metronome.api.v1.controllers
 
 import dcos.metronome.api.v1.models._
-import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents, TestAuthFixture, UnknownJob, ErrorHandler }
+import dcos.metronome.api.{ ErrorHandler, MockApiComponents, OneAppPerTestWithComponents, TestAuthFixture, UnknownJob }
 import dcos.metronome.model._
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context
 import play.api.libs.json._
@@ -15,6 +16,8 @@ import play.api.test.Helpers._
 import scala.collection.immutable._
 
 class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with GivenWhenThen with ScalaFutures with BeforeAndAfter {
+
+  implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
   "POST /jobs" should {
     "creates a job when sending a valid job spec" in {

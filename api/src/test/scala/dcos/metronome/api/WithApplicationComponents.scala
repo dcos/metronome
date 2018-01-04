@@ -2,20 +2,21 @@ package dcos.metronome.api
 
 import controllers.Assets
 import dcos.metronome.behavior.{ Behavior, BehaviorFixture, Metrics }
-import dcos.metronome.history.{ JobHistoryServiceFixture, JobHistoryService }
+import dcos.metronome.history.{ JobHistoryService, JobHistoryServiceFixture }
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobinfo.impl.JobInfoServiceImpl
 import dcos.metronome.jobrun.{ JobRunService, JobRunServiceFixture }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
+import dcos.metronome.queue.{ LaunchQueueService, QueueServiceFixture }
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ Suite, TestData }
 import org.scalatestplus.play.{ OneAppPerSuite, OneAppPerTest, OneServerPerSuite, OneServerPerTest }
 import play.api.ApplicationLoader.Context
 import play.api.i18n.I18nComponents
 import play.api.routing.Router
-import scala.concurrent.duration._
 
+import scala.concurrent.duration._
 import scala.concurrent.duration.Duration
 import play.api._
 
@@ -120,6 +121,8 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
   lazy val jobInfoService: JobInfoService = wire[JobInfoServiceImpl]
 
   lazy val assets: Assets = wire[Assets]
+
+  lazy val queueService: LaunchQueueService = QueueServiceFixture.simpleQueueService()
 
   lazy val apiModule: ApiModule = wire[ApiModule]
 
