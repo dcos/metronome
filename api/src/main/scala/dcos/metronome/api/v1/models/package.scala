@@ -254,19 +254,6 @@ package object models {
 
   implicit lazy val MetronomeInfoWrites: Writes[MetronomeInfo] = Json.writes[MetronomeInfo]
 
-  implicit lazy val MarathonRunSpecWrites: Writes[RunSpec] = new Writes[RunSpec] {
-    override def writes(runSpec: RunSpec): JsValue = Json.obj(
-      "cpus" -> runSpec.cpus,
-      "mem" -> runSpec.mem,
-      "cmd" -> runSpec.cmd,
-      "container" -> runSpec.container.toString,
-      "args" -> runSpec.args,
-      "env" -> runSpec.env.toString(),
-      "constraints" -> runSpec.constraints.toString(),
-      "roles" -> runSpec.acceptedResourceRoles
-    )
-  }
-
   implicit lazy val TimestampWrites: Writes[Timestamp] = new Writes[Timestamp] {
     override def writes(timestamp: Timestamp): JsValue = {
       JsString(timestamp.toString())
@@ -275,14 +262,14 @@ package object models {
 
   implicit lazy val QueuedTaskInfoWrites: Writes[QueuedJobRunInfo] = new Writes[QueuedJobRunInfo] {
     //    output of queue is only runid
-    override def writes(runInfo: QueuedJobRunInfo): JsValue = {
-      JsString(runInfo.id.toString())
-    }
+    override def writes(runInfo: QueuedJobRunInfo): JsValue = Json.obj(
+      "runId" -> JsString(runInfo.id.toString())
+    )
   }
 
   def queuedTaskInfoMap(job: String, queuedTaskList: Seq[QueuedJobRunInfo]): JsValue = {
     Json.obj(
-      "job" -> job,
+      "jobId" -> job,
       "runs" -> queuedTaskList
     )
   }
