@@ -23,6 +23,5 @@ trait YamlContent { self: Controller =>
   def parseYaml: BodyParser[YamlValue] = parse.when(
     _.contentType.exists(m => m.equalsIgnoreCase("text/yaml") || m.equalsIgnoreCase("application/x-yaml")),
     parse.tolerantText.map(_.parseYaml),
-    _ => Future.successful(BadRequest("Expecting text/yaml or application/x-yaml body"))
-  )
+    _ => Future.successful(BadRequest("Expecting text/yaml or application/x-yaml body")))
 }

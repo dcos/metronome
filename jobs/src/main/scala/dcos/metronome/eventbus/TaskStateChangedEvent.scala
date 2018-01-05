@@ -9,5 +9,4 @@ case class TaskStateChangedEvent(
   taskId:    Task.Id,
   taskState: TaskState,
   timestamp: DateTime,
-  eventType: String    = "task_changed_event"
-)
+  eventType: String    = "task_changed_event")

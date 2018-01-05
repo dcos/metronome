@@ -10,10 +10,9 @@ import dcos.metronome.repository.{ NoConcurrentRepoChange, Repository }
   * Handles persistence for one JobExecutor.
   */
 class JobRunPersistenceActor(
-    id:           JobRunId,
-    repo:         Repository[JobRunId, JobRun],
-    val behavior: Behavior
-) extends NoConcurrentRepoChange[JobRunId, JobRun, Unit] {
+  id:           JobRunId,
+  repo:         Repository[JobRunId, JobRun],
+  val behavior: Behavior) extends NoConcurrentRepoChange[JobRunId, JobRun, Unit] {
   import JobRunPersistenceActor._
   import context.dispatcher
 

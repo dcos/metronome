@@ -8,10 +8,9 @@ import dcos.metronome.repository.NoConcurrentRepoChange.{ Failed, Change }
 import dcos.metronome.repository.{ NoConcurrentRepoChange, Repository }
 
 class JobSpecPersistenceActor(
-    id:           JobId,
-    repo:         Repository[JobId, JobSpec],
-    val behavior: Behavior
-) extends NoConcurrentRepoChange[JobId, JobSpec, ActorRef] {
+  id:           JobId,
+  repo:         Repository[JobId, JobSpec],
+  val behavior: Behavior) extends NoConcurrentRepoChange[JobId, JobSpec, ActorRef] {
   import JobSpecPersistenceActor._
   import context.dispatcher
 

@@ -14,11 +14,10 @@ import scala.collection.concurrent.TrieMap
   */
 //noinspection AccessorLikeMethodIsUnit
 class JobSpecServiceActor(
-    val repo:                Repository[JobId, JobSpec],
-    persistenceActorFactory: JobId => Props,
-    schedulerActorFactory:   JobSpec => Props,
-    val behavior:            Behavior
-) extends LoadContentOnStartup[JobId, JobSpec] with ActorBehavior {
+  val repo:                Repository[JobId, JobSpec],
+  persistenceActorFactory: JobId => Props,
+  schedulerActorFactory:   JobSpec => Props,
+  val behavior:            Behavior) extends LoadContentOnStartup[JobId, JobSpec] with ActorBehavior {
   import JobSpecPersistenceActor._
   import JobSpecServiceActor._
 
@@ -192,6 +191,5 @@ object JobSpecServiceActor {
     repo:                    Repository[JobId, JobSpec],
     persistenceActorFactory: JobId => Props,
     schedulerActorFactory:   JobSpec => Props,
-    behavior:                Behavior
-  ): Props = Props(new JobSpecServiceActor(repo, persistenceActorFactory, schedulerActorFactory, behavior))
+    behavior:                Behavior): Props = Props(new JobSpecServiceActor(repo, persistenceActorFactory, schedulerActorFactory, behavior))
 }

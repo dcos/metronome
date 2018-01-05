@@ -26,8 +26,7 @@ object TaskState {
     "TASK_RUNNING" -> Running,
     "TASK_FINISHED" -> Finished,
     "TASK_FAILED" -> Failed,
-    "TASK_KILLED" -> Killed
-  )
+    "TASK_KILLED" -> Killed)
 
   val statusNames: Map[TaskState, String] = names.map{ case (a, b) => (b, a) }
 

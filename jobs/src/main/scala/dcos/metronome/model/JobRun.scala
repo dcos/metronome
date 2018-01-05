@@ -12,15 +12,13 @@ case class JobRun(
   status:      JobRunStatus,
   createdAt:   DateTime,
   completedAt: Option[DateTime],
-  tasks:       Map[Task.Id, JobRunTask]
-)
+  tasks:       Map[Task.Id, JobRunTask])
 
 case class JobRunTask(
   id:          Task.Id,
   startedAt:   DateTime,
   completedAt: Option[DateTime],
-  status:      TaskState
-)
+  status:      TaskState)
 
 object JobRunTask {
   def apply(task: LaunchedEphemeral): JobRunTask = {
@@ -30,8 +28,7 @@ object JobRunTask {
       id = task.taskId,
       startedAt = task.status.stagedAt.toDateTime,
       completedAt = None,
-      status = TaskState(task)
-    )
+      status = TaskState(task))
   }
 }
 
@@ -57,8 +54,7 @@ object JobRunStatus {
     "STARTING" -> Starting,
     "ACTIVE" -> Active,
     "SUCCESS" -> Success,
-    "FAILED" -> Failed
-  )
+    "FAILED" -> Failed)
   val statusNames: Map[JobRunStatus, String] = names.map{ case (a, b) => (b, a) }
 
   def name(status: JobRunStatus): String = statusNames(status)

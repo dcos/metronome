@@ -15,8 +15,7 @@ trait NoConcurrentRepoChange[Id, Model, Data] extends Actor with ActorLogging wi
     change:    => Future[Model],
     data:      Data,
     onSuccess: (ActorRef, Model, Data) => Change,
-    onFailed:  (ActorRef, Throwable, Data) => Failed
-  )(implicit ec: ExecutionContext): Unit = {
+    onFailed:  (ActorRef, Throwable, Data) => Failed)(implicit ec: ExecutionContext): Unit = {
     val from = sender()
     try {
       val changed = change //can throw an exception, so execute before we enter waiting state

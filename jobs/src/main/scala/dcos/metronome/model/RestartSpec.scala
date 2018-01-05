@@ -5,8 +5,7 @@ import scala.concurrent.duration.Duration
 
 case class RestartSpec(
   policy:         RestartPolicy    = RestartSpec.DefaultRestartPolicy,
-  activeDeadline: Option[Duration] = RestartSpec.DefaultActiveDeadline
-)
+  activeDeadline: Option[Duration] = RestartSpec.DefaultActiveDeadline)
 
 object RestartSpec {
   val DefaultRestartPolicy = RestartPolicy.Never

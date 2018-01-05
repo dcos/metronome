@@ -20,8 +20,7 @@ case class JobRunSpec(
   docker:                     Option[DockerSpec]     = JobRunSpec.DefaultDocker,
   volumes:                    Seq[Volume]            = JobRunSpec.DefaultVolumes,
   restart:                    RestartSpec            = JobRunSpec.DefaultRestartSpec,
-  taskKillGracePeriodSeconds: Option[FiniteDuration] = JobRunSpec.DefaultTaskKillGracePeriodSeconds
-)
+  taskKillGracePeriodSeconds: Option[FiniteDuration] = JobRunSpec.DefaultTaskKillGracePeriodSeconds)
 
 object JobRunSpec {
   val DefaultCpus: Double = 1.0

@@ -23,15 +23,14 @@ import scala.concurrent.Promise
   * @param run the related job run object.
   */
 class JobRunExecutorActor(
-    run:                        JobRun,
-    promise:                    Promise[JobResult],
-    persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
-    launchQueue:                LaunchQueue,
-    taskTracker:                TaskTracker,
-    driverHolder:               MarathonSchedulerDriverHolder,
-    clock:                      Clock,
-    val behavior:               Behavior
-) extends Actor with Stash with ActorLogging with ActorBehavior {
+  run:                        JobRun,
+  promise:                    Promise[JobResult],
+  persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
+  launchQueue:                LaunchQueue,
+  taskTracker:                TaskTracker,
+  driverHolder:               MarathonSchedulerDriverHolder,
+  clock:                      Clock,
+  val behavior:               Behavior) extends Actor with Stash with ActorLogging with ActorBehavior {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
   import TaskStates._
@@ -106,15 +105,13 @@ class JobRunExecutorActor(
     val updatedTask = jobRun.tasks.get(update.taskId).map { t =>
       t.copy(
         completedAt = completedAt,
-        status = update.taskState
-      )
+        status = update.taskState)
     }.getOrElse {
       JobRunTask(
         id = update.taskId,
         startedAt = update.timestamp,
         completedAt = completedAt,
-        status = update.taskState
-      )
+        status = update.taskState)
     }
 
     jobRun.tasks + (updatedTask.id -> updatedTask)
@@ -146,8 +143,7 @@ class JobRunExecutorActor(
         becomeFailing(jobRun.copy(
           status = JobRunStatus.Failed,
           tasks = updatedTasks(update),
-          completedAt = Some(clock.now())
-        ))
+          completedAt = Some(clock.now())))
     }
   }
 
@@ -173,8 +169,7 @@ class JobRunExecutorActor(
     // Abort the jobRun
     jobRun = jobRun.copy(
       status = JobRunStatus.Failed,
-      completedAt = Some(clock.now())
-    )
+      completedAt = Some(clock.now()))
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
 
@@ -233,8 +228,7 @@ class JobRunExecutorActor(
         becomeFinishing(jobRun.copy(
           status = JobRunStatus.Success,
           tasks = updatedTasks(update),
-          completedAt = Some(update.timestamp)
-        ))
+          completedAt = Some(update.timestamp)))
 
       case ForwardStatusUpdate(update) if isFailed(update.taskState) =>
         continueOrBecomeFailing(update)
@@ -253,8 +247,7 @@ class JobRunExecutorActor(
         becomeFinishing(jobRun.copy(
           status = JobRunStatus.Success,
           tasks = updatedTasks(update),
-          completedAt = Some(update.timestamp)
-        ))
+          completedAt = Some(update.timestamp)))
 
       case ForwardStatusUpdate(update) if isFailed(update.taskState) =>
         continueOrBecomeFailing(update)
@@ -278,8 +271,7 @@ class JobRunExecutorActor(
         log.info(s"Execution of JobRun ${jobRun.id} has been finished but deleting the jobRun failed")
         jobRun = jobRun.copy(
           status = JobRunStatus.Failed,
-          completedAt = Some(clock.now())
-        )
+          completedAt = Some(clock.now()))
         val result = JobResult(jobRun)
         context.parent ! JobRunExecutorActor.Aborted(result)
         promise.failure(JobRunFailed(result))
@@ -348,11 +340,9 @@ object JobRunExecutorActor {
     taskTracker:                TaskTracker,
     driverHolder:               MarathonSchedulerDriverHolder,
     clock:                      Clock,
-    behavior:                   Behavior
-  ): Props = Props(
+    behavior:                   Behavior): Props = Props(
     new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
-      launchQueue, taskTracker, driverHolder, clock, behavior)
-  )
+      launchQueue, taskTracker, driverHolder, clock, behavior))
 }
 
 object TaskStates {

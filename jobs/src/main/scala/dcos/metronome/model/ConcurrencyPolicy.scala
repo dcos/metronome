@@ -6,8 +6,7 @@ object ConcurrencyPolicy {
   case object Allow extends ConcurrencyPolicy
 
   val names: Map[String, ConcurrencyPolicy] = Map(
-    "ALLOW" -> Allow
-  )
+    "ALLOW" -> Allow)
   val concurrencyPolicyNames: Map[ConcurrencyPolicy, String] = names.map{ case (a, b) => (b, a) }
 
   def name(concurrencyPolicy: ConcurrencyPolicy): String = concurrencyPolicyNames(concurrencyPolicy)

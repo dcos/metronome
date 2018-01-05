@@ -15,16 +15,15 @@ import mesosphere.marathon.core.leadership.LeadershipModule
 import scala.concurrent.Promise
 
 class JobRunModule(
-    config:           JobRunConfig,
-    actorSystem:      ActorSystem,
-    clock:            Clock,
-    jobRunRepository: Repository[JobRunId, JobRun],
-    launchQueue:      LaunchQueue,
-    taskTracker:      TaskTracker,
-    driverHolder:     MarathonSchedulerDriverHolder,
-    behavior:         Behavior,
-    leadershipModule: LeadershipModule
-) {
+  config:           JobRunConfig,
+  actorSystem:      ActorSystem,
+  clock:            Clock,
+  jobRunRepository: Repository[JobRunId, JobRun],
+  launchQueue:      LaunchQueue,
+  taskTracker:      TaskTracker,
+  driverHolder:     MarathonSchedulerDriverHolder,
+  behavior:         Behavior,
+  leadershipModule: LeadershipModule) {
 
   import com.softwaremill.macwire._
 
@@ -36,8 +35,7 @@ class JobRunModule(
   }
 
   val jobRunServiceActor = leadershipModule.startWhenLeader(
-    JobRunServiceActor.props(clock, executorFactory, jobRunRepository, behavior), "JobRunService"
-  )
+    JobRunServiceActor.props(clock, executorFactory, jobRunRepository, behavior), "JobRunService")
 
   def jobRunService: JobRunService = behavior(wire[JobRunServiceDelegate])
 }

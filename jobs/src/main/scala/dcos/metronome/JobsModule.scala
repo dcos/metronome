@@ -13,10 +13,9 @@ import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.core.plugin.{ PluginManager, PluginModule }
 
 class JobsModule(
-    config:      JobsConfig,
-    actorSystem: ActorSystem,
-    clock:       Clock
-) {
+  config:      JobsConfig,
+  actorSystem: ActorSystem,
+  clock:       Clock) {
 
   private[this] lazy val pluginModule = new PluginModule(config.scallopConf)
   def pluginManger: PluginManager = pluginModule.pluginManager
@@ -35,8 +34,7 @@ class JobsModule(
     clock,
     schedulerRepositoriesModule,
     pluginModule,
-    metricsModule
-  )
+    metricsModule)
 
   lazy val jobRunModule = {
     val launchQueue = schedulerModule.launchQueueModule.launchQueue
@@ -52,8 +50,7 @@ class JobsModule(
     repositoryModule.jobSpecRepository,
     jobRunModule.jobRunService,
     behaviorModule.behavior,
-    schedulerModule.leadershipModule
-  )
+    schedulerModule.leadershipModule)
 
   lazy val jobHistoryModule = new JobHistoryModule(
     config,
@@ -61,15 +58,13 @@ class JobsModule(
     clock,
     repositoryModule.jobHistoryRepository,
     behaviorModule.behavior,
-    schedulerModule.leadershipModule
-  )
+    schedulerModule.leadershipModule)
 
   lazy val jobInfoModule = new JobInfoModule(
     jobSpecModule.jobSpecService,
     jobRunModule.jobRunService,
     behaviorModule.behavior,
-    jobHistoryModule.jobHistoryService
-  )
+    jobHistoryModule.jobHistoryService)
 
   lazy val queueModule = new LaunchQueueModule(schedulerModule.launchQueueModule.launchQueue)
 }

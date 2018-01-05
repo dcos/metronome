@@ -7,12 +7,11 @@ import mesosphere.marathon.state.Timestamp
 import scala.collection.immutable.Map
 
 case class QueuedJobRunInfo(
-    id:                    PathId,
-    tasksLost:             Int,
-    backOffUntil:          Timestamp,
-    run:                   JobRunSpec          = JobRunSpec(),
-    acceptedResourceRoles: Option[Set[String]] = None
-) extends RunSpec {
+  id:                    PathId,
+  tasksLost:             Int,
+  backOffUntil:          Timestamp,
+  run:                   JobRunSpec          = JobRunSpec(),
+  acceptedResourceRoles: Option[Set[String]] = None) extends RunSpec {
   def jobid: String = id.path.head
   override def user: Option[String] = run.user
   override def secrets: Map[String, Secret] = Map.empty

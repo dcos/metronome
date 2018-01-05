@@ -32,8 +32,7 @@ object MarathonImplicits {
       hostPath = Some(volume.hostPath),
       mode = volume.mode.toProto,
       persistent = None,
-      external = None
-    )
+      external = None)
   }
 
   implicit class ArtifactToFetchUri(val artifact: Artifact) extends AnyVal {
@@ -41,8 +40,7 @@ object MarathonImplicits {
       uri = artifact.uri,
       extract = artifact.extract,
       executable = artifact.executable,
-      cache = artifact.cache
-    )
+      cache = artifact.cache)
   }
 
   implicit class ConstraintSpecToProto(val spec: ConstraintSpec) extends AnyVal {
@@ -72,8 +70,7 @@ object MarathonImplicits {
         case Some(dockerSpec) => Some(Container.Docker(
           image = dockerSpec.image,
           volumes = jobSpec.run.volumes.map(_.toMarathon),
-          forcePullImage = dockerSpec.forcePullImage
-        ))
+          forcePullImage = dockerSpec.forcePullImage))
         case _ => None
       }
 
@@ -115,8 +112,7 @@ object MarathonImplicits {
         ipAddress = None,
         versionInfo = AppDefinition.VersionInfo.NoVersion,
         residency = None,
-        secrets = Map.empty[String, Secret]
-      )
+        secrets = Map.empty[String, Secret])
     }
   }
 }

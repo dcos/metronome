@@ -8,11 +8,10 @@ import mesosphere.util.state.{ PersistentEntity, PersistentStore, PersistentStor
 import scala.concurrent.{ ExecutionContext, Future }
 
 abstract class KeyValueRepository[Id, Model](
-    pathResolver:    PathResolver[Id],
-    marshaller:      EntityMarshaller[Model],
-    store:           PersistentStoreWithNestedPathsSupport,
-    implicit val ec: ExecutionContext
-) extends Repository[Id, Model] {
+  pathResolver:    PathResolver[Id],
+  marshaller:      EntityMarshaller[Model],
+  store:           PersistentStoreWithNestedPathsSupport,
+  implicit val ec: ExecutionContext) extends Repository[Id, Model] {
 
   override def ids(): Future[Iterable[Id]] = {
     store.allIds(pathResolver.basePath).map(paths => paths.map(pathResolver.fromPath))

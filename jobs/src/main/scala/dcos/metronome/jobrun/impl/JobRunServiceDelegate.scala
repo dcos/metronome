@@ -10,9 +10,8 @@ import dcos.metronome.model.{ JobId, JobRun, JobRunId, JobSpec }
 import scala.concurrent.Future
 
 private[jobrun] class JobRunServiceDelegate(
-    config:   JobRunConfig,
-    actorRef: ActorRef
-) extends JobRunService {
+  config:   JobRunConfig,
+  actorRef: ActorRef) extends JobRunService {
 
   implicit val timeout: Timeout = config.askTimeout
   import JobRunServiceActor._

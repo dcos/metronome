@@ -61,8 +61,7 @@ object JobSpecConversions {
         description = description,
         labels = proto.getLabelsList.asScala.toModel,
         schedules = proto.getSchedulesList.asScala.toModel,
-        run = proto.getRun.toModel
-      )
+        run = proto.getRun.toModel)
     }
   }
 
@@ -91,9 +90,7 @@ object JobSpecConversions {
         .setStartingDeadline(schedule.startingDeadline.toSeconds)
         .setConcurrencyPolicy(
           Protos.JobSpec.ScheduleSpec.ConcurrencyPolicy.valueOf(
-            ConcurrencyPolicy.name(schedule.concurrencyPolicy)
-          )
-        )
+            ConcurrencyPolicy.name(schedule.concurrencyPolicy)))
         .setEnabled(schedule.enabled)
         .build
     }
@@ -110,8 +107,7 @@ object JobSpecConversions {
           timeZone = DateTimeZone.forID(schedule.getTz),
           startingDeadline = schedule.getStartingDeadline.seconds,
           concurrencyPolicy = ConcurrencyPolicy.names(schedule.getConcurrencyPolicy.toString),
-          enabled = schedule.getEnabled
-        )
+          enabled = schedule.getEnabled)
       }.toList
     }
   }
@@ -167,8 +163,7 @@ object RunSpecConversions {
         args = args,
         user = user,
         docker = docker,
-        taskKillGracePeriodSeconds = taskKillGracePeriodSeconds
-      )
+        taskKillGracePeriodSeconds = taskKillGracePeriodSeconds)
     }
   }
 
@@ -177,8 +172,7 @@ object RunSpecConversions {
       val builder = Protos.JobSpec.RunSpec.RestartSpec.newBuilder
 
       builder.setPolicy(
-        Protos.JobSpec.RunSpec.RestartSpec.RestartPolicy.valueOf(RestartPolicy.name(restart.policy))
-      )
+        Protos.JobSpec.RunSpec.RestartSpec.RestartPolicy.valueOf(RestartPolicy.name(restart.policy)))
 
       restart.activeDeadline.foreach { activeDeadline => builder.setActiveDeadline(activeDeadline.toSeconds) }
 
@@ -202,8 +196,7 @@ object RunSpecConversions {
         .setContainerPath(volume.containerPath)
         .setHostPath(volume.hostPath)
         .setMode(
-          Protos.JobSpec.RunSpec.Volume.Mode.valueOf(Mode.name(volume.mode))
-        )
+          Protos.JobSpec.RunSpec.Volume.Mode.valueOf(Mode.name(volume.mode)))
         .build
     }
   }
@@ -213,8 +206,7 @@ object RunSpecConversions {
       Volume(
         containerPath = volume.getContainerPath,
         hostPath = volume.getHostPath,
-        mode = Mode.names(volume.getMode.toString)
-      )
+        mode = Mode.names(volume.getMode.toString))
     }.toList
   }
 
@@ -239,8 +231,7 @@ object RunSpecConversions {
       builder
         .setAttribute(constraint.attribute)
         .setOperator(
-          Protos.JobSpec.RunSpec.PlacementSpec.Constraint.Operator.valueOf(Operator.name(constraint.operator))
-        )
+          Protos.JobSpec.RunSpec.PlacementSpec.Constraint.Operator.valueOf(Operator.name(constraint.operator)))
         .build()
     }
   }
@@ -251,8 +242,7 @@ object RunSpecConversions {
       ConstraintSpec(
         attribute = constraint.getAttribute,
         operator = Operator.names(constraint.getOperator.toString),
-        value = value
-      )
+        value = value)
     }.toList
   }
 
@@ -273,8 +263,7 @@ object RunSpecConversions {
         uri = artifact.getUrl,
         extract = artifact.getExtract,
         executable = artifact.getExecutable,
-        cache = artifact.getCache
-      )
+        cache = artifact.getCache)
     }.toList
   }
 

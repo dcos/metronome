@@ -8,10 +8,9 @@ import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
 
 class JobInfoModule(
-    jobSpecService: JobSpecService,
-    jobRunService:  JobRunService,
-    behavior:       Behavior, history: JobHistoryService
-) {
+  jobSpecService: JobSpecService,
+  jobRunService:  JobRunService,
+  behavior:       Behavior, history: JobHistoryService) {
 
   import com.softwaremill.macwire._
 

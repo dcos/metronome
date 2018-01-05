@@ -8,8 +8,7 @@ object RestartPolicy {
 
   val names: Map[String, RestartPolicy] = Map(
     "NEVER" -> Never,
-    "ON_FAILURE" -> OnFailure
-  )
+    "ON_FAILURE" -> OnFailure)
   val restartPolicyNames: Map[RestartPolicy, String] = names.map{ case (a, b) => (b, a) }
 
   def name(restartPolicy: RestartPolicy): String = restartPolicyNames(restartPolicy)

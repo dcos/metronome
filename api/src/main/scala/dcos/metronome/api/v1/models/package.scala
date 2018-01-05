@@ -31,20 +31,17 @@ package object models {
 
   implicit lazy val JobIdFormat: Format[JobId] = Format(
     Reads.of[String](Reads.minLength[String](1)).map(s => JobId(s)),
-    Writes[JobId] { id => JsString(id.toString) }
-  )
+    Writes[JobId] { id => JsString(id.toString) })
 
   implicit val DateTimeFormat: Format[DateTime] = Format (
     Reads.jodaDateReads("yyyy-MM-dd'T'HH:mm:ss.SSSZ"),
-    Writes.jodaDateWrites("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
-  )
+    Writes.jodaDateWrites("yyyy-MM-dd'T'HH:mm:ss.SSSZ"))
 
   implicit lazy val ArtifactFormat: Format[Artifact] = (
     (__ \ "uri").format[String] ~
     (__ \ "extract").formatNullable[Boolean].withDefault(true) ~
     (__ \ "executable").formatNullable[Boolean].withDefault(false) ~
-    (__ \ "cache").formatNullable[Boolean].withDefault(false)
-  )(Artifact.apply, unlift(Artifact.unapply))
+    (__ \ "cache").formatNullable[Boolean].withDefault(false))(Artifact.apply, unlift(Artifact.unapply))
 
   implicit lazy val CronFormat: Format[CronSpec] = new Format[CronSpec] {
     override def writes(o: CronSpec): JsValue = JsString(o.toString)
@@ -96,8 +93,7 @@ package object models {
       (__ \ "timezone").formatNullable[DateTimeZone].withDefault(ScheduleSpec.DefaultTimeZone) ~
       (__ \ "startingDeadlineSeconds").formatNullable[Duration].withDefault(ScheduleSpec.DefaultStartingDeadline) ~
       (__ \ "concurrencyPolicy").formatNullable[ConcurrencyPolicy].withDefault(ScheduleSpec.DefaultConcurrencyPolicy) ~
-      (__ \ "enabled").formatNullable[Boolean].withDefault(ScheduleSpec.DefaultEnabled)
-    )(ScheduleSpec.apply, unlift(ScheduleSpec.unapply))
+      (__ \ "enabled").formatNullable[Boolean].withDefault(ScheduleSpec.DefaultEnabled))(ScheduleSpec.apply, unlift(ScheduleSpec.unapply))
 
     Format(
       Reads.of[ScheduleSpec](ScheduleSpecFormatBasic),
@@ -105,8 +101,7 @@ package object models {
         override def writes(o: ScheduleSpec): JsValue =
           ScheduleSpecFormatBasic.writes(o).as[JsObject] ++
             Json.obj("nextRunAt" -> o.nextExecution())
-      }
-    )
+      })
   }
 
   implicit lazy val OperatorFormat: Format[Operator] = new Format[Operator] {
@@ -121,8 +116,7 @@ package object models {
   implicit lazy val ConstraintSpecFormat: Format[ConstraintSpec] = (
     (__ \ "attribute").format[String] ~
     (__ \ "operator").format[Operator] ~
-    (__ \ "value").formatNullable[String]
-  )(ConstraintSpec.apply, unlift(ConstraintSpec.unapply))
+    (__ \ "value").formatNullable[String])(ConstraintSpec.apply, unlift(ConstraintSpec.unapply))
 
   implicit lazy val PlacementSpecFormat: Format[PlacementSpec] = Json.format[PlacementSpec]
 
@@ -138,13 +132,11 @@ package object models {
 
   implicit lazy val DockerSpecFormat: Format[DockerSpec] = (
     (__ \ "image").format[String] ~
-    (__ \ "forcePullImage").formatNullable[Boolean].withDefault(false)
-  ) (DockerSpec.apply, unlift(DockerSpec.unapply))
+    (__ \ "forcePullImage").formatNullable[Boolean].withDefault(false)) (DockerSpec.apply, unlift(DockerSpec.unapply))
 
   implicit lazy val RestartSpecFormat: Format[RestartSpec] = (
     (__ \ "policy").formatNullable[RestartPolicy].withDefault(RestartSpec.DefaultRestartPolicy) ~
-    (__ \ "activeDeadlineSeconds").formatNullable[Duration]
-  ) (RestartSpec.apply, unlift(RestartSpec.unapply))
+    (__ \ "activeDeadlineSeconds").formatNullable[Duration]) (RestartSpec.apply, unlift(RestartSpec.unapply))
 
   implicit lazy val FiniteDurationFormat: Format[FiniteDuration] = new Format[FiniteDuration] {
     override def writes(o: FiniteDuration): JsValue = JsNumber(o.toSeconds)
@@ -168,20 +160,17 @@ package object models {
     (__ \ "docker").formatNullable[DockerSpec] ~
     (__ \ "volumes").formatNullable[Seq[Volume]].withDefault(JobRunSpec.DefaultVolumes) ~
     (__ \ "restart").formatNullable[RestartSpec].withDefault(JobRunSpec.DefaultRestartSpec) ~
-    (__ \ "taskKillGracePeriodSeconds").formatNullable[FiniteDuration]
-  )(JobRunSpec.apply, unlift(JobRunSpec.unapply))
+    (__ \ "taskKillGracePeriodSeconds").formatNullable[FiniteDuration])(JobRunSpec.apply, unlift(JobRunSpec.unapply))
 
   implicit lazy val JobSpecFormat: Format[JobSpec] = (
     (__ \ "id").format[JobId] ~
     (__ \ "description").formatNullable[String] ~
     (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty) ~
-    (__ \ "run").format[JobRunSpec]
-  )(JobSpec.apply(_, _, _, Seq.empty, _), s => (s.id, s.description, s.labels, s.run))
+    (__ \ "run").format[JobRunSpec])(JobSpec.apply(_, _, _, Seq.empty, _), s => (s.id, s.description, s.labels, s.run))
 
   implicit lazy val TaskIdFormat: Format[Task.Id] = Format(
     Reads.of[String](Reads.minLength[String](3)).map(Task.Id(_)),
-    Writes[Task.Id] { id => JsString(id.idString) }
-  )
+    Writes[Task.Id] { id => JsString(id.idString) })
 
   implicit lazy val TaskStateFormat: Format[TaskState] = new Format[TaskState] {
     override def writes(o: TaskState): JsValue = JsString(TaskState.name(o))
@@ -212,8 +201,7 @@ package object models {
       "status" -> run.status,
       "createdAt" -> run.createdAt,
       "completedAt" -> run.completedAt,
-      "tasks" -> run.tasks.values
-    )
+      "tasks" -> run.tasks.values)
   }
 
   implicit lazy val JobRunInfoWrites: Writes[JobRunInfo] = Json.writes[JobRunInfo]
@@ -224,16 +212,14 @@ package object models {
       "lastSuccessAt" -> o.lastSuccessAt,
       "lastFailureAt" -> o.lastFailureAt,
       "successfulFinishedRuns" -> o.successfulRuns,
-      "failedFinishedRuns" -> o.failedRuns
-    )
+      "failedFinishedRuns" -> o.failedRuns)
   }
   implicit lazy val JobHistorySummaryWrites: Writes[JobHistorySummary] = new Writes[JobHistorySummary] {
     override def writes(o: JobHistorySummary): JsValue = Json.obj(
       "successCount" -> o.successCount,
       "failureCount" -> o.failureCount,
       "lastSuccessAt" -> o.lastSuccessAt,
-      "lastFailureAt" -> o.lastFailureAt
-    )
+      "lastFailureAt" -> o.lastFailureAt)
   }
 
   implicit lazy val StartedJobRunWrites: Writes[StartedJobRun] = new Writes[StartedJobRun] {
@@ -249,8 +235,7 @@ package object models {
       "message" -> s"Object is not valid",
       "details" -> error.errors.map {
         case (jsPath, errs) => Json.obj("path" -> jsPath.toString(), "errors" -> errs.map(_.message))
-      }
-    )
+      })
   }
 
   implicit lazy val MetronomeInfoWrites: Writes[MetronomeInfo] = Json.writes[MetronomeInfo]
@@ -264,15 +249,13 @@ package object models {
   implicit lazy val QueuedTaskInfoWrites: Writes[QueuedJobRunInfo] = new Writes[QueuedJobRunInfo] {
     //    output of queue is only runid
     override def writes(runInfo: QueuedJobRunInfo): JsValue = Json.obj(
-      "runId" -> JsString(runInfo.id.toString())
-    )
+      "runId" -> JsString(runInfo.id.toString()))
   }
 
   def queuedTaskInfoMap(job: String, queuedTaskList: Seq[QueuedJobRunInfo]): JsValue = {
     Json.obj(
       "jobId" -> job,
-      "runs" -> queuedTaskList
-    )
+      "runs" -> queuedTaskList)
   }
 
   implicit lazy val QueuedJobRunMapWrites: Writes[Map[String, Seq[QueuedJobRunInfo]]] = new Writes[Map[String, Seq[QueuedJobRunInfo]]] {
