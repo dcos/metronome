@@ -519,9 +519,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     When("nothing happened until timeout is reached")
     f.clock += startingDeadline.get
     Then("job will become failed")
-    eventually {
-      verifyAbortedActions(jobRun, 0, f)
-    }
+    verifyAbortedActions(jobRun, 0, f)
   }
 
   test("startingDeadline is cancelled when job is started") {
@@ -541,7 +539,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     }
   }
 
-  test("works correctly for negative starting deadline") {
+  test("does not attempt to start job for negative starting deadline") {
     import scala.concurrent.duration._
     val f = new Fixture
 
@@ -551,13 +549,10 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     )
     val startingDeadline = Some(1 second)
     Given("a job run created one hour before now")
-    f.clock += Duration(-1, TimeUnit.HOURS)
-    val (actor, jobRun) = f.setupInitialExecutorActor(Some(jobSpec), startingDeadline)
+    val (actor, jobRun) = f.setupInitialExecutorActor(Some(jobSpec), startingDeadline,
+      createdAt = f.clock.now().minus(Duration(1, TimeUnit.HOURS).toMillis))
 
-    When("starting deadline is computed")
-    eventually {
-      actor.underlyingActor.startingDeadlineTimer.isDefined should be(true)
-    }
+    actor.underlyingActor.startingDeadlineTimer.isDefined should be(false)
 
     Then("job will fail immediately")
     eventually {
@@ -654,7 +649,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     def executorActor(jobRun: JobRun, startingDeadline: Option[Duration] = None): TestActorRef[JobRunExecutorActor] = {
       import JobRunExecutorActorTest._
       val actorRef = TestActorRef[JobRunExecutorActor](JobRunExecutorActor.props(jobRun, promise, persistenceActorFactory,
-        launchQueue, taskTracker, driverHolder, clock, behaviour), parent.ref, "JobRunExecutor")
+        launchQueue, taskTracker, driverHolder, clock, behaviour)(scheduler), parent.ref, "JobRunExecutor")
       actor = Some(actorRef)
       actorRef
     }
@@ -677,9 +672,9 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       *
       *  @return A tuple containing the ActorRef and the JobRun
       */
-    def setupInitialExecutorActor(spec: Option[JobSpec] = None, startingDeadline: Option[Duration] = None): (TestActorRef[JobRunExecutorActor], JobRun) = {
+    def setupInitialExecutorActor(spec: Option[JobSpec] = None, startingDeadline: Option[Duration] = None, createdAt: DateTime = clock.now()): (TestActorRef[JobRunExecutorActor], JobRun) = {
       val jobSpec = spec.getOrElse(defaultJobSpec)
-      val startingJobRun = JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Initial, clock.now(), None, startingDeadline, Map.empty)
+      val startingJobRun = JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Initial, createdAt, None, startingDeadline, Map.empty)
       val actorRef = executorActor(startingJobRun, startingDeadline)
       (actorRef, startingJobRun)
     }

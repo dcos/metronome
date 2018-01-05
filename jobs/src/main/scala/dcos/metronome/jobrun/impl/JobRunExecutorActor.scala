@@ -17,7 +17,7 @@ import mesosphere.marathon.core.task.tracker.TaskTracker
 import org.joda.time.Seconds
 
 import scala.concurrent.Promise
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{ Duration, FiniteDuration }
 
 /**
   * Handles one job run from start until the job either completes successful or failed.
@@ -47,30 +47,36 @@ class JobRunExecutorActor(
   val runSpecId = jobRun.id.toPathId
 
   override def preStart(): Unit = {
-    scheduleTimeout()
+    val startingDeadline = computeStartingDeadline
+    if (startingDeadline.exists(d => d.toSeconds <= 0)) {
+      log.info(s"StartingDeadline reached for job ${jobRun.id}, aborting job run.")
+      becomeAborting()
+    } else {
+      startingDeadline.foreach(scheduleStartingDeadline)
 
-    jobRun.status match {
-      case JobRunStatus.Initial => becomeCreating()
+      jobRun.status match {
+        case JobRunStatus.Initial => becomeCreating()
 
-      case JobRunStatus.Starting | JobRunStatus.Active =>
-        launchQueue.get(runSpecId) match {
-          case Some(info) if info.finalTaskCount > 0 =>
-            log.info("found an active launch queue for {}, not scheduling more tasks", runSpecId)
-            val tasks = taskTracker.appTasksLaunchedSync(runSpecId).collect {
-              // FIXME: we do currently only allow non-resident tasks. Since there is no clear state on
-              // Marathon's task representation, this is the safest conversion we can do for now:
-              case task: LaunchedEphemeral => JobRunTask(task)
-              case task: Task              => throw new UnexpectedTaskState(task)
-            }
-            self ! Initialized(tasks)
+        case JobRunStatus.Starting | JobRunStatus.Active =>
+          launchQueue.get(runSpecId) match {
+            case Some(info) if info.finalTaskCount > 0 =>
+              log.info("found an active launch queue for {}, not scheduling more tasks", runSpecId)
+              val tasks = taskTracker.appTasksLaunchedSync(runSpecId).collect {
+                // FIXME: we do currently only allow non-resident tasks. Since there is no clear state on
+                // Marathon's task representation, this is the safest conversion we can do for now:
+                case task: LaunchedEphemeral => JobRunTask(task)
+                case task: Task              => throw UnexpectedTaskState(task)
+              }
+              self ! Initialized(tasks)
 
-          case _ =>
-            self ! Initialized(tasks = Nil)
-        }
+            case _ =>
+              self ! Initialized(tasks = Nil)
+          }
 
-      case JobRunStatus.Success => becomeFinishing(jobRun)
+        case JobRunStatus.Success => becomeFinishing(jobRun)
 
-      case JobRunStatus.Failed  => becomeFailing(jobRun)
+        case JobRunStatus.Failed  => becomeFailing(jobRun)
+      }
     }
   }
 
@@ -90,16 +96,19 @@ class JobRunExecutorActor(
     context.become(starting)
   }
 
-  def scheduleTimeout(): Unit = {
+  def computeStartingDeadline: Option[FiniteDuration] = {
     import scala.concurrent.duration._
 
-    jobRun.startingDeadline.foreach { deadline =>
+    jobRun.startingDeadline.map { deadline =>
       val now = clock.now()
       val from = run.createdAt.plus(deadline.toMillis)
-      val timeout = Seconds.secondsBetween(now, from).getSeconds.seconds
-      log.info(s"Timeout scheduled for ${jobRun.id} at $timeout")
-      startingDeadlineTimer = Some(context.system.scheduler.scheduleOnce(timeout, self, StartTimeout))
+      Seconds.secondsBetween(now, from).getSeconds.seconds
     }
+  }
+
+  def scheduleStartingDeadline(timeout: FiniteDuration): Unit = {
+    log.info(s"Timeout scheduled for ${jobRun.id} at $timeout")
+    startingDeadlineTimer = Some(scheduler.scheduleOnce(timeout, self, StartTimeout))
   }
 
   def addTaskToLaunchQueue(): Unit = {
