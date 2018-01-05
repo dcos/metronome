@@ -1,4 +1,5 @@
-package dcos.metronome.api
+package dcos.metronome
+package api
 
 import akka.util.ByteString
 import dcos.metronome.jobinfo.JobSpecSelector
@@ -115,4 +116,3 @@ object PluginFacade {
     }
   }
 }
-

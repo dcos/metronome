@@ -1,4 +1,5 @@
-package dcos.metronome.behavior
+package dcos.metronome
+package behavior
 
 trait BehaviorConfig {
 

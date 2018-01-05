@@ -1,4 +1,5 @@
-package dcos.metronome.utils.test
+package dcos.metronome
+package utils.test
 
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.{ Answer, OngoingStubbing }

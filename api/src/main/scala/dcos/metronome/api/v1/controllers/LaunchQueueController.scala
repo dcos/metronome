@@ -1,4 +1,5 @@
-package dcos.metronome.api.v1.controllers
+package dcos.metronome
+package api.v1.controllers
 
 import dcos.metronome.api.{ Authorization, RestController }
 import dcos.metronome.queue.LaunchQueueService

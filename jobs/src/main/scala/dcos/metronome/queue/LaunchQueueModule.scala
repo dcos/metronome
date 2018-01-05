@@ -1,4 +1,5 @@
-package dcos.metronome.queue
+package dcos.metronome
+package queue
 
 import com.softwaremill.macwire.wire
 import dcos.metronome.queue.impl.LaunchQueueServiceImpl

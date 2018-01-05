@@ -1,4 +1,5 @@
-package dcos.metronome.migration.impl
+package dcos.metronome
+package migration.impl
 
 import dcos.metronome.migration.Migration
 import dcos.metronome.repository.impl.kv.{ JobHistoryPathResolver, JobRunPathResolver, JobSpecPathResolver }

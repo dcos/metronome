@@ -1,4 +1,5 @@
-package dcos.metronome.jobspec
+package dcos.metronome
+package jobspec
 
 import scala.concurrent.duration.{ FiniteDuration, Duration }
 

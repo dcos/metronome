@@ -1,4 +1,5 @@
-package dcos.metronome.model
+package dcos.metronome
+package model
 
 import scala.concurrent.duration._
 import scala.collection.immutable._
@@ -38,4 +39,3 @@ object JobRunSpec {
   val DefaultRestartSpec = RestartSpec()
   val DefaultTaskKillGracePeriodSeconds = None
 }
-

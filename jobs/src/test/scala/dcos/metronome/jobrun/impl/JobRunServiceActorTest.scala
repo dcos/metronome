@@ -1,4 +1,5 @@
-package dcos.metronome.jobrun.impl
+package dcos.metronome
+package jobrun.impl
 
 import java.util.concurrent.LinkedBlockingDeque
 

@@ -1,4 +1,5 @@
-package dcos.metronome.repository
+package dcos.metronome
+package repository
 
 import java.net.InetSocketAddress
 import java.util.UUID

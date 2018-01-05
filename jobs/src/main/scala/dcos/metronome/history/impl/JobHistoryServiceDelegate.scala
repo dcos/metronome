@@ -1,4 +1,5 @@
-package dcos.metronome.history.impl
+package dcos.metronome
+package history.impl
 
 import akka.actor.ActorRef
 import akka.pattern.ask

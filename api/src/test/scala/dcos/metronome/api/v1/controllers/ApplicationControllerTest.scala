@@ -1,4 +1,5 @@
-package dcos.metronome.api.v1.controllers
+package dcos.metronome
+package api.v1.controllers
 
 import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents }
 import org.scalatestplus.play.PlaySpec

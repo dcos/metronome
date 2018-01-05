@@ -1,4 +1,5 @@
-package dcos.metronome.model
+package dcos.metronome
+package model
 
 import mesosphere.marathon.plugin.{ EnvVarValue, PathId, RunSpec, Secret }
 import mesosphere.marathon.state.Timestamp

@@ -1,4 +1,5 @@
-package dcos.metronome.jobinfo.impl
+package dcos.metronome
+package jobinfo.impl
 
 import dcos.metronome.history.JobHistoryService
 import dcos.metronome.jobinfo.JobInfo.Embed

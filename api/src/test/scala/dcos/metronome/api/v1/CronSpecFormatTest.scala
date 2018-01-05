@@ -1,4 +1,5 @@
-package dcos.metronome.api.v1
+package dcos.metronome
+package api.v1
 
 import dcos.metronome.api.v1.models._
 import dcos.metronome.model.CronSpec

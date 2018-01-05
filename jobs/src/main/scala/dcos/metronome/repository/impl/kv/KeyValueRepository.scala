@@ -1,4 +1,5 @@
-package dcos.metronome.repository.impl.kv
+package dcos.metronome
+package repository.impl.kv
 
 import dcos.metronome.PersistenceFailed
 import dcos.metronome.repository.Repository

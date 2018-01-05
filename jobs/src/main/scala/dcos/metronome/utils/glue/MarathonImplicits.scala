@@ -1,4 +1,5 @@
-package dcos.metronome.utils.glue
+package dcos.metronome
+package utils.glue
 
 import java.util.concurrent.TimeUnit
 

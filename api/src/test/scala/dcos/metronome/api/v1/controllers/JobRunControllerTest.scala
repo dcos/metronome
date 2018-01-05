@@ -1,4 +1,5 @@
-package dcos.metronome.api.v1.controllers
+package dcos.metronome
+package api.v1.controllers
 
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
@@ -252,4 +253,3 @@ class JobRunControllerTest extends PlaySpec with OneAppPerTestWithComponents[Moc
     override lazy val pluginManager: PluginManager = auth.pluginManager
   }
 }
-

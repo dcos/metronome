@@ -1,4 +1,5 @@
-package dcos.metronome.api
+package dcos.metronome
+package api
 
 import controllers.Assets
 import dcos.metronome.behavior.{ Behavior, BehaviorFixture, Metrics }
@@ -135,4 +136,3 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
 
   override def router: Router = apiModule.router
 }
-

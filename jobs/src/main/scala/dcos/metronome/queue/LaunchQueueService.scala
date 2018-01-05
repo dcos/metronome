@@ -1,6 +1,8 @@
-package dcos.metronome.queue
+package dcos.metronome
+package queue
 
 import dcos.metronome.model.QueuedJobRunInfo
+import scala.collection.immutable.Seq
 
 /**
   * Provides access to the underlying list of tasks in the launch queue.
@@ -8,6 +10,6 @@ import dcos.metronome.model.QueuedJobRunInfo
   */
 trait LaunchQueueService {
 
-  def list(): scala.collection.immutable.Seq[QueuedJobRunInfo]
+  def list(): Seq[QueuedJobRunInfo]
 
 }

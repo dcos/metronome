@@ -1,4 +1,5 @@
-package dcos.metronome.model
+package dcos.metronome
+package model
 
 import com.wix.accord.dsl._
 import com.wix.accord.Validator
@@ -34,4 +35,3 @@ object JobSpec {
     jobSpec.schedules has size <= 1 // FIXME: we will support only one schedule in v1
   }
 }
-

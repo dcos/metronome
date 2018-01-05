@@ -1,4 +1,5 @@
-package dcos.metronome.behavior.impl
+package dcos.metronome
+package behavior.impl
 
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.health.HealthCheckRegistry

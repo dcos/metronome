@@ -1,4 +1,5 @@
-package dcos.metronome.api.v0.controllers
+package dcos.metronome
+package api.v0.controllers
 
 import dcos.metronome.{ JobSpecAlreadyExists, JobSpecDoesNotExist }
 import dcos.metronome.api._

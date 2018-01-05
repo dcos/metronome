@@ -1,4 +1,5 @@
-package dcos.metronome.repository
+package dcos.metronome
+package repository
 
 import com.twitter.util.JavaTimer
 import com.twitter.zk.{ NativeConnector, ZNode, ZkClient }
@@ -41,4 +42,3 @@ class RepositoryModule(config: ZkConfig) {
 
   def jobHistoryRepository: Repository[JobId, JobHistory] = new ZkJobHistoryRepository(zkStore, ec)
 }
-

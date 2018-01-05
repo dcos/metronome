@@ -1,4 +1,5 @@
-package dcos.metronome.behavior.impl
+package dcos.metronome
+package behavior.impl
 
 import java.lang.reflect.Method
 

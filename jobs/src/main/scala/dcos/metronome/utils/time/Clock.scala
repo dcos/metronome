@@ -1,4 +1,5 @@
-package dcos.metronome.utils.time
+package dcos.metronome
+package utils.time
 
 import org.joda.time.{ DateTimeZone, DateTime }
 

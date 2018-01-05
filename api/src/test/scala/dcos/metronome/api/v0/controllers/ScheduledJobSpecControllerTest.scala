@@ -1,4 +1,5 @@
-package dcos.metronome.api.v0.controllers
+package dcos.metronome
+package api.v0.controllers
 
 import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
 import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents, TestAuthFixture, UnknownJob }
@@ -207,4 +208,3 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
     override lazy val pluginManager: PluginManager = auth.pluginManager
   }
 }
-

@@ -1,4 +1,5 @@
-package dcos.metronome.model
+package dcos.metronome
+package model
 
 sealed trait ConcurrencyPolicy
 object ConcurrencyPolicy {
@@ -13,4 +14,3 @@ object ConcurrencyPolicy {
   def unapply(name: String): Option[ConcurrencyPolicy] = names.get(name)
   def isDefined(name: String): Boolean = names.contains(name)
 }
-

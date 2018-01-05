@@ -1,4 +1,5 @@
-package dcos.metronome.jobrun.impl
+package dcos.metronome
+package jobrun.impl
 
 import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Props, Stash }
 import dcos.metronome.{ JobRunFailed, UnexpectedTaskState }

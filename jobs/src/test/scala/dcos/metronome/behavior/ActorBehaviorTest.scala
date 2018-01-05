@@ -1,4 +1,5 @@
-package dcos.metronome.behavior
+package dcos.metronome
+package behavior
 
 import akka.actor.{ Actor, ActorLogging, ActorSystem, Props }
 import akka.testkit.{ TestActorRef, TestKit }

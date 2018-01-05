@@ -1,4 +1,5 @@
-package dcos.metronome.jobinfo
+package dcos.metronome
+package jobinfo
 
 import dcos.metronome.behavior.Behavior
 import dcos.metronome.history.JobHistoryService

@@ -1,4 +1,5 @@
-package dcos.metronome.api
+package dcos.metronome
+package api
 
 import dcos.metronome.jobinfo.JobInfo.Embed
 import dcos.metronome.model.JobId

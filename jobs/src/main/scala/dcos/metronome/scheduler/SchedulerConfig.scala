@@ -1,4 +1,5 @@
-package dcos.metronome.scheduler
+package dcos.metronome
+package scheduler
 
 import dcos.metronome.repository.impl.kv.ZkConfig
 import mesosphere.marathon.AllConf

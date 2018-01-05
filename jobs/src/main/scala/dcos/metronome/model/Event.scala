@@ -1,4 +1,5 @@
-package dcos.metronome.model
+package dcos.metronome
+package model
 
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
@@ -55,4 +56,3 @@ object Event {
   ) extends JobRunEvent
 
 }
-

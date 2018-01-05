@@ -1,4 +1,5 @@
-package dcos.metronome.api.v1.models
+package dcos.metronome
+package api.v1.models
 
 import dcos.metronome.api.JsonSchema
 import dcos.metronome.model.{ ScheduleSpec, JobSpec }

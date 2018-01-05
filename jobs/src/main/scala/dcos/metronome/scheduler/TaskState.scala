@@ -1,4 +1,5 @@
-package dcos.metronome.scheduler
+package dcos.metronome
+package scheduler
 
 import mesosphere.marathon.core.task.Task
 import org.apache.mesos
