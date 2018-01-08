@@ -45,17 +45,15 @@ class SimulatedScheduler(clock: FixedClock) extends Scheduler {
 
   override def scheduleOnce(
     delay:    FiniteDuration,
-    runnable: Runnable
-  )(implicit executor: ExecutionContext): Cancellable = synchronized {
+    runnable: Runnable)(implicit executor: ExecutionContext): Cancellable = synchronized {
     val id = nextId.getAndIncrement
     val cancellable = new ScheduledTaskCancellable(id)
     scheduledTasks(id) = ScheduledTask(
       time = clock.now().getMillis + delay.toMillis,
       action = () => {
-      cancellable.cancel()
-      executor.execute(runnable)
-    }
-    )
+        cancellable.cancel()
+        executor.execute(runnable)
+      })
     poll()
     cancellable
   }
@@ -63,17 +61,15 @@ class SimulatedScheduler(clock: FixedClock) extends Scheduler {
   def schedule(
     initialDelay: FiniteDuration,
     interval:     FiniteDuration,
-    runnable:     Runnable
-  )(implicit executor: ExecutionContext): Cancellable = synchronized {
+    runnable:     Runnable)(implicit executor: ExecutionContext): Cancellable = synchronized {
     val id = nextId.getAndIncrement
     val cancellable = new ScheduledTaskCancellable(id)
     scheduledTasks(id) = ScheduledTask(
       time = clock.now().getMillis + initialDelay.toMillis,
       action = () => {
-      scheduledTasks(id).time = clock.now().getMillis + interval.toMillis
-      executor.execute(runnable)
-    }
-    )
+        scheduledTasks(id).time = clock.now().getMillis + interval.toMillis
+        executor.execute(runnable)
+      })
     poll()
     cancellable
   }

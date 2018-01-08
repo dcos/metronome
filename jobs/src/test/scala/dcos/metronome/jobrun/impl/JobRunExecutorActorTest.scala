@@ -506,8 +506,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
     Given("a jobRunSpec with startingDeadline")
     val jobSpec = JobSpec(
-      id = JobId("/test")
-    )
+      id = JobId("/test"))
     val startingDeadline = Some(1 second)
     val (actor, jobRun) = f.setupInitialExecutorActor(Some(jobSpec), startingDeadline)
     f.persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
@@ -528,8 +527,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
     Given("a jobRunSpec with startingDeadline")
     val jobSpec = JobSpec(
-      id = JobId("/test")
-    )
+      id = JobId("/test"))
     val startingDeadline = Some(1 second)
     val (actor, jobRun) = f.setupActiveExecutorActor(Some(jobSpec))
 
@@ -545,8 +543,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
     Given("a jobRunSpec with startingDeadline")
     val jobSpec = JobSpec(
-      id = JobId("/test")
-    )
+      id = JobId("/test"))
     val startingDeadline = Some(1 second)
     Given("a job run created one hour before now")
     val (actor, jobRun) = f.setupInitialExecutorActor(Some(jobSpec), startingDeadline,

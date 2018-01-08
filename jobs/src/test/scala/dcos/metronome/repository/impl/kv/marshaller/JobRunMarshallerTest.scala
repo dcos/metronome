@@ -28,7 +28,6 @@ class JobRunMarshallerTest extends FunSuite with Matchers {
       DateTime.parse("2004-09-06T08:50:12.000Z"),
       Some(DateTime.parse("2004-09-06T08:50:12.000Z")),
       Some(1 minute),
-      Map.empty
-    )
+      Map.empty)
   }
 }
