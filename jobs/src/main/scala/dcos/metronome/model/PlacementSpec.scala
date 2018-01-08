@@ -4,8 +4,7 @@ package model
 import scala.collection.immutable.Seq
 
 case class PlacementSpec(
-  constraints: Seq[ConstraintSpec] = PlacementSpec.DefaultConstraints
-)
+  constraints: Seq[ConstraintSpec] = PlacementSpec.DefaultConstraints)
 object PlacementSpec {
   val DefaultConstraints = Seq.empty[ConstraintSpec]
 }
@@ -21,8 +20,7 @@ object Operator {
   val names: Map[String, Operator] = Map(
     "EQ" -> Eq,
     "LIKE" -> Like,
-    "UNLIKE" -> Unlike
-  )
+    "UNLIKE" -> Unlike)
   val operatorNames: Map[Operator, String] = names.map{ case (a, b) => (b, a) }
 
   def name(operator: Operator): String = operatorNames(operator)

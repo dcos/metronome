@@ -20,8 +20,7 @@ class RepositoryModule(config: ZkConfig) {
       None,
       config.zkSessionTimeout.toMillis.millis,
       new JavaTimer(isDaemon = true),
-      config.zkAuthInfo
-    )
+      config.zkAuthInfo)
 
     ZkClient(connector)
       .withAcl(config.zkDefaultCreationACL)
@@ -33,8 +32,7 @@ class RepositoryModule(config: ZkConfig) {
   val zkStore: ZKStore = new ZKStore(
     zkClient,
     zkRoot,
-    CompressionConf(config.zkCompressionEnabled, config.zkCompressionThreshold)
-  )
+    CompressionConf(config.zkCompressionEnabled, config.zkCompressionThreshold))
 
   def jobSpecRepository: Repository[JobId, JobSpec] = new ZkJobSpecRepository(zkStore, ec)
 

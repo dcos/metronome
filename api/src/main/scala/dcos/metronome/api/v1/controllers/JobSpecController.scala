@@ -18,13 +18,12 @@ import scala.async.Async.{ async, await }
 import scala.concurrent.Future
 
 class JobSpecController(
-    jobSpecService:    JobSpecService,
-    jobRunService:     JobRunService,
-    jobInfoService:    JobInfoService,
-    val authenticator: Authenticator,
-    val authorizer:    Authorizer,
-    val config:        ApiConfig
-) extends Authorization {
+  jobSpecService:    JobSpecService,
+  jobRunService:     JobRunService,
+  jobInfoService:    JobInfoService,
+  val authenticator: Authenticator,
+  val authorizer:    Authorizer,
+  val config:        ApiConfig) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 

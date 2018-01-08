@@ -33,13 +33,12 @@ import scala.collection.immutable.Seq
 import scala.util.Random
 
 class SchedulerModule(
-    config:            SchedulerConfig,
-    actorSystem:       ActorSystem,
-    clock:             Clock,
-    persistenceModule: SchedulerRepositoriesModule,
-    pluginModule:      PluginModule,
-    metricsModule:     MetricsModule
-) {
+  config:            SchedulerConfig,
+  actorSystem:       ActorSystem,
+  clock:             Clock,
+  persistenceModule: SchedulerRepositoriesModule,
+  pluginModule:      PluginModule,
+  metricsModule:     MetricsModule) {
 
   private[this] lazy val scallopConf: AllConf = config.scallopConf
   private[this] lazy val marathonClock = new mesosphere.marathon.core.base.Clock {
@@ -64,8 +63,7 @@ class SchedulerModule(
     scallopConf,
     metrics,
     hostPort,
-    shutdownHooks
-  )
+    shutdownHooks)
   lazy val leadershipModule: LeadershipModule = {
     val actorRefFactory: ActorRefFactory = actorsModule.actorRefFactory
     val electionService: ElectionService = electionModule.service
@@ -75,8 +73,7 @@ class SchedulerModule(
   lazy val taskTrackerModule: TaskTrackerModule = {
     val taskRepository: TaskRepository = persistenceModule.taskRepository
     val updateSteps: Seq[TaskUpdateStep] = Seq(
-      ContinueOnErrorStep(new NotifyOfTaskStateOperationStep(eventBus, clock))
-    )
+      ContinueOnErrorStep(new NotifyOfTaskStateOperationStep(eventBus, clock)))
 
     new TaskTrackerModule(marathonClock, metrics, scallopConf, leadershipModule, taskRepository, updateSteps)
   }
@@ -84,8 +81,7 @@ class SchedulerModule(
   private[this] lazy val offerMatcherManagerModule = new OfferMatcherManagerModule(
     // infrastructure
     marathonClock, random, metrics, scallopConf,
-    leadershipModule
-  )
+    leadershipModule)
 
   private[this] lazy val offerMatcherReconcilerModule =
     new OfferMatcherReconciliationModule(
@@ -95,34 +91,29 @@ class SchedulerModule(
       taskTrackerModule.taskTracker,
       persistenceModule.groupRepository,
       offerMatcherManagerModule.subOfferMatcherManager,
-      leadershipModule
-    )
+      leadershipModule)
 
   private[this] lazy val launcherModule: LauncherModule = {
     val taskCreationHandler: TaskCreationHandler = taskTrackerModule.taskCreationHandler
     val offerMatcher: OfferMatcher = StopOnFirstMatchingOfferMatcher(
       offerMatcherReconcilerModule.offerMatcherReconciler,
-      offerMatcherManagerModule.globalOfferMatcher
-    )
+      offerMatcherManagerModule.globalOfferMatcher)
 
     new LauncherModule(
-      marathonClock, metrics, scallopConf, taskCreationHandler, schedulerDriverHolder, offerMatcher, pluginModule.pluginManager
-    )
+      marathonClock, metrics, scallopConf, taskCreationHandler, schedulerDriverHolder, offerMatcher, pluginModule.pluginManager)
   }
 
   private[this] lazy val frameworkIdUtil: FrameworkIdUtil = new FrameworkIdUtil(
     persistenceModule.frameworkIdStore,
     timeout = config.zkTimeout,
-    key = "id"
-  )
+    key = "id")
 
   private[this] lazy val taskTerminationModule: TaskTerminationModule = new TaskTerminationModule(
     taskTrackerModule,
     leadershipModule,
     schedulerDriverHolder,
     config.taskKillConfig,
-    marathonClock
-  )
+    marathonClock)
   lazy val taskKillService: TaskKillService = taskTerminationModule.taskKillService
 
   private[this] lazy val scheduler: MarathonScheduler = {
@@ -130,8 +121,7 @@ class SchedulerModule(
     val stateOpProcessor: TaskStateOpProcessor = taskTrackerModule.stateOpProcessor
     val offerProcessor: OfferProcessor = launcherModule.offerProcessor
     val taskStatusProcessor: TaskStatusUpdateProcessor = new TaskStatusUpdateProcessorImpl(
-      metrics, marathonClock, taskTracker, stateOpProcessor, schedulerDriverHolder, taskKillService, eventBus
-    )
+      metrics, marathonClock, taskTracker, stateOpProcessor, schedulerDriverHolder, taskKillService, eventBus)
     val leaderInfo = config.mesosLeaderUiUrl match {
       case someUrl @ Some(_) => ConstMesosLeaderInfo(someUrl)
       case None              => new MutableMesosLeaderInfo
@@ -145,8 +135,7 @@ class SchedulerModule(
       frameworkIdUtil,
       leaderInfo,
       actorSystem,
-      scallopConf
-    )
+      scallopConf)
   }
 
   private[this] val schedulerDriverFactory: SchedulerDriverFactory = new MesosSchedulerDriverFactory(
@@ -154,16 +143,14 @@ class SchedulerModule(
     config = scallopConf,
     httpConfig = scallopConf,
     frameworkIdUtil = frameworkIdUtil,
-    scheduler = scheduler
-  )
+    scheduler = scheduler)
 
   private[this] lazy val prePostDriverCallbacks: Seq[PrePostDriverCallback] = Seq(
     persistenceModule.taskStore,
     persistenceModule.frameworkIdStore,
-    persistenceModule.groupStore
-  ).collect {
-    case l: PrePostDriverCallback => l
-  }
+    persistenceModule.groupStore).collect {
+      case l: PrePostDriverCallback => l
+    }
 
   private[this] lazy val periodicOperations: PeriodicOperations = new PeriodicOperationsImpl()
 
@@ -175,15 +162,13 @@ class SchedulerModule(
     schedulerDriverFactory,
     metrics,
     persistenceModule.migration,
-    periodicOperations
-  )
+    periodicOperations)
 
   lazy val taskBusModule = new TaskBusModule()
   lazy val flowModule = new FlowModule(leadershipModule)
   // make sure launch tokens get initialized
   flowModule.refillOfferMatcherManagerLaunchTokens(
-    scallopConf, taskBusModule.taskStatusObservables, offerMatcherManagerModule.subOfferMatcherManager
-  )
+    scallopConf, taskBusModule.taskStatusObservables, offerMatcherManagerModule.subOfferMatcherManager)
 
   lazy val electionService: ElectionService = electionModule.service
 
@@ -200,23 +185,19 @@ class SchedulerModule(
     offerMatcherManagerModule.subOfferMatcherManager,
     maybeOfferReviver = flowModule.maybeOfferReviver(marathonClock, scallopConf, eventBus, offersWanted, schedulerDriverHolder),
     taskTracker = taskTrackerModule.taskTracker,
-    taskOpFactory = launcherModule.taskOpFactory
-  )
+    taskOpFactory = launcherModule.taskOpFactory)
 
   leadershipModule.startWhenLeader(
     props = ReconciliationActor.props(schedulerDriverHolder, taskTrackerModule.taskTracker, config),
-    name = "reconciliationActor"
-  )
+    name = "reconciliationActor")
 
   val taskJobsModule = new TaskJobsModule(config.scallopConf, leadershipModule, marathonClock)
 
   taskJobsModule.expungeOverdueLostTasks(
-    taskTrackerModule.taskTracker, taskTrackerModule.stateOpProcessor
-  )
+    taskTrackerModule.taskTracker, taskTrackerModule.stateOpProcessor)
 
   taskJobsModule.handleOverdueTasks(
     taskTrackerModule.taskTracker,
     taskTrackerModule.taskReservationTimeoutHandler,
-    taskKillService
-  )
+    taskKillService)
 }

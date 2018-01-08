@@ -54,8 +54,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     httpErrorHandler,
     jobsModule.behaviorModule.metrics,
     assets,
-    jobsModule.queueModule.launchQueueService
-  )
+    jobsModule.queueModule.launchQueueService)
 
   def schedulerService = jobsModule.schedulerModule.schedulerService
 
@@ -75,8 +74,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
   }
 
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(
-    new LeaderProxyFilter(wsClient, jobsModule.schedulerModule.electionService, config)
-  )
+    new LeaderProxyFilter(wsClient, jobsModule.schedulerModule.electionService, config))
 
   override def router: Router = apiModule.router
 

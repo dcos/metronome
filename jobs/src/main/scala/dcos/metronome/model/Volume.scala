@@ -4,8 +4,7 @@ package model
 case class Volume(
   containerPath: String,
   hostPath:      String,
-  mode:          Mode
-)
+  mode:          Mode)
 
 sealed trait Mode
 
@@ -15,8 +14,7 @@ object Mode {
 
   val names: Map[String, Mode] = Map(
     "RO" -> RO,
-    "RW" -> RW
-  )
+    "RW" -> RW)
   val modeNames: Map[Mode, String] = names.map{ case (a, b) => (b, a) }
 
   def name(mode: Mode): String = modeNames(mode)

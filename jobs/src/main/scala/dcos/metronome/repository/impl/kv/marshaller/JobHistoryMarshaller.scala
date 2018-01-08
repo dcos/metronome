@@ -47,8 +47,7 @@ object JobHistoryMarshaller extends EntityMarshaller[JobHistory] {
       lastSuccessAt = lastSuccessAt,
       lastFailureAt = lastFailureAt,
       successfulRuns = proto.getSuccessfulRunsList.asScala.toModel,
-      failedRuns = proto.getFailedRunsList.asScala.toModel
-    )
+      failedRuns = proto.getFailedRunsList.asScala.toModel)
   }
 }
 
@@ -73,8 +72,7 @@ object JobHistoryConversions {
       JobRunInfo(
         id = proto.getJobRunId.toModel,
         createdAt = new DateTime(proto.getCreatedAt, DateTimeZone.UTC),
-        finishedAt = new DateTime(proto.getFinishedAt, DateTimeZone.UTC)
-      )
+        finishedAt = new DateTime(proto.getFinishedAt, DateTimeZone.UTC))
     }.toList
   }
 }

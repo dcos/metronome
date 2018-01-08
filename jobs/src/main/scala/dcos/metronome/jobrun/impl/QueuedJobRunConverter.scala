@@ -25,8 +25,7 @@ object QueuedJobRunConverter {
       ConstraintSpec(
         attribute = constraint.getField,
         operator = Operator.names(operator.toString),
-        value = value
-      )
+        value = value)
     }.toList
   }
 
@@ -54,8 +53,7 @@ object QueuedJobRunConverter {
         placement = placement,
         maxLaunchDelay = run.maxLaunchDelay,
         taskKillGracePeriodSeconds = run.taskKillGracePeriod,
-        docker = run.container.toModel
-      )
+        docker = run.container.toModel)
     }
 
     // TODO: remove once placement is fixed.
@@ -76,8 +74,7 @@ object QueuedJobRunConverter {
         tasksLost = taskInfo.tasksLost,
         backOffUntil = taskInfo.backOffUntil,
         run = taskInfo.runSpec.toModel,
-        acceptedResourceRoles = Some(taskInfo.runSpec.acceptedResourceRoles.getOrElse(Set("*")))
-      )
+        acceptedResourceRoles = Some(taskInfo.runSpec.acceptedResourceRoles.getOrElse(Set("*"))))
     }
   }
 }

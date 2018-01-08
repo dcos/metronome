@@ -19,8 +19,7 @@ class NotifyOfTaskStateOperationStep(eventBus: EventStream, clock: Clock) extend
       val event = TaskStateChangedEvent(
         taskId = taskChanged.taskId,
         taskState = state,
-        timestamp = clock.now()
-      )
+        timestamp = clock.now())
       eventBus.publish(event)
     }
 

@@ -12,12 +12,11 @@ import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer, UpdateRunSpe
 import scala.async.Async.{ async, await }
 
 class JobRunController(
-    jobSpecService:    JobSpecService,
-    jobRunService:     JobRunService,
-    val authenticator: Authenticator,
-    val authorizer:    Authorizer,
-    val config:        ApiConfig
-) extends Authorization {
+  jobSpecService:    JobSpecService,
+  jobRunService:     JobRunService,
+  val authenticator: Authenticator,
+  val authorizer:    Authorizer,
+  val config:        ApiConfig) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 

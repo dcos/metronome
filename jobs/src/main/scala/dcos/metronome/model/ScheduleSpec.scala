@@ -10,13 +10,12 @@ import org.joda.time.{ DateTime, DateTimeZone }
 import scala.concurrent.duration._
 
 case class ScheduleSpec(
-    id:                String,
-    cron:              CronSpec,
-    timeZone:          DateTimeZone      = ScheduleSpec.DefaultTimeZone,
-    startingDeadline:  Duration          = ScheduleSpec.DefaultStartingDeadline,
-    concurrencyPolicy: ConcurrencyPolicy = ScheduleSpec.DefaultConcurrencyPolicy,
-    enabled:           Boolean           = ScheduleSpec.DefaultEnabled
-) {
+  id:                String,
+  cron:              CronSpec,
+  timeZone:          DateTimeZone      = ScheduleSpec.DefaultTimeZone,
+  startingDeadline:  Duration          = ScheduleSpec.DefaultStartingDeadline,
+  concurrencyPolicy: ConcurrencyPolicy = ScheduleSpec.DefaultConcurrencyPolicy,
+  enabled:           Boolean           = ScheduleSpec.DefaultEnabled) {
   def clock: Clock = ScheduleSpec.DefaultClock
 
   def nextExecution(after: DateTime): DateTime = {

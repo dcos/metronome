@@ -19,16 +19,15 @@ import dcos.metronome.behavior.Metrics
 import dcos.metronome.queue.LaunchQueueService
 
 class ApiModule(
-    config:             ApiConfig,
-    jobSpecService:     JobSpecService,
-    jobRunService:      JobRunService,
-    jobInfoService:     JobInfoService,
-    pluginManager:      PluginManager,
-    httpErrorHandler:   HttpErrorHandler,
-    metrics:            Metrics,
-    assets:             Assets,
-    launchQueueService: LaunchQueueService
-) {
+  config:             ApiConfig,
+  jobSpecService:     JobSpecService,
+  jobRunService:      JobRunService,
+  jobInfoService:     JobInfoService,
+  pluginManager:      PluginManager,
+  httpErrorHandler:   HttpErrorHandler,
+  metrics:            Metrics,
+  assets:             Assets,
+  launchQueueService: LaunchQueueService) {
 
   lazy val applicationController = wire[ApplicationController]
 

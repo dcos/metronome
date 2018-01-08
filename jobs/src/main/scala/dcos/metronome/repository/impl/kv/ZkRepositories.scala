@@ -32,23 +32,19 @@ object JobRunPathResolver extends PathResolver[JobRunId] {
 
 class ZkJobHistoryRepository(
   store:                    PersistentStoreWithNestedPathsSupport,
-  override implicit val ec: ExecutionContext
-) extends KeyValueRepository[JobId, JobHistory](
+  override implicit val ec: ExecutionContext) extends KeyValueRepository[JobId, JobHistory](
   JobHistoryPathResolver,
   JobHistoryMarshaller,
   store,
-  ec
-)
+  ec)
 
 class ZkJobRunRepository(
   store:                    PersistentStoreWithNestedPathsSupport,
-  override implicit val ec: ExecutionContext
-) extends KeyValueRepository[JobRunId, JobRun](
+  override implicit val ec: ExecutionContext) extends KeyValueRepository[JobRunId, JobRun](
   JobRunPathResolver,
   JobRunMarshaller,
   store,
-  ec
-) {
+  ec) {
   override def ids(): Future[Iterable[JobRunId]] = {
     store.allIds(JobRunPathResolver.basePath).flatMap { parentPaths =>
       parentPaths.foldLeft(Future.successful(List.empty[JobRunId])) {
@@ -64,13 +60,11 @@ class ZkJobRunRepository(
 
 class ZkJobSpecRepository(
   store:                    PersistentStoreWithNestedPathsSupport,
-  override implicit val ec: ExecutionContext
-) extends KeyValueRepository[JobId, JobSpec](
+  override implicit val ec: ExecutionContext) extends KeyValueRepository[JobId, JobSpec](
   JobSpecPathResolver,
   JobSpecMarshaller,
   store,
-  ec
-) {
+  ec) {
   override def create(id: JobId, jobSpec: JobSpec): Future[JobSpec] = {
     val future = store match {
       case s: PersistentStoreWithNestedPathsSupport =>

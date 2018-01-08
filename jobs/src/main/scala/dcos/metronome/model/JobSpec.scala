@@ -9,12 +9,11 @@ import mesosphere.marathon.plugin.{ Secret, EnvVarValue, RunSpec }
 import scala.collection.immutable._
 
 case class JobSpec(
-    id:          JobId,
-    description: Option[String]      = JobSpec.DefaultDescription,
-    labels:      Map[String, String] = JobSpec.DefaultLabels,
-    schedules:   Seq[ScheduleSpec]   = JobSpec.DefaultSchedule,
-    run:         JobRunSpec          = JobSpec.DefaultRunSpec
-) extends RunSpec {
+  id:          JobId,
+  description: Option[String]      = JobSpec.DefaultDescription,
+  labels:      Map[String, String] = JobSpec.DefaultLabels,
+  schedules:   Seq[ScheduleSpec]   = JobSpec.DefaultSchedule,
+  run:         JobRunSpec          = JobSpec.DefaultRunSpec) extends RunSpec {
   def schedule(id: String): Option[ScheduleSpec] = schedules.find(_.id == id)
 
   override def user: Option[String] = run.user

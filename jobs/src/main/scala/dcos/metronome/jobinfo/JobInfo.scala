@@ -15,8 +15,7 @@ case class JobInfo(
   schedules:      Option[Seq[ScheduleSpec]],
   activeRuns:     Option[Iterable[StartedJobRun]],
   history:        Option[JobHistory],
-  historySummary: Option[JobHistorySummary]
-)
+  historySummary: Option[JobHistorySummary])
 
 object JobInfo {
   sealed trait Embed
@@ -25,8 +24,7 @@ object JobInfo {
       "activeRuns" -> ActiveRuns,
       "schedules" -> Schedules,
       "history" -> History,
-      "historySummary" -> HistorySummary
-    )
+      "historySummary" -> HistorySummary)
     case object Schedules extends Embed
     case object ActiveRuns extends Embed
     case object History extends Embed
@@ -38,8 +36,7 @@ object JobInfo {
     schedules: Option[Seq[ScheduleSpec]],
     runs:      Option[Iterable[StartedJobRun]],
     history:   Option[JobHistory],
-    summary:   Option[JobHistorySummary]
-  ): JobInfo = {
+    summary:   Option[JobHistorySummary]): JobInfo = {
     JobInfo(spec.id, spec.description, spec.labels, spec.run, schedules, runs, history, summary)
   }
 }

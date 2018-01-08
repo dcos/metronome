@@ -56,8 +56,7 @@ object JobRunConversions {
       Task.Id(proto.getId),
       new DateTime(proto.getStartedAt, DateTimeZone.UTC),
       if (proto.hasCompletedAt) Some(new DateTime(proto.getCompletedAt, DateTimeZone.UTC)) else None,
-      proto.getStatus.toModel
-    )
+      proto.getStatus.toModel)
   }
 
   implicit class ProtoToJobRunId(val proto: Protos.JobRun.Id) extends AnyVal {
@@ -90,8 +89,7 @@ object JobRunConversions {
         status = proto.getStatus.toModel,
         createdAt = new DateTime(proto.getCreatedAt, DateTimeZone.UTC),
         completedAt = if (proto.hasFinishedAt) Some(new DateTime(proto.getFinishedAt, DateTimeZone.UTC)) else None,
-        tasks = proto.getTasksList.asScala.map(_.toModel).map(task => task.id -> task).toMap
-      )
+        tasks = proto.getTasksList.asScala.map(_.toModel).map(task => task.id -> task).toMap)
     }
   }
 

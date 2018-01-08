@@ -11,10 +11,9 @@ import mesosphere.marathon.core.task.tracker.TaskTracker
 import scala.util.control.NonFatal
 
 class ReconciliationActor(
-    driverHolder: MarathonSchedulerDriverHolder,
-    taskTracker:  TaskTracker,
-    config:       SchedulerConfig
-) extends FSM[State, Data] {
+  driverHolder: MarathonSchedulerDriverHolder,
+  taskTracker:  TaskTracker,
+  config:       SchedulerConfig) extends FSM[State, Data] {
 
   startWith(init(), NoData)
 
@@ -126,7 +125,6 @@ object ReconciliationActor {
   def props(
     driverHolder: MarathonSchedulerDriverHolder,
     taskTracker:  TaskTracker,
-    config:       SchedulerConfig
-  ): Props =
+    config:       SchedulerConfig): Props =
     Props(new ReconciliationActor(driverHolder, taskTracker, config))
 }

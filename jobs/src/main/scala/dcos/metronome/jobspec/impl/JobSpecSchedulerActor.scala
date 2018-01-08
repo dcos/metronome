@@ -15,11 +15,10 @@ import scala.concurrent.duration._
   * If the JobSpec has a schedule, the schedule is triggered in this actor.
   */
 class JobSpecSchedulerActor(
-    initSpec:     JobSpec,
-    clock:        Clock,
-    runService:   JobRunService,
-    val behavior: Behavior
-) extends Actor with Stash with ActorLogging with ActorBehavior {
+  initSpec:     JobSpec,
+  clock:        Clock,
+  runService:   JobRunService,
+  val behavior: Behavior) extends Actor with Stash with ActorLogging with ActorBehavior {
 
   import JobSpecSchedulerActor._
   import context.dispatcher

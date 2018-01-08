@@ -7,9 +7,8 @@ import dcos.metronome.model.{ JobId, JobHistory }
 import dcos.metronome.repository.{ Repository, NoConcurrentRepoChange }
 
 class JobHistoryPersistenceActor(
-    repo:         Repository[JobId, JobHistory],
-    val behavior: Behavior
-) extends NoConcurrentRepoChange[JobId, JobHistory, Unit] {
+  repo:         Repository[JobId, JobHistory],
+  val behavior: Behavior) extends NoConcurrentRepoChange[JobId, JobHistory, Unit] {
   import JobHistoryPersistenceActor._
   import context.dispatcher
 

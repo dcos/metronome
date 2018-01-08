@@ -31,13 +31,11 @@ class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: Rep
   lazy val zk: ZooKeeperClient = {
     require(
       config.zkSessionTimeout.toMillis < Integer.MAX_VALUE,
-      "ZooKeeper timeout too large!"
-    )
+      "ZooKeeper timeout too large!")
 
     val client = new ZooKeeperLeaderElectionClient(
       Amount.of(config.zkSessionTimeout.toMillis.toInt, Time.MILLISECONDS),
-      config.zkHostAddresses.asJavaCollection
-    )
+      config.zkHostAddresses.asJavaCollection)
 
     // Marathon can't do anything useful without a ZK connection
     // so we wait to proceed until one is available
@@ -63,8 +61,7 @@ class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: Rep
       persistentStore,
       metrics,
       prefix = "task:",
-      newState = () => MarathonTaskState(MarathonTask.newBuilder().setId(UUID.randomUUID().toString).build())
-    )
+      newState = () => MarathonTaskState(MarathonTask.newBuilder().setId(UUID.randomUUID().toString).build()))
   }
   lazy val taskRepository: TaskRepository = new TaskRepository(taskStore, metrics)
 
@@ -74,14 +71,12 @@ class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: Rep
       persistentStore,
       metrics,
       prefix = "group:",
-      newState = () => Group.empty
-    )
+      newState = () => Group.empty)
   }
   lazy val groupRepository: GroupRepository = new GroupRepository(
     groupStore,
     maxVersions = None,
-    metrics
-  )
+    metrics)
 
   lazy val frameworkIdStore = directOrCachedStore {
     val newState = () => new FrameworkId(UUID.randomUUID().toString)
@@ -94,8 +89,7 @@ class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: Rep
       persistentStore,
       metrics,
       prefix = "app:",
-      newState = () => AppDefinition.apply()
-    )
+      newState = () => AppDefinition.apply())
   }
   lazy val appRepository: AppRepository = new AppRepository(appStore, maxVersions = None, metrics)
 
@@ -107,8 +101,7 @@ object SchedulerRepositoriesModule {
 
   class ZooKeeperLeaderElectionClient(
     sessionTimeout:   Amount[Integer, Time],
-    zooKeeperServers: java.lang.Iterable[InetSocketAddress]
-  )
+    zooKeeperServers: java.lang.Iterable[InetSocketAddress])
       extends ZooKeeperClient(sessionTimeout, zooKeeperServers) {
     import scala.concurrent.duration._
 

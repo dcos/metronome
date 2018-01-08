@@ -17,8 +17,7 @@ import play.api.mvc.Action
 class ApplicationController(metrics: Metrics) extends RestController {
 
   private[this] val metricsMapper = new ObjectMapper().registerModule(
-    new MetricsModule(TimeUnit.SECONDS, TimeUnit.SECONDS, false)
-  )
+    new MetricsModule(TimeUnit.SECONDS, TimeUnit.SECONDS, false))
 
   def ping = Action { Ok("pong") }
 

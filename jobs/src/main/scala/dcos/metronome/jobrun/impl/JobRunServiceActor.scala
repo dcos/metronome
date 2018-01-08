@@ -17,11 +17,10 @@ import scala.concurrent.Promise
   * Knows and manages all active JobRunExecutors.
   */
 class JobRunServiceActor(
-    clock:           Clock,
-    executorFactory: (JobRun, Promise[JobResult]) => Props,
-    val repo:        Repository[JobRunId, JobRun], //TODO: remove the repo
-    val behavior:    Behavior
-) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash with ActorBehavior {
+  clock:           Clock,
+  executorFactory: (JobRun, Promise[JobResult]) => Props,
+  val repo:        Repository[JobRunId, JobRun], //TODO: remove the repo
+  val behavior:    Behavior) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash with ActorBehavior {
 
   import JobRunExecutorActor._
   import JobRunServiceActor._
@@ -162,7 +161,6 @@ object JobRunServiceActor {
     clock:           Clock,
     executorFactory: (JobRun, Promise[JobResult]) => Props,
     repo:            Repository[JobRunId, JobRun],
-    behavior:        Behavior
-  ): Props = Props(new JobRunServiceActor(clock, executorFactory, repo, behavior))
+    behavior:        Behavior): Props = Props(new JobRunServiceActor(clock, executorFactory, repo, behavior))
 
 }

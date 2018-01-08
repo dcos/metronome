@@ -29,8 +29,7 @@ private[scheduler] class SchedulerServiceImpl(
   driverFactory:          SchedulerDriverFactory,
   metrics:                Metrics,
   migration:              Migration,
-  periodicOperations:     PeriodicOperations
-)
+  periodicOperations:     PeriodicOperations)
     extends SchedulerService with ElectionCandidate {
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -93,8 +92,7 @@ private[scheduler] class SchedulerServiceImpl(
     log.info(s"""Call preDriverStarts callbacks on ${prePostDriverCallbacks.mkString(", ")}""")
     Await.result(
       Future.sequence(prePostDriverCallbacks.map(_.preDriverStarts)),
-      config.leaderPreparationTimeout
-    )
+      config.leaderPreparationTimeout)
     log.info("Finished preDriverStarts callbacks")
 
     // start all leadership coordination actors

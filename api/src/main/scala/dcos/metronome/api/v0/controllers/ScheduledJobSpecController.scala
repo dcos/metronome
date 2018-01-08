@@ -14,11 +14,10 @@ import play.api.libs.json._
 import scala.collection.immutable._
 
 class ScheduledJobSpecController(
-    jobSpecService:    JobSpecService,
-    val authenticator: Authenticator,
-    val authorizer:    Authorizer,
-    val config:        ApiConfig
-) extends Authorization {
+  jobSpecService:    JobSpecService,
+  val authenticator: Authenticator,
+  val authorizer:    Authorizer,
+  val config:        ApiConfig) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
   import ScheduledJobSpecController._
@@ -48,8 +47,7 @@ object ScheduledJobSpecController {
     (__ \ "description").formatNullable[String] ~
     (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty) ~
     (__ \ "schedules").formatNullable[Seq[ScheduleSpec]].withDefault(Seq.empty) ~
-    (__ \ "run").format[JobRunSpec]
-  )(JobSpec.apply, unlift(JobSpec.unapply))
+    (__ \ "run").format[JobRunSpec])(JobSpec.apply, unlift(JobSpec.unapply))
 
   implicit lazy val JobSpecSchema: JsonSchema[JobSpec] = JsonSchema.fromResource("/public/api/v0/schema/jobspec_v0.schema.json")
 }

@@ -57,8 +57,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
     val flags = Seq[Option[String]](
       if (httpPort.isEmpty) Some("--disable_http") else None,
       if (zkCompressionEnabled) Some("--zk_compression") else None,
-      if (mesosAuthentication) Some("--mesos_authentication") else None
-    )
+      if (mesosAuthentication) Some("--mesos_authentication") else None)
     val options = Map[String, Option[String]](
       "--framework_name" -> Some(frameworkName),
       "--master" -> Some(mesosMaster),
@@ -91,8 +90,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       "--task_lost_expunge_initial_delay" -> Some(taskLostExpungeInitialDelay.toMillis.toString),
       "--task_lost_expunge_interval" -> Some(taskLostExpungeInterval.toMillis.toString),
       "--kill_chunk_size" -> Some(killChunkSize.toString),
-      "--kill_retry_timeout" -> Some(killRetryTimeout.toString)
-    )
+      "--kill_retry_timeout" -> Some(killRetryTimeout.toString))
       .collect { case (name, Some(value)) => (name, value) }
       .flatMap { case (name, value) => Seq(name, value) }
     new AllConf(options.toSeq ++ flags.flatten)

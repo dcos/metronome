@@ -59,8 +59,7 @@ class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: R
     def update(jobHistory: JobHistory): JobHistory = jobHistory.copy(
       successCount = jobHistory.successCount + 1,
       lastSuccessAt = Some(clock.now()),
-      successfulRuns = runHistory(run, jobHistory.successfulRuns)
-    )
+      successfulRuns = runHistory(run, jobHistory.successfulRuns))
     persistenceActor ! Update(run.id.jobId, update)
   }
 
@@ -69,8 +68,7 @@ class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: R
     def update(jobHistory: JobHistory): JobHistory = jobHistory.copy(
       failureCount = jobHistory.failureCount + 1,
       lastFailureAt = Some(clock.now()),
-      failedRuns = runHistory(run, jobHistory.failedRuns)
-    )
+      failedRuns = runHistory(run, jobHistory.failedRuns))
     persistenceActor ! Update(run.id.jobId, update)
   }
 
