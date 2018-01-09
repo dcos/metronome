@@ -5,7 +5,7 @@ ansiColor('gnome-terminal') {
       stage('Run Pipeline') {
         try {
             checkout scm
-            sh "ping leader.mesos"
+            sh "ping -c 1 leader.mesos"
             sh "PATH=\$PATH:\$HOME/protobuf/bin sbt clean test"
         } finally {
             junit(allowEmptyResults: true, testResults: '*/target/test-reports/*.xml')
