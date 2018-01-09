@@ -68,6 +68,7 @@ message JobRun {
     optional Status status = 4;
   }
   repeated JobRunTask tasks = 6;
+  optional int64 starting_deadline_seconds = 7;
 }
 
 message JobSpec {

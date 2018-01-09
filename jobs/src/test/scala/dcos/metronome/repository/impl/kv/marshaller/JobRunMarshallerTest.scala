@@ -4,6 +4,7 @@ package repository.impl.kv.marshaller
 import dcos.metronome.model._
 import org.joda.time.DateTime
 import org.scalatest.{ FunSuite, Matchers }
+import scala.concurrent.duration._
 
 class JobRunMarshallerTest extends FunSuite with Matchers {
   test("round-trip of a JobRun") {
@@ -26,6 +27,7 @@ class JobRunMarshallerTest extends FunSuite with Matchers {
       JobRunStatus.Active,
       DateTime.parse("2004-09-06T08:50:12.000Z"),
       Some(DateTime.parse("2004-09-06T08:50:12.000Z")),
+      Some(1 minute),
       Map.empty)
   }
 }

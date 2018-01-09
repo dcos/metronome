@@ -59,7 +59,7 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
     val nextRun = DateTime.parse("2016-06-01T08:52:00.000Z")
 
     When("The actor is created")
-    actor ! StartJob
+    actor ! StartJob(f.jobSpec.schedules.head)
 
     Then("The next run is rescheduled")
     eventually(actor.underlyingActor.scheduledAt should be(Some(nextRun)))
@@ -75,7 +75,7 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
     val nextRun = DateTime.parse("2018-01-13T14:01:00.000Z")
 
     When("The actor is created")
-    actor ! StartJob
+    actor ! StartJob(f.jobSpec.schedules.head)
 
     Then("The next run is rescheduled")
     eventually(actor.underlyingActor.scheduledAt should be(Some(nextRun)))

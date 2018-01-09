@@ -12,6 +12,7 @@ import dcos.metronome.utils.time.Clock
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.Promise
+import scala.concurrent.duration.Duration
 
 /**
   * Knows and manages all active JobRunExecutors.
@@ -41,29 +42,29 @@ class JobRunServiceActor(
 
   override def receive: Receive = around {
     // api messages
-    case ListRuns(filter)              => sender() ! allJobRuns.values.filter(startedJobRun => filter(startedJobRun.jobRun))
-    case GetJobRun(id)                 => sender() ! allJobRuns.get(id)
-    case GetActiveJobRuns(specId)      => sender() ! runsForJob(specId)
-    case KillJobRun(id)                => killJobRun(id)
+    case ListRuns(filter)                      => sender() ! allJobRuns.values.filter(startedJobRun => filter(startedJobRun.jobRun))
+    case GetJobRun(id)                         => sender() ! allJobRuns.get(id)
+    case GetActiveJobRuns(specId)              => sender() ! runsForJob(specId)
+    case KillJobRun(id)                        => killJobRun(id)
 
     // trigger messages
-    case TriggerJobRun(spec)           => triggerJobRun(spec)
+    case TriggerJobRun(spec, startingDeadline) => triggerJobRun(spec, startingDeadline)
 
     // executor messages
-    case JobRunUpdate(started)         => updateJobRun(started)
-    case Finished(result)              => jobRunFinished(result)
-    case Aborted(result)               => jobRunFailed(result)
-    case Failed(result)                => jobRunFailed(result)
+    case JobRunUpdate(started)                 => updateJobRun(started)
+    case Finished(result)                      => jobRunFinished(result)
+    case Aborted(result)                       => jobRunFailed(result)
+    case Failed(result)                        => jobRunFailed(result)
 
     //event stream events
-    case update: TaskStateChangedEvent => forwardStatusUpdate(update)
+    case update: TaskStateChangedEvent         => forwardStatusUpdate(update)
   }
 
   def runsForJob(jobId: JobId): Iterable[StartedJobRun] = allJobRuns.values.filter(_.jobRun.id.jobId == jobId)
 
-  def triggerJobRun(spec: JobSpec): Unit = {
+  def triggerJobRun(spec: JobSpec, startingDeadline: Option[Duration]): Unit = {
     log.info(s"Trigger new JobRun for JobSpec: $spec")
-    val jobRun = new JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.now(), None, Map.empty)
+    val jobRun = JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.now(), None, startingDeadline, Map.empty)
     val startedJobRun = startJobRun(jobRun)
     sender() ! startedJobRun
   }
@@ -145,7 +146,7 @@ class JobRunServiceActor(
 
   override def initialize(runs: List[JobRun]): Unit = {
     // FIXME: we should to wait until the Reconciliation has finished!
-    runs.foreach(startJobRun)
+    runs.foreach(r => startJobRun(r))
   }
 }
 
@@ -155,7 +156,7 @@ object JobRunServiceActor {
   case class GetJobRun(id: JobRunId)
   case class GetActiveJobRuns(jobId: JobId)
   case class KillJobRun(id: JobRunId)
-  case class TriggerJobRun(jobSpec: JobSpec)
+  case class TriggerJobRun(jobSpec: JobSpec, startingDeadline: Option[Duration])
 
   def props(
     clock:           Clock,

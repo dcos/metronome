@@ -6,13 +6,16 @@ import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.Task.LaunchedEphemeral
 import org.joda.time.DateTime
 
+import scala.concurrent.duration.Duration
+
 case class JobRun(
-  id:          JobRunId,
-  jobSpec:     JobSpec,
-  status:      JobRunStatus,
-  createdAt:   DateTime,
-  completedAt: Option[DateTime],
-  tasks:       Map[Task.Id, JobRunTask])
+  id:               JobRunId,
+  jobSpec:          JobSpec,
+  status:           JobRunStatus,
+  createdAt:        DateTime,
+  completedAt:      Option[DateTime],
+  startingDeadline: Option[Duration],
+  tasks:            Map[Task.Id, JobRunTask])
 
 case class JobRunTask(
   id:          Task.Id,

@@ -4,7 +4,7 @@ package jobspec.impl
 import akka.actor._
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.jobrun.JobRunService
-import dcos.metronome.model.JobSpec
+import dcos.metronome.model.{ JobSpec, ScheduleSpec }
 import dcos.metronome.utils.time.Clock
 import org.joda.time.{ DateTime, Seconds }
 
@@ -36,7 +36,7 @@ class JobSpecSchedulerActor(
   }
 
   override def receive: Receive = around {
-    case StartJob               => runJob()
+    case StartJob(schedule)     => runJob(schedule)
     case UpdateJobSpec(newSpec) => updateSpec(newSpec)
   }
 
@@ -47,9 +47,9 @@ class JobSpecSchedulerActor(
     scheduleNextRun()
   }
 
-  def runJob(): Unit = {
+  def runJob(schedule: ScheduleSpec): Unit = {
     log.info(s"Start next run of job ${spec.id}, which was scheduled for $scheduledAt")
-    runService.startJobRun(spec)
+    runService.startJobRun(spec, Some(schedule.startingDeadline))
     scheduleNextRun()
   }
 
@@ -64,7 +64,7 @@ class JobSpecSchedulerActor(
       scheduledAt = Some(nextTime)
       // 60 secs is the smallest unit of reschedule time for cron
       val in = Seconds.secondsBetween(now, nextTime).getSeconds.seconds.max(60.seconds)
-      nextSchedule = Some(context.system.scheduler.scheduleOnce(in, self, StartJob))
+      nextSchedule = Some(context.system.scheduler.scheduleOnce(in, self, StartJob(schedule)))
       log.info(s"Spec ${spec.id}: next run is scheduled for: $nextTime (in $in)")
     }
   }
@@ -78,7 +78,7 @@ class JobSpecSchedulerActor(
 
 object JobSpecSchedulerActor {
 
-  case object StartJob
+  case class StartJob(schedule: ScheduleSpec)
   case class UpdateJobSpec(newSpec: JobSpec)
 
   def props(spec: JobSpec, clock: Clock, runService: JobRunService, behavior: Behavior): Props = {

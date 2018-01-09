@@ -14,7 +14,15 @@ class SystemClock(dateTimeZone: DateTimeZone = DateTimeZone.UTC) extends Clock {
 }
 
 class FixedClock(var _now: DateTime) extends Clock {
+  private[this] var subscribers: List[() => Unit] = Nil
+  def onChange(fn: () => Unit): Unit = synchronized {
+    subscribers = fn :: subscribers
+  }
+
   override def now(): DateTime = _now
 
-  def +=(duration: FiniteDuration): Unit = _now = _now.plusMillis(duration.toMillis.toInt)
+  def +=(duration: FiniteDuration): Unit = {
+    _now = _now.plusMillis(duration.toMillis.toInt)
+    subscribers.foreach(f => f())
+  }
 }

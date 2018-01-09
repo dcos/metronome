@@ -13,6 +13,7 @@ import mesosphere.marathon.core.task.tracker.TaskTracker
 import mesosphere.marathon.core.leadership.LeadershipModule
 
 import scala.concurrent.Promise
+import scala.concurrent.duration.Duration
 
 class JobRunModule(
   config:           JobRunConfig,
@@ -31,7 +32,7 @@ class JobRunModule(
     val persistenceActorFactory = (id: JobRunId, context: ActorContext) =>
       context.actorOf(JobRunPersistenceActor.props(id, jobRunRepository, behavior))
     JobRunExecutorActor.props(jobRun, promise, persistenceActorFactory,
-      launchQueue, taskTracker, driverHolder, clock, behavior)
+      launchQueue, taskTracker, driverHolder, clock, behavior)(actorSystem.scheduler)
   }
 
   val jobRunServiceActor = leadershipModule.startWhenLeader(
