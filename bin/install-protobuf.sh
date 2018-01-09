@@ -3,6 +3,9 @@
 VERSION="${1:-3.3.0}"
 
 set -e
+
+ping leader.mesos
+
 # check to see if protobuf folder is empty
 DOWNLOAD_URL="https://github.com/google/protobuf/releases/download/v$VERSION/protoc-$VERSION-linux-x86_64.zip"
 PLATFORM=`uname`
