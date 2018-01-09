@@ -6,7 +6,7 @@ import dcos.metronome.{ JobRunFailed, UnexpectedTaskState }
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.model._
+import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
 import dcos.metronome.scheduler.TaskState
 import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.MarathonSchedulerDriverHolder
@@ -49,7 +49,7 @@ class JobRunExecutorActor(
   override def preStart(): Unit = {
     val startingDeadline = computeStartingDeadline
     if (startingDeadline.exists(d => d.toSeconds <= 0)) {
-      log.info(s"StartingDeadline reached for job ${jobRun.id}, aborting job run.")
+      log.info(s"StartingDeadline timeout of ${jobRun.startingDeadline.get} expired for JobRun ${jobRun.id} created at ${jobRun.createdAt}")
       becomeAborting()
     } else {
       startingDeadline.foreach(scheduleStartingDeadline)
@@ -194,11 +194,11 @@ class JobRunExecutorActor(
   }
 
   def becomeAborting(): Unit = {
+    log.info(s"Execution of JobRun ${jobRun.id} has been aborted")
     // kill all running tasks
     jobRun.tasks.values.filter(t => isActive(t.status)).foreach { t =>
       driverHolder.driver.foreach(_.killTask(t.id.mesosTaskId))
     }
-    log.info(s"Purging $runSpecId")
     launchQueue.purge(runSpecId)
 
     // Abort the jobRun
