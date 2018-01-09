@@ -94,11 +94,10 @@ object JobRunConversions {
         createdAt = new DateTime(proto.getCreatedAt, DateTimeZone.UTC),
         completedAt = if (proto.hasFinishedAt) Some(new DateTime(proto.getFinishedAt, DateTimeZone.UTC)) else None,
         startingDeadline = if (proto.hasStartingDeadlineSeconds)
-        Some(Duration(proto.getStartingDeadlineSeconds, TimeUnit.SECONDS))
-      else
-        None,
-        tasks = proto.getTasksList.asScala.map(_.toModel).map(task => task.id -> task).toMap
-      )
+          Some(Duration(proto.getStartingDeadlineSeconds, TimeUnit.SECONDS))
+        else
+          None,
+        tasks = proto.getTasksList.asScala.map(_.toModel).map(task => task.id -> task).toMap)
     }
   }
 

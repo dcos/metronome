@@ -25,15 +25,14 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   * @param run the related job run object.
   */
 class JobRunExecutorActor(
-    run:                        JobRun,
-    promise:                    Promise[JobResult],
-    persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
-    launchQueue:                LaunchQueue,
-    taskTracker:                TaskTracker,
-    driverHolder:               MarathonSchedulerDriverHolder,
-    clock:                      Clock,
-    val behavior:               Behavior
-)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorBehavior {
+  run:                        JobRun,
+  promise:                    Promise[JobResult],
+  persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
+  launchQueue:                LaunchQueue,
+  taskTracker:                TaskTracker,
+  driverHolder:               MarathonSchedulerDriverHolder,
+  clock:                      Clock,
+  val behavior:               Behavior)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorBehavior {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
   import TaskStates._
@@ -383,17 +382,9 @@ object JobRunExecutorActor {
     taskTracker:                TaskTracker,
     driverHolder:               MarathonSchedulerDriverHolder,
     clock:                      Clock,
-<<<<<<< HEAD
-    behavior:                   Behavior): Props = Props(
+    behavior:                   Behavior)(implicit scheduler: Scheduler): Props = Props(
     new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
       launchQueue, taskTracker, driverHolder, clock, behavior))
-=======
-    behavior:                   Behavior
-  )(implicit scheduler: Scheduler): Props = Props(
-    new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
-      launchQueue, taskTracker, driverHolder, clock, behavior)
-  )
->>>>>>> Implement start deadline METRONOME-191
 }
 
 object TaskStates {

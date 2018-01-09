@@ -15,8 +15,7 @@ case class JobRun(
   createdAt:        DateTime,
   completedAt:      Option[DateTime],
   startingDeadline: Option[Duration],
-  tasks:            Map[Task.Id, JobRunTask]
-)
+  tasks:            Map[Task.Id, JobRunTask])
 
 case class JobRunTask(
   id:          Task.Id,
