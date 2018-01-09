@@ -20,14 +20,12 @@ class JobHistoryMarshallerTest extends FunSuite with Matchers {
     val successfulJobRunInfo = JobRunInfo(
       JobRunId(JobId("/test"), "successful"),
       DateTime.parse("2004-09-06T08:50:12.000Z"),
-      DateTime.parse("2014-09-06T08:50:12.000Z")
-    )
+      DateTime.parse("2014-09-06T08:50:12.000Z"))
 
     val finishedJobRunInfo = JobRunInfo(
       JobRunId(JobId("/test"), "finished"),
       DateTime.parse("1984-09-06T08:50:12.000Z"),
-      DateTime.parse("1994-09-06T08:50:12.000Z")
-    )
+      DateTime.parse("1994-09-06T08:50:12.000Z"))
 
     val jobHistory = JobHistory(
       JobId("/my/wonderful/job"),
@@ -36,7 +34,6 @@ class JobHistoryMarshallerTest extends FunSuite with Matchers {
       lastSuccessAt = Some(DateTime.parse("2014-09-06T08:50:12.000Z")),
       lastFailureAt = Some(DateTime.now(DateTimeZone.UTC)),
       successfulRuns = Seq(successfulJobRunInfo),
-      failedRuns = Seq(finishedJobRunInfo)
-    )
+      failedRuns = Seq(finishedJobRunInfo))
   }
 }

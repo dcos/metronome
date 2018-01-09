@@ -33,8 +33,7 @@ class TestAuthFixture extends Mockito with Status {
     override def isAuthorized[Resource](
       principal: Identity,
       action:    AuthorizedAction[Resource],
-      resource:  Resource
-    ): Boolean = {
+      resource:  Resource): Boolean = {
       authFn(resource) && authorized
     }
   }

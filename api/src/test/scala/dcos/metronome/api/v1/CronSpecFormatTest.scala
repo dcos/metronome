@@ -151,8 +151,7 @@ class CronSpecFormatTest extends FunSuite with Mockito with Matchers {
       date(2017, 12, 27) -> date(2018, 1, 1),
       date(2018, 4, 29) -> date(2018, 4, 30),
       date(2018, 9, 30) -> date(2018, 10, 1),
-      date(2018, 12, 26) -> date(2018, 12, 31)
-    )
+      date(2018, 12, 26) -> date(2018, 12, 31))
     for ((fromDate, executionDate) <- expectations) {
       CronSpec.apply("* * * * 1").nextExecution(fromDate) shouldEqual executionDate
     }

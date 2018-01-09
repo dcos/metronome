@@ -191,8 +191,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
     And("the promise fails")
     f.promise.future.failed.futureValue shouldEqual JobRunFailed(JobResult(jobRun.copy(
-      status = JobRunStatus.Failed, completedAt = Some(f.clock.now())
-    )))
+      status = JobRunStatus.Failed, completedAt = Some(f.clock.now()))))
   }
 
   test("Persistence failure is propagated during starting") {
@@ -372,8 +371,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       tasksLeftToLaunch = 0,
       finalTaskCount = 0,
       tasksLost = 0,
-      backOffUntil = Timestamp(0)
-    )
+      backOffUntil = Timestamp(0))
     f.launchQueue.get(runSpecId) returns Some(queuedTaskInfo)
 
     When("the actor is initialized")
@@ -400,12 +398,10 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       tasksLeftToLaunch = 0,
       finalTaskCount = 1,
       tasksLost = 0,
-      backOffUntil = Timestamp(0)
-    )
+      backOffUntil = Timestamp(0))
     launchQueue.get(runSpecId) returns Some(queuedTaskInfo)
     taskTracker.appTasksLaunchedSync(runSpecId) returns Seq(
-      mockTask(taskId, Timestamp(clock.now()), mesos.Protos.TaskState.TASK_RUNNING)
-    )
+      mockTask(taskId, Timestamp(clock.now()), mesos.Protos.TaskState.TASK_RUNNING))
 
     When("the actor is initialized")
     val actorRef: ActorRef = executorActor(activeJobRun)
@@ -426,9 +422,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       id = JobId("/test"),
       run = JobRunSpec(restart = RestartSpec(
         policy = RestartPolicy.OnFailure,
-        activeDeadline = Some(10.seconds)
-      ))
-    )
+        activeDeadline = Some(10.seconds))))
     val (actor, jobRun) = f.setupActiveExecutorActor(Some(jobSpec))
 
     When("the task fails")
@@ -464,8 +458,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     Given("a jobRunSpec with taskKillGracePeriodSeconds")
     val jobSpec = JobSpec(
       id = JobId("/test"),
-      run = JobRunSpec(taskKillGracePeriodSeconds = Some(10 seconds))
-    )
+      run = JobRunSpec(taskKillGracePeriodSeconds = Some(10 seconds)))
     val (_, jobRun) = f.setupInitialExecutorActor(Some(jobSpec))
 
     And("a new task is launched")
@@ -487,8 +480,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     Given("a jobRunSpec with forcePullImage")
     val jobSpec = JobSpec(
       id = JobId("/test"),
-      run = JobRunSpec(docker = Some(DockerSpec("image", forcePullImage = true)))
-    )
+      run = JobRunSpec(docker = Some(DockerSpec("image", forcePullImage = true))))
     val (_, jobRun) = f.setupInitialExecutorActor(Some(jobSpec))
 
     And("a new task is launched")
@@ -557,8 +549,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     }
 
     def statusUpdate(state: TaskState) = ForwardStatusUpdate(TaskStateChangedEvent(
-      taskId = taskId, taskState = state, timestamp = DateTime.now()
-    ))
+      taskId = taskId, taskState = state, timestamp = DateTime.now()))
 
     val persistenceActor = TestProbe()
     val persistenceActorFactory: (JobRunId, ActorContext) => ActorRef = (_, context) => persistenceActor.ref
@@ -629,8 +620,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       actorRef ! ForwardStatusUpdate(TaskStateChangedEvent(
         taskId = taskId,
         taskState = TaskState.Running,
-        timestamp = clock.now()
-      ))
+        timestamp = clock.now()))
       val updateMsg = persistenceActor.expectMsgType[JobRunPersistenceActor.Update]
       persistenceActor.reply(JobRunPersistenceActor.JobRunUpdated(persistenceActor.ref, updateMsg.change(startingJobRun), ()))
       val parentUpdate = parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]

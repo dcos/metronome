@@ -17,8 +17,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers {
     val f = new Fixture
 
     val jobSpec = f.jobSpec.copy(
-      run = f.runSpec.copy(cmd = None, args = Some(Seq("first", "second")))
-    )
+      run = f.runSpec.copy(cmd = None, args = Some(Seq("first", "second"))))
     JobSpecMarshaller.fromBytes(JobSpecMarshaller.toBytes(f.jobSpec)) should be (Some(f.jobSpec))
   }
 
@@ -43,11 +42,9 @@ class JobSpecMarshallerTest extends FunSuite with Matchers {
       maxLaunchDelay = 24.hours,
       docker = Some(DockerSpec(image = "dcos/metronome", true)),
       volumes = Seq(
-        Volume(containerPath = "/var/log", hostPath = "/sandbox/task1/var/log", mode = Mode.RW)
-      ),
+        Volume(containerPath = "/var/log", hostPath = "/sandbox/task1/var/log", mode = Mode.RW)),
       restart = RestartSpec(policy = RestartPolicy.OnFailure, activeDeadline = Some(15.days)),
-      taskKillGracePeriodSeconds = Some(10 seconds)
-    )
+      taskKillGracePeriodSeconds = Some(10 seconds))
 
     val jobSpec = JobSpec(
       id = JobId("/foo/bar"),
@@ -58,9 +55,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers {
         cron = CronSpec("* * * * *"),
         timeZone = DateTimeZone.UTC,
         concurrencyPolicy = ConcurrencyPolicy.Allow,
-        enabled = true
-      )),
-      run = runSpec
-    )
+        enabled = true)),
+      run = runSpec)
   }
 }

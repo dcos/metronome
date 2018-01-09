@@ -18,8 +18,7 @@ class JobRunMarshallerTest extends FunSuite with Matchers {
 
   class Fixture {
     val jobSpec = JobSpec(
-      JobId("job.id")
-    )
+      JobId("job.id"))
 
     val jobRun = JobRun(
       JobRunId(jobSpec.id, "run.id"),
@@ -27,7 +26,6 @@ class JobRunMarshallerTest extends FunSuite with Matchers {
       JobRunStatus.Active,
       DateTime.parse("2004-09-06T08:50:12.000Z"),
       Some(DateTime.parse("2004-09-06T08:50:12.000Z")),
-      Map.empty
-    )
+      Map.empty)
   }
 }

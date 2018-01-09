@@ -177,8 +177,7 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
         |    "user": "nobody"
         |  }
         |}
-      """.stripMargin
-    )
+      """.stripMargin)
     val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(json)).get
 
     Then("The job is created")
