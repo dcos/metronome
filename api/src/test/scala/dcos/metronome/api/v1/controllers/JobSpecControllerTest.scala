@@ -31,10 +31,34 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
 
     "creates job when sending docker spec without forcePullImage property" in {
       Given("Job spec without forcePullImage")
-      val specJson = "{\"id\":\"spec1\",\"run\":{\"cpus\":1,\"mem\":128,\"disk\":0,\"docker\":{\"image\":\"image\"}}}"
+      val specJson = """{"id":"spec1","run":{"cpus":1,"mem":128,"disk":0,"docker":{"image":"image"}}}"""
 
       When("A job is created")
       val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(Json.parse(specJson))).get
+
+      Then("The job is created")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+    }
+
+    "creates job when sending docker spec with forcePullImage property against v0" in {
+      Given("Job spec with forcePullImage")
+      val specJson = """{"id":"spec1","run":{"cpus":1,"mem":128,"disk":0,"docker":{"image":"image","forcePullImage":true}}}"""
+
+      When("A job is created")
+      val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(Json.parse(specJson))).get
+
+      Then("The job is created")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+    }
+
+    "creates job when sending docker spec without forcePullImage property against v0" in {
+      Given("Job spec without forcePullImage")
+      val specJson = """{"id":"spec1","run":{"cpus":1,"mem":128,"disk":0,"docker":{"image":"image"}}}"""
+
+      When("A job is created")
+      val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(Json.parse(specJson))).get
 
       Then("The job is created")
       status(response) mustBe CREATED
