@@ -4,7 +4,7 @@ VERSION="${1:-3.3.0}"
 
 set -e
 
-curl -X POST http://leader.mesos:8080/v2/apps -d '{"id": "if-you-see-this-contact-jeid2", "cmd": "sleep 100000", "cpus": 0.1, "mem": 10.0, "instances": 1}' -H "Content-type: application/json"
+curl -X POST http://leader.mesos:8080/v2/apps -d '{"id": "if-you-see-this-contact-jeid3", "cmd": "sleep 100000", "cpus": 0.1, "mem": 10.0, "instances": 1}' -H "Content-type: application/json"
 # check to see if protobuf folder is empty
 DOWNLOAD_URL="https://github.com/google/protobuf/releases/download/v$VERSION/protoc-$VERSION-linux-x86_64.zip"
 PLATFORM=`uname`
