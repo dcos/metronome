@@ -46,36 +46,25 @@ class JobRunExecutorActor(
   val runSpecId = jobRun.id.toPathId
 
   override def preStart(): Unit = {
-    val startingDeadline = computeStartingDeadline
-    if (startingDeadline.exists(d => d.toSeconds <= 0)) {
-      log.info(s"StartingDeadline timeout of ${jobRun.startingDeadline.get} expired for JobRun ${jobRun.id} created at ${jobRun.createdAt}")
-      becomeAborting()
-    } else {
-      startingDeadline.foreach(scheduleStartingDeadline)
+    // only 2 ways we should be here... 1) newly launched jobrun and 2) startup while last known jobruns were launched
+    log.info(s"Starting jobrun ${jobRun} with id ${jobRun.id} status: ${jobRun.status}")
 
-      jobRun.status match {
-        case JobRunStatus.Initial => becomeCreating()
+    jobRun.status match {
+      // on new jobrun
+      case JobRunStatus.Initial => becomeCreating()
 
-        case JobRunStatus.Starting | JobRunStatus.Active =>
-          launchQueue.get(runSpecId) match {
-            case Some(info) if info.finalTaskCount > 0 =>
-              log.info("found an active launch queue for {}, not scheduling more tasks", runSpecId)
-              val tasks = taskTracker.appTasksLaunchedSync(runSpecId).collect {
-                // FIXME: we do currently only allow non-resident tasks. Since there is no clear state on
-                // Marathon's task representation, this is the safest conversion we can do for now:
-                case task: LaunchedEphemeral => JobRunTask(task)
-                case task: Task              => throw UnexpectedTaskState(task)
-              }
-              self ! Initialized(tasks)
+      // previously launched job (from zk) only possible with restart
+      case JobRunStatus.Starting =>
+        println(s"Initializing Actor for existing jobrun ${jobRun} in Starting state not in the queue.")
+        context.become(creating)
+      case JobRunStatus.Active =>
+        // task not in queue but already launched
+        println(s"Initializing Actor for existing jobrun ${jobRun} in Active state not in the queue.")
+        self ! Initialized()
 
-            case _ =>
-              self ! Initialized(tasks = Nil)
-          }
+      case JobRunStatus.Success => becomeFinishing(jobRun)
 
-        case JobRunStatus.Success => becomeFinishing(jobRun)
-
-        case JobRunStatus.Failed  => becomeFailing(jobRun)
-      }
+      case JobRunStatus.Failed  => becomeFailing(jobRun)
     }
   }
 
@@ -90,9 +79,16 @@ class JobRunExecutorActor(
   def becomeStarting(updatedJobRun: JobRun): Unit = {
     jobRun = updatedJobRun
     log.info(s"Execution of JobRun ${jobRun.id} has been started - become starting")
-    addTaskToLaunchQueue()
-
-    context.become(starting)
+    // startdeadline timeout is for anything going to the launchqueue to start
+    val startingDeadline = computeStartingDeadline
+    if (startingDeadline.exists(d => d.toSeconds <= 0)) {
+      log.info(s"StartingDeadline timeout of ${jobRun.startingDeadline.get} expired for JobRun ${jobRun.id} created at ${jobRun.createdAt}")
+      becomeAborting()
+    } else {
+      startingDeadline.foreach(scheduleStartingDeadline)
+      addTaskToLaunchQueue()
+      context.become(starting)
+    }
   }
 
   def computeStartingDeadline: Option[FiniteDuration] = {
@@ -214,24 +210,12 @@ class JobRunExecutorActor(
   // Behavior
 
   override def receive: Receive = around {
-    case Initialized(Nil) =>
-      log.info("initializing - no existing tasks in the queue")
-      becomeStarting(jobRun)
-      unstashAll()
 
-    case Initialized(tasks) =>
-      log.info("initializing - found existing tasks in the queue")
-      // sync the state with loaded tasks
-      // since the task tracker only stores active tasks, we don't remove anything here
-      tasks.foreach { task =>
-        jobRun.tasks + (task.id -> task)
-      }
-      if (tasks.exists(t => isActive(t.status))) {
-        // the actor is already active, so don't transition to active, just switch
-        context.become(active)
-      } else {
-        becomeStarting(jobRun)
-      }
+    // this is called because the check is in the launch queue which on restart is cleared
+    // if recorded in zk we need to assume it is running... a reconc will indicate that it isn't any longer
+    case Initialized() =>
+      log.info("initializing - no existing tasks in the queue")
+      context.become(active)
       unstashAll()
 
     case _ => stash()
@@ -361,7 +345,7 @@ class JobRunExecutorActor(
 
 object JobRunExecutorActor {
 
-  case class Initialized(tasks: Iterable[JobRunTask])
+  case class Initialized()
 
   case object KillCurrentJobRun
   case class JobRunUpdate(startedJobRun: StartedJobRun)
