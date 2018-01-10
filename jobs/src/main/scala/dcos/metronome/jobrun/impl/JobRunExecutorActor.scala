@@ -2,7 +2,6 @@ package dcos.metronome
 package jobrun.impl
 
 import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Scheduler, Stash }
-import dcos.metronome.{ JobRunFailed, UnexpectedTaskState }
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
@@ -12,12 +11,10 @@ import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.core.task.Task.LaunchedEphemeral
-import mesosphere.marathon.core.task.tracker.TaskTracker
 import org.joda.time.Seconds
 
 import scala.concurrent.Promise
-import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.concurrent.duration.FiniteDuration
 
 /**
   * Handles one job run from start until the job either completes successful or failed.
@@ -29,7 +26,6 @@ class JobRunExecutorActor(
   promise:                    Promise[JobResult],
   persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
   launchQueue:                LaunchQueue,
-  taskTracker:                TaskTracker,
   driverHolder:               MarathonSchedulerDriverHolder,
   clock:                      Clock,
   val behavior:               Behavior)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorBehavior {
@@ -363,12 +359,11 @@ object JobRunExecutorActor {
     promise:                    Promise[JobResult],
     persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
     launchQueue:                LaunchQueue,
-    taskTracker:                TaskTracker,
     driverHolder:               MarathonSchedulerDriverHolder,
     clock:                      Clock,
     behavior:                   Behavior)(implicit scheduler: Scheduler): Props = Props(
     new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
-      launchQueue, taskTracker, driverHolder, clock, behavior))
+      launchQueue, driverHolder, clock, behavior))
 }
 
 object TaskStates {
