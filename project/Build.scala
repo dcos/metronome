@@ -14,6 +14,7 @@ import scalariform.formatter.preferences._
 
 
 object Build extends sbt.Build {
+  println("some logging message")
 
   val pbSettings = PB.projectSettings ++ Seq(
     (version in ProtobufConfig) := "3.3.0"
