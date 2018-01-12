@@ -25,8 +25,7 @@ class JobRunModule(
   taskTracker:      TaskTracker,
   driverHolder:     MarathonSchedulerDriverHolder,
   behavior:         Behavior,
-  leadershipModule: LeadershipModule,
-  schedulerConfig:  SchedulerConfig) {
+  leadershipModule: LeadershipModule) {
 
   import com.softwaremill.macwire._
 
@@ -34,7 +33,7 @@ class JobRunModule(
     val persistenceActorFactory = (id: JobRunId, context: ActorContext) =>
       context.actorOf(JobRunPersistenceActor.props(id, jobRunRepository, behavior))
     JobRunExecutorActor.props(jobRun, promise, persistenceActorFactory,
-      launchQueue, taskTracker, driverHolder, clock, behavior, schedulerConfig.reconciliationTimeout)(actorSystem.scheduler)
+      launchQueue, taskTracker, driverHolder, clock, behavior)(actorSystem.scheduler)
   }
 
   val jobRunServiceActor = leadershipModule.startWhenLeader(

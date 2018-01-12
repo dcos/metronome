@@ -1,7 +1,7 @@
 package dcos.metronome
 package scheduler.impl
 
-import akka.actor.{FSM, Props}
+import akka.actor.{ FSM, Props }
 import dcos.metronome.model.Event
 import dcos.metronome.model.Event.ReconciliationFinished
 import dcos.metronome.scheduler.SchedulerConfig

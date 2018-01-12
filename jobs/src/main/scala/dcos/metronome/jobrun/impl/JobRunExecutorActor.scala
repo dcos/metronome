@@ -32,8 +32,7 @@ class JobRunExecutorActor(
   taskTracker:                TaskTracker,
   driverHolder:               MarathonSchedulerDriverHolder,
   clock:                      Clock,
-  val behavior:               Behavior,
-  reconciliationTimeout:      FiniteDuration)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorBehavior {
+  val behavior:               Behavior)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorBehavior {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
   import TaskStates._
@@ -58,14 +57,17 @@ class JobRunExecutorActor(
       case JobRunStatus.Initial =>
         becomeCreating()
       case JobRunStatus.Starting | JobRunStatus.Active =>
-        val maybeTasksFromQueue = tryGetTasksFromLaunchQueue()
-        maybeTasksFromQueue match {
-          case Some(tasks) =>
+        val existingTasks = tasksFromTaskTracker()
+        existingTasks match {
+          case tasks if tasks.nonEmpty =>
             // the actor was probably just restarted and we did not lose contents of the launch queue
             self ! Initialized(tasks)
-          case None =>
-            // whole process might have been restarted, we need to wait for the actor to finish reconciliation
-            becomeReconciling()
+          case _ if jobRun.status == JobRunStatus.Starting && existsInLaunchQueue() =>
+            // we did attempt to launch something but there is no known existing task yet
+            // this is exactly the same as starting state with already launched item
+            context.become(starting)
+          case _ =>
+            self ! Initialized(Nil)
         }
 
       case JobRunStatus.Success => becomeFinishing(jobRun)
@@ -88,12 +90,6 @@ class JobRunExecutorActor(
     addTaskToLaunchQueue()
 
     context.become(starting)
-  }
-
-  def becomeReconciling(): Unit = {
-    reconciliationTimer = Some(scheduler.scheduleOnce(reconciliationTimeout, self, ReconciliationTimeout))
-    context.system.eventStream.subscribe(self, classOf[Event.ReconciliationFinished])
-    context.become(reconciling)
   }
 
   def computeStartingDeadline: Option[FiniteDuration] = {
@@ -132,7 +128,7 @@ class JobRunExecutorActor(
     startingDeadlineTimer = None
   }
 
-  def tasksFromTaskTracker() = {
+  def tasksFromTaskTracker(): Iterable[JobRunTask] = {
     taskTracker.appTasksLaunchedSync(runSpecId).collect {
       // FIXME: we do currently only allow non-resident tasks. Since there is no clear state on
       // Marathon's task representation, this is the safest conversion we can do for now:
@@ -141,16 +137,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def tryGetTasksFromLaunchQueue(): Option[Iterable[JobRunTask]] = {
-    launchQueue.get(runSpecId) match {
-      case Some(info) if info.finalTaskCount > 0 =>
-        log.info("found an active launch queue for {}, not scheduling more tasks", runSpecId)
-        Some(tasksFromTaskTracker())
-
-      case _ =>
-        None
-    }
-  }
+  def existsInLaunchQueue(): Boolean = launchQueue.get(runSpecId).exists(_.finalTaskCount > 0)
 
   def updatedTasks(update: TaskStateChangedEvent): Map[Task.Id, JobRunTask] = {
     // Note: there is a certain inaccuracy when we receive a finished task that's not in the Map
@@ -307,15 +294,6 @@ class JobRunExecutorActor(
     }
   }
 
-  def reconciling: Receive = around {
-    receiveKill orElse {
-      case ReconciliationTimeout =>
-        proceedAfterReconciliation()
-      case Event.ReconciliationFinished =>
-        proceedAfterReconciliation()
-    }
-  }
-
   def active: Receive = around {
     receiveKill orElse {
       case ForwardStatusUpdate(update) if isFinished(update.taskState) =>
@@ -418,10 +396,9 @@ object JobRunExecutorActor {
     taskTracker:                TaskTracker,
     driverHolder:               MarathonSchedulerDriverHolder,
     clock:                      Clock,
-    behavior:                   Behavior,
-    reconciliationTimeout:      FiniteDuration)(implicit scheduler: Scheduler): Props = Props(
+    behavior:                   Behavior)(implicit scheduler: Scheduler): Props = Props(
     new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
-      launchQueue, taskTracker, driverHolder, clock, behavior, reconciliationTimeout))
+      launchQueue, taskTracker, driverHolder, clock, behavior))
 }
 
 object TaskStates {

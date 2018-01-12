@@ -40,7 +40,7 @@ class JobsModule(
     val launchQueue = schedulerModule.launchQueueModule.launchQueue
     val taskTracker = schedulerModule.taskTrackerModule.taskTracker
     val driverHolder = schedulerModule.schedulerDriverHolder
-    new JobRunModule(config, actorSystem, clock, repositoryModule.jobRunRepository, launchQueue, taskTracker, driverHolder, behaviorModule.behavior, schedulerModule.leadershipModule, config)
+    new JobRunModule(config, actorSystem, clock, repositoryModule.jobRunRepository, launchQueue, taskTracker, driverHolder, behaviorModule.behavior, schedulerModule.leadershipModule)
   }
 
   lazy val jobSpecModule = new JobSpecModule(
