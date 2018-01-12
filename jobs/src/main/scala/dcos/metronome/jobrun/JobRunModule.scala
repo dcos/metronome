@@ -9,11 +9,9 @@ import dcos.metronome.repository.Repository
 import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
-import mesosphere.marathon.core.task.tracker.TaskTracker
 import mesosphere.marathon.core.leadership.LeadershipModule
 
 import scala.concurrent.Promise
-import scala.concurrent.duration.Duration
 
 class JobRunModule(
   config:           JobRunConfig,
@@ -21,7 +19,6 @@ class JobRunModule(
   clock:            Clock,
   jobRunRepository: Repository[JobRunId, JobRun],
   launchQueue:      LaunchQueue,
-  taskTracker:      TaskTracker,
   driverHolder:     MarathonSchedulerDriverHolder,
   behavior:         Behavior,
   leadershipModule: LeadershipModule) {
@@ -32,7 +29,7 @@ class JobRunModule(
     val persistenceActorFactory = (id: JobRunId, context: ActorContext) =>
       context.actorOf(JobRunPersistenceActor.props(id, jobRunRepository, behavior))
     JobRunExecutorActor.props(jobRun, promise, persistenceActorFactory,
-      launchQueue, taskTracker, driverHolder, clock, behavior)(actorSystem.scheduler)
+      launchQueue, driverHolder, clock, behavior)(actorSystem.scheduler)
   }
 
   val jobRunServiceActor = leadershipModule.startWhenLeader(
