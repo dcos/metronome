@@ -6,7 +6,7 @@ import dcos.metronome.{ JobRunFailed, UnexpectedTaskState }
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
+import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
 import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.MarathonSchedulerDriverHolder
@@ -32,13 +32,15 @@ class JobRunExecutorActor(
   taskTracker:                TaskTracker,
   driverHolder:               MarathonSchedulerDriverHolder,
   clock:                      Clock,
-  val behavior:               Behavior)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorBehavior {
+  val behavior:               Behavior,
+  reconciliationTimeout:      FiniteDuration)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorBehavior {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
   import TaskStates._
   import context.dispatcher
 
   private[impl] var startingDeadlineTimer: Option[Cancellable] = None
+  private[impl] var reconciliationTimer: Option[Cancellable] = None
 
   lazy val persistenceActor = persistenceActorRefFactory(run.id, context)
   var jobRun: JobRun = run
@@ -47,35 +49,28 @@ class JobRunExecutorActor(
 
   override def preStart(): Unit = {
     val startingDeadline = computeStartingDeadline
-    if (startingDeadline.exists(d => d.toSeconds <= 0)) {
-      log.info(s"StartingDeadline timeout of ${jobRun.startingDeadline.get} expired for JobRun ${jobRun.id} created at ${jobRun.createdAt}")
-      becomeAborting()
-    } else {
-      startingDeadline.foreach(scheduleStartingDeadline)
+    startingDeadline.foreach(scheduleStartingDeadline)
 
-      jobRun.status match {
-        case JobRunStatus.Initial => becomeCreating()
+    jobRun.status match {
+      case JobRunStatus.Initial | JobRunStatus.Starting if startingDeadline.exists(d => d.toSeconds <= 0) =>
+        log.info(s"StartingDeadline timeout of ${jobRun.startingDeadline.get} expired for JobRun ${jobRun.id} created at ${jobRun.createdAt}")
+        becomeAborting()
+      case JobRunStatus.Initial =>
+        becomeCreating()
+      case JobRunStatus.Starting | JobRunStatus.Active =>
+        val maybeTasksFromQueue = tryGetTasksFromLaunchQueue()
+        maybeTasksFromQueue match {
+          case Some(tasks) =>
+            // the actor was probably just restarted and we did not lose contents of the launch queue
+            self ! Initialized(tasks)
+          case None =>
+            // whole process might have been restarted, we need to wait for the actor to finish reconciliation
+            becomeReconciling()
+        }
 
-        case JobRunStatus.Starting | JobRunStatus.Active =>
-          launchQueue.get(runSpecId) match {
-            case Some(info) if info.finalTaskCount > 0 =>
-              log.info("found an active launch queue for {}, not scheduling more tasks", runSpecId)
-              val tasks = taskTracker.appTasksLaunchedSync(runSpecId).collect {
-                // FIXME: we do currently only allow non-resident tasks. Since there is no clear state on
-                // Marathon's task representation, this is the safest conversion we can do for now:
-                case task: LaunchedEphemeral => JobRunTask(task)
-                case task: Task              => throw UnexpectedTaskState(task)
-              }
-              self ! Initialized(tasks)
+      case JobRunStatus.Success => becomeFinishing(jobRun)
 
-            case _ =>
-              self ! Initialized(tasks = Nil)
-          }
-
-        case JobRunStatus.Success => becomeFinishing(jobRun)
-
-        case JobRunStatus.Failed  => becomeFailing(jobRun)
-      }
+      case JobRunStatus.Failed  => becomeFailing(jobRun)
     }
   }
 
@@ -93,6 +88,12 @@ class JobRunExecutorActor(
     addTaskToLaunchQueue()
 
     context.become(starting)
+  }
+
+  def becomeReconciling(): Unit = {
+    reconciliationTimer = Some(scheduler.scheduleOnce(reconciliationTimeout, self, ReconciliationTimeout))
+    context.system.eventStream.subscribe(self, classOf[Event.ReconciliationFinished])
+    context.become(reconciling)
   }
 
   def computeStartingDeadline: Option[FiniteDuration] = {
@@ -129,6 +130,26 @@ class JobRunExecutorActor(
   def cancelStartingDeadline(): Unit = {
     startingDeadlineTimer.foreach { c => if (!c.isCancelled) c.cancel() }
     startingDeadlineTimer = None
+  }
+
+  def tasksFromTaskTracker() = {
+    taskTracker.appTasksLaunchedSync(runSpecId).collect {
+      // FIXME: we do currently only allow non-resident tasks. Since there is no clear state on
+      // Marathon's task representation, this is the safest conversion we can do for now:
+      case task: LaunchedEphemeral => JobRunTask(task)
+      case task: Task              => throw UnexpectedTaskState(task)
+    }
+  }
+
+  def tryGetTasksFromLaunchQueue(): Option[Iterable[JobRunTask]] = {
+    launchQueue.get(runSpecId) match {
+      case Some(info) if info.finalTaskCount > 0 =>
+        log.info("found an active launch queue for {}, not scheduling more tasks", runSpecId)
+        Some(tasksFromTaskTracker())
+
+      case _ =>
+        None
+    }
   }
 
   def updatedTasks(update: TaskStateChangedEvent): Map[Task.Id, JobRunTask] = {
@@ -193,6 +214,7 @@ class JobRunExecutorActor(
   }
 
   def becomeAborting(): Unit = {
+    cancelStartingDeadline()
     log.info(s"Execution of JobRun ${jobRun.id} has been aborted")
     // kill all running tasks
     jobRun.tasks.values.filter(t => isActive(t.status)).foreach { t =>
@@ -209,6 +231,10 @@ class JobRunExecutorActor(
 
     log.debug("become aborting")
     context.become(aborting)
+  }
+
+  def proceedAfterReconciliation(): Unit = {
+    self ! Initialized(tasksFromTaskTracker())
   }
 
   // Behavior
@@ -278,6 +304,15 @@ class JobRunExecutorActor(
 
       case PersistFailed(_, id, ex, _) =>
         becomeAborting()
+    }
+  }
+
+  def reconciling: Receive = around {
+    receiveKill orElse {
+      case ReconciliationTimeout =>
+        proceedAfterReconciliation()
+      case Event.ReconciliationFinished =>
+        proceedAfterReconciliation()
     }
   }
 
@@ -371,6 +406,7 @@ object JobRunExecutorActor {
   case class Aborted(jobResult: JobResult)
 
   case object StartTimeout
+  case object ReconciliationTimeout
 
   case class ForwardStatusUpdate(update: TaskStateChangedEvent)
 
@@ -382,9 +418,10 @@ object JobRunExecutorActor {
     taskTracker:                TaskTracker,
     driverHolder:               MarathonSchedulerDriverHolder,
     clock:                      Clock,
-    behavior:                   Behavior)(implicit scheduler: Scheduler): Props = Props(
+    behavior:                   Behavior,
+    reconciliationTimeout:      FiniteDuration)(implicit scheduler: Scheduler): Props = Props(
     new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
-      launchQueue, taskTracker, driverHolder, clock, behavior))
+      launchQueue, taskTracker, driverHolder, clock, behavior, reconciliationTimeout))
 }
 
 object TaskStates {

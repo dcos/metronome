@@ -646,7 +646,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     def executorActor(jobRun: JobRun, startingDeadline: Option[Duration] = None): TestActorRef[JobRunExecutorActor] = {
       import JobRunExecutorActorTest._
       val actorRef = TestActorRef[JobRunExecutorActor](JobRunExecutorActor.props(jobRun, promise, persistenceActorFactory,
-        launchQueue, taskTracker, driverHolder, clock, behaviour)(scheduler), parent.ref, "JobRunExecutor")
+        launchQueue, taskTracker, driverHolder, clock, behaviour, Duration.Zero)(scheduler), parent.ref, "JobRunExecutor")
       actor = Some(actorRef)
       actorRef
     }

@@ -48,4 +48,9 @@ object Event {
     eventType: String   = "job_run_failed",
     timestamp: DateTime = DateTime.now(UTC)) extends JobRunEvent
 
+  trait ReconciliationEvent extends Event
+  case class ReconciliationFinished(
+    eventType: String   = "job_run_failed",
+    timestamp: DateTime = DateTime.now(UTC)) extends ReconciliationEvent
+
 }
