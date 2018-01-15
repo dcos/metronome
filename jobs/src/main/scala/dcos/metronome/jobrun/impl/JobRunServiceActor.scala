@@ -29,7 +29,6 @@ class JobRunServiceActor(
   override def preStart(): Unit = {
     super.preStart()
     context.system.eventStream.subscribe(self, classOf[TaskStateChangedEvent])
-    context.system.eventStream.subscribe(self, classOf[Event.ReconciliationFinished])
   }
 
   override def postStop(): Unit = {

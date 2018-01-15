@@ -39,7 +39,6 @@ class JobRunExecutorActor(
   import context.dispatcher
 
   private[impl] var startingDeadlineTimer: Option[Cancellable] = None
-  private[impl] var reconciliationTimer: Option[Cancellable] = None
 
   lazy val persistenceActor = persistenceActorRefFactory(run.id, context)
   var jobRun: JobRun = run
@@ -218,10 +217,6 @@ class JobRunExecutorActor(
 
     log.debug("become aborting")
     context.become(aborting)
-  }
-
-  def proceedAfterReconciliation(): Unit = {
-    self ! Initialized(tasksFromTaskTracker())
   }
 
   // Behavior
