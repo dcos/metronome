@@ -6,7 +6,7 @@ import dcos.metronome.{ JobRunFailed, UnexpectedTaskState }
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.model._
+import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
 import dcos.metronome.scheduler.TaskState
 import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.MarathonSchedulerDriverHolder

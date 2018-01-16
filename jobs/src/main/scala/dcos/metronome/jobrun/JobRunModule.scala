@@ -6,15 +6,13 @@ import dcos.metronome.behavior.Behavior
 import dcos.metronome.jobrun.impl.{ JobRunExecutorActor, JobRunPersistenceActor, JobRunServiceActor, JobRunServiceDelegate }
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId }
 import dcos.metronome.repository.Repository
-import dcos.metronome.scheduler.SchedulerConfig
 import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
-import mesosphere.marathon.core.task.tracker.TaskTracker
 import mesosphere.marathon.core.leadership.LeadershipModule
+import mesosphere.marathon.core.task.tracker.TaskTracker
 
 import scala.concurrent.Promise
-import scala.concurrent.duration.Duration
 
 class JobRunModule(
   config:           JobRunConfig,
