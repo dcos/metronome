@@ -11,7 +11,6 @@ import scala.collection.immutable.Seq
 class LaunchQueueServiceImpl(launchQueue: LaunchQueue) extends LaunchQueueService {
 
   override def list(): Seq[QueuedJobRunInfo] = {
-    launchQueue.list.map(_.toModel)
+    launchQueue.list.filter(_.inProgress == true).map(_.toModel)
   }
-
 }
