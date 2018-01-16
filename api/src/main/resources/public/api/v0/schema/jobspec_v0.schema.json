@@ -221,7 +221,8 @@
           "concurrencyPolicy": {
             "type": "string",
             "enum": [
-              "ALLOW"
+              "ALLOW",
+              "FORBID"
             ],
             "description": "Defines the behavior if a job is started, before the current job has finished. ALLOW will launch a new job, even if there is an existing run."
           },
