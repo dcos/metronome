@@ -239,6 +239,28 @@ def test_docker_job():
         assert len(client.get_runs(job_id)) == 1
 
 
+def test_metronome_shutdown_with_no_extra_tasks():
+    """ Test for METRONOME-100 regression
+        When Metronome is restarted it incorrectly started another task for already running job run task.
+    """
+    client = metronome.create_client()
+    job_id = "metronome-shutdown-{}".format(uuid.uuid4().hex)
+    with job(job_no_schedule(job_id)):
+        # run a job before we shutdown Metronome
+        client.run_job(job_id)
+        time.sleep(2)
+        common.assert_one_job_run_with_one_task(client, job_id)
+
+        # restart metronome process
+        metronome_leader = shakedown.marathon_leader_ip()
+        shakedown.run_command_on_agent(metronome_leader, 'sudo systemctl restart dcos-metronome')
+        shakedown.time_wait(lambda: common.metronome_available_predicate(), timeout_seconds=timedelta(minutes=1).total_seconds())
+
+        # verify that no extra job runs were started when Metronome was restarted
+        time.sleep(20) # launching a new task takes some time, we have to give marathon enough time to do that
+        common.assert_one_job_run_with_one_task(client, job_id)
+
+
 def setup_module(module):
     agents = shakedown.get_private_agents()
     if len(agents) < 2:

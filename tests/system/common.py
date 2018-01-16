@@ -1,6 +1,7 @@
 """ Commons for Metronome """
 
 from datetime import timedelta
+from dcos import http
 
 import shakedown
 
@@ -83,3 +84,26 @@ def wait_for_mesos_endpoint(timeout_sec=timedelta(minutes=5).total_seconds()):
     it returns false"""
 
     return shakedown.time_wait(lambda: shakedown.mesos_available_predicate(), timeout_seconds=timeout_sec)
+
+
+def metronome_available_predicate():
+    url = metronome_api_url()
+    print("http")
+    print(url)
+    try:
+        response = http.get(url)
+        print(response)
+        return response.status_code == 200
+    except Exception as e:
+        print(e)
+        return False
+
+def metronome_api_url():
+    return shakedown.dcos_url_path("/service/metronome/v1/jobs")
+
+
+def assert_one_job_run_with_one_task(client, job_id):
+    job_runs_count = len(client.get_runs(job_id))
+    assert job_runs_count == 1, "Expecting 1 job run but found {} for job {}.".format(job_runs_count, job_id)
+    job_run_tasks = client.get_runs(job_id)[0]["tasks"]
+    assert len(job_run_tasks) == 1, "Expecting 1 job run task but found {} for job {}: {}.".format(len(job_run_tasks), job_id, job_run_tasks)
