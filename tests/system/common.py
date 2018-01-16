@@ -88,14 +88,10 @@ def wait_for_mesos_endpoint(timeout_sec=timedelta(minutes=5).total_seconds()):
 
 def metronome_available_predicate():
     url = metronome_api_url()
-    print("http")
-    print(url)
     try:
         response = http.get(url)
-        print(response)
         return response.status_code == 200
     except Exception as e:
-        print(e)
         return False
 
 def metronome_api_url():
