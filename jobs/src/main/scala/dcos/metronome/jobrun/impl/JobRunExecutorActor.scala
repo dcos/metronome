@@ -129,8 +129,6 @@ class JobRunExecutorActor(
 
   def tasksFromTaskTracker(): Iterable[JobRunTask] = {
     taskTracker.appTasksLaunchedSync(runSpecId).collect {
-      // FIXME: we do currently only allow non-resident tasks. Since there is no clear state on
-      // Marathon's task representation, this is the safest conversion we can do for now:
       case task: LaunchedEphemeral => JobRunTask(task)
       case task: Task              => throw UnexpectedTaskState(task)
     }
@@ -379,7 +377,6 @@ object JobRunExecutorActor {
   case class Aborted(jobResult: JobResult)
 
   case object StartTimeout
-  case object ReconciliationTimeout
 
   case class ForwardStatusUpdate(update: TaskStateChangedEvent)
 
