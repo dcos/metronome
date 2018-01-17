@@ -47,35 +47,31 @@ class JobRunExecutorActor(
 
   override def preStart(): Unit = {
     val startingDeadline = computeStartingDeadline
-    if (startingDeadline.exists(d => d.toSeconds <= 0)) {
-      log.info(s"StartingDeadline timeout of ${jobRun.startingDeadline.get} expired for JobRun ${jobRun.id} created at ${jobRun.createdAt}")
-      becomeAborting()
-    } else {
-      startingDeadline.foreach(scheduleStartingDeadline)
+    startingDeadline.foreach(scheduleStartingDeadline)
 
-      jobRun.status match {
-        case JobRunStatus.Initial => becomeCreating()
+    jobRun.status match {
+      case JobRunStatus.Initial | JobRunStatus.Starting if startingDeadline.exists(d => d.toSeconds <= 0) =>
+        log.info(s"StartingDeadline timeout of ${jobRun.startingDeadline.get} expired for JobRun ${jobRun.id} created at ${jobRun.createdAt}")
+        becomeAborting()
+      case JobRunStatus.Initial =>
+        becomeCreating()
+      case JobRunStatus.Starting | JobRunStatus.Active =>
+        val existingTasks = tasksFromTaskTracker()
+        existingTasks match {
+          case tasks if tasks.nonEmpty =>
+            // the actor was probably just restarted and we did not lose contents of the launch queue
+            self ! Initialized(tasks)
+          case _ if jobRun.status == JobRunStatus.Starting && existsInLaunchQueue() =>
+            // we did attempt to launch something but there is no known existing task yet
+            // this is exactly the same as starting state with already launched item
+            context.become(starting)
+          case _ =>
+            self ! Initialized(Nil)
+        }
 
-        case JobRunStatus.Starting | JobRunStatus.Active =>
-          launchQueue.get(runSpecId) match {
-            case Some(info) if info.finalTaskCount > 0 =>
-              log.info("found an active launch queue for {}, not scheduling more tasks", runSpecId)
-              val tasks = taskTracker.appTasksLaunchedSync(runSpecId).collect {
-                // FIXME: we do currently only allow non-resident tasks. Since there is no clear state on
-                // Marathon's task representation, this is the safest conversion we can do for now:
-                case task: LaunchedEphemeral => JobRunTask(task)
-                case task: Task              => throw UnexpectedTaskState(task)
-              }
-              self ! Initialized(tasks)
+      case JobRunStatus.Success => becomeFinishing(jobRun)
 
-            case _ =>
-              self ! Initialized(tasks = Nil)
-          }
-
-        case JobRunStatus.Success => becomeFinishing(jobRun)
-
-        case JobRunStatus.Failed  => becomeFailing(jobRun)
-      }
+      case JobRunStatus.Failed  => becomeFailing(jobRun)
     }
   }
 
@@ -130,6 +126,15 @@ class JobRunExecutorActor(
     startingDeadlineTimer.foreach { c => if (!c.isCancelled) c.cancel() }
     startingDeadlineTimer = None
   }
+
+  def tasksFromTaskTracker(): Iterable[JobRunTask] = {
+    taskTracker.appTasksLaunchedSync(runSpecId).collect {
+      case task: LaunchedEphemeral => JobRunTask(task)
+      case task: Task              => throw UnexpectedTaskState(task)
+    }
+  }
+
+  def existsInLaunchQueue(): Boolean = launchQueue.get(runSpecId).exists(_.finalTaskCount > 0)
 
   def updatedTasks(update: TaskStateChangedEvent): Map[Task.Id, JobRunTask] = {
     // Note: there is a certain inaccuracy when we receive a finished task that's not in the Map
@@ -193,6 +198,7 @@ class JobRunExecutorActor(
   }
 
   def becomeAborting(): Unit = {
+    cancelStartingDeadline()
     log.info(s"Execution of JobRun ${jobRun.id} has been aborted")
     // kill all running tasks
     jobRun.tasks.values.filter(t => isActive(t.status)).foreach { t =>

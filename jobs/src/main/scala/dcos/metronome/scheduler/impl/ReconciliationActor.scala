@@ -2,6 +2,8 @@ package dcos.metronome
 package scheduler.impl
 
 import akka.actor.{ FSM, Props }
+import dcos.metronome.model.Event
+import dcos.metronome.model.Event.ReconciliationFinished
 import dcos.metronome.scheduler.SchedulerConfig
 import dcos.metronome.scheduler.impl.ReconciliationActor._
 import mesosphere.marathon.MarathonSchedulerDriverHolder
@@ -54,7 +56,7 @@ class ReconciliationActor(
 
   onTransition {
     case _ -> Idle =>
-      // TODO: eventBus.publish(ReconciliationFinished)
+      context.system.eventStream.publish(ReconciliationFinished())
       log.debug("Entered Idle state")
 
     case Idle -> Loading =>
