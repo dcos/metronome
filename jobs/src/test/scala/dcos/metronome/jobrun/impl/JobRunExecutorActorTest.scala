@@ -351,26 +351,24 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Active, clock.now(), None, None, Map.empty)
     val runSpecId = activeJobRun.id.toRunSpecId
     f.launchQueue.get(runSpecId) returns None
+    taskTracker.appTasksLaunchedSync(runSpecId) returns Seq.empty
 
     When("the actor is initialized")
     val actorRef: ActorRef = executorActor(activeJobRun)
-
-    Then("it will fetch info about queued or running tasks")
-    verify(f.launchQueue, timeout(1000)).get(runSpecId)
 
     And("a task is placed onto the launch queue")
     verify(launchQueue, timeout(1000)).add(any, any)
   }
 
-  test("Init of JobRun with JobRunStatus.Active and EMPTY launchQueue") {
+  test("Init of JobRun with JobRunStatus.Starting and EMPTY launchQueue") {
     val f = new Fixture
     import f._
 
-    Given("a JobRun with status Active")
-    val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Active, clock.now(), None, None, Map.empty)
+    Given("a JobRun with status Starting")
+    val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Starting, clock.now(), None, None, Map.empty)
     val runSpecId = activeJobRun.id.toRunSpecId
     val runSpec: RunSpec = activeJobRun.toRunSpec
-    val queuedTaskInfo = new QueuedTaskInfo(
+    val queuedTaskInfo = QueuedTaskInfo(
       runSpec = runSpec,
       inProgress = false,
       tasksLeftToLaunch = 0,
@@ -378,6 +376,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       tasksLost = 0,
       backOffUntil = Timestamp(0))
     f.launchQueue.get(runSpecId) returns Some(queuedTaskInfo)
+    taskTracker.appTasksLaunchedSync(runSpecId) returns Seq.empty
 
     When("the actor is initialized")
     val actorRef: ActorRef = executorActor(activeJobRun)
@@ -389,7 +388,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     verify(launchQueue, timeout(1000)).add(any, any)
   }
 
-  test("Init of JobRun with JobRunStatus.Active and a task on the launchQueue") {
+  test("Init of JobRun with JobRunStatus.Active and a task on the launchQueue and in the task tracker") {
     val f = new Fixture
     import f._
 
@@ -410,9 +409,6 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
     When("the actor is initialized")
     val actorRef: ActorRef = executorActor(activeJobRun)
-
-    Then("it will fetch info about queued or running tasks")
-    verify(f.launchQueue, timeout(1000)).get(runSpecId)
 
     And("NO task is placed onto the launch queue")
     noMoreInteractions(launchQueue)
@@ -557,6 +553,22 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     }
   }
 
+  // regression for METRONOME-100
+  test("does not start a new job when jobqueue was purged after metronome restart") {
+    val f = new Fixture
+
+    Given("a jobRun already in active state")
+    f.setupRunningExecutorActor()
+
+    Then("no new tasks are launched")
+    noMoreInteractions(f.launchQueue)
+    Then("Nothing is persisted because the JobRunStatus is still Active")
+    f.persistenceActor.expectNoMsg(500.millis)
+
+    And("No additional message is send because the job is still active")
+    f.parent.expectNoMsg(500.millis)
+  }
+
   def verifyFailureActions(jobRun: JobRun, expectedTaskCount: Int, f: Fixture): Unit = {
     import f._
 
@@ -689,6 +701,16 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       persistenceActor.reply(JobRunPersistenceActor.JobRunCreated(persistenceActor.ref, startingJobRun, Unit))
       verify(launchQueue, timeout(1000)).add(any, any)
       (actorRef, startingJobRun)
+    }
+
+    def setupRunningExecutorActor(): (ActorRef, JobRun) = {
+      val activeJob = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Active, clock.now(), None, None,
+        Map(Task.Id("taskId") -> JobRunTask(Task.Id("taskId"), null, None, TaskState.Running)))
+      val actorRef: ActorRef = executorActor(activeJob)
+      val runSpecId = activeJob.id.toRunSpecId
+      taskTracker.appTasksLaunchedSync(runSpecId) returns Seq(
+        mockTask(taskId, Timestamp(clock.now()), mesos.Protos.TaskState.TASK_RUNNING))
+      (actorRef, activeJob)
     }
 
     /**
