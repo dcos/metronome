@@ -1,15 +1,18 @@
 package dcos.metronome
 package repository.impl.kv
 
-import dcos.metronome.model.{ JobId, JobSpec }
+import dcos.metronome.model.{JobId, JobSpec}
 import dcos.metronome.utils.test.Mockito
 import mesosphere.util.state.PersistentStoreWithNestedPathsSupport
 import org.scalatest.FunSuite
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time.{Millis, Seconds, Span}
 
 import concurrent.Future
 
 class ZkJobSpecRepositoryTest extends FunSuite with Mockito with ScalaFutures {
+
+  override implicit def patienceConfig: PatienceConfig = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
   test("delete") {
     val f = new Fixture
