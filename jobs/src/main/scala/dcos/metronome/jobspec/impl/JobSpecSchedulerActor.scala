@@ -4,10 +4,11 @@ package jobspec.impl
 import akka.actor._
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.jobrun.JobRunService
-import dcos.metronome.model.{ JobSpec, ScheduleSpec }
+import dcos.metronome.model.{ ConcurrencyPolicy, JobSpec, ScheduleSpec }
 import dcos.metronome.utils.time.Clock
 import org.joda.time.{ DateTime, Seconds }
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 /**
@@ -49,8 +50,25 @@ class JobSpecSchedulerActor(
 
   def runJob(schedule: ScheduleSpec): Unit = {
     log.info(s"Start next run of job ${spec.id}, which was scheduled for $scheduledAt")
-    runService.startJobRun(spec, Some(schedule.startingDeadline))
+
+    if (!(schedule.concurrencyPolicy == ConcurrencyPolicy.Forbid && activeRunsForJobSpec())) {
+      runService.startJobRun(spec, Some(schedule.startingDeadline))
+    } else {
+      log.debug(s"Skipping Scheduled run for ${spec.id} based on concurrency policy")
+    }
     scheduleNextRun()
+  }
+
+  def activeRunsForJobSpec(): Boolean = {
+    try {
+      val runResult = Await.result(runService.activeRuns(spec.id), 5.seconds)
+      log.debug(s"job ${spec.id} has active runs? ${runResult.nonEmpty}")
+      runResult.nonEmpty
+    } catch {
+      case _: Throwable =>
+        log.error("Timeout retrieving active runs.")
+        true
+    }
   }
 
   def scheduleNextRun(): Unit = {

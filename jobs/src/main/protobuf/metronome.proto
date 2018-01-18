@@ -85,6 +85,7 @@ message JobSpec {
     enum ConcurrencyPolicy {
       UNKNOWN = 1;
       ALLOW = 2;
+      FORBID = 3;
     }
     optional ConcurrencyPolicy concurrency_policy = 5;
 
