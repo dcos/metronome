@@ -50,12 +50,11 @@ class JobSpecSchedulerActor(
 
   def runJob(schedule: ScheduleSpec): Unit = {
     log.info(s"Start next run of job ${spec.id}, which was scheduled for $scheduledAt")
-
-    if (!(schedule.concurrencyPolicy == ConcurrencyPolicy.Forbid && activeRunsForJobSpec())) {
-      runService.startJobRun(spec, Some(schedule.startingDeadline))
-    } else {
-      log.debug(s"Skipping Scheduled run for ${spec.id} based on concurrency policy")
-    }
+    runService.startJobRun(spec, Some(schedule), Some(schedule.startingDeadline))
+    //    if (!(schedule.concurrencyPolicy == ConcurrencyPolicy.Forbid && activeRunsForJobSpec())) {
+    //    } else {
+    //      log.debug(s"Skipping Scheduled run for ${spec.id} based on concurrency policy")
+    //    }
     scheduleNextRun()
   }
 

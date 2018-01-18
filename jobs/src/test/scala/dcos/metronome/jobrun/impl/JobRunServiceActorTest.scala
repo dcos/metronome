@@ -90,7 +90,7 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     val actor = f.serviceActor
 
     When("An existing jobRun is queried")
-    actor ! TriggerJobRun(f.jobSpec, None)
+    actor ! TriggerJobRun(f.jobSpec, None, None)
 
     Then("The list of started job runs is returned")
     val started = expectMsgClass(classOf[StartedJobRun])
@@ -103,7 +103,7 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     Given("An empty service")
     val f = new Fixture
     val actor = f.serviceActor
-    actor ! TriggerJobRun(f.jobSpec, None)
+    actor ! TriggerJobRun(f.jobSpec, None, None)
     val startedRun = expectMsgClass(classOf[StartedJobRun])
 
     When("The job finished")
@@ -119,7 +119,7 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     Given("An empty service")
     val f = new Fixture
     val actor = f.serviceActor
-    actor ! TriggerJobRun(f.jobSpec, None)
+    actor ! TriggerJobRun(f.jobSpec, None, None)
     val startedRun = expectMsgClass(classOf[StartedJobRun])
 
     When("The job aborted")
@@ -135,7 +135,7 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     Given("An empty service")
     val f = new Fixture
     val actor = f.serviceActor
-    actor ! TriggerJobRun(f.jobSpec, None)
+    actor ! TriggerJobRun(f.jobSpec, None, None)
     val startedRun = expectMsgClass(classOf[StartedJobRun])
 
     When("The job finished")
@@ -151,7 +151,7 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     Given("A service with 2 jobRuns")
     val f = new Fixture
     val actor = f.serviceActor
-    actor ! TriggerJobRun(f.jobSpec, None)
+    actor ! TriggerJobRun(f.jobSpec, None, None)
     val startedRun = expectMsgClass(classOf[StartedJobRun])
 
     When("An existing jobRun is queried")

@@ -2,7 +2,6 @@ package dcos.metronome
 package jobrun.impl
 
 import akka.actor._
-import dcos.metronome.JobRunDoesNotExist
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
@@ -42,31 +41,40 @@ class JobRunServiceActor(
 
   override def receive: Receive = around {
     // api messages
-    case ListRuns(filter)                      => sender() ! allJobRuns.values.filter(startedJobRun => filter(startedJobRun.jobRun))
-    case GetJobRun(id)                         => sender() ! allJobRuns.get(id)
-    case GetActiveJobRuns(specId)              => sender() ! runsForJob(specId)
-    case KillJobRun(id)                        => killJobRun(id)
+    case ListRuns(filter)                                => sender() ! allJobRuns.values.filter(startedJobRun => filter(startedJobRun.jobRun))
+    case GetJobRun(id)                                   => sender() ! allJobRuns.get(id)
+    case GetActiveJobRuns(specId)                        => sender() ! runsForJob(specId)
+    case KillJobRun(id)                                  => killJobRun(id)
 
     // trigger messages
-    case TriggerJobRun(spec, startingDeadline) => triggerJobRun(spec, startingDeadline)
+    case TriggerJobRun(spec, schedule, startingDeadline) => triggerJobRun(spec, schedule, startingDeadline)
 
     // executor messages
-    case JobRunUpdate(started)                 => updateJobRun(started)
-    case Finished(result)                      => jobRunFinished(result)
-    case Aborted(result)                       => jobRunFailed(result)
-    case Failed(result)                        => jobRunFailed(result)
+    case JobRunUpdate(started)                           => updateJobRun(started)
+    case Finished(result)                                => jobRunFinished(result)
+    case Aborted(result)                                 => jobRunFailed(result)
+    case Failed(result)                                  => jobRunFailed(result)
 
     //event stream events
-    case update: TaskStateChangedEvent         => forwardStatusUpdate(update)
+    case update: TaskStateChangedEvent                   => forwardStatusUpdate(update)
   }
 
   def runsForJob(jobId: JobId): Iterable[StartedJobRun] = allJobRuns.values.filter(_.jobRun.id.jobId == jobId)
 
-  def triggerJobRun(spec: JobSpec, startingDeadline: Option[Duration]): Unit = {
+  def triggerJobRun(spec: JobSpec, schedule: Option[ScheduleSpec], startingDeadline: Option[Duration]): Unit = {
     log.info(s"Trigger new JobRun for JobSpec: $spec")
-    val jobRun = JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.now(), None, startingDeadline, Map.empty)
-    val startedJobRun = startJobRun(jobRun)
-    sender() ! startedJobRun
+
+    val skipRun = schedule match {
+      case Some(schedule) => schedule.concurrencyPolicy == ConcurrencyPolicy.Forbid && runsForJob(spec.id).nonEmpty
+      case None           => false
+    }
+    if (skipRun) {
+      log.debug(s"SkippingB Scheduled run for ${spec.id} based on concurrency policy")
+    } else {
+      val jobRun = JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.now(), None, startingDeadline, Map.empty)
+      val startedJobRun = startJobRun(jobRun)
+      sender() ! startedJobRun
+    }
   }
 
   def startJobRun(jobRun: JobRun): StartedJobRun = {
@@ -156,7 +164,7 @@ object JobRunServiceActor {
   case class GetJobRun(id: JobRunId)
   case class GetActiveJobRuns(jobId: JobId)
   case class KillJobRun(id: JobRunId)
-  case class TriggerJobRun(jobSpec: JobSpec, startingDeadline: Option[Duration])
+  case class TriggerJobRun(jobSpec: JobSpec, schedule: Option[ScheduleSpec], startingDeadline: Option[Duration])
 
   def props(
     clock:           Clock,
