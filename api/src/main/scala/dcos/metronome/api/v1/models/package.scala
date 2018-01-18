@@ -249,7 +249,7 @@ package object models {
   implicit lazy val QueuedTaskInfoWrites: Writes[QueuedJobRunInfo] = new Writes[QueuedJobRunInfo] {
     //    output of queue is only runid
     override def writes(runInfo: QueuedJobRunInfo): JsValue = Json.obj(
-      "runId" -> JsString(runInfo.id.toString()))
+      "runId" -> JsString(runInfo.id.path.last))
   }
 
   def queuedTaskInfoMap(job: String, queuedTaskList: Seq[QueuedJobRunInfo]): JsValue = {
