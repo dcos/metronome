@@ -24,7 +24,7 @@ node('py36') {
             [$class: 'FileBinding', credentialsId: '11fcc957-5156-4470-ae34-d433da88248a', variable: 'DOT_SHAKEDOWN']
           ]) {
             sh """./ci/si_provision.sh"""
-            sh """./si_pipeline.sh $params.channel open"""
+            sh """./ci/si_pipeline.sh $params.channel open"""
           }
         } finally {
             junit allowEmptyResults: true, testResults: 'shakedown.xml'
