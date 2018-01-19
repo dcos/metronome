@@ -64,12 +64,9 @@ class JobRunServiceActor(
   def triggerJobRun(spec: JobSpec, schedule: Option[ScheduleSpec], startingDeadline: Option[Duration]): Unit = {
     log.info(s"Trigger new JobRun for JobSpec: $spec")
 
-    val skipRun = schedule match {
-      case Some(schedule) => schedule.concurrencyPolicy == ConcurrencyPolicy.Forbid && runsForJob(spec.id).nonEmpty
-      case None           => false
-    }
+    val skipRun = schedule.exists(schedule => schedule.concurrencyPolicy == ConcurrencyPolicy.Forbid && runsForJob(spec.id).nonEmpty)
     if (skipRun) {
-      log.debug(s"SkippingB Scheduled run for ${spec.id} based on concurrency policy")
+      log.debug(s"Skipping scheduled run for ${spec.id} based on concurrency policy")
     } else {
       val jobRun = JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.now(), None, startingDeadline, Map.empty)
       val startedJobRun = startJobRun(jobRun)
