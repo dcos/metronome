@@ -1,3 +1,11 @@
+# Version 0.3.4
+
+Diff [0.3.3-0.3.4](https://github.com/dcos/metronome/compare/v0.3.3...4dcb0dddc6e13f24eff1e3e6502213437a6392d8)
+
+## Bugs and Tracking
+
+* [METRONOME-207](https://jira.mesosphere.com/browse/METRONOME-207) V0 Endpoint needs to support ForcePullImage
+
 # Version 0.3.3
 
 Diff [0.3.2-0.3.3](https://github.com/dcos/metronome/compare/v0.3.2...0e28f5653f2ee8726c8e1f6499063af19e435f39)
