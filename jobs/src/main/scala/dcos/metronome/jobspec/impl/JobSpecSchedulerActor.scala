@@ -50,7 +50,7 @@ class JobSpecSchedulerActor(
 
   def runJob(schedule: ScheduleSpec): Unit = {
     log.info(s"Start next run of job ${spec.id}, which was scheduled for $scheduledAt")
-    runService.startJobRun(spec, Some(schedule), Some(schedule.startingDeadline))
+    runService.startJobRun(spec, Some(schedule))
     scheduleNextRun()
   }
 

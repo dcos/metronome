@@ -33,7 +33,7 @@ private[jobrun] class JobRunServiceDelegate(
     actorRef.ask(GetActiveJobRuns(jobId)).mapTo[Iterable[StartedJobRun]]
   }
 
-  override def startJobRun(jobSpec: JobSpec, schedule: Option[ScheduleSpec] = None, startingDeadline: Option[Duration] = None): Future[StartedJobRun] = {
-    actorRef.ask(TriggerJobRun(jobSpec, schedule, startingDeadline)).mapTo[StartedJobRun]
+  override def startJobRun(jobSpec: JobSpec, schedule: Option[ScheduleSpec] = None): Future[StartedJobRun] = {
+    actorRef.ask(TriggerJobRun(jobSpec, schedule)).mapTo[StartedJobRun]
   }
 }

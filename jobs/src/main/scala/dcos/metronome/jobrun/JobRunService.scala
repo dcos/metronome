@@ -41,7 +41,7 @@ trait JobRunService {
     * @param jobSpec the specification to run.
     * @return the started job run
     */
-  def startJobRun(jobSpec: JobSpec, schedule: Option[ScheduleSpec] = None, startingDeadline: Option[Duration] = None): Future[StartedJobRun]
+  def startJobRun(jobSpec: JobSpec, schedule: Option[ScheduleSpec] = None): Future[StartedJobRun]
 
   /**
     * Kill a given job run by the given job run id.
