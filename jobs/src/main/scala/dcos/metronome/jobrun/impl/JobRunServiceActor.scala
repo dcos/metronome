@@ -19,7 +19,7 @@ import scala.concurrent.duration.Duration
 class JobRunServiceActor(
   clock:           Clock,
   executorFactory: (JobRun, Promise[JobResult]) => Props,
-  val repo:        Repository[JobRunId, JobRun], //TODO: remove the repo
+  val repo:        Repository[JobRunId, JobRun],
   val behavior:    Behavior) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash with ActorBehavior {
 
   import JobRunExecutorActor._
@@ -154,7 +154,7 @@ class JobRunServiceActor(
   }
 
   override def initialize(runs: List[JobRun]): Unit = {
-    // FIXME: we should to wait until the Reconciliation has finished!
+//    called from LoadContentOnStartup with job runs from zk
     runs.foreach(r => startJobRun(r))
   }
 }
