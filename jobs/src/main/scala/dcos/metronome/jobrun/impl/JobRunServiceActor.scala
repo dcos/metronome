@@ -66,12 +66,9 @@ class JobRunServiceActor(
 
     val skipRun = schedule.exists(schedule => schedule.concurrencyPolicy == ConcurrencyPolicy.Forbid && runsForJob(spec.id).nonEmpty)
     if (skipRun) {
-      log.debug(s"Skipping scheduled run for ${spec.id} based on concurrency policy")
+      log.info(s"Skipping scheduled run for ${spec.id} based on concurrency policy")
     } else {
-      val startingDeadline: Option[Duration] = schedule match {
-        case Some(schedule) => Some(schedule.startingDeadline)
-        case _              => None
-      }
+      val startingDeadline: Option[Duration] = schedule.map(_.startingDeadline)
       val jobRun = JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.now(), None, startingDeadline, Map.empty)
       val startedJobRun = startJobRun(jobRun)
       sender() ! startedJobRun
@@ -154,7 +151,7 @@ class JobRunServiceActor(
   }
 
   override def initialize(runs: List[JobRun]): Unit = {
-//    called from LoadContentOnStartup with job runs from zk
+    //    called from LoadContentOnStartup with job runs from zk
     runs.foreach(r => startJobRun(r))
   }
 }
