@@ -4,7 +4,7 @@ package api
 import akka.util.ByteString
 import dcos.metronome.jobinfo.JobSpecSelector
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.model.{ JobRun, JobSpec }
+import dcos.metronome.model.{ JobRun, JobSpec, QueuedJobRunInfo }
 import mesosphere.marathon.plugin.auth._
 import mesosphere.marathon.plugin.http.{ HttpRequest, HttpResponse }
 import play.api.http.{ HeaderNames, HttpEntity, Status }
@@ -38,9 +38,11 @@ case class AuthorizedRequest[Body](identity: Identity, request: Request[Body], a
   def isAllowed(jobSpec: JobSpec): Boolean = authorizer.isAuthorized(identity, ViewRunSpec, jobSpec)
   def isAllowed(jobRun: JobRun): Boolean = isAllowed(jobRun.jobSpec)
   def isAllowed(started: StartedJobRun): Boolean = isAllowed(started.jobRun.jobSpec)
+  // QueuedJobRunInfo extends RunSpec so we can pass it directly to Authorizer
+  def isAllowed(queuedJobRunInfo: QueuedJobRunInfo): Boolean = authorizer.isAuthorized(identity, ViewRunSpec, queuedJobRunInfo)
 
   object Authorized {
-    def unapply(jobSpec: JobSpec): Option[JobSpec] = if (isAllowed(jobSpec)) Some(jobSpec) else None
+    def unapply(jobSpec: JobSpec): Option[JobSpec] = Some(jobSpec).filter(isAllowed)
   }
 
   def notAuthorized(): Result = PluginFacade.withResponse(authorizer.handleNotAuthorized(identity, _))
