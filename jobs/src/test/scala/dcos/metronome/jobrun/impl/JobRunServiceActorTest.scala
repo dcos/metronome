@@ -202,7 +202,6 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     eventually(actor.underlyingActor.allRunExecutors should have size 0)
   }
 
-
   override protected def afterAll(): Unit = {
     shutdown()
   }
