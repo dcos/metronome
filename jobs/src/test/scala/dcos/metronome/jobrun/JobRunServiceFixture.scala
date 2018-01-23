@@ -1,7 +1,6 @@
 package dcos.metronome
 package jobrun
 
-import dcos.metronome.JobRunDoesNotExist
 import dcos.metronome.model._
 import mesosphere.marathon.core.task.Task
 import org.joda.time.DateTime
@@ -32,7 +31,8 @@ object JobRunServiceFixture {
     override def listRuns(filter: (JobRun) => Boolean): Future[Iterable[StartedJobRun]] = {
       Future.successful(specs.values.filter(r => filter(r.jobRun)))
     }
-    override def startJobRun(jobSpec: JobSpec, startingDeadline: Option[Duration] = None): Future[StartedJobRun] = {
+    override def startJobRun(jobSpec: JobSpec, schedule: Option[ScheduleSpec] = None): Future[StartedJobRun] = {
+      val startingDeadline: Option[Duration] = schedule.map(_.startingDeadline)
       val run = JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Active, DateTime.now, None, startingDeadline, Map.empty[Task.Id, JobRunTask])
       val startedRun = StartedJobRun(run, Promise[JobResult].future)
       specs += run.id -> startedRun
