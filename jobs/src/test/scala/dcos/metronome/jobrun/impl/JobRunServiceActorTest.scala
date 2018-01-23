@@ -99,6 +99,37 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     system.stop(actor)
   }
 
+  test("Triggering a jobRun with forbid policy and no job run works") {
+    Given("An empty service")
+    val f = new Fixture
+    val actor = f.serviceActor
+
+    When("An existing jobRun is queried")
+    actor ! TriggerJobRun(f.jobSpec, Some(f.forbidSchedule))
+
+    Then("The list of started job runs is returned")
+    val started = expectMsgClass(classOf[StartedJobRun])
+    started.jobRun.jobSpec should be(f.jobSpec)
+    actor.underlyingActor.allJobRuns should have size 1
+    system.stop(actor)
+  }
+
+  test("Triggering a jobRun with forbid policy and a current job run does NOT start another job run") {
+    Given("A service with 1 jobRuns")
+    val f = new Fixture
+    val actor = f.serviceActor
+    // triggered job
+    actor ! TriggerJobRun(f.jobSpec, None)
+    val startedRun = expectMsgClass(classOf[StartedJobRun])
+
+    When("An existing jobRun is queried")
+    actor ! TriggerJobRun(f.jobSpec, Some(f.forbidSchedule))
+
+    Then("No Job Started and No Returned StartedJobRun")
+    expectNoMsg()
+    actor.underlyingActor.allJobRuns should have size 1
+  }
+
   test("A finished job run will be removed from the registry") {
     Given("An empty service")
     val f = new Fixture
@@ -178,6 +209,8 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
   class Fixture {
     val id = JobId("test")
     val jobSpec = JobSpec(id)
+    val forbidSchedule = ScheduleSpec("schedule", CronSpec("* * * * *"), ScheduleSpec.DefaultTimeZone, ScheduleSpec.DefaultStartingDeadline, ConcurrencyPolicy.Forbid)
+
     val clock = new FixedClock(DateTime.parse("2016-06-01T08:50:12.000Z"))
 
     def run() = {

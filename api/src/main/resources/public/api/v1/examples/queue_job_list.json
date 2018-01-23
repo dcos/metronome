@@ -3,10 +3,10 @@
     "jobId": "jobId",
     "runs": [
       {
-        "runId": "/jobId/20180103214004BPuOB"
+        "runId": "20180103214004BPuOB"
       },
       {
-        "runId": "/jobId/20180103214014JIT0Y"
+        "runId": "20180103214014JIT0Y"
       }
     ]
   }
