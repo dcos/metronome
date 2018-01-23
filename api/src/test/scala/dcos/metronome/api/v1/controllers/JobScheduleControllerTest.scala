@@ -5,7 +5,7 @@ import java.time.{ Clock, Instant, ZoneOffset }
 
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
-import dcos.metronome.model.{ CronSpec, JobId, JobSpec, ScheduleSpec }
+import dcos.metronome.model._
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
@@ -32,6 +32,19 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       status(response) mustBe CREATED
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe schedule1Json
+    }
+
+    "create a job schedule using the forbid concurrencyPolicy" in {
+      Given("A job")
+      route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
+
+      When("A Schedule is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs/$specId/schedules").withJsonBody(schedule3Json)).get
+
+      Then("The schedule is created")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+      contentAsJson(response) mustBe schedule3Json
     }
 
     "can not create a job schedule with the same id" in {
@@ -331,8 +344,10 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
   val schedule2 = new ScheduleSpec("id2", cron2) {
     override def clock = mockedClock
   }
+  val scheduleForbid = new ScheduleSpec("id3", cron1, ScheduleSpec.DefaultTimeZone, ScheduleSpec.DefaultStartingDeadline, ConcurrencyPolicy.Forbid)
   val schedule1Json = Json.toJson(schedule1)
   val schedule2Json = Json.toJson(schedule2)
+  val schedule3Json = Json.toJson(scheduleForbid)
   val specId = JobId("spec")
   val jobSpec = JobSpec(specId)
   val jobSpecJson = Json.toJson(jobSpec)
