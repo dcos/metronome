@@ -5,13 +5,17 @@ node('py36') {
   wrap([$class: 'MesosSingleUseSlave']) {
   wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'XTerm']) {
 
+    // Hardcoded default values are:
+    // DC/OS OS: channel="testing/pull/2359", for open cluster  (from: https://github.com/dcos/dcos/pull/2359)
+    // DC/OS EE: channel="testing/pull/2121", for strict, permissive or disabled clusters  (from: https://github.com/mesosphere/dcos-enterprise/pull/2121)
+    // The channel can be passed to the job in Jenkins (Build with Parameters) so that this job can be executed against any PR/cluster.
     properties([
             // once a day between 1 AM and 5 AM
             pipelineTriggers([cron('H H(1-5) * * *')]),
             parameters([
                     string(name: 'channel',
-                            defaultValue: 'testing/master',
-                            description: 'PR to start the cluster from e.g. testing/pull/1739'
+                            defaultValue: 'testing/pull/2359',
+                            description: 'PR to start the cluster from e.g. testing/pull/2359'
                     )]
             )
     ])
