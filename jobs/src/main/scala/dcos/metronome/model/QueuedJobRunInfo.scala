@@ -13,7 +13,7 @@ case class QueuedJobRunInfo(
   backOffUntil:          Timestamp,
   run:                   JobRunSpec          = JobRunSpec(),
   acceptedResourceRoles: Option[Set[String]] = None) extends RunSpec {
-  def jobid: String = id.path.head
+  def jobId: String = id.path.head
   lazy val runId: String = id.path.last
   override def user: Option[String] = run.user
   override def secrets: Map[String, Secret] = Map.empty
