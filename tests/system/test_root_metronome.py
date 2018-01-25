@@ -252,7 +252,9 @@ def test_metronome_shutdown_with_no_extra_tasks():
         common.assert_one_job_run_with_one_task(client, job_id)
 
         # restart metronome process
-        metronome_leader = shakedown.marathon_leader_ip()
+        # this won't work in multi-master setup if the mesos leader is not the same as metronome leader
+        # we can improve this one there is a good way how to get metronome leader from the system (e.g. info endpoint)
+        metronome_leader = shakedown.master_leader_ip()
         shakedown.run_command_on_agent(metronome_leader, 'sudo systemctl restart dcos-metronome')
         shakedown.time_wait(lambda: common.metronome_available_predicate(), timeout_seconds=timedelta(minutes=1).total_seconds())
 
