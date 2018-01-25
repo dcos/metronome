@@ -4,7 +4,7 @@ package jobspec.impl
 import java.time.Clock
 
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.model.{JobId, JobSpec, ScheduleSpec}
+import dcos.metronome.model.{ JobId, JobSpec, ScheduleSpec }
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.Future
