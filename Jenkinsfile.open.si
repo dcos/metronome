@@ -1,0 +1,37 @@
+#!/usr/bin/env groovy
+
+timeout(120) {
+node('py36') {
+  wrap([$class: 'MesosSingleUseSlave']) {
+  wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'XTerm']) {
+
+    properties([
+            // once a day between 1 AM and 5 AM
+            pipelineTriggers([cron('H H(1-5) * * *')]),
+            parameters([
+                    string(name: 'channel',
+                            defaultValue: 'testing/master',
+                            description: 'PR to start the cluster from e.g. testing/pull/1739'
+                    )]
+            )
+    ])
+
+    stage("Run System Integration Test Pipeline") {
+      try {
+        checkout scm
+        withCredentials(
+          [ [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'mesosphere-ci-marathon', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
+            [$class: 'FileBinding', credentialsId: '11fcc957-5156-4470-ae34-d433da88248a', variable: 'DOT_SHAKEDOWN']
+          ]) {
+            sh """./ci/si_provision.sh"""
+            sh """./ci/si_pipeline.sh $params.channel open"""
+          }
+        } finally {
+            junit allowEmptyResults: true, testResults: 'shakedown.xml'
+            archive includes: "diagnostics.zip"
+        }
+    }
+  }
+  }
+}
+}

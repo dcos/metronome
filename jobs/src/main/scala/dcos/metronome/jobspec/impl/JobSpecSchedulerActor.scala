@@ -4,10 +4,11 @@ package jobspec.impl
 import akka.actor._
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.jobrun.JobRunService
-import dcos.metronome.model.{ JobSpec, ScheduleSpec }
+import dcos.metronome.model.{ ConcurrencyPolicy, JobSpec, ScheduleSpec }
 import dcos.metronome.utils.time.Clock
 import org.joda.time.{ DateTime, Seconds }
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 /**
@@ -49,7 +50,7 @@ class JobSpecSchedulerActor(
 
   def runJob(schedule: ScheduleSpec): Unit = {
     log.info(s"Start next run of job ${spec.id}, which was scheduled for $scheduledAt")
-    runService.startJobRun(spec, Some(schedule.startingDeadline))
+    runService.startJobRun(spec, Some(schedule))
     scheduleNextRun()
   }
 
