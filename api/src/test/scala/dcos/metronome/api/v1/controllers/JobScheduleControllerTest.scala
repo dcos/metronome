@@ -1,15 +1,17 @@
 package dcos.metronome.api.v1.controllers
 
-import java.time.{ Clock, Instant, ZoneOffset }
+import java.time.{Clock, Instant, ZoneOffset}
 
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
-import dcos.metronome.model.{ CronSpec, JobId, JobSpec, ScheduleSpec }
+import dcos.metronome.jobspec.JobSpecService
+import dcos.metronome.jobspec.impl.JobSpecServiceFixture
+import dcos.metronome.model.{CronSpec, JobId, JobSpec, ScheduleSpec}
 import mesosphere.marathon.core.plugin.PluginManager
-import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
+import org.scalatest.{BeforeAndAfter, GivenWhenThen}
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{ Millis, Seconds, Span }
-import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
+import org.scalatest.time.{Millis, Seconds, Span}
+import org.scalatest.{BeforeAndAfter, GivenWhenThen}
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context
 import play.api.libs.json._
@@ -344,6 +346,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
 
   override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context) {
     override lazy val pluginManager: PluginManager = auth.pluginManager
+    override lazy val jobSpecService: JobSpecService = JobSpecServiceFixture.simpleJobSpecService(mockedClock)
   }
 }
 
