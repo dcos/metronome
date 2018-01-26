@@ -1,9 +1,10 @@
 package dcos.metronome
 package jobspec.impl
 
-import dcos.metronome.{ JobSpecAlreadyExists, JobSpecDoesNotExist }
+import java.time.Clock
+
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.model.{ JobId, JobSpec }
+import dcos.metronome.model.{ JobId, JobSpec, ScheduleSpec }
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.Future
@@ -11,7 +12,7 @@ import scala.util.control.NonFatal
 
 object JobSpecServiceFixture {
 
-  def simpleJobSpecService(): JobSpecService = new JobSpecService {
+  def simpleJobSpecService(testClock: Clock = Clock.systemUTC()): JobSpecService = new JobSpecService {
     val specs = TrieMap.empty[JobId, JobSpec]
     import Future._
     override def getJobSpec(id: JobId): Future[Option[JobSpec]] = successful(specs.get(id))
@@ -21,17 +22,21 @@ object JobSpecServiceFixture {
         case Some(_) =>
           failed(JobSpecAlreadyExists(jobSpec.id))
         case None =>
-          specs += jobSpec.id -> jobSpec
+          specs += jobSpec.id -> jobSpecWithMockedTime(jobSpec)
           successful(jobSpec)
       }
     }
+
+    private def jobSpecWithMockedTime(jobSpec: JobSpec): JobSpec = jobSpec.copy(schedules = jobSpec.schedules.map(s => new ScheduleSpec(s.id, s.cron, s.timeZone, s.startingDeadline, s.concurrencyPolicy, s.enabled) {
+      override def clock: Clock = testClock
+    }))
 
     override def updateJobSpec(id: JobId, update: (JobSpec) => JobSpec): Future[JobSpec] = {
       specs.get(id) match {
         case Some(spec) =>
           try {
             val changed = update(spec)
-            specs.update(id, changed)
+            specs.update(id, jobSpecWithMockedTime(changed))
             successful(changed)
           } catch {
             case NonFatal(ex) => failed(ex)
