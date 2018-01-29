@@ -4,6 +4,7 @@ from datetime import timedelta
 from dcos import http
 
 import shakedown
+import time
 
 from dcos import metronome
 
@@ -94,12 +95,33 @@ def metronome_available_predicate():
     except Exception as e:
         return False
 
+
 def metronome_api_url():
     return shakedown.dcos_url_path("/service/metronome/v1/jobs")
 
 
-def assert_one_job_run_with_one_task(client, job_id):
+def assert_job_run(client, job_id, runs_number=1, tasks_number=1):
     job_runs_count = len(client.get_runs(job_id))
-    assert job_runs_count == 1, "Expecting 1 job run but found {} for job {}.".format(job_runs_count, job_id)
+    assert job_runs_count == runs_number, "Expecting 1 job run but found {} for job {}.".format(job_runs_count, job_id)
     job_run_tasks = client.get_runs(job_id)[0]["tasks"]
-    assert len(job_run_tasks) == 1, "Expecting 1 job run task but found {} for job {}: {}.".format(len(job_run_tasks), job_id, job_run_tasks)
+    assert len(job_run_tasks) == tasks_number, "Expecting 1 job run task but found {} for job {}: {}.".format(len(job_run_tasks), job_id, job_run_tasks)
+
+
+def job_run_predicate(job_id, run_id):
+    run = metronome.create_client().get_run(job_id, run_id)
+    return run["status"] == "ACTIVE" or run["status"] == "SUCCESS"
+
+
+def wait_for_job_started(job_id, run_id, timeout=120):
+    "Verifies that a job with given run_id is in state running or finished. "
+    shakedown.time_wait(lambda: job_run_predicate(job_id, run_id),
+              timeout)
+
+
+def assert_wait_for_no_additional_tasks(client, job_id, timeout=20, tasks_count=1):
+    """ Starting Metronome and all its actors takes some time and there is no way how to query API to figure out it finished.
+        Here we wait for given time and then assert that expected tasks count matches.
+        This covers a bug regression of METRONOME-100
+    """
+    time.sleep(timeout)
+    assert_job_run(client, job_id, tasks_number=tasks_count)
