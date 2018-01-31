@@ -23,6 +23,7 @@ node('py36') {
           [ [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'mesosphere-ci-marathon', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
             [$class: 'FileBinding', credentialsId: '11fcc957-5156-4470-ae34-d433da88248a', variable: 'DOT_SHAKEDOWN']
           ]) {
+            exit 1
             sh """./ci/si_provision.sh"""
             sh """./ci/si_pipeline.sh $params.channel open"""
           }
@@ -33,7 +34,7 @@ node('py36') {
                 color: "danger",
                 channel: "#metronome",
                 tokenCredentialId: "f430eaac-958a-44cb-802a-6a943323a6a8")
-            } finally {
+        } finally {
             junit allowEmptyResults: true, testResults: 'shakedown.xml'
             archive includes: "diagnostics.zip"
         }
