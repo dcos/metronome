@@ -23,12 +23,10 @@ node('py36') {
           [ [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'mesosphere-ci-marathon', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
             [$class: 'FileBinding', credentialsId: '11fcc957-5156-4470-ae34-d433da88248a', variable: 'DOT_SHAKEDOWN']
           ]) {
-            sh 'exit 1'
             sh """./ci/si_provision.sh"""
             sh """./ci/si_pipeline.sh $params.channel open"""
           }
         } catch (Exception e) {
-            echo "exception"
             currentBuild.result = 'FAILURE'
             slackSend(
                 message: "(;¬_¬) SI tests for Metronome (Open) failed in build `${env.BUILD_NUMBER}`. (<${env.BUILD_URL}|Open>)",
