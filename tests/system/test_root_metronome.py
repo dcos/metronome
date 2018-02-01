@@ -13,6 +13,7 @@ import pytest
 from common import job_no_schedule, schedule
 from dcos import metronome
 from retrying import retry
+from shakedown import required_masters # NOQA F401
 
 pytestmark = [pytest.mark.skipif("shakedown.dcos_version_less_than('1.8')")]
 
@@ -237,6 +238,31 @@ def test_docker_job():
         client.run_job(job_id)
         time.sleep(2)
         assert len(client.get_runs(job_id)) == 1
+
+
+@shakedown.masters(1)
+def test_metronome_shutdown_with_no_extra_tasks():
+    """ Test for METRONOME-100 regression
+        When Metronome is restarted it incorrectly started another task for already running job run task.
+    """
+    client = metronome.create_client()
+    job_id = "metronome-shutdown-{}".format(uuid.uuid4().hex)
+    with job(job_no_schedule(job_id)):
+        # run a job before we shutdown Metronome
+        run_id = client.run_job(job_id)["id"]
+        common.wait_for_job_started(job_id, run_id)
+        common.assert_job_run(client, job_id)
+
+        # restart metronome process
+        # this won't work in multi-master setup if the mesos leader is not the same as metronome leader
+        # we can improve this one there is a good way how to get metronome leader from the system (e.g. info endpoint)
+        metronome_leader = shakedown.master_leader_ip()
+        shakedown.run_command_on_agent(metronome_leader, 'sudo systemctl restart dcos-metronome')
+        shakedown.time_wait(lambda: common.metronome_available_predicate(),
+                            timeout_seconds=timedelta(minutes=1).total_seconds())
+
+        # verify that no extra job runs were started when Metronome was restarted
+        common.assert_wait_for_no_additional_tasks(tasks_count=1, client=client, job_id=job_id)
 
 
 def setup_module(module):
