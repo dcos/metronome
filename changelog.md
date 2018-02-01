@@ -2,22 +2,20 @@
 
 ## Features
 
-* [METRONOME-190](https://jira.mesosphere.com/browse/METRONOME-190) Added authorized launch queue
+* [METRONOME-190](https://jira.mesosphere.com/browse/METRONOME-190) Added launch queue
 * [METRONOME-194](https://jira.mesosphere.com/browse/METRONOME-194) Support FORBID Concurrency Policy
 
 ## Bugs and Tracking
 
-* [METRONOME-100](https://jira.mesosphere.com/browse/METRONOME-100) Metronome Restarts causes duplication of jobruns
-* [METRONOME-191](https://jira.mesosphere.com/browse/METRONOME-191) Implement Start Deadline Timeout
+* [METRONOME-100](https://jira.mesosphere.com/browse/METRONOME-100) Metronome restart causes duplication of jobrun
+* [METRONOME-191](https://jira.mesosphere.com/browse/METRONOME-191) Implement startingDeadlineTimeout
 
 Diff [0.3.4-0.4.0](https://github.com/dcos/metronome/compare/releases/0.3...1457e6)
 
 The launch queue (`/v1/queue`) provides a way to see jobs which have been scheduled to launch but are still not launched on the cluster.
 This is usually because there is not enough resources or constraints are not met.
 
-The FORBID concurrency policy allows `"concurrencyPolicy": "FORBID"` to be added a schedule.  This restricts the launching of a scheduled
-jobrun based on it's schedule.   It will not launch nor will be queued to launch.  The job will be rescheduled for the next CRON time.
-
+The FORBID concurrency policy allows `"concurrencyPolicy": "FORBID"` to be added to a schedule. This restricts launching of a scheduled jobrun when previous run is still active. In that case it will not launch nor will be queued to launch. The job will be rescheduled for the next CRON time.
 
 # Version 0.3.4
 
