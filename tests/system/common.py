@@ -100,11 +100,22 @@ def metronome_api_url():
     return shakedown.dcos_url_path("/service/metronome/v1/jobs")
 
 
-def assert_job_run(client, job_id, runs_number=1, tasks_number=1):
-    job_runs_count = len(client.get_runs(job_id))
-    assert job_runs_count == runs_number, "Expecting 1 job run but found {} for job {}.".format(job_runs_count, job_id)
-    job_run_tasks = client.get_runs(job_id)[0]["tasks"]
-    assert len(job_run_tasks) == tasks_number, "Expecting 1 job run task but found {} for job {}: {}.".format(len(job_run_tasks), job_id, job_run_tasks)
+def assert_job_run(client, job_id, runs_number=1, active_tasks_number=1):
+    """
+    Verify that the job has expected number of runs (active and finished) as well as tasks
+    :param runs_number: number of runs, both active and finished are considered
+    :param active_tasks_number: number of tasks for ACTIVE runs only
+    """
+    active_job_runs_count = len(client.get_runs(job_id))
+    finished_job_runs_count = client.get_job(job_id, ['history'])['history']['successCount']
+    # we are verifying both finished as well as active job runs
+    assert active_job_runs_count + finished_job_runs_count == runs_number, \
+        "Expecting 1 job run but found {} active and {} finished for job {}."\
+            .format(active_job_runs_count, finished_job_runs_count, job_id)
+    if active_tasks_number > 0:
+        # if this job has only finished runs, the tasks overview is no longer available
+        job_run_tasks = client.get_runs(job_id)[0]["tasks"]
+        assert len(job_run_tasks) == active_tasks_number, "Expecting 1 job run task but found {} for job {}: {}.".format(len(job_run_tasks), job_id, job_run_tasks)
 
 
 def job_run_predicate(job_id, run_id):
@@ -124,4 +135,4 @@ def assert_wait_for_no_additional_tasks(client, job_id, timeout=20, tasks_count=
         This covers a bug regression of METRONOME-100
     """
     time.sleep(timeout)
-    assert_job_run(client, job_id, tasks_number=tasks_count)
+    assert_job_run(client, job_id, active_tasks_number=tasks_count)
