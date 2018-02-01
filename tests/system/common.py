@@ -110,12 +110,12 @@ def assert_job_run(client, job_id, runs_number=1, active_tasks_number=1):
     finished_job_runs_count = client.get_job(job_id, ['history'])['history']['successCount']
     # we are verifying both finished as well as active job runs
     assert active_job_runs_count + finished_job_runs_count == runs_number, \
-        "Expecting 1 job run but found {} active and {} finished for job {}."\
-            .format(active_job_runs_count, finished_job_runs_count, job_id)
+        f"Expecting {runs_number} job run but found {active_job_runs_count} active and {finished_job_runs_count} finished for job {job_id}."
     if active_tasks_number > 0:
         # if this job has only finished runs, the tasks overview is no longer available
         job_run_tasks = client.get_runs(job_id)[0]["tasks"]
-        assert len(job_run_tasks) == active_tasks_number, "Expecting 1 job run task but found {} for job {}: {}.".format(len(job_run_tasks), job_id, job_run_tasks)
+        assert len(job_run_tasks) == active_tasks_number, \
+            f"Expecting {runs_number} job run task but found {len(job_run_tasks)} for job {job_id}: {job_run_tasks}."
 
 
 def job_run_predicate(job_id, run_id):
