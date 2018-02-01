@@ -346,7 +346,9 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
   val schedule2 = new ScheduleSpec("id2", cron2) {
     override def clock = mockedClock
   }
-  val scheduleForbid = new ScheduleSpec("id3", cron1, ScheduleSpec.DefaultTimeZone, ScheduleSpec.DefaultStartingDeadline, ConcurrencyPolicy.Forbid)
+  val scheduleForbid = new ScheduleSpec("id3", cron1, ScheduleSpec.DefaultTimeZone, ScheduleSpec.DefaultStartingDeadline, ConcurrencyPolicy.Forbid) {
+    override def clock = mockedClock
+  }
   val schedule1Json = Json.toJson(schedule1)
   val schedule2Json = Json.toJson(schedule2)
   val schedule3Json = Json.toJson(scheduleForbid)
