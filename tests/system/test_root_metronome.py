@@ -258,7 +258,8 @@ def test_metronome_shutdown_with_no_extra_tasks():
         # we can improve this one there is a good way how to get metronome leader from the system (e.g. info endpoint)
         metronome_leader = shakedown.master_leader_ip()
         shakedown.run_command_on_agent(metronome_leader, 'sudo systemctl restart dcos-metronome')
-        shakedown.time_wait(lambda: common.metronome_available_predicate(), timeout_seconds=timedelta(minutes=1).total_seconds())
+        shakedown.time_wait(lambda: common.metronome_available_predicate(),
+                            timeout_seconds=timedelta(minutes=1).total_seconds())
 
         # verify that no extra job runs were started when Metronome was restarted
         common.assert_wait_for_no_additional_tasks(tasks_count=1, client=client, job_id=job_id)

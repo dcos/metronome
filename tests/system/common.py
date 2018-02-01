@@ -110,7 +110,8 @@ def assert_job_run(client, job_id, runs_number=1, active_tasks_number=1):
     finished_job_runs_count = client.get_job(job_id, ['history'])['history']['successCount']
     # we are verifying both finished as well as active job runs
     assert active_job_runs_count + finished_job_runs_count == runs_number, \
-        f"Expecting {runs_number} job run but found {active_job_runs_count} active and {finished_job_runs_count} finished for job {job_id}."
+        f"Expecting {runs_number} job run but found {active_job_runs_count} active " \
+        f"and {finished_job_runs_count} finished for job {job_id}."
     if active_tasks_number > 0:
         # if this job has only finished runs, the tasks overview is no longer available
         job_run_tasks = client.get_runs(job_id)[0]["tasks"]
@@ -125,13 +126,12 @@ def job_run_predicate(job_id, run_id):
 
 def wait_for_job_started(job_id, run_id, timeout=120):
     "Verifies that a job with given run_id is in state running or finished. "
-    shakedown.time_wait(lambda: job_run_predicate(job_id, run_id),
-              timeout)
+    shakedown.time_wait(lambda: job_run_predicate(job_id, run_id), timeout)
 
 
 def assert_wait_for_no_additional_tasks(client, job_id, timeout=20, tasks_count=1):
-    """ Starting Metronome and all its actors takes some time and there is no way how to query API to figure out it finished.
-        Here we wait for given time and then assert that expected tasks count matches.
+    """ Starting Metronome and all its actors takes some time and there is no way how to query API
+        to figure out it finished. Here we wait for given time and then assert that expected tasks count matches.
         This covers a bug regression of METRONOME-100
     """
     time.sleep(timeout)
