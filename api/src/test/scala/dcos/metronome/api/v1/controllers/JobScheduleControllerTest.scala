@@ -5,6 +5,8 @@ import java.time.{ Clock, Instant, ZoneOffset }
 
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
+import dcos.metronome.jobspec.JobSpecService
+import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import dcos.metronome.model._
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
@@ -344,7 +346,9 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
   val schedule2 = new ScheduleSpec("id2", cron2) {
     override def clock = mockedClock
   }
-  val scheduleForbid = new ScheduleSpec("id3", cron1, ScheduleSpec.DefaultTimeZone, ScheduleSpec.DefaultStartingDeadline, ConcurrencyPolicy.Forbid)
+  val scheduleForbid = new ScheduleSpec("id3", cron1, ScheduleSpec.DefaultTimeZone, ScheduleSpec.DefaultStartingDeadline, ConcurrencyPolicy.Forbid) {
+    override def clock = mockedClock
+  }
   val schedule1Json = Json.toJson(schedule1)
   val schedule2Json = Json.toJson(schedule2)
   val schedule3Json = Json.toJson(scheduleForbid)
@@ -360,5 +364,6 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
 
   override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context) {
     override lazy val pluginManager: PluginManager = auth.pluginManager
+    override lazy val jobSpecService: JobSpecService = JobSpecServiceFixture.simpleJobSpecService(mockedClock)
   }
 }
