@@ -10,10 +10,9 @@ import common
 import shakedown
 import pytest
 
-from common import job_no_schedule, schedule
+from common import job_no_schedule, schedule, not_required_masters_exact_count # NOQA F401
 from dcos import metronome
 from retrying import retry
-from shakedown import required_masters # NOQA F401
 
 pytestmark = [pytest.mark.skipif("shakedown.dcos_version_less_than('1.8')")]
 
@@ -240,7 +239,8 @@ def test_docker_job():
         assert len(client.get_runs(job_id)) == 1
 
 
-@shakedown.masters(1)
+@common.masters_exact(1)
+@pytest.mark.skip(reason="we need to wait until METRONOME-100 gets to testing/master")
 def test_metronome_shutdown_with_no_extra_tasks():
     """ Test for METRONOME-100 regression
         When Metronome is restarted it incorrectly started another task for already running job run task.

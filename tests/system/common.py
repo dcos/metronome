@@ -5,6 +5,7 @@ from dcos import http
 
 import shakedown
 import time
+import pytest
 
 from dcos import metronome
 
@@ -136,3 +137,20 @@ def assert_wait_for_no_additional_tasks(client, job_id, timeout=20, tasks_count=
     """
     time.sleep(timeout)
     assert_job_run(client, job_id, active_tasks_number=tasks_count)
+
+
+def not_required_masters_exact_count(count):
+    """ Returns True if the number of masters is equal to
+    the count.  This is useful in using pytest skipif such as:
+    `pytest.mark.skipif('required_masters(3)')` which will skip the test if
+    the number of masters is only 1.
+    :param count: the number of required masters.
+    """
+    master_count = len(shakedown.get_all_masters())
+    # reverse logic (skip if less than count)
+    # returns True if less than count
+    return master_count != count
+
+
+def masters_exact(count):
+    return pytest.mark.skipif('not_required_masters_exact_count({})'.format(count))
