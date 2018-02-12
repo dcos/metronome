@@ -89,16 +89,10 @@ def wait_for_mesos_endpoint(timeout_sec=timedelta(minutes=5).total_seconds()):
 
 
 def wait_for_metronome(timeout_sec=timedelta(minutes=5).total_seconds()):
-    """ Waits for the Metronome API url to be available for a given timeout.
-        It needs to succeed as many times as we have masters because that means that all adminrouters on all masters
-        are probably aware of the restarted leader.
-        Without this in multimaster setup this can be very flaky.
-    """
+    """ Waits for the Metronome API url to be available for a given timeout. """
 
-    master_count = len(shakedown.get_all_masters())
     shakedown.time_wait(lambda: metronome_available_predicate(),
-                        timeout_seconds=timeout_sec,
-                        required_consecutive_success_count=master_count)
+                        timeout_seconds=timeout_sec)
 
 
 def metronome_available_predicate():
