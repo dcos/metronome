@@ -8,6 +8,7 @@ import time
 import pytest
 
 from dcos import metronome
+from retrying import retry
 
 
 def job_no_schedule(id='pikachu', cmd='sleep 10000'):
@@ -88,20 +89,23 @@ def wait_for_mesos_endpoint(timeout_sec=timedelta(minutes=5).total_seconds()):
     return shakedown.time_wait(lambda: shakedown.mesos_available_predicate(), timeout_seconds=timeout_sec)
 
 
-def wait_for_metronome(timeout_sec=timedelta(minutes=5).total_seconds()):
+def ignore_exception(exc):
+    """Used with @retrying.retry to ignore exceptions in a retry loop.
+       ex.  @retrying.retry( retry_on_exception=ignore_exception)
+       It does verify that the object passed is an exception
+    """
+    return isinstance(exc, Exception)
+
+
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=5*60*1000, retry_on_exception=ignore_exception) # 5 minutes
+def wait_for_metronome():
     """ Waits for the Metronome API url to be available for a given timeout. """
-
-    shakedown.time_wait(lambda: metronome_available_predicate(),
-                        timeout_seconds=timeout_sec)
-
-
-def metronome_available_predicate():
     url = metronome_api_url()
     try:
         response = http.get(url)
-        return response.status_code == 200
+        assert response.status_code == 200, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last response: {response}"
     except Exception as e:
-        return False
+        assert False, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last exception: {e}"
 
 
 def metronome_api_url():

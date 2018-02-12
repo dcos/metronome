@@ -125,7 +125,7 @@ def test_disable_schedule_recovery_from_master_bounce():
 
         # # bounce master
         shakedown.restart_master_node()
-        common.wait_for_metronome(timedelta(minutes=10).total_seconds())
+        common.wait_for_metronome()
 
         # wait for the next run
         time.sleep(timedelta(minutes=1.5).total_seconds())
@@ -258,7 +258,7 @@ def test_metronome_shutdown_with_no_extra_tasks():
         # we can improve this one there is a good way how to get metronome leader from the system (e.g. info endpoint)
         metronome_leader = shakedown.master_leader_ip()
         shakedown.run_command_on_agent(metronome_leader, 'sudo systemctl restart dcos-metronome')
-        common.wait_for_metronome(timeout_sec=timedelta(minutes=1).total_seconds())
+        common.wait_for_metronome()
 
         # verify that no extra job runs were started when Metronome was restarted
         common.assert_wait_for_no_additional_tasks(tasks_count=1, client=client, job_id=job_id)
@@ -279,4 +279,7 @@ def job(job_json):
     try:
         yield
     finally:
-        client.remove_job(job_id, True)
+        try:
+            client.remove_job(job_id, True)
+        except Exception as e:
+            print(e)
