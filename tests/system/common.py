@@ -103,7 +103,7 @@ def wait_for_metronome():
     url = metronome_api_url()
     try:
         response = http.get(url)
-        assert response.status_code == 200, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last response: {response}"
+        assert response.status_code == 200, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last response: {response.content}"
     except Exception as e:
         assert False, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last exception: {e}"
 
