@@ -51,7 +51,7 @@ trait LoadContentOnStartup[Id, Model] extends Actor with Stash with ActorLogging
     repo.get(id).recoverWith {
       case ex: StoreCommandFailedException =>
         log.error(s"ID $id is a dangling path with data recovery issues.  Exception message: ${ex.getMessage}")
-        Future { None }
+        Future.successful(None)
     }
   }
 }
