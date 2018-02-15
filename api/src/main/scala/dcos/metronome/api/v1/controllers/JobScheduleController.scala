@@ -76,12 +76,15 @@ class JobScheduleController(
     }
 
     withJobSpec(id) { spec =>
-      jobSpecService.updateJobSpec(id, deleteSchedule)
-        .map(_ => Ok)
-        .recover{
-          case JobSpecDoesNotExist(_)       => NotFound(UnknownJob(id))
-          case ex: IllegalArgumentException => NotFound(UnknownSchedule(scheduleId))
-        }
+      if (spec.schedules.count(_.id == scheduleId) != 1) {
+        Future.successful(NotFound(UnknownSchedule(scheduleId)))
+      } else {
+        jobSpecService.updateJobSpec(id, deleteSchedule)
+          .map(_ => Ok)
+          .recover {
+            case JobSpecDoesNotExist(_) => NotFound(UnknownJob(id))
+          }
+      }
     }
   }
 
