@@ -3,7 +3,7 @@ package api.v0.controllers
 
 import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
 import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents, TestAuthFixture, UnknownJob }
-import dcos.metronome.model.{ CronSpec, JobId, JobSpec, ScheduleSpec }
+import dcos.metronome.model._
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
@@ -192,9 +192,9 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
   val CronSpec(cron) = "* * * * *"
   val schedule1 = ScheduleSpec("id1", cron)
   val schedule2 = ScheduleSpec("id2", cron)
-  val jobSpec1 = JobSpec(JobId("spec1"), schedules = Seq(schedule1))
+  val jobSpec1 = JobSpec(JobId("spec1"), schedules = Seq(schedule1), run = JobRunSpec(cmd = Some("cmd")))
   val jobSpec1Json = Json.toJson(jobSpec1)
-  val jobSpec2 = JobSpec(JobId("spec2"), schedules = Seq(schedule1))
+  val jobSpec2 = JobSpec(JobId("spec2"), schedules = Seq(schedule1), run = JobRunSpec(cmd = Some("cmd")))
   val jobSpec2Json = Json.toJson(jobSpec2)
   val auth = new TestAuthFixture
 

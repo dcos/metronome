@@ -7,6 +7,7 @@ import mesosphere.marathon.api.v2.Validation._
 import mesosphere.marathon.plugin.{ Secret, EnvVarValue, RunSpec }
 
 import scala.collection.immutable._
+import JobRunSpec._
 
 case class JobSpec(
   id:          JobId,
@@ -31,6 +32,7 @@ object JobSpec {
   implicit lazy val validJobSpec: Validator[JobSpec] = validator[JobSpec] { jobSpec =>
     jobSpec.id is valid
     jobSpec.schedules is every(valid)
+    jobSpec.run is valid
     jobSpec.schedules has size <= 1 // FIXME: we will support only one schedule in v1
   }
 }
