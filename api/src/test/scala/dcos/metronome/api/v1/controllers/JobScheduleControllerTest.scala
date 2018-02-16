@@ -350,7 +350,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
   val schedule1Json = Json.toJson(schedule1)
   val schedule2Json = Json.toJson(schedule2)
   val specId = JobId("spec")
-  val jobSpec = JobSpec(specId)
+  val jobSpec = JobSpec(specId, run = JobRunSpec(cmd = Some("cmd")))
   val jobSpecJson = Json.toJson(jobSpec)
   val auth = new TestAuthFixture
 
