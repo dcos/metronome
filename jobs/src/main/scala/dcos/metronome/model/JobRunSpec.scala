@@ -48,7 +48,7 @@ object JobRunSpec {
     import ViolationBuilder._
 
     override def apply(jobRunSpec: JobRunSpec): Result = {
-      if (jobRunSpec.cmd.isDefined || jobRunSpec.docker.exists(d => !d.image.isEmpty))
+      if (jobRunSpec.cmd.isDefined || jobRunSpec.docker.exists(d => d.image.nonEmpty))
         Success
       else
         RuleViolation(jobRunSpec, JobRunSpecMessages.cmdOrDockerValidation, None)
