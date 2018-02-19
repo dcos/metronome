@@ -44,7 +44,7 @@ class JobScheduleController(
       require(jobSpec.schedules.isEmpty, "Only one schedule supported at the moment")
       jobSpec.copy(schedules = request.body +: jobSpec.schedules)
     }
-    withJobSpec(id) { spec =>
+    withAuthorization(id) { _ =>
       jobSpecService.updateJobSpec(id, addSchedule)
         .map(job => Created(job.schedule(request.body.id)))
         .recover {
@@ -59,7 +59,7 @@ class JobScheduleController(
       require(jobSpec.schedules.count(_.id == scheduleId) == 1, "Can only update an existing schedule")
       jobSpec.copy(schedules = request.body +: jobSpec.schedules.filterNot(_.id == scheduleId))
     }
-    withJobSpec(id) { spec =>
+    withAuthorization(id) { _ =>
       jobSpecService.updateJobSpec(id, changeSchedule)
         .map(job => Ok(job.schedule(scheduleId)))
         .recover {
@@ -71,24 +71,23 @@ class JobScheduleController(
 
   def deleteSchedule(id: JobId, scheduleId: String) = AuthorizedAction.async { implicit request =>
     def deleteSchedule(jobSpec: JobSpec) = {
-      require(jobSpec.schedules.count(_.id == scheduleId) == 1, "Can only delete an existing schedule")
+      if (jobSpec.schedules.count(_.id == scheduleId) != 1) {
+        throw JobSpecWithNoSchedule(jobSpec.id)
+      }
       jobSpec.copy(schedules = jobSpec.schedules.filterNot(_.id == scheduleId))
     }
 
-    withJobSpec(id) { spec =>
-      if (spec.schedules.count(_.id == scheduleId) != 1) {
-        Future.successful(NotFound(UnknownSchedule(scheduleId)))
-      } else {
-        jobSpecService.updateJobSpec(id, deleteSchedule)
-          .map(_ => Ok)
-          .recover {
-            case JobSpecDoesNotExist(_) => NotFound(UnknownJob(id))
-          }
-      }
+    withAuthorization(id) { _ =>
+      jobSpecService.updateJobSpec(id, deleteSchedule)
+        .map(_ => Ok)
+        .recover {
+          case JobSpecDoesNotExist(_)   => NotFound(UnknownJob(id))
+          case JobSpecWithNoSchedule(_) => NotFound(UnknownSchedule(scheduleId))
+        }
     }
   }
 
-  private def withJobSpec[R](id: JobId)(fn: JobSpec => Future[Result])(implicit request: AuthorizedRequest[R]): Future[Result] = {
+  private def withAuthorization[R](id: JobId)(fn: JobSpec => Future[Result])(implicit request: AuthorizedRequest[R]): Future[Result] = {
     async {
       await(jobSpecService.getJobSpec(id)) match {
         case Some(jobSpec) =>
