@@ -16,6 +16,7 @@ import $file.githubClient
 import $file.utils
 
 val PACKAGE_DIR: Path = pwd / 'target / 'universal
+val logFileName = s"ci-${sys.env.getOrElse("BUILD_TAG", "run")}.log"
 
 /**
  * Compile Metronome and run unit.
@@ -28,6 +29,45 @@ def compileAndTest(logFileName: String): Unit = utils.stage("Compile and Test") 
   run("sbt", "clean", "test")
 
   checkSystemIntegrationTests(logFileName)
+}
+
+/**
+ * The main pipeline target for builds on Jenkins.
+ *
+ * @return Version and artifact description of Marathon build.
+ */
+@main
+def jenkins(): Unit = {
+  if(utils.isPullRequest) pr()
+  else master()
+}
+
+/**
+ * Build target for pull request builds.
+ */
+@main
+def pr(): Unit = asPullRequest {
+  val version = build()
+
+  // Uploads
+  val artifact = uploadTarballToS3(version, s"builds/$version")
+  (version, artifact)
+}
+
+/**
+ * Build target for master and potential release branches.
+ */
+@main
+def master(): Unit = {
+  val version = build()
+
+  // Uploads
+  val maybeArtifact = uploadTarballToS3(version, s"builds/$version")
+  maybeArtifact.foreach { artifact =>
+    def run(cmd: String *) = utils.runWithTimeout(30.minutes, logFileName)(cmd)
+    run("ci/upgrade.sc", "updateMetronome", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+    run("ci/upgrade.sc", "updateMetronomeEE", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+  }
 }
 
 @main
@@ -124,8 +164,6 @@ def asPullRequest(run: => (String, Option[awsClient.Artifact])): Unit = {
  */
 @main
 def build(): String = {
-
-  val logFileName = s"ci-${sys.env.getOrElse("BUILD_TAG", "run")}.log"
   try {
     compileAndTest(logFileName)
   } finally {
@@ -134,27 +172,6 @@ def build(): String = {
   val version = createPackages()
   version
 }
-
-/**
- * The main pipeline target for builds on Jenkins.
- *
- * @return Version and artifact description of Metronome build.
- */
-@main
-def jenkins(): Unit = {
-  if(utils.isPullRequest) {
-    asPullRequest {
-      val version = build()
-      // Uploads
-      val artifact = uploadTarballToS3(version, "builds")
-      (version, artifact)
-    }
-  } else {
-    val version = build()
-    uploadTarballToS3(version, "builds")
-  }
-}
-
 
 /**
  * Executes the Community Release which includes:
