@@ -15,8 +15,8 @@ ansiColor('gnome-terminal') {
       stage('Run Pipeline') {
         try {
             checkout scm
-            sh "bin/install-protobuf.sh"
             sh "ci/ci_provision.sh"
+            sh "bin/install-protobuf.sh"
             sh "PATH=\$PATH:\$HOME/protobuf/bin ci/pipeline jenkins"
         } finally {
             junit(allowEmptyResults: true, testResults: '*/target/test-reports/*.xml')
