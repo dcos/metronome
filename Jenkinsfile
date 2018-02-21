@@ -20,6 +20,8 @@ ansiColor('gnome-terminal') {
             sh "PATH=\$PATH:\$HOME/protobuf/bin ci/pipeline jenkins"
         } finally {
             junit(allowEmptyResults: true, testResults: '*/target/test-reports/*.xml')
+            archive includes: "ci-${env.BUILD_TAG}.log.tar.gz"
+            archive includes: "ci-${env.BUILD_TAG}.log"  // Only in case the build was  aborted and the logs weren't zipped
         }
       }
     }
