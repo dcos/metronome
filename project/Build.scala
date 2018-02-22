@@ -136,7 +136,8 @@ object Build extends sbt.Build {
       val AsyncAwait = "0.9.7"
       val ScalaTest = "2.2.6"
       val MacWire = "2.2.2"
-      val Marathon = "1.3.13"
+      val Marathon = "1.5.6"
+      val MarathonPluginInterface = "1.5.0-SNAPSHOT-559-g62b3175"
       val Play = "2.5.18"
       val CronUtils = "6.0.4"
       val Threeten = "1.3.3"
@@ -154,8 +155,8 @@ object Build extends sbt.Build {
     val macWireMacros = "com.softwaremill.macwire" %% "macros" % V.MacWire % "provided"
     val macWireUtil = "com.softwaremill.macwire" %% "util" % V.MacWire
     val macWireProxy = "com.softwaremill.macwire" %% "proxy" % V.MacWire
-    val marathon = "mesosphere.marathon" %% "marathon" % V.Marathon exclude("com.typesafe.play", "*") exclude("mesosphere.marathon", "ui") exclude("mesosphere", "chaos") exclude("org.apache.hadoop", "hadoop-hdfs") exclude("org.apache.hadoop", "hadoop-common") exclude("org.eclipse.jetty", "*")
-    val marathonPlugin = "mesosphere.marathon" %% "plugin-interface" % V.Marathon
+    val marathon = "mesosphere.marathon" %% "marathon" % V.Marathon exclude("com.typesafe.play", "*") exclude("mesosphere.marathon", "ui") exclude("mesosphere", "chaos") exclude("org.apache.hadoop", "hadoop-hdfs") exclude("org.apache.hadoop", "hadoop-common") exclude("org.eclipse.jetty", "*") exclude("mesosphere.marathon", "plugin-interface_2.11")
+    val marathonPlugin = "mesosphere.marathon" %% "plugin-interface" % V.MarathonPluginInterface
     val cronUtils = "com.cronutils" % "cron-utils" % V.CronUtils exclude("org.threeten", "threetenbp")
     val threeten = "org.threeten" % "threetenbp" % V.Threeten
     val wixAccord = "com.wix" %% "accord-core" % V.WixAccord
