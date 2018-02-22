@@ -11,13 +11,13 @@ ansiColor('gnome-terminal') {
         user_is_authorized(master_branches, '8b793652-f26a-422f-a9ba-0d1e47eb9d89', '#marathon-dev')
       }
     }
-    node('JenkinsMarathonCI-Debian9-2018-02-09') {
+    node('jdk8-scala') {
       stage('Run Pipeline') {
         try {
             checkout scm
             sh "ci/ci_provision.sh"
             sh "bin/install-protobuf.sh"
-            sh "PATH=\$PATH:\$HOME/protobuf/bin sudo ci/pipeline jenkins"
+            sh "PATH=\$PATH:\$HOME/protobuf/bin ci/pipeline jenkins"
         } finally {
             junit(allowEmptyResults: true, testResults: '*/target/test-reports/*.xml')
             archive includes: "ci-${env.BUILD_TAG}.log.tar.gz"
