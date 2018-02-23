@@ -17,7 +17,9 @@ ansiColor('gnome-terminal') {
             checkout scm
             sh "ci/ci_provision.sh"
             sh "bin/install-protobuf.sh"
-            sh "sudo python -m pip install flake8"
+            sh "sudo python --version"
+            sh "sudo python3 --version"
+            sh "sudo python -m pip3 install flake8"
             sh "sudo \"PATH=\$PATH:\$HOME/protobuf/bin\" -E ci/pipeline jenkins"
         } finally {
             junit(allowEmptyResults: true, testResults: '*/target/test-reports/*.xml')
