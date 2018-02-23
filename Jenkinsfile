@@ -11,15 +11,12 @@ ansiColor('gnome-terminal') {
         user_is_authorized(master_branches, '8b793652-f26a-422f-a9ba-0d1e47eb9d89', '#marathon-dev')
       }
     }
-    node('JenkinsMarathonCI-Debian9-2018-02-09') {
+    node('JenkinsMarathonCI-Debian9-2018-02-23') {
       stage('Run Pipeline') {
         try {
             checkout scm
             sh "ci/ci_provision.sh"
             sh "bin/install-protobuf.sh"
-            sh "sudo python --version"
-            sh "sudo python3 --version"
-            sh "sudo python -m pip3 install flake8"
             sh "sudo \"PATH=\$PATH:\$HOME/protobuf/bin\" -E ci/pipeline jenkins"
         } finally {
             junit(allowEmptyResults: true, testResults: '*/target/test-reports/*.xml')
