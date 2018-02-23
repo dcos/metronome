@@ -17,7 +17,8 @@ ansiColor('gnome-terminal') {
             checkout scm
             sh "ci/ci_provision.sh"
             sh "bin/install-protobuf.sh"
-            sh "PATH=\$PATH:\$HOME/protobuf/bin sudo -E ci/pipeline jenkins"
+            sh "export PATH=\$PATH:\$HOME/protobuf/bin"
+            sh "sudo -E ci/pipeline jenkins"
         } finally {
             junit(allowEmptyResults: true, testResults: '*/target/test-reports/*.xml')
             archive includes: "ci-${env.BUILD_TAG}.log.tar.gz"
