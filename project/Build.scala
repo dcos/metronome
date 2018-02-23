@@ -67,6 +67,7 @@ object Build extends sbt.Build {
         Dependency.asyncAwait,
         Dependency.playJson,
         Dependency.marathon,
+        Dependency.marathonPlugin,
         Dependency.macWireMacros,
         Dependency.macWireUtil,
         Dependency.macWireProxy,
@@ -136,8 +137,8 @@ object Build extends sbt.Build {
       val AsyncAwait = "0.9.7"
       val ScalaTest = "2.2.6"
       val MacWire = "2.2.2"
-      val Marathon = "1.5.6"
-      val MarathonPluginInterface = "1.5.0-SNAPSHOT-559-g62b3175"
+      val Marathon = "1.5.6-19-g2d4e150"
+      val MarathonPluginInterface = "1.5.6-19-g2d4e150"
       val Play = "2.5.18"
       val CronUtils = "6.0.4"
       val Threeten = "1.3.3"
