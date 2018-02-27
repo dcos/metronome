@@ -182,6 +182,17 @@ class CronSpecFormatTest extends FunSuite with Mockito with Matchers {
     nextCronDate shouldEqual new DateTime(2018, 2, 20, 0, 0)
   }
 
+  test("Not fail when leap year is possible") {
+    val cronString = "0 0 29 2 *"
+
+    val spec = CronSpec(cronString)
+    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+
+    val nextCronDate = spec.nextExecution(currentDateTime)
+
+    nextCronDate shouldEqual new DateTime(2020, 2, 29, 0, 0)
+  }
+
   test("Invalid cron because february and march both don't have 31 days") {
     val cronString = "0 0 31 2-3 *"
 

@@ -79,12 +79,12 @@ object CronSpec {
 }
 
 object CronSpecValidation {
-  val validDayOfMonth = "Day of the month must exist in the provided month and year (e.g. February have only < 29 days so running cron on 30.2. is invalid)"
+  val validDayOfMonth = "Day of the month must exist in the provided month (e.g. February has only <= 29 days so running cron on Feb 30 is invalid)"
 }
 
 /**
-  * In the existing validation logic inside cron-utils there is not validation that the given day exist in a month.
-  * This validator covers that use case disallowing schedules like 0 0 31 2 * (run on 31.2.)
+  * Day of month validation is missing from cron-utils which will cause it to search endlessly for a day that doesn't exist.
+  * This validator covers that use case disallowing schedules like 0 0 31 2 * (run on Feb 31.)
   */
 class CronDaysInMonthValidation extends CronConstraint(CronSpecValidation.validDayOfMonth) {
   def daysExistInAMonths(days: Seq[Int], months: Seq[Int]): Boolean = {
@@ -92,7 +92,7 @@ class CronDaysInMonthValidation extends CronConstraint(CronSpecValidation.validD
   }
   val maxDaysOfMonth = Array(31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
   def dayExistInAMonth(day: Int, month: Int): Boolean = {
-    day < maxDaysOfMonth(month - 1)
+    day <= maxDaysOfMonth(month - 1)
   }
 
   def getValuesFromCron(field: CronField): Seq[Int] = field.getExpression match {
