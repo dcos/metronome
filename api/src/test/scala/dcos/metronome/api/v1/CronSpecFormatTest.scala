@@ -2,7 +2,7 @@ package dcos.metronome
 package api.v1
 
 import dcos.metronome.api.v1.models._
-import dcos.metronome.model.CronSpec
+import dcos.metronome.model.{ CronSpec, CronSpecValidation }
 import dcos.metronome.utils.test.Mockito
 import org.joda.time.DateTime
 import org.scalatest.{ FunSuite, Matchers }
@@ -155,5 +155,37 @@ class CronSpecFormatTest extends FunSuite with Mockito with Matchers {
     for ((fromDate, executionDate) <- expectations) {
       CronSpec.apply("* * * * 1").nextExecution(fromDate) shouldEqual executionDate
     }
+  }
+
+  test("Invalid cron because february cannot have 31 days") {
+    val cronString = "0 0 31 2 *"
+
+    val thrown = the[IllegalArgumentException] thrownBy CronSpec(cronString)
+    thrown.getMessage should include(CronSpecValidation.validDayOfMonth)
+  }
+
+  test("Invalid cron because february will never be in a range 30-31") {
+    val cronString = "0 0 30-31 2 *"
+
+    val thrown = the[IllegalArgumentException] thrownBy CronSpec(cronString)
+    thrown.getMessage should include(CronSpecValidation.validDayOfMonth)
+  }
+
+  test("Not fail when at least some day in the month exist") {
+    val cronString = "0 0 20-31 2 *"
+
+    val spec = CronSpec(cronString)
+    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+
+    val nextCronDate = spec.nextExecution(currentDateTime)
+
+    nextCronDate shouldEqual new DateTime(2018, 2, 20, 0, 0)
+  }
+
+  test("Invalid cron because february and march both don't have 31 days") {
+    val cronString = "0 0 31 2-3 *"
+
+    val thrown = the[IllegalArgumentException] thrownBy CronSpec(cronString)
+    thrown.getMessage should include(CronSpecValidation.validDayOfMonth)
   }
 }

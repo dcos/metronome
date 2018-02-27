@@ -1,9 +1,15 @@
 package dcos.metronome
 package model
 
-import com.cronutils.model.definition.{ CronDefinition, CronDefinitionBuilder }
+import java.util.Calendar
+
+import com.cronutils.mapper.CronMapper
+import com.cronutils.model.definition.{ CronConstraint, CronDefinition, CronDefinitionBuilder }
 import com.cronutils.model.time.ExecutionTime
 import com.cronutils.model.Cron
+import com.cronutils.model.field.expression.{ Between, On }
+import com.cronutils.model.field.value.IntegerFieldValue
+import com.cronutils.model.field.{ CronField, CronFieldName }
 import com.cronutils.parser.CronParser
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.threeten.bp.{ Instant, ZoneId, ZonedDateTime }
@@ -54,6 +60,7 @@ object CronSpec {
       .supportsHash().supportsL().supportsW().and()
       .withYear().optional().and()
       .matchDayOfWeekAndDayOfMonth() // the regular UNIX cron definition permits matching either DoW or DoM
+      .withCronValidation(new CronDaysInMonthValidation)
       .instance()
 
   def isValid(cronString: String): Boolean = unapply(cronString).isDefined
@@ -67,6 +74,47 @@ object CronSpec {
       Some(new CronSpec(new CronParser(cronDefinition).parse(cronString)))
     } catch {
       case NonFatal(_) => None
+    }
+  }
+}
+
+object CronSpecValidation {
+  val validDayOfMonth = "Day of the month must exist in the provided month and year (e.g. February have only < 29 days so running cron on 30.2. is invalid)"
+}
+
+/**
+  * In the existing validation logic inside cron-utils there is not validation that the given day exist in a month.
+  * This validator covers that use case disallowing schedules like 0 0 31 2 * (run on 31.2.)
+  */
+class CronDaysInMonthValidation extends CronConstraint(CronSpecValidation.validDayOfMonth) {
+  def daysExistInAMonths(days: Seq[Int], months: Seq[Int]): Boolean = {
+    months.exists(m => days.exists(d => dayExistInAMonth(d, m)))
+  }
+  val maxDaysOfMonth = Array(31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+  def dayExistInAMonth(day: Int, month: Int): Boolean = {
+    day < maxDaysOfMonth(month - 1)
+  }
+
+  def getValuesFromCron(field: CronField): Seq[Int] = field.getExpression match {
+    case fieldValue: On => Seq(fieldValue.getTime.getValue)
+    case fieldValue: Between =>
+      (fieldValue.getFrom, fieldValue.getTo) match {
+        case (f: IntegerFieldValue, t: IntegerFieldValue) => Array.range(f.getValue, t.getValue).toSeq
+        case _ => Seq.empty
+      }
+    case _ => Seq.empty
+  }
+
+  override def validate(cron: Cron): Boolean = {
+    val maybeDay = Option(cron.retrieve(CronFieldName.DAY_OF_MONTH))
+    val maybeMonth = Option(cron.retrieve(CronFieldName.MONTH))
+
+    (maybeDay, maybeMonth) match {
+      case (Some(dayField), Some(monthField)) =>
+        val days = getValuesFromCron(dayField)
+        val months = getValuesFromCron(monthField)
+        days.isEmpty || months.isEmpty || daysExistInAMonths(days, months)
+      case _ => true // nothing to validate
     }
   }
 }
