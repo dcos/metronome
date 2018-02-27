@@ -121,6 +121,21 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       Then("a forbidden response is send")
       status(unauthorized) mustBe FORBIDDEN
     }
+
+    // regression of METRONOME-236
+    "end with validation error for invalid cron" in {
+      Given("A job")
+      route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
+
+      When("Invalid schedule is sent")
+      val invalid = schedule2Json.as[JsObject] ++ Json.obj("cron" -> "0 0 31 2 *")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs/$specId/schedules").withJsonBody(invalid)).get
+
+      Then("A validation problem is indicated")
+      status(response) mustBe UNPROCESSABLE_ENTITY
+      contentType(response) mustBe Some("application/json")
+      (contentAsJson(response) \ "message").as[String] mustBe "Object is not valid"
+    }
   }
 
   "GET /jobs/{id}/schedules" should {
