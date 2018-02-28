@@ -1,17 +1,17 @@
 package dcos.metronome
 package scheduler
 
-import akka.actor.{ ActorRefFactory, ActorSystem }
+import akka.actor.{ActorRefFactory, ActorSystem}
 import akka.event.EventStream
 import dcos.metronome.repository.SchedulerRepositoriesModule
-import dcos.metronome.scheduler.impl.{ NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor, SchedulerServiceImpl }
+import dcos.metronome.scheduler.impl.{NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor, SchedulerServiceImpl}
 import dcos.metronome.utils.time.Clock
 import dcos.metronome.MetricsModule
 import mesosphere.marathon._
-import mesosphere.marathon.core.base.{ ActorsModule, ShutdownHooks }
-import mesosphere.marathon.core.election.{ ElectionModule, ElectionService }
+import mesosphere.marathon.core.base.{ActorsModule, CrashStrategy, LifecycleState}
+import mesosphere.marathon.core.election.{ElectionModule, ElectionService}
 import mesosphere.marathon.core.flow.FlowModule
-import mesosphere.marathon.core.launcher.{ LauncherModule, OfferProcessor }
+import mesosphere.marathon.core.launcher.{LauncherModule, OfferProcessor}
 import mesosphere.marathon.core.launchqueue.LaunchQueueModule
 import mesosphere.marathon.core.leadership.LeadershipModule
 import mesosphere.marathon.core.matcher.base.OfferMatcher
@@ -21,11 +21,11 @@ import mesosphere.marathon.core.matcher.reconcile.OfferMatcherReconciliationModu
 import mesosphere.marathon.core.plugin.PluginModule
 import mesosphere.marathon.core.task.bus.TaskBusModule
 import mesosphere.marathon.core.task.jobs.TaskJobsModule
-import mesosphere.marathon.core.task.termination.{ TaskKillService, TaskTerminationModule }
+import mesosphere.marathon.core.task.termination.{TaskKillService, TaskTerminationModule}
 import mesosphere.marathon.core.task.tracker._
 import mesosphere.marathon.core.task.update.impl.TaskStatusUpdateProcessorImpl
 import mesosphere.marathon.core.task.update.impl.steps.ContinueOnErrorStep
-import mesosphere.marathon.core.task.update.{ TaskStatusUpdateProcessor, TaskUpdateStep }
+import mesosphere.marathon.core.task.update.{TaskStatusUpdateProcessor, TaskUpdateStep}
 import mesosphere.marathon.state._
 import mesosphere.util.state._
 
@@ -38,17 +38,18 @@ class SchedulerModule(
   clock:             Clock,
   persistenceModule: SchedulerRepositoriesModule,
   pluginModule:      PluginModule,
-  metricsModule:     MetricsModule) {
+  metricsModule:     MetricsModule,
+  lifecycleState: LifecycleState,
+  crashStrategy: CrashStrategy) {
 
   private[this] lazy val scallopConf: AllConf = config.scallopConf
-  private[this] lazy val marathonClock = new mesosphere.marathon.core.base.Clock {
+  private[this] lazy val marathonClock: java.time.Clock = new mesosphere.marathon.core.base.Clock {
     override def now(): Timestamp = Timestamp(clock.now())
   }
 
   private[this] lazy val metrics = metricsModule.metrics
   private[this] lazy val random = Random
-  private[this] lazy val shutdownHooks = ShutdownHooks()
-  private[this] lazy val actorsModule = new ActorsModule(shutdownHooks, actorSystem)
+  private[this] lazy val actorsModule = new ActorsModule(actorSystem)
 
   private[this] lazy val eventBus: EventStream = actorSystem.eventStream
 
@@ -60,22 +61,21 @@ class SchedulerModule(
     scallopConf,
     actorSystem,
     eventBus,
-    scallopConf,
-    metrics,
     hostPort,
-    shutdownHooks)
+    lifecycleState,
+    crashStrategy)
   lazy val leadershipModule: LeadershipModule = {
     val actorRefFactory: ActorRefFactory = actorsModule.actorRefFactory
     val electionService: ElectionService = electionModule.service
 
-    LeadershipModule(actorRefFactory, electionService)
+    LeadershipModule(actorRefFactory)
   }
-  lazy val taskTrackerModule: TaskTrackerModule = {
+  lazy val taskTrackerModule: InstanceTrackerModule = {
     val taskRepository: TaskRepository = persistenceModule.taskRepository
     val updateSteps: Seq[TaskUpdateStep] = Seq(
       ContinueOnErrorStep(new NotifyOfTaskStateOperationStep(eventBus, clock)))
 
-    new TaskTrackerModule(marathonClock, metrics, scallopConf, leadershipModule, taskRepository, updateSteps)
+    new InstanceTrackerModule(marathonClock, metrics, scallopConf, leadershipModule, taskRepository, updateSteps)
   }
 
   private[this] lazy val offerMatcherManagerModule = new OfferMatcherManagerModule(
