@@ -2,7 +2,9 @@ package dcos.metronome
 package repository
 
 import akka.actor.{ Actor, ActorLogging, Stash }
+import com.google.protobuf.InvalidProtocolBufferException
 import mesosphere.marathon.StoreCommandFailedException
+import org.apache.zookeeper.KeeperException.NoNodeException
 
 import scala.concurrent.Future
 import scala.util.{ Failure, Success }
@@ -50,8 +52,18 @@ trait LoadContentOnStartup[Id, Model] extends Actor with Stash with ActorLogging
   private def getModel(id: Id): Future[Option[Model]] = {
     repo.get(id).recoverWith {
       case ex: StoreCommandFailedException =>
-        log.error(s"ID $id is a dangling path with data recovery issues.  Exception message: ${ex.getMessage}")
-        Future.successful(None)
+        ex.getCause match {
+          case cause: InvalidProtocolBufferException =>
+            log.error(s"ID $id has corrupt data and will be ignored.  Zk will need to be manually repaired.  Exception message: ${cause.getMessage}")
+            Future.successful(None)
+          case cause: NoNodeException =>
+            log.error(s"ID $id or job-specs znode missing. Zk will need to be manually repaired.  Exception message: ${cause.getMessage}")
+            Future.successful(None)
+          case cause: Throwable =>
+            log.error(s"Unexpected exception occurred in reading zk at startup.  Exception message: ${cause.getMessage}")
+            System.exit(-1)
+            Future.failed(cause)
+        }
     }
   }
 }
