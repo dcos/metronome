@@ -1,6 +1,8 @@
 package dcos.metronome
 package repository.impl.kv.marshaller
 
+import java.time.ZoneId
+
 import dcos.metronome.Protos
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.kv.EntityMarshaller
@@ -8,7 +10,6 @@ import org.joda.time.DateTimeZone
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 
@@ -104,7 +105,7 @@ object JobSpecConversions {
         ScheduleSpec(
           id = schedule.getId,
           cron = CronSpec(schedule.getSchedule),
-          timeZone = DateTimeZone.forID(schedule.getTz),
+          timeZone = ZoneId.of(schedule.getTz),
           startingDeadline = schedule.getStartingDeadline.seconds,
           concurrencyPolicy = ConcurrencyPolicy.names(schedule.getConcurrencyPolicy.toString),
           enabled = schedule.getEnabled)

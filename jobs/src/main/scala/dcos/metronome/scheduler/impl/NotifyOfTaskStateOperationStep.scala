@@ -1,10 +1,11 @@
 package dcos.metronome
 package scheduler.impl
 
+import java.time.Clock
+
 import akka.event.EventStream
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.scheduler.TaskState
-import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.core.task.bus.TaskChangeObservables.TaskChanged
 import mesosphere.marathon.core.task.update.TaskUpdateStep
 import mesosphere.marathon.core.task.{ TaskStateChange, TaskStateOp }
@@ -19,7 +20,7 @@ class NotifyOfTaskStateOperationStep(eventBus: EventStream, clock: Clock) extend
       val event = TaskStateChangedEvent(
         taskId = taskChanged.taskId,
         taskState = state,
-        timestamp = clock.now())
+        timestamp = clock.instant())
       eventBus.publish(event)
     }
 

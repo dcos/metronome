@@ -1,12 +1,13 @@
 package dcos.metronome
 package history.impl
 
-import akka.actor.{ ActorLogging, ActorRef, Props, Actor }
+import java.time.Clock
+
+import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.history.JobHistoryConfig
 import dcos.metronome.model._
-import dcos.metronome.repository.{ Repository, LoadContentOnStartup }
-import dcos.metronome.utils.time.Clock
+import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
 
 import scala.collection.concurrent.TrieMap
 
@@ -58,7 +59,7 @@ class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: R
     log.debug(s"JobRun: ${run.id} has been reported finished successfully.")
     def update(jobHistory: JobHistory): JobHistory = jobHistory.copy(
       successCount = jobHistory.successCount + 1,
-      lastSuccessAt = Some(clock.now()),
+      lastSuccessAt = Some(clock.instant()),
       successfulRuns = runHistory(run, jobHistory.successfulRuns))
     persistenceActor ! Update(run.id.jobId, update)
   }
@@ -67,7 +68,7 @@ class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: R
     log.debug(s"JobRun: ${run.id} has been reported failed.")
     def update(jobHistory: JobHistory): JobHistory = jobHistory.copy(
       failureCount = jobHistory.failureCount + 1,
-      lastFailureAt = Some(clock.now()),
+      lastFailureAt = Some(clock.instant()),
       failedRuns = runHistory(run, jobHistory.failedRuns))
     persistenceActor ! Update(run.id.jobId, update)
   }

@@ -1,9 +1,8 @@
 package dcos.metronome
 package model
 
-import java.util.Calendar
+import java.time.{ Instant, ZoneId, ZonedDateTime }
 
-import com.cronutils.mapper.CronMapper
 import com.cronutils.model.definition.{ CronConstraint, CronDefinition, CronDefinitionBuilder }
 import com.cronutils.model.time.ExecutionTime
 import com.cronutils.model.Cron
@@ -11,8 +10,7 @@ import com.cronutils.model.field.expression.{ Between, On }
 import com.cronutils.model.field.value.IntegerFieldValue
 import com.cronutils.model.field.{ CronField, CronFieldName }
 import com.cronutils.parser.CronParser
-import org.joda.time.{ DateTime, DateTimeZone }
-import org.threeten.bp.{ Instant, ZoneId, ZonedDateTime }
+import org.threeten.bp.{ Instant => ThreeTenInstant, ZoneId => ThreeTenZoneId, ZonedDateTime => ThreeTenZonedDateTime }
 
 import scala.util.control.NonFatal
 
@@ -20,22 +18,22 @@ class CronSpec(val cron: Cron) {
 
   private[this] lazy val executionTime: ExecutionTime = ExecutionTime.forCron(cron)
 
-  def nextExecution(from: DateTime): DateTime = {
-    val fromDateTime: ZonedDateTime = jodaToThreetenTime(from)
+  def nextExecution(from: ZonedDateTime): ZonedDateTime = {
+    val fromDateTime: ThreeTenZonedDateTime = jodaToThreetenTime(from)
     threetenToJodaTime(executionTime.nextExecution(fromDateTime).get())
   }
 
-  def lastExecution(from: DateTime): DateTime = {
-    val fromDateTime: ZonedDateTime = jodaToThreetenTime(from)
+  def lastExecution(from: ZonedDateTime): ZonedDateTime = {
+    val fromDateTime: ThreeTenZonedDateTime = jodaToThreetenTime(from)
     threetenToJodaTime(executionTime.lastExecution(fromDateTime).get())
   }
 
-  private def threetenToJodaTime(from: ZonedDateTime): DateTime = {
-    new DateTime(from.toInstant().toEpochMilli(), DateTimeZone.forID(from.getZone().getId()))
+  private def threetenToJodaTime(from: ThreeTenZonedDateTime): ZonedDateTime = {
+    ZonedDateTime.ofInstant(Instant.ofEpochMilli(from.toInstant.toEpochMilli), ZoneId.of(from.getZone.getId))
   }
 
-  private def jodaToThreetenTime(from: DateTime): ZonedDateTime = {
-    ZonedDateTime.ofInstant(Instant.ofEpochMilli(from.getMillis()), ZoneId.of(from.getZone().getID))
+  private def jodaToThreetenTime(from: ZonedDateTime): ThreeTenZonedDateTime = {
+    ThreeTenZonedDateTime.ofInstant(ThreeTenInstant.ofEpochMilli(from.toInstant.toEpochMilli), ThreeTenZoneId.of(from.getZone.toString))
   }
 
   override def hashCode(): Int = cron.hashCode()

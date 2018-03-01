@@ -1,6 +1,9 @@
 package dcos.metronome
 package jobrun.impl
 
+import java.time.Clock
+import java.util.concurrent.TimeUnit
+
 import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Scheduler, Stash }
 import dcos.metronome.{ JobRunFailed, UnexpectedTaskState }
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
@@ -8,7 +11,6 @@ import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
 import dcos.metronome.scheduler.TaskState
-import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
@@ -95,9 +97,9 @@ class JobRunExecutorActor(
     import scala.concurrent.duration._
 
     jobRun.startingDeadline.map { deadline =>
-      val now = clock.now()
-      val from = run.createdAt.plus(deadline.toMillis)
-      Seconds.secondsBetween(now, from).getSeconds.seconds
+      val now = clock.instant()
+      val from = run.createdAt.plusMillis(deadline.toMillis)
+      Duration.apply(from.toEpochMilli - now.toEpochMilli, TimeUnit.MILLISECONDS)
     }
   }
 
@@ -168,7 +170,7 @@ class JobRunExecutorActor(
 
   def continueOrBecomeFailing(update: TaskStateChangedEvent): Unit = {
     def inTime: Boolean = jobRun.jobSpec.run.restart.activeDeadline.fold(true) { deadline =>
-      jobRun.createdAt.plus(deadline.toMillis).getMillis > clock.now().getMillis
+      jobRun.createdAt.plusMillis(deadline.toMillis).isAfter(clock.instant())
     }
     jobRun.jobSpec.run.restart.policy match {
       case RestartPolicy.OnFailure if inTime =>
@@ -182,7 +184,7 @@ class JobRunExecutorActor(
         becomeFailing(jobRun.copy(
           status = JobRunStatus.Failed,
           tasks = updatedTasks(update),
-          completedAt = Some(clock.now())))
+          completedAt = Some(clock.instant())))
     }
   }
 
@@ -209,7 +211,7 @@ class JobRunExecutorActor(
     // Abort the jobRun
     jobRun = jobRun.copy(
       status = JobRunStatus.Failed,
-      completedAt = Some(clock.now()))
+      completedAt = Some(clock.instant()))
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
 
@@ -317,7 +319,7 @@ class JobRunExecutorActor(
         log.info(s"Execution of JobRun ${jobRun.id} has been finished but deleting the jobRun failed")
         jobRun = jobRun.copy(
           status = JobRunStatus.Failed,
-          completedAt = Some(clock.now()))
+          completedAt = Some(clock.instant()))
         val result = JobResult(jobRun)
         context.parent ! JobRunExecutorActor.Aborted(result)
         promise.failure(JobRunFailed(result))
