@@ -2,6 +2,7 @@ package dcos.metronome.jobspec.impl
 
 import java.time.Clock
 
+import dcos.metronome.{ JobSpecAlreadyExists, JobSpecDoesNotExist }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobId, JobSpec, ScheduleSpec }
 
