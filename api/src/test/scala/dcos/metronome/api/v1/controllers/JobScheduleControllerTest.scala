@@ -4,11 +4,13 @@ import java.time.{ Clock, Instant, ZoneOffset }
 
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
+import dcos.metronome.jobspec.JobSpecService
+import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import dcos.metronome.model.{ CronSpec, JobId, JobSpec, ScheduleSpec }
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{ Millis, Span }
+import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context
@@ -333,7 +335,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
     }
   }
 
-  override implicit def patienceConfig: PatienceConfig = PatienceConfig(timeout = scaled(Span(300, Millis)))
+  override implicit val patienceConfig = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
   val mockedClock = Clock.fixed(Instant.now, ZoneOffset.UTC)
 
@@ -359,6 +361,7 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
 
   override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context) {
     override lazy val pluginManager: PluginManager = auth.pluginManager
+    override lazy val jobSpecService: JobSpecService = JobSpecServiceFixture.simpleJobSpecService(mockedClock)
   }
 }
 
