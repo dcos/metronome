@@ -97,15 +97,15 @@ def ignore_exception(exc):
     return isinstance(exc, Exception)
 
 
-@retry(wait_exponential_multiplier=1000, wait_exponential_max=5*60*1000, retry_on_exception=ignore_exception) # 5 minutes
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=5*60*1000, retry_on_exception=ignore_exception)  # 5 mins
 def wait_for_metronome():
     """ Waits for the Metronome API url to be available for a given timeout. """
     url = metronome_api_url()
     try:
         response = http.get(url)
-        assert response.status_code == 200, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last response: {response.content}"
+        assert response.status_code == 200, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last response: {response.content}"  # noqa
     except Exception as e:
-        assert False, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last exception: {e}"
+        assert False, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last exception: {e}"  # noqa
 
 
 def metronome_api_url():
