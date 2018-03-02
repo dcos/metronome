@@ -7,11 +7,11 @@ import dcos.metronome.jobinfo.JobInfoModule
 import dcos.metronome.jobrun.JobRunModule
 import dcos.metronome.jobspec.JobSpecModule
 import dcos.metronome.queue.LaunchQueueModule
-import dcos.metronome.repository.{RepositoryModule, SchedulerRepositoriesModule}
+import dcos.metronome.repository.{ RepositoryModule, SchedulerRepositoriesModule }
 import dcos.metronome.scheduler.SchedulerModule
 import dcos.metronome.utils.time.Clock
-import mesosphere.marathon.core.base.{JvmExitsCrashStrategy, LifecycleState}
-import mesosphere.marathon.core.plugin.{PluginManager, PluginModule}
+import mesosphere.marathon.core.base.{ JvmExitsCrashStrategy, LifecycleState }
+import mesosphere.marathon.core.plugin.{ PluginManager, PluginModule }
 
 class JobsModule(
   config:      JobsConfig,
@@ -43,9 +43,9 @@ class JobsModule(
 
   lazy val jobRunModule = {
     val launchQueue = schedulerModule.launchQueueModule.launchQueue
-    val taskTracker = schedulerModule.taskTrackerModule.taskTracker
+    val instanceTracker = schedulerModule.instanceTrackerModule.instanceTracker
     val driverHolder = schedulerModule.schedulerDriverHolder
-    new JobRunModule(config, actorSystem, clock, repositoryModule.jobRunRepository, launchQueue, taskTracker, driverHolder, behaviorModule.behavior, schedulerModule.leadershipModule)
+    new JobRunModule(config, actorSystem, clock, repositoryModule.jobRunRepository, launchQueue, instanceTracker, driverHolder, behaviorModule.behavior, schedulerModule.leadershipModule)
   }
 
   lazy val jobSpecModule = new JobSpecModule(

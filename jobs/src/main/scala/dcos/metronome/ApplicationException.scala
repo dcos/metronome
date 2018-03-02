@@ -8,6 +8,7 @@ class ApplicationException(message: String, cause: Throwable) extends RuntimeExc
 }
 
 case class JobSpecDoesNotExist(id: JobId) extends ApplicationException(s"JobSpec does not exist: $id")
+case class JobSpecWithNoSchedule(id: JobId) extends ApplicationException(s"We were expecting the job to have a schedule but it does not have any: $id")
 case class JobSpecAlreadyExists(id: JobId) extends ApplicationException(s"JobSpec already exists: $id")
 case class JobSpecChangeInFlight(id: JobId) extends ApplicationException(s"JobSpec change in flight: $id")
 

@@ -1,7 +1,9 @@
 package dcos.metronome
 package scheduler
 
+import mesosphere.marathon.core.condition.Condition
 import mesosphere.marathon.core.task.Task
+import mesosphere.mesos.protos.TaskStatus
 import org.apache.mesos
 /**
   * Internal representation of mesos task states including tasks that have been created but are not yet confirmed.
@@ -39,21 +41,21 @@ object TaskState {
   // and make sure a taskStateChange always provides a task or that status
   def apply(task: Task.LaunchedEphemeral): TaskState = {
     val default: TaskState = TaskState.Created
-    task.mesosStatus.fold(default)(apply)
+    apply(task.status.condition).getOrElse(default)
   }
 
-  def apply(mesosTaskStatus: mesos.Protos.TaskStatus): TaskState = {
-    import mesos.Protos.{ TaskState => MesosTaskState }
-    mesosTaskStatus.getState match {
-      case MesosTaskState.TASK_ERROR    => TaskState.Failed
-      case MesosTaskState.TASK_FAILED   => TaskState.Failed
-      case MesosTaskState.TASK_FINISHED => TaskState.Finished
-      case MesosTaskState.TASK_KILLED   => TaskState.Killed
-      case MesosTaskState.TASK_KILLING  => TaskState.Running
-      case MesosTaskState.TASK_LOST     => TaskState.Failed
-      case MesosTaskState.TASK_RUNNING  => TaskState.Running
-      case MesosTaskState.TASK_STAGING  => TaskState.Staging
-      case MesosTaskState.TASK_STARTING => TaskState.Starting
+  def apply(condition: Condition): Option[TaskState] = {
+    condition match {
+      case Condition.Error    => Some(TaskState.Failed)
+      case Condition.Failed   => Some(TaskState.Failed)
+      case Condition.Finished => Some(TaskState.Finished)
+      case Condition.Killed   => Some(TaskState.Killed)
+      case Condition.Killing  => Some(TaskState.Running)
+      case c if c.isLost      => Some(TaskState.Failed)
+      case Condition.Running  => Some(TaskState.Running)
+      case Condition.Staging  => Some(TaskState.Staging)
+      case Condition.Starting => Some(TaskState.Starting)
+      case _                  => None
     }
   }
 

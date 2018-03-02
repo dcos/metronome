@@ -141,13 +141,13 @@ class JobRunExecutorActor(
     // This will be fault tolerant and still add it, but startedAt and completedAt will be the same
     // in this case because we don't know the startedAt timestamp
     def completedAt = if (update.taskState == TaskState.Finished) Some(update.timestamp) else None
-    val updatedTask = jobRun.tasks.get(update.taskId).map { t =>
+    val updatedTask = jobRun.tasks.get(update.instanceId).map { t =>
       t.copy(
         completedAt = completedAt,
         status = update.taskState)
     }.getOrElse {
       JobRunTask(
-        id = update.taskId,
+        id = update.instanceId,
         startedAt = update.timestamp,
         completedAt = completedAt,
         status = update.taskState)

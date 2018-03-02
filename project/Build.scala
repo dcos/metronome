@@ -147,6 +147,7 @@ object Build extends sbt.Build {
       val Mockito = "2.0.54-beta"
       val Metrics = "3.5.4_a2.3"
       val JsonValidate = "0.7.0"
+      val TwitterCommons = "0.0.76"
     }
 
     val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
@@ -164,6 +165,7 @@ object Build extends sbt.Build {
     val akka = "com.typesafe.akka" %%  "akka-actor" % V.Akka
     val metrics = "nl.grons" %% "metrics-scala" % V.Metrics
     val jsonValidate = "com.eclipsesource" %% "play-json-schema-validator" % V.JsonValidate
+    val twitterCommons = "com.twitter.common.zookeeper" % "candidate" % V.TwitterCommons
 
     object Test {
       val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"

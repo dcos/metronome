@@ -8,7 +8,6 @@ import dcos.metronome.migration.Migration
 import dcos.metronome.scheduler.{ PeriodicOperations, PrePostDriverCallback, SchedulerConfig, SchedulerService }
 import mesosphere.marathon.core.election.{ ElectionCandidate, ElectionService }
 import mesosphere.marathon.core.leadership.LeadershipCoordinator
-import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.SchedulerDriverFactory
 import org.apache.mesos.SchedulerDriver
 import org.slf4j.LoggerFactory
@@ -27,7 +26,6 @@ private[scheduler] class SchedulerServiceImpl(
   electionService:        ElectionService,
   prePostDriverCallbacks: Seq[PrePostDriverCallback],
   driverFactory:          SchedulerDriverFactory,
-  metrics:                Metrics,
   migration:              Migration,
   periodicOperations:     PeriodicOperations)
     extends SchedulerService with ElectionCandidate {
