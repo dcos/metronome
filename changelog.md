@@ -1,3 +1,12 @@
+# Version 0.4.1
+
+## Bugs and Tracking
+
+* [METRONOME-222](https://jira.mesosphere.com/browse/METRONOME-222) CMD or Docker is Required.
+* [METRONOME-236](https://jira.mesosphere.com/browse/METRONOME-236) Additional CRON validation to prevent system lock up.
+
+Diff [0.4.0-0.4.1](https://github.com/dcos/metronome/compare/v0.4.0...4cf60b24)
+
 # Version 0.4.0
 
 ## Features
@@ -16,6 +25,14 @@ The launch queue (`/v1/queue`) provides a way to see jobs which have been schedu
 This is usually because there is not enough resources or constraints are not met.
 
 The FORBID concurrency policy allows `"concurrencyPolicy": "FORBID"` to be added to a schedule. This restricts launching of a scheduled jobrun when previous run is still active. In that case it will not launch nor will be queued to launch. The job will be rescheduled for the next CRON time.
+
+# Version 0.3.5
+
+Diff [0.3.4-0.3.5](https://github.com/dcos/metronome/compare/v0.3.4...8bbfda7d6b84a70b4ede28770eae64aeb1b3654)
+
+## Bugs and Tracking
+
+* [METRONOME-236](https://jira.mesosphere.com/browse/METRONOME-236) Additional CRON validation to prevent system lock up.
 
 # Version 0.3.4
 
@@ -51,7 +68,6 @@ Diff [0.2.4-0.3.1](https://github.com/dcos/metronome/compare/v0.2.4...v0.3.1)
 * [MARATHON_EE-1725](https://jira.mesosphere.com/browse/MARATHON_EE-1725)
 * [MARATHON_EE-1726](https://jira.mesosphere.com/browse/MARATHON_EE-1726) Upgrade Marathon libraries and dependencies
 
-
 ## Download
 
 https://s3.amazonaws.com/downloads.mesosphere.io/metronome/releases/0.3.1/metronome-0.3.1.tgz
@@ -63,9 +79,8 @@ diff from [0.2.3-0.2.4](https://github.com/dcos/metronome/compare/87976...23fe8c
 
 ## Fixes
 
-- Upgraded to cron-utils 6.0.4, fixes issues with cron calculations enabling crons such as `0 9 1-7 * 1-5` as mon-fri the first week of the month only.
-- Documentation and Job placement examples provided.
-
+* Upgraded to cron-utils 6.0.4, fixes issues with cron calculations enabling crons such as `0 9 1-7 * 1-5` as mon-fri the first week of the month only.
+* Documentation and Job placement examples provided.
 
 # Version 0.2
 
@@ -77,12 +92,11 @@ Prepare Metronome for DC/OS 1.9.
 
 We now have a suite of integration tests for DC/OS that runs in our CI.
 
-
 ## Fixes
-- Fix #96 Change constraints fields names to match schema.
-- Fix #102 API Examples update: test.com -> example.com
-- Fix #107 Add /v0/scheduled-jobs raml documentation.
 
+* Fix #96 Change constraints fields names to match schema.
+* Fix #102 API Examples update: test.com -> example.com
+* Fix #107 Add /v0/scheduled-jobs raml documentation.
 
 # Version 0.1
 
