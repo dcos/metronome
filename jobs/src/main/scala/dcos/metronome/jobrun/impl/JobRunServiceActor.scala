@@ -131,7 +131,7 @@ class JobRunServiceActor(
   }
 
   def forwardStatusUpdate(update: TaskStateChangedEvent): Unit = {
-    val jobRunId = JobRunId(update.instanceId.runSpecId)
+    val jobRunId = JobRunId(update.taskId.runSpecId)
 
     allRunExecutors.get(jobRunId) match {
       case Some(actorRef) =>

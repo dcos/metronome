@@ -5,13 +5,13 @@ import java.time.Clock
 import com.softwaremill.macwire._
 import controllers.Assets
 import dcos.metronome.api.v1.LeaderProxyFilter
-import dcos.metronome.api.{ApiModule, ErrorHandler}
+import dcos.metronome.api.{ ApiModule, ErrorHandler }
 import org.asynchttpclient.AsyncHttpClientConfig
 import play.api.ApplicationLoader.Context
 import play.api._
 import play.api.i18n._
-import play.api.libs.ws.ahc.{AhcConfigBuilder, AhcWSClient, AhcWSClientConfig}
-import play.api.libs.ws.{WSClient, WSConfigParser}
+import play.api.libs.ws.ahc.{ AhcConfigBuilder, AhcWSClient, AhcWSClientConfig }
+import play.api.libs.ws.{ WSClient, WSConfigParser }
 import play.api.mvc.EssentialFilter
 import play.api.routing.Router
 

@@ -7,12 +7,12 @@ import akka.actor.{ ActorRefFactory, ActorSystem }
 import akka.event.EventStream
 import dcos.metronome.repository.SchedulerRepositoriesModule
 import dcos.metronome.scheduler.impl.{ NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor, SchedulerServiceImpl }
-import dcos.metronome.MetricsModule
 import mesosphere.marathon._
 import mesosphere.marathon.core.base.{ ActorsModule, CrashStrategy, LifecycleState }
 import mesosphere.marathon.core.election.{ ElectionModule, ElectionService }
 import mesosphere.marathon.core.flow.FlowModule
 import mesosphere.marathon.core.instance.update.InstanceChangeHandler
+import mesosphere.marathon.core.launcher.impl.UnreachableReservedOfferMonitor
 import mesosphere.marathon.core.launcher.{ LauncherModule, OfferProcessor }
 import mesosphere.marathon.core.launchqueue.LaunchQueueModule
 import mesosphere.marathon.core.leadership.LeadershipModule
@@ -24,11 +24,10 @@ import mesosphere.marathon.core.plugin.PluginModule
 import mesosphere.marathon.core.task.jobs.TaskJobsModule
 import mesosphere.marathon.core.task.termination.{ KillService, TaskTerminationModule }
 import mesosphere.marathon.core.task.tracker._
+import mesosphere.marathon.core.task.update.TaskStatusUpdateProcessor
 import mesosphere.marathon.core.task.update.impl.TaskStatusUpdateProcessorImpl
 import mesosphere.marathon.core.task.update.impl.steps.ContinueOnErrorStep
-import mesosphere.marathon.core.task.update.{ TaskStatusUpdateProcessor }
-import mesosphere.marathon.state._
-import mesosphere.marathon.storage.repository.{ FrameworkIdRepository, FrameworkIdRepositoryImpl, InstanceRepository }
+import mesosphere.marathon.storage.repository.InstanceRepository
 import mesosphere.util.state._
 
 import scala.collection.immutable.Seq
@@ -91,19 +90,20 @@ class SchedulerModule(
       persistenceModule.groupRepository,
       leadershipModule)
 
+  lazy val taskStatusProcessor: TaskStatusUpdateProcessor = new TaskStatusUpdateProcessorImpl(
+    clock, instanceTrackerModule.instanceTracker, instanceTrackerModule.stateOpProcessor, schedulerDriverHolder, taskKillService, eventBus)
+
   private[this] lazy val launcherModule: LauncherModule = {
     val instanceCreationHandler: InstanceCreationHandler = instanceTrackerModule.instanceCreationHandler
     val offerMatcher: OfferMatcher = StopOnFirstMatchingOfferMatcher(
       offerMatcherReconcilerModule.offerMatcherReconciler,
       offerMatcherManagerModule.globalOfferMatcher)
+    val offerStreamInput = UnreachableReservedOfferMonitor.run(
+      lookupInstance = instanceTrackerModule.instanceTracker.instance,
+      taskStatusPublisher = taskStatusProcessor.publish)(actorsModule.materializer)
 
-    new LauncherModule(scallopConf, instanceCreationHandler, schedulerDriverHolder, offerMatcher, pluginModule.pluginManager)
+    new LauncherModule(scallopConf, instanceCreationHandler, schedulerDriverHolder, offerMatcher, pluginModule.pluginManager, offerStreamInput)
   }
-
-  private[this] lazy val frameworkIdUtil: FrameworkIdRepository = new FrameworkIdRepositoryImpl(
-    persistenceModule.frameworkIdStore,
-    timeout = config.zkTimeout,
-    key = "id")
 
   private[this] lazy val taskTerminationModule: TaskTerminationModule = new TaskTerminationModule(
     instanceTrackerModule,
@@ -128,7 +128,7 @@ class SchedulerModule(
       eventBus,
       offerProcessor,
       taskStatusProcessor,
-      frameworkIdUtil,
+      persistenceModule.frameworkIdRepository,
       leaderInfo,
       scallopConf)
   }
@@ -137,13 +137,13 @@ class SchedulerModule(
     holder = schedulerDriverHolder,
     config = scallopConf,
     httpConfig = scallopConf,
-    frameworkIdUtil = frameworkIdUtil,
+    frameworkIdRepository = persistenceModule.frameworkIdRepository,
     scheduler = scheduler)
 
   private[this] lazy val prePostDriverCallbacks: Seq[PrePostDriverCallback] = Seq(
-    persistenceModule.taskStore,
-    persistenceModule.frameworkIdStore,
-    persistenceModule.groupStore).collect {
+    persistenceModule.instanceRepository,
+    persistenceModule.frameworkIdRepository,
+    persistenceModule.groupRepository).collect {
       case l: PrePostDriverCallback => l
     }
 

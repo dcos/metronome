@@ -30,7 +30,7 @@ object JobRunTask {
     // so it is somewhat safe to derive that completedAt for these tasks is always None!
     JobRunTask(
       id = task.taskId,
-      startedAt = Instant.ofEpochMilli(task.status.stagedAt.toDateTime.getMillis),
+      startedAt = Instant.ofEpochMilli(task.status.stagedAt.millis),
       completedAt = None,
       status = TaskState(task))
   }

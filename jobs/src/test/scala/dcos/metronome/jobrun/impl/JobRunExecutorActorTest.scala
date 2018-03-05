@@ -645,7 +645,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     }
 
     def statusUpdate(state: TaskState) = ForwardStatusUpdate(TaskStateChangedEvent(
-      instanceId = taskId, taskState = state, timestamp = Clock.systemUTC().instant()))
+      taskId = taskId, taskState = state, timestamp = Clock.systemUTC().instant()))
 
 
     val persistenceActor = TestProbe()
@@ -726,7 +726,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       persistenceActor.reply(JobRunPersistenceActor.JobRunCreated(persistenceActor.ref, startingJobRun, Unit))
       verify(launchQueue, timeout(1000)).add(any, any)
       actorRef ! ForwardStatusUpdate(TaskStateChangedEvent(
-        instanceId = taskId,
+        taskId = taskId,
         taskState = TaskState.Running,
         timestamp = clock.instant()))
       val updateMsg = persistenceActor.expectMsgType[JobRunPersistenceActor.Update]

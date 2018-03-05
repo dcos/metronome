@@ -4,24 +4,23 @@ package repository
 import java.net.InetSocketAddress
 import java.util.UUID
 
+import com.sun.javaws.exceptions.InvalidArgumentException
 import com.twitter.common.quantity.{ Amount, Time }
 import com.twitter.common.zookeeper.ZooKeeperClient
 import dcos.metronome.migration.Migration
 import dcos.metronome.migration.impl.MigrationImpl
 import dcos.metronome.scheduler.SchedulerConfig
-import dcos.metronome.MetricsModule
-import dcos.metronome.utils.state.{ EntityStore, EntityStoreCache, MarathonStore }
-import mesosphere.marathon.Protos.MarathonTask
-import mesosphere.marathon.state.{ AppDefinition, AppRepository, EntityStore, EntityStoreCache, Group, GroupRepository, MarathonStore, MarathonTaskState, TaskRepository }
-import mesosphere.marathon.storage.repository.AppRepository
-import mesosphere.util.state.{ FrameworkId, PersistentStore }
+import dcos.metronome.utils.state.{ EntityStore, EntityStoreCache, MarathonStore, PersistentStore }
+import mesosphere.marathon.core.base.LifecycleState
+import mesosphere.marathon.storage.{ CuratorZk, StorageConfig, StorageModule }
+import mesosphere.marathon.storage.repository.{ AppRepository, FrameworkIdRepository, GroupRepository, InstanceRepository }
 import org.apache.zookeeper.KeeperException
-import org.slf4j.LoggerFactory
+import org.slf4j.{ Logger, LoggerFactory }
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ Await, Future }
 
-class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: RepositoryModule, metricsModule: MetricsModule) {
+class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: RepositoryModule, metricsModule: MetricsModule, lifecycleState: LifecycleState) {
   import SchedulerRepositoriesModule._
 
   private[this] def directOrCachedStore[T <: mesosphere.marathon.state.MarathonState[_, T]](store: MarathonStore[T]): EntityStore[T] = {
@@ -58,48 +57,19 @@ class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: Rep
 
   private[this] lazy val persistentStore: PersistentStore = repositoryModule.zkStore
 
-  lazy val taskStore = directOrCachedStore {
-    new MarathonStore[MarathonTaskState](
-      persistentStore,
-      metrics,
-      prefix = "task:",
-      newState = () => MarathonTaskState(MarathonTask.newBuilder().setId(UUID.randomUUID().toString).build()))
-  }
-  lazy val instanceRepository: TaskRepository = new TaskRepository(taskStore, metrics)
+  lazy val storageConfig = StorageConfig(config.scallopConf, lifecycleState)
+  lazy val storageModule = StorageModule(config.scallopConf, lifecycleState)
 
-  // FIXME (wiring): we shouldn't need the groupRepo
-  lazy val groupStore = directOrCachedStore {
-    new MarathonStore[Group](
-      persistentStore,
-      metrics,
-      prefix = "group:",
-      newState = () => Group.empty)
-  }
-  lazy val groupRepository: GroupRepository = new GroupRepository(
-    groupStore,
-    maxVersions = None,
-    metrics)
+  lazy val instanceRepository: InstanceRepository = storageModule.instanceRepository
+  lazy val groupRepository: GroupRepository = storageModule.groupRepository
 
-  lazy val frameworkIdStore = directOrCachedStore {
-    val newState = () => new FrameworkId(UUID.randomUUID().toString)
-    val prefix = "framework:"
-    new MarathonStore[FrameworkId](persistentStore, metrics, newState, prefix)
-  }
-
-  lazy val appStore = directOrCachedStore {
-    new MarathonStore[AppDefinition](
-      persistentStore,
-      metrics,
-      prefix = "app:",
-      newState = () => AppDefinition.apply())
-  }
-  lazy val appRepository: AppRepository = new AppRepository(appStore, maxVersions = None, metrics)
+  lazy val frameworkIdRepository: FrameworkIdRepository = storageModule.frameworkIdRepository
 
   lazy val migration: Migration = new MigrationImpl(persistentStore)
 }
 
 object SchedulerRepositoriesModule {
-  val log = LoggerFactory.getLogger(getClass)
+  val log: Logger = LoggerFactory.getLogger(getClass)
 
   class ZooKeeperLeaderElectionClient(
     sessionTimeout:   Amount[Integer, Time],

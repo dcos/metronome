@@ -30,7 +30,7 @@ class JobsModule(
 
   lazy val repositoryModule = new RepositoryModule(config)
 
-  lazy val schedulerRepositoriesModule = new SchedulerRepositoriesModule(config, repositoryModule, metricsModule)
+  lazy val schedulerRepositoriesModule = new SchedulerRepositoriesModule(config, repositoryModule, metricsModule, lifecycleState)
 
   lazy val schedulerModule: SchedulerModule = new SchedulerModule(
     config,

@@ -119,7 +119,7 @@ private[scheduler] class SchedulerServiceImpl(
         }
 
         // tell leader election that we step back, but want to be re-elected if isRunning is true.
-        electionService.abdicateLeadership(error = result.isFailure, reoffer = isRunningLatch.getCount > 0)
+        electionService.abdicateLeadership()
 
         log.info(s"Call postDriverRuns callbacks on ${prePostDriverCallbacks.mkString(", ")}")
         Await.result(Future.sequence(prePostDriverCallbacks.map(_.postDriverTerminates)), config.zkTimeout)

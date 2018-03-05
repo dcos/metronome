@@ -4,11 +4,11 @@ package jobrun.impl
 import java.time.Clock
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Scheduler, Stash}
-import dcos.metronome.behavior.{ActorBehavior, Behavior}
+import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Scheduler, Stash }
+import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.model.{JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy}
+import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
@@ -16,8 +16,8 @@ import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.Task.LaunchedEphemeral
 import mesosphere.marathon.core.task.tracker.InstanceTracker
 
-import scala.concurrent.Promise
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{ Await, Promise }
+import scala.concurrent.duration.{ Duration, FiniteDuration }
 
 /**
   * Handles one job run from start until the job either completes successful or failed.
@@ -25,14 +25,14 @@ import scala.concurrent.duration.FiniteDuration
   * @param run the related job run object.
   */
 class JobRunExecutorActor(
-                           run:                        JobRun,
-                           promise:                    Promise[JobResult],
-                           persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
-                           launchQueue:                LaunchQueue,
-                           instanceTracker:                InstanceTracker,
-                           driverHolder:               MarathonSchedulerDriverHolder,
-                           clock:                      Clock,
-                           val behavior:               Behavior)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorBehavior {
+  run:                        JobRun,
+  promise:                    Promise[JobResult],
+  persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
+  launchQueue:                LaunchQueue,
+  instanceTracker:            InstanceTracker,
+  driverHolder:               MarathonSchedulerDriverHolder,
+  clock:                      Clock,
+  val behavior:               Behavior)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorBehavior {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
   import TaskStates._
@@ -128,26 +128,26 @@ class JobRunExecutorActor(
   }
 
   def tasksFromTaskTracker(): Iterable[JobRunTask] = {
-    instanceTracker.appTasksLaunchedSync(runSpecId).collect {
+    instanceTracker.specInstancesSync(runSpecId).map(a => a.appTask).collect {
       case task: LaunchedEphemeral => JobRunTask(task)
       case task: Task              => throw UnexpectedTaskState(task)
     }
   }
 
-  def existsInLaunchQueue(): Boolean = launchQueue.get(runSpecId).exists(_.finalTaskCount > 0)
+  def existsInLaunchQueue(): Boolean = launchQueue.get(runSpecId).exists(i => i.finalInstanceCount > 0)
 
   def updatedTasks(update: TaskStateChangedEvent): Map[Task.Id, JobRunTask] = {
     // Note: there is a certain inaccuracy when we receive a finished task that's not in the Map
     // This will be fault tolerant and still add it, but startedAt and completedAt will be the same
     // in this case because we don't know the startedAt timestamp
     def completedAt = if (update.taskState == TaskState.Finished) Some(update.timestamp) else None
-    val updatedTask = jobRun.tasks.get(update.instanceId).map { t =>
+    val updatedTask = jobRun.tasks.get(update.taskId).map { t =>
       t.copy(
         completedAt = completedAt,
         status = update.taskState)
     }.getOrElse {
       JobRunTask(
-        id = update.instanceId,
+        id = update.taskId,
         startedAt = update.timestamp,
         completedAt = completedAt,
         status = update.taskState)
@@ -157,7 +157,7 @@ class JobRunExecutorActor(
   }
 
   def becomeFinishing(updatedJobRun: JobRun): Unit = {
-    launchQueue.purge(runSpecId)
+    Await.result(launchQueue.asyncPurge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
     jobRun = updatedJobRun
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
@@ -188,7 +188,7 @@ class JobRunExecutorActor(
 
   // FIXME: compare to becomeFinishing, there's lots of DRY violation
   def becomeFailing(updatedJobRun: JobRun): Unit = {
-    launchQueue.purge(runSpecId)
+    Await.result(launchQueue.asyncPurge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
     jobRun = updatedJobRun
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
@@ -204,7 +204,7 @@ class JobRunExecutorActor(
     jobRun.tasks.values.filter(t => isActive(t.status)).foreach { t =>
       driverHolder.driver.foreach(_.killTask(t.id.mesosTaskId))
     }
-    launchQueue.purge(runSpecId)
+    Await.result(launchQueue.asyncPurge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
 
     // Abort the jobRun
     jobRun = jobRun.copy(
@@ -381,14 +381,14 @@ object JobRunExecutorActor {
   case class ForwardStatusUpdate(update: TaskStateChangedEvent)
 
   def props(
-             run:                        JobRun,
-             promise:                    Promise[JobResult],
-             persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
-             launchQueue:                LaunchQueue,
-             instanceTracker:                InstanceTracker,
-             driverHolder:               MarathonSchedulerDriverHolder,
-             clock:                      Clock,
-             behavior:                   Behavior)(implicit scheduler: Scheduler): Props = Props(
+    run:                        JobRun,
+    promise:                    Promise[JobResult],
+    persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
+    launchQueue:                LaunchQueue,
+    instanceTracker:            InstanceTracker,
+    driverHolder:               MarathonSchedulerDriverHolder,
+    clock:                      Clock,
+    behavior:                   Behavior)(implicit scheduler: Scheduler): Props = Props(
     new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
       launchQueue, instanceTracker, driverHolder, clock, behavior))
 }

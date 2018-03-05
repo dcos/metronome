@@ -3,7 +3,6 @@ package dcos.metronome.utils.state
 import com.google.protobuf.InvalidProtocolBufferException
 import dcos.metronome.behavior.Metrics
 import mesosphere.marathon.StoreCommandFailedException
-import mesosphere.marathon.metrics.Histogram
 import org.slf4j.LoggerFactory
 
 import scala.collection.immutable.Seq
@@ -27,7 +26,6 @@ class MarathonStore[S <: MarathonState[_, S]](
     store.load(prefix + key)
       .map {
         _.map { entity =>
-          bytesRead.update(entity.bytes.length)
           stateFromBytes(entity.bytes.toArray)
         }
       }
@@ -45,14 +43,11 @@ class MarathonStore[S <: MarathonState[_, S]](
       log.debug(s"Modify $prefix$key")
       val res = store.load(prefix + key).flatMap {
         case Some(entity) =>
-          bytesRead.update(entity.bytes.length)
           val updated = f(() => stateFromBytes(entity.bytes.toArray))
           val updatedEntity = entity.withNewContent(updated.toProtoByteArray)
-          bytesWritten.update(updatedEntity.bytes.length)
           store.update(updatedEntity)
         case None =>
           val created = f(() => newState()).toProtoByteArray
-          bytesWritten.update(created.length)
           store.create(prefix + key, created)
       }
       res.map { entity =>

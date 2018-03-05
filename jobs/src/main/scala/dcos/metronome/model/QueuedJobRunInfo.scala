@@ -9,7 +9,6 @@ import scala.collection.immutable.Map
 case class QueuedJobRunInfo(
   // is the full id used by marathon which includes the jobid/runid example: /startdeadline/201801221711083L7i6
   id:                    PathId,
-  tasksLost:             Int,
   backOffUntil:          Timestamp,
   run:                   JobRunSpec          = JobRunSpec(),
   acceptedResourceRoles: Option[Set[String]] = None) extends RunSpec {

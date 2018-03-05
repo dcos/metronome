@@ -3,7 +3,7 @@ package repository.impl.kv
 
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.kv.marshaller.{ JobHistoryMarshaller, JobRunMarshaller, JobSpecMarshaller }
-import mesosphere.util.state.PersistentStoreWithNestedPathsSupport
+import dcos.metronome.utils.state.PersistentStoreWithNestedPathsSupport
 
 import scala.concurrent.{ ExecutionContext, Future }
 

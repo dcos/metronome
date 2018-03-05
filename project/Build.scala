@@ -52,8 +52,6 @@ object Build extends sbt.Build {
         Dependency.cronUtils,
         Dependency.threeten,
         Dependency.metrics,
-        Dependency.twitterCommons,
-        Dependency.twitterZk,
         Dependency.jsonValidate,
         Dependency.Test.scalatest,
         Dependency.Test.scalatestPlay
@@ -77,6 +75,8 @@ object Build extends sbt.Build {
         Dependency.cronUtils,
         Dependency.akka,
         Dependency.metrics,
+        Dependency.twitterCommons,
+        Dependency.twitterZk,
         Dependency.Test.akkaTestKit,
         Dependency.Test.mockito
       )

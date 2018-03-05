@@ -6,18 +6,12 @@ import com.fasterxml.uuid.impl.UUIDUtil
 import com.google.protobuf.{ ByteString, InvalidProtocolBufferException }
 import com.twitter.util.{ Future => TWFuture }
 import com.twitter.zk.{ ZNode, ZkClient }
-import mesosphere.marathon.io.IO
 import mesosphere.marathon.{ Protos, StoreCommandFailedException }
-import mesosphere.util.state.zk.ZKStore._
-import mesosphere.util.state.{
-  PersistentEntity,
-  PersistentStore,
-  PersistentStoreManagement,
-  PersistentStoreWithNestedPathsSupport
-}
+
 import org.apache.zookeeper.KeeperException
 import org.apache.zookeeper.KeeperException.{ NoNodeException, NodeExistsException }
 import org.slf4j.LoggerFactory
+import ZKStore._
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 

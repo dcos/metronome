@@ -124,8 +124,8 @@ object ReconciliationActor {
   case class ReconciliationData(tasks: Iterable[Task]) extends Data
 
   def props(
-             driverHolder: MarathonSchedulerDriverHolder,
-             instanceTracker:  InstanceTracker,
-             config:       SchedulerConfig): Props =
+    driverHolder:    MarathonSchedulerDriverHolder,
+    instanceTracker: InstanceTracker,
+    config:          SchedulerConfig): Props =
     Props(new ReconciliationActor(driverHolder, instanceTracker, config))
 }
