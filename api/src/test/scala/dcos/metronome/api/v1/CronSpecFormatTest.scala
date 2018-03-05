@@ -1,10 +1,11 @@
 package dcos.metronome
 package api.v1
 
+import java.time.{ LocalDateTime, ZoneId, ZoneOffset, ZonedDateTime }
+
 import dcos.metronome.api.v1.models._
 import dcos.metronome.model.{ CronSpec, CronSpecValidation }
 import dcos.metronome.utils.test.Mockito
-import org.joda.time.DateTime
 import org.scalatest.{ FunSuite, Matchers }
 import play.api.libs.json.Json
 
@@ -67,81 +68,81 @@ class CronSpecFormatTest extends FunSuite with Mockito with Matchers {
     val cronString = "0 9 1-7 * 1"
 
     val spec = CronSpec(cronString)
-    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+    val currentDateTime = ZonedDateTime.of(LocalDateTime.of(2017, 10, 2, 10, 0), ZoneId.of("UTC"))
 
     val nextCronDate = spec.nextExecution(currentDateTime)
 
-    nextCronDate shouldEqual new DateTime(2017, 11, 6, 9, 0)
+    nextCronDate shouldEqual ZonedDateTime.of(LocalDateTime.of(2017, 11, 6, 9, 0), ZoneId.of("UTC"))
   }
 
   test("Each weekday the first week Of The Month") {
     val cronString = "0 9 1-7 * 1-5"
 
     val spec = CronSpec(cronString)
-    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+    val currentDateTime = ZonedDateTime.of(LocalDateTime.of(2017, 10, 2, 10, 0), ZoneId.of("UTC"))
 
     val nextCronDate = spec.nextExecution(currentDateTime)
 
-    nextCronDate shouldEqual new DateTime(2017, 10, 3, 9, 0)
+    nextCronDate shouldEqual ZonedDateTime.of(LocalDateTime.of(2017, 10, 3, 9, 0), ZoneId.of("UTC"))
   }
 
   test("Each weekend day the first week Of The Month") {
     val cronString = "0 9 1-7 * 6-7"
 
     val spec = CronSpec(cronString)
-    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+    val currentDateTime = ZonedDateTime.of(LocalDateTime.of(2017, 10, 2, 10, 0), ZoneId.of("UTC"))
 
     val nextCronDate = spec.nextExecution(currentDateTime)
 
-    nextCronDate shouldEqual new DateTime(2017, 10, 7, 9, 0)
+    nextCronDate shouldEqual ZonedDateTime.of(LocalDateTime.of(2017, 10, 7, 9, 0), ZoneId.of("UTC"))
   }
 
   test("Each weekday the second week Of The Month") {
     val cronString = "0 9 8-14 * 1-5"
 
     val spec = CronSpec(cronString)
-    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+    val currentDateTime = ZonedDateTime.of(LocalDateTime.of(2017, 10, 2, 10, 0), ZoneId.of("UTC"))
 
     val nextCronDate = spec.nextExecution(currentDateTime)
 
-    nextCronDate shouldEqual new DateTime(2017, 10, 9, 9, 0)
+    nextCronDate shouldEqual ZonedDateTime.of(LocalDateTime.of(2017, 10, 9, 9, 0), ZoneId.of("UTC"))
   }
 
   test("Each weekend day the fourth week Of The Month") {
     val cronString = "0 9 22-28 * 6-7"
 
     val spec = CronSpec(cronString)
-    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+    val currentDateTime = ZonedDateTime.of(LocalDateTime.of(2017, 10, 2, 10, 0), ZoneId.of("UTC"))
 
     val nextCronDate = spec.nextExecution(currentDateTime)
 
-    nextCronDate shouldEqual new DateTime(2017, 10, 22, 9, 0)
+    nextCronDate shouldEqual ZonedDateTime.of(LocalDateTime.of(2017, 10, 22, 9, 0), ZoneId.of("UTC"))
   }
 
   test("Each day on a wednesday") {
     val cronString = "* * * * 3"
 
     val spec = CronSpec(cronString)
-    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+    val currentDateTime = ZonedDateTime.of(LocalDateTime.of(2017, 10, 2, 10, 0), ZoneId.of("UTC"))
 
     val nextCronDate = spec.nextExecution(currentDateTime)
 
-    nextCronDate shouldEqual new DateTime(2017, 10, 4, 0, 0)
+    nextCronDate shouldEqual ZonedDateTime.of(LocalDateTime.of(2017, 10, 4, 0, 0), ZoneId.of("UTC"))
   }
 
   test("Each day slash of 1 on a wednesday") {
     val cronString = "* * */1 * 3"
 
     val spec = CronSpec(cronString)
-    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+    val currentDateTime = ZonedDateTime.of(LocalDateTime.of(2017, 10, 2, 10, 0), ZoneId.of("UTC"))
 
     val nextCronDate = spec.nextExecution(currentDateTime)
 
-    nextCronDate shouldEqual new DateTime(2017, 10, 4, 0, 0)
+    nextCronDate shouldEqual ZonedDateTime.of(LocalDateTime.of(2017, 10, 4, 0, 0), ZoneId.of("UTC"))
   }
 
   test("A cron job should execute next Monday when day of week is 1") {
-    val date = (year: Int, month: Int, day: Int) => new DateTime(year, month, day, 0, 0)
+    val date = (year: Int, month: Int, day: Int) => ZonedDateTime.of(LocalDateTime.of(year, month, day, 0, 0), ZoneId.of("UTC"))
 
     // With cronutils 4.1.0, the execution date is sometimes wrong if the
     // intended date falls on the first or last day of the month
@@ -175,22 +176,22 @@ class CronSpecFormatTest extends FunSuite with Mockito with Matchers {
     val cronString = "0 0 20-31 2 *"
 
     val spec = CronSpec(cronString)
-    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+    val currentDateTime = ZonedDateTime.of(LocalDateTime.of(2017, 10, 2, 10, 0), ZoneId.of("UTC"))
 
     val nextCronDate = spec.nextExecution(currentDateTime)
 
-    nextCronDate shouldEqual new DateTime(2018, 2, 20, 0, 0)
+    nextCronDate shouldEqual ZonedDateTime.of(LocalDateTime.of(2018, 2, 20, 0, 0), ZoneId.of("UTC"))
   }
 
   test("Not fail when leap year is possible") {
     val cronString = "0 0 29 2 *"
 
     val spec = CronSpec(cronString)
-    val currentDateTime: DateTime = new DateTime(2017, 10, 2, 10, 0)
+    val currentDateTime = ZonedDateTime.of(LocalDateTime.of(2017, 10, 2, 10, 0), ZoneId.of("UTC"))
 
     val nextCronDate = spec.nextExecution(currentDateTime)
 
-    nextCronDate shouldEqual new DateTime(2020, 2, 29, 0, 0)
+    nextCronDate shouldEqual ZonedDateTime.of(LocalDateTime.of(2020, 2, 29, 0, 0), ZoneId.of("UTC"))
   }
 
   test("Invalid cron because february and march both don't have 31 days") {

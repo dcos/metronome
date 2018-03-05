@@ -1,11 +1,13 @@
 package dcos.metronome
 package jobspec.impl
 
+import java.time.{ Clock, Instant }
+import java.util.concurrent.TimeUnit
+
 import akka.actor._
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.model.{ ConcurrencyPolicy, JobSpec, ScheduleSpec }
-import dcos.metronome.utils.time.Clock
 import org.joda.time.{ DateTime, Seconds }
 
 import scala.concurrent.Await
@@ -26,7 +28,7 @@ class JobSpecSchedulerActor(
 
   private[impl] var spec = initSpec
   private[impl] var nextSchedule: Option[Cancellable] = None
-  private[impl] var scheduledAt: Option[DateTime] = None
+  private[impl] var scheduledAt: Option[Instant] = None
 
   override def preStart(): Unit = {
     scheduleNextRun()
@@ -59,14 +61,14 @@ class JobSpecSchedulerActor(
     cancelSchedule()
     // TODO: only reschedule for one specific schedule!
     spec.schedules.foreach { schedule =>
-      val now = clock.now()
+      val now = clock.instant()
       val from = lastScheduledAt.getOrElse(now)
       val nextTime = schedule.nextExecution(from)
       scheduledAt = Some(nextTime)
       // 60 secs is the smallest unit of reschedule time for cron
-      val in = Seconds.secondsBetween(now, nextTime).getSeconds.seconds.max(60.seconds)
-      nextSchedule = Some(context.system.scheduler.scheduleOnce(in, self, StartJob(schedule)))
-      log.info(s"Spec ${spec.id}: next run is scheduled for: $nextTime (in $in)")
+      val inSeconds = Math.max(java.time.Duration.between(now, nextTime).getSeconds, 60)
+      nextSchedule = Some(context.system.scheduler.scheduleOnce(Duration(inSeconds, TimeUnit.SECONDS), self, StartJob(schedule)))
+      log.info(s"Spec ${spec.id}: next run is scheduled for: $nextTime (in $inSeconds seconds)")
     }
   }
 

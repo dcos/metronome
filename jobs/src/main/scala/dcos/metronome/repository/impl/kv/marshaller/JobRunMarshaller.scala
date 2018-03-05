@@ -1,6 +1,7 @@
 package dcos.metronome
 package repository.impl.kv.marshaller
 
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 import dcos.metronome.Protos
@@ -8,7 +9,6 @@ import dcos.metronome.model._
 import dcos.metronome.repository.impl.kv.EntityMarshaller
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.task.Task
-import org.joda.time.{ DateTime, DateTimeZone }
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -47,9 +47,9 @@ object JobRunConversions {
     def toProto: Protos.JobRun.JobRunTask = {
       val builder = Protos.JobRun.JobRunTask.newBuilder()
         .setId(task.id.idString)
-        .setStartedAt(task.startedAt.getMillis)
+        .setStartedAt(task.startedAt.toEpochMilli)
         .setStatus(task.status.toProto)
-      task.completedAt.foreach(t => builder.setCompletedAt(t.getMillis))
+      task.completedAt.foreach(t => builder.setCompletedAt(t.toEpochMilli))
       builder.build()
     }
   }
@@ -57,8 +57,8 @@ object JobRunConversions {
   implicit class ProtoToJobRunTask(val proto: Protos.JobRun.JobRunTask) extends AnyVal {
     def toModel: JobRunTask = JobRunTask(
       Task.Id(proto.getId),
-      new DateTime(proto.getStartedAt, DateTimeZone.UTC),
-      if (proto.hasCompletedAt) Some(new DateTime(proto.getCompletedAt, DateTimeZone.UTC)) else None,
+      Instant.ofEpochMilli(proto.getStartedAt),
+      if (proto.hasCompletedAt) Some(Instant.ofEpochMilli(proto.getCompletedAt)) else None,
       proto.getStatus.toModel)
   }
 
@@ -74,9 +74,9 @@ object JobRunConversions {
         .setId(jobRun.id.toProto)
         .setJobSpec(jobRun.jobSpec.toProto)
         .setStatus(jobRun.status.toProto)
-        .setCreatedAt(jobRun.createdAt.getMillis)
+        .setCreatedAt(jobRun.createdAt.toEpochMilli)
 
-      jobRun.completedAt.foreach(date => builder.setFinishedAt(date.getMillis))
+      jobRun.completedAt.foreach(date => builder.setFinishedAt(date.toEpochMilli))
       jobRun.tasks.values.foreach(task => builder.addTasks(task.toProto))
       jobRun.startingDeadline.foreach(d => builder.setStartingDeadlineSeconds(d.toSeconds))
       builder.build()
@@ -91,8 +91,8 @@ object JobRunConversions {
         id = proto.getId.toModel,
         jobSpec = proto.getJobSpec.toModel,
         status = proto.getStatus.toModel,
-        createdAt = new DateTime(proto.getCreatedAt, DateTimeZone.UTC),
-        completedAt = if (proto.hasFinishedAt) Some(new DateTime(proto.getFinishedAt, DateTimeZone.UTC)) else None,
+        createdAt = Instant.ofEpochMilli(proto.getCreatedAt),
+        completedAt = if (proto.hasFinishedAt) Some(Instant.ofEpochMilli(proto.getFinishedAt)) else None,
         startingDeadline = if (proto.hasStartingDeadlineSeconds)
           Some(Duration(proto.getStartingDeadlineSeconds, TimeUnit.SECONDS))
         else
