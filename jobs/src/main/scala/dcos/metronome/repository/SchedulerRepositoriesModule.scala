@@ -20,14 +20,12 @@ import org.slf4j.{ Logger, LoggerFactory }
 import scala.collection.JavaConverters._
 import scala.concurrent.{ Await, Future }
 
-class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: RepositoryModule, metricsModule: MetricsModule, lifecycleState: LifecycleState) {
+class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: RepositoryModule, lifecycleState: LifecycleState) {
   import SchedulerRepositoriesModule._
 
   private[this] def directOrCachedStore[T <: mesosphere.marathon.state.MarathonState[_, T]](store: MarathonStore[T]): EntityStore[T] = {
     if (config.enableStoreCache) new EntityStoreCache[T](store) else store
   }
-
-  private[this] lazy val metrics = metricsModule.metrics
 
   lazy val zk: ZooKeeperClient = {
     require(

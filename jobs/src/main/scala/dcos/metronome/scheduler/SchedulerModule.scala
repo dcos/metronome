@@ -39,13 +39,11 @@ class SchedulerModule(
   clock:             Clock,
   persistenceModule: SchedulerRepositoriesModule,
   pluginModule:      PluginModule,
-  metricsModule:     MetricsModule,
   lifecycleState:    LifecycleState,
   crashStrategy:     CrashStrategy) {
 
   private[this] lazy val scallopConf: AllConf = config.scallopConf
 
-  private[this] lazy val metrics = metricsModule.metrics
   private[this] lazy val random = Random
   private[this] lazy val actorsModule = new ActorsModule(actorSystem)
 
