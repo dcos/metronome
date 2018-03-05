@@ -9,7 +9,6 @@ import dcos.metronome.jobinfo.JobSpecSelector
 import dcos.metronome.jobrun.JobRunServiceFixture
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import dcos.metronome.model._
-import org.joda.time.DateTime
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }
 

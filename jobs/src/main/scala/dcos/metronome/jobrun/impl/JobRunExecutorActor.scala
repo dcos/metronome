@@ -4,22 +4,19 @@ package jobrun.impl
 import java.time.Clock
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Scheduler, Stash }
-import dcos.metronome.{ JobRunFailed, UnexpectedTaskState }
-import dcos.metronome.behavior.{ ActorBehavior, Behavior }
+import akka.actor.{Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Scheduler, Stash}
+import dcos.metronome.behavior.{ActorBehavior, Behavior}
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
+import dcos.metronome.model.{JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy}
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.Task.LaunchedEphemeral
-import mesosphere.marathon.core.task.tracker.TaskTracker
-import org.joda.time.Seconds
 
 import scala.concurrent.Promise
-import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.concurrent.duration.FiniteDuration
 
 /**
   * Handles one job run from start until the job either completes successful or failed.

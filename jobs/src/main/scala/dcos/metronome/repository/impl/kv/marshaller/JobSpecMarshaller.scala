@@ -3,10 +3,8 @@ package repository.impl.kv.marshaller
 
 import java.time.ZoneId
 
-import dcos.metronome.Protos
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.kv.EntityMarshaller
-import org.joda.time.DateTimeZone
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
