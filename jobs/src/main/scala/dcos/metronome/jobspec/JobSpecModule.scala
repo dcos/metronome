@@ -1,13 +1,14 @@
 package dcos.metronome
 package jobspec
 
+import java.time.Clock
+
 import akka.actor.ActorSystem
 import dcos.metronome.behavior.Behavior
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.impl.{ JobSpecPersistenceActor, JobSpecSchedulerActor, JobSpecServiceActor, JobSpecServiceDelegate }
 import dcos.metronome.model.{ JobId, JobSpec }
 import dcos.metronome.repository.Repository
-import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.core.leadership.LeadershipModule
 
 class JobSpecModule(

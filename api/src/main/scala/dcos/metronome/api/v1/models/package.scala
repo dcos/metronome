@@ -1,6 +1,9 @@
 package dcos.metronome
 package api.v1
 
+import java.time.{ Instant, ZoneId }
+import java.time.format.DateTimeFormatter
+
 import dcos.metronome.MetronomeInfo
 import dcos.metronome.api._
 import dcos.metronome.jobinfo.JobInfo
@@ -11,7 +14,6 @@ import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedTaskInfo
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.plugin.PathId
 import mesosphere.marathon.state.{ RunSpec, Timestamp }
-import org.joda.time.{ DateTime, DateTimeZone }
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.{ Json, _ }
@@ -33,9 +35,11 @@ package object models {
     Reads.of[String](Reads.minLength[String](1)).map(s => JobId(s)),
     Writes[JobId] { id => JsString(id.toString) })
 
-  implicit val DateTimeFormat: Format[DateTime] = Format (
-    Reads.jodaDateReads("yyyy-MM-dd'T'HH:mm:ss.SSSZ"),
-    Writes.jodaDateWrites("yyyy-MM-dd'T'HH:mm:ss.SSSZ"))
+  private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+    .withZone(ZoneId.systemDefault())
+  implicit val DateTimeFormat: Format[Instant] = Format (
+    Reads.instantReads(dateTimeFormatter),
+    Writes[Instant] { instant => JsString(dateTimeFormatter.format(instant)) })
 
   implicit lazy val ArtifactFormat: Format[Artifact] = (
     (__ \ "uri").format[String] ~
@@ -51,11 +55,11 @@ package object models {
     }
   }
 
-  implicit lazy val DateTimeZoneFormat: Format[DateTimeZone] = new Format[DateTimeZone] {
-    override def writes(o: DateTimeZone): JsValue = JsString(o.getID)
-    override def reads(json: JsValue): JsResult[DateTimeZone] = json match {
-      case JsString(value) if DateTimeZone.getAvailableIDs.asScala.contains(value) =>
-        JsSuccess(DateTimeZone.forID(value))
+  implicit lazy val DateTimeZoneFormat: Format[ZoneId] = new Format[ZoneId] {
+    override def writes(o: ZoneId): JsValue = JsString(o.toString)
+    override def reads(json: JsValue): JsResult[ZoneId] = json match {
+      case JsString(value) if ZoneId.getAvailableZoneIds.asScala.contains(value) =>
+        JsSuccess(ZoneId.of(value))
       case invalid => JsError(s"No time zone found with this id: $invalid")
     }
   }
@@ -90,7 +94,7 @@ package object models {
     lazy val ScheduleSpecFormatBasic: Format[ScheduleSpec] = (
       (__ \ "id").format[String] ~
       (__ \ "cron").format[CronSpec] ~
-      (__ \ "timezone").formatNullable[DateTimeZone].withDefault(ScheduleSpec.DefaultTimeZone) ~
+      (__ \ "timezone").formatNullable[ZoneId].withDefault(ScheduleSpec.DefaultTimeZone) ~
       (__ \ "startingDeadlineSeconds").formatNullable[Duration].withDefault(ScheduleSpec.DefaultStartingDeadline) ~
       (__ \ "concurrencyPolicy").formatNullable[ConcurrencyPolicy].withDefault(ScheduleSpec.DefaultConcurrencyPolicy) ~
       (__ \ "enabled").formatNullable[Boolean].withDefault(ScheduleSpec.DefaultEnabled))(ScheduleSpec.apply, unlift(ScheduleSpec.unapply))

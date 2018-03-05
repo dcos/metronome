@@ -36,6 +36,26 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       contentAsJson(response) mustBe schedule1Json
     }
 
+    "create a job schedule with timezone" in {
+      Given("A job")
+      route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
+
+      When("A Schedule is created")
+      val scheduleJson = Json.parse("""{
+                                      |    "id": "everyminute",
+                                      |    "cron": "* * * * *",
+                                      |    "concurrencyPolicy": "ALLOW",
+                                      |    "enabled": true,
+                                      |    "startingDeadlineSeconds": 60,
+                                      |    "timezone": "America/Chicago"
+                                      |  }""".stripMargin)
+      val response = route(app, FakeRequest(POST, s"/v1/jobs/$specId/schedules")
+        .withJsonBody(scheduleJson)).get
+
+      Then("The schedule is created")
+      (contentAsJson(response) \ "timezone").as[String] mustBe "America/Chicago"
+    }
+
     "create a job schedule using the forbid concurrencyPolicy" in {
       Given("A job")
       route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
