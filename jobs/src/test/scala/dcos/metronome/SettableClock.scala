@@ -1,6 +1,6 @@
 package dcos.metronome
 
-import java.time._
+import java.time.{ Clock, Instant, LocalDateTime, ZoneOffset, ZoneId, Duration }
 
 import scala.concurrent.duration.FiniteDuration
 

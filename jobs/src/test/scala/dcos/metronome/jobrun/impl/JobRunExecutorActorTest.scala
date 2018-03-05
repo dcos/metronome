@@ -1,7 +1,7 @@
 package dcos.metronome
 package jobrun.impl
 
-import java.time.{ Duration => _, _ }
+import java.time.{ Clock, Instant, LocalDateTime, ZoneOffset }
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ ActorContext, ActorRef, ActorSystem }
@@ -24,7 +24,7 @@ import org.apache.mesos.SchedulerDriver
 import org.apache.mesos
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatest.time.{ Millis, Seconds, Span }
-import org.scalatest._
+import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, FunSuiteLike, GivenWhenThen, Matchers }
 
 import scala.concurrent.{ Promise, duration }
 import scala.concurrent.duration._

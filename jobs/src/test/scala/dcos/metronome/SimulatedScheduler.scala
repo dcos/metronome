@@ -47,7 +47,7 @@ class SimulatedScheduler(clock: SettableClock) extends Scheduler {
     val id = nextId.getAndIncrement
     val cancellable = new ScheduledTaskCancellable(id)
     scheduledTasks(id) = ScheduledTask(
-      time = clock.instant().toEpochMilli + delay.toMillis,
+      time = clock.instant().plusMillis(delay.toMillis).toEpochMilli,
       action = () => {
         cancellable.cancel()
         executor.execute(runnable)

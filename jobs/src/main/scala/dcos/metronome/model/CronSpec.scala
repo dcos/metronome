@@ -19,20 +19,20 @@ class CronSpec(val cron: Cron) {
   private[this] lazy val executionTime: ExecutionTime = ExecutionTime.forCron(cron)
 
   def nextExecution(from: ZonedDateTime): ZonedDateTime = {
-    val fromDateTime: ThreeTenZonedDateTime = jodaToThreetenTime(from)
-    threetenToJodaTime(executionTime.nextExecution(fromDateTime).get())
+    val fromDateTime: ThreeTenZonedDateTime = javaTimeToThreetenTime(from)
+    threetenToJavaTime(executionTime.nextExecution(fromDateTime).get())
   }
 
   def lastExecution(from: ZonedDateTime): ZonedDateTime = {
-    val fromDateTime: ThreeTenZonedDateTime = jodaToThreetenTime(from)
-    threetenToJodaTime(executionTime.lastExecution(fromDateTime).get())
+    val fromDateTime: ThreeTenZonedDateTime = javaTimeToThreetenTime(from)
+    threetenToJavaTime(executionTime.lastExecution(fromDateTime).get())
   }
 
-  private def threetenToJodaTime(from: ThreeTenZonedDateTime): ZonedDateTime = {
+  private def threetenToJavaTime(from: ThreeTenZonedDateTime): ZonedDateTime = {
     ZonedDateTime.ofInstant(Instant.ofEpochMilli(from.toInstant.toEpochMilli), ZoneId.of(from.getZone.getId))
   }
 
-  private def jodaToThreetenTime(from: ZonedDateTime): ThreeTenZonedDateTime = {
+  private def javaTimeToThreetenTime(from: ZonedDateTime): ThreeTenZonedDateTime = {
     ThreeTenZonedDateTime.ofInstant(ThreeTenInstant.ofEpochMilli(from.toInstant.toEpochMilli), ThreeTenZoneId.of(from.getZone.toString))
   }
 
