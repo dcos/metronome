@@ -52,6 +52,8 @@ object Build extends sbt.Build {
         Dependency.cronUtils,
         Dependency.threeten,
         Dependency.metrics,
+        Dependency.twitterCommons,
+        Dependency.twitterZk,
         Dependency.jsonValidate,
         Dependency.Test.scalatest,
         Dependency.Test.scalatestPlay
@@ -148,6 +150,7 @@ object Build extends sbt.Build {
       val Metrics = "3.5.4_a2.3"
       val JsonValidate = "0.7.0"
       val TwitterCommons = "0.0.76"
+      val TwitterZk = "6.34.0"
     }
 
     val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
@@ -166,6 +169,7 @@ object Build extends sbt.Build {
     val metrics = "nl.grons" %% "metrics-scala" % V.Metrics
     val jsonValidate = "com.eclipsesource" %% "play-json-schema-validator" % V.JsonValidate
     val twitterCommons = "com.twitter.common.zookeeper" % "candidate" % V.TwitterCommons
+    val twitterZk = "com.twitter" %% "util-zk" % V.TwitterZk
 
     object Test {
       val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"

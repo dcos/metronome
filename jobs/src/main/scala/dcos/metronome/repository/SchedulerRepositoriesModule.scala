@@ -4,22 +4,22 @@ package repository
 import java.net.InetSocketAddress
 import java.util.UUID
 
-import com.twitter.common.quantity.{Amount, Time}
+import com.twitter.common.quantity.{ Amount, Time }
 import com.twitter.common.zookeeper.ZooKeeperClient
 import dcos.metronome.migration.Migration
 import dcos.metronome.migration.impl.MigrationImpl
 import dcos.metronome.scheduler.SchedulerConfig
 import dcos.metronome.MetricsModule
-import dcos.metronome.utils.state.{EntityStore, EntityStoreCache, MarathonStore}
+import dcos.metronome.utils.state.{ EntityStore, EntityStoreCache, MarathonStore }
 import mesosphere.marathon.Protos.MarathonTask
-import mesosphere.marathon.state.{AppDefinition, AppRepository, EntityStore, EntityStoreCache, Group, GroupRepository, MarathonStore, MarathonTaskState, TaskRepository}
+import mesosphere.marathon.state.{ AppDefinition, AppRepository, EntityStore, EntityStoreCache, Group, GroupRepository, MarathonStore, MarathonTaskState, TaskRepository }
 import mesosphere.marathon.storage.repository.AppRepository
-import mesosphere.util.state.{FrameworkId, PersistentStore}
+import mesosphere.util.state.{ FrameworkId, PersistentStore }
 import org.apache.zookeeper.KeeperException
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 
 class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: RepositoryModule, metricsModule: MetricsModule) {
   import SchedulerRepositoriesModule._

@@ -16,9 +16,8 @@ import dcos.metronome.utils.glue.MarathonImplicits._
 import dcos.metronome.utils.test.Mockito
 import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
-import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedTaskInfo
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.core.task.tracker.{InstanceTracker, TaskTracker}
+import mesosphere.marathon.core.task.tracker.{InstanceTracker}
 import mesosphere.marathon.state.{RunSpec, Timestamp}
 import org.apache.mesos.SchedulerDriver
 import org.apache.mesos
@@ -350,7 +349,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Active, clock.instant(), None, None, Map.empty)
     val runSpecId = activeJobRun.id.toRunSpecId
     f.launchQueue.get(runSpecId) returns None
-    taskTracker.appTasksLaunchedSync(runSpecId) returns Seq.empty
+    instanceTracker.appTasksLaunchedSync(runSpecId) returns Seq.empty
 
     When("the actor is initialized")
     val actorRef: ActorRef = executorActor(activeJobRun)
@@ -375,7 +374,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       tasksLost = 0,
       backOffUntil = Timestamp(0))
     f.launchQueue.get(runSpecId) returns Some(queuedTaskInfo)
-    taskTracker.appTasksLaunchedSync(runSpecId) returns Seq.empty
+    instanceTracker.appTasksLaunchedSync(runSpecId) returns Seq.empty
 
     When("the actor is initialized")
     val actorRef: ActorRef = executorActor(activeJobRun)
@@ -403,7 +402,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       tasksLost = 0,
       backOffUntil = Timestamp(0))
     launchQueue.get(runSpecId) returns Some(queuedTaskInfo)
-    taskTracker.appTasksLaunchedSync(runSpecId) returns Seq(
+    instanceTracker.appTasksLaunchedSync(runSpecId) returns Seq(
       mockTask(taskId, Timestamp(clock.instant().toEpochMilli), mesos.Protos.TaskState.TASK_RUNNING))
 
     When("the actor is initialized")
@@ -637,7 +636,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val defaultJobSpec = JobSpec(runSpecId, Some("test"))
     val clock = new SettableClock(Clock.fixed(LocalDateTime.parse("2016-06-01T08:50:12.000").toInstant(ZoneOffset.UTC), ZoneOffset.UTC))
     val launchQueue: LaunchQueue = mock[LaunchQueue]
-    val taskTracker: InstanceTracker = mock[InstanceTracker]
+    val instanceTracker: InstanceTracker = mock[InstanceTracker]
     val driver = mock[SchedulerDriver]
     val driverHolder: MarathonSchedulerDriverHolder = {
       val holder = new MarathonSchedulerDriverHolder
@@ -658,7 +657,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     def executorActor(jobRun: JobRun, startingDeadline: Option[Duration] = None): TestActorRef[JobRunExecutorActor] = {
       import JobRunExecutorActorTest._
       val actorRef = TestActorRef[JobRunExecutorActor](JobRunExecutorActor.props(jobRun, promise, persistenceActorFactory,
-        launchQueue, taskTracker, driverHolder, clock, behaviour)(scheduler), parent.ref, "JobRunExecutor")
+        launchQueue, instanceTracker, driverHolder, clock, behaviour)(scheduler), parent.ref, "JobRunExecutor")
       actor = Some(actorRef)
       actorRef
     }
@@ -708,7 +707,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
         Map(Task.Id("taskId") -> JobRunTask(Task.Id("taskId"), null, None, TaskState.Running)))
       val actorRef: ActorRef = executorActor(activeJob)
       val runSpecId = activeJob.id.toRunSpecId
-      taskTracker.appTasksLaunchedSync(runSpecId) returns Seq(
+      instanceTracker.appTasksLaunchedSync(runSpecId) returns Seq(
         mockTask(taskId, Timestamp(clock.instant().toEpochMilli), mesos.Protos.TaskState.TASK_RUNNING))
       (actorRef, activeJob)
     }

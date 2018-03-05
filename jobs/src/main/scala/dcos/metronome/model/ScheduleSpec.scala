@@ -1,7 +1,7 @@
 package dcos.metronome
 package model
 
-import java.time.{Clock, Instant, ZoneId, ZonedDateTime}
+import java.time.{ Clock, Instant, ZoneId, ZonedDateTime }
 
 import com.wix.accord.Validator
 import com.wix.accord.dsl._

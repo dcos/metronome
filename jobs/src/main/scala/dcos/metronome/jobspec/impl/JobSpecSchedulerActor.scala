@@ -1,13 +1,13 @@
 package dcos.metronome
 package jobspec.impl
 
-import java.time.{Clock, Instant}
+import java.time.{ Clock, Instant }
 import java.util.concurrent.TimeUnit
 
 import akka.actor._
-import dcos.metronome.behavior.{ActorBehavior, Behavior}
+import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.jobrun.JobRunService
-import dcos.metronome.model.{JobSpec, ScheduleSpec}
+import dcos.metronome.model.{ JobSpec, ScheduleSpec }
 
 import scala.concurrent.duration._
 

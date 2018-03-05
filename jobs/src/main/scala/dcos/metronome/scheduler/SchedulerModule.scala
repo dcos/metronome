@@ -114,11 +114,11 @@ class SchedulerModule(
   lazy val taskKillService: KillService = taskTerminationModule.taskKillService
 
   private[this] lazy val scheduler: MarathonScheduler = {
-    val taskTracker: InstanceTracker = instanceTrackerModule.instanceTracker
+    val instanceTracker: InstanceTracker = instanceTrackerModule.instanceTracker
     val stateOpProcessor: TaskStateOpProcessor = instanceTrackerModule.stateOpProcessor
     val offerProcessor: OfferProcessor = launcherModule.offerProcessor
     val taskStatusProcessor: TaskStatusUpdateProcessor = new TaskStatusUpdateProcessorImpl(
-      clock, taskTracker, stateOpProcessor, schedulerDriverHolder, taskKillService, eventBus)
+      clock, instanceTracker, stateOpProcessor, schedulerDriverHolder, taskKillService, eventBus)
     val leaderInfo = config.mesosLeaderUiUrl match {
       case someUrl @ Some(_) => ConstMesosLeaderInfo(someUrl)
       case None              => new MutableMesosLeaderInfo

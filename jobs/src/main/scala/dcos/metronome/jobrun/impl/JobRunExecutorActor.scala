@@ -14,6 +14,7 @@ import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.Task.LaunchedEphemeral
+import mesosphere.marathon.core.task.tracker.InstanceTracker
 
 import scala.concurrent.Promise
 import scala.concurrent.duration.FiniteDuration
@@ -24,14 +25,14 @@ import scala.concurrent.duration.FiniteDuration
   * @param run the related job run object.
   */
 class JobRunExecutorActor(
-  run:                        JobRun,
-  promise:                    Promise[JobResult],
-  persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
-  launchQueue:                LaunchQueue,
-  taskTracker:                TaskTracker,
-  driverHolder:               MarathonSchedulerDriverHolder,
-  clock:                      Clock,
-  val behavior:               Behavior)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorBehavior {
+                           run:                        JobRun,
+                           promise:                    Promise[JobResult],
+                           persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
+                           launchQueue:                LaunchQueue,
+                           instanceTracker:                InstanceTracker,
+                           driverHolder:               MarathonSchedulerDriverHolder,
+                           clock:                      Clock,
+                           val behavior:               Behavior)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorBehavior {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
   import TaskStates._
@@ -127,7 +128,7 @@ class JobRunExecutorActor(
   }
 
   def tasksFromTaskTracker(): Iterable[JobRunTask] = {
-    taskTracker.appTasksLaunchedSync(runSpecId).collect {
+    instanceTracker.appTasksLaunchedSync(runSpecId).collect {
       case task: LaunchedEphemeral => JobRunTask(task)
       case task: Task              => throw UnexpectedTaskState(task)
     }
@@ -380,16 +381,16 @@ object JobRunExecutorActor {
   case class ForwardStatusUpdate(update: TaskStateChangedEvent)
 
   def props(
-    run:                        JobRun,
-    promise:                    Promise[JobResult],
-    persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
-    launchQueue:                LaunchQueue,
-    taskTracker:                TaskTracker,
-    driverHolder:               MarathonSchedulerDriverHolder,
-    clock:                      Clock,
-    behavior:                   Behavior)(implicit scheduler: Scheduler): Props = Props(
+             run:                        JobRun,
+             promise:                    Promise[JobResult],
+             persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
+             launchQueue:                LaunchQueue,
+             instanceTracker:                InstanceTracker,
+             driverHolder:               MarathonSchedulerDriverHolder,
+             clock:                      Clock,
+             behavior:                   Behavior)(implicit scheduler: Scheduler): Props = Props(
     new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
-      launchQueue, taskTracker, driverHolder, clock, behavior))
+      launchQueue, instanceTracker, driverHolder, clock, behavior))
 }
 
 object TaskStates {

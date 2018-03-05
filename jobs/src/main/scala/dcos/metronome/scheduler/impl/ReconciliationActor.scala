@@ -25,7 +25,7 @@ class ReconciliationActor(
 
   when(Loading) {
     case Event(TasksLoaded(tasks), _) =>
-      log.debug("received tasks from taskTracker")
+      log.debug("received tasks from instanceTracker")
       goto(Reconciling) using ReconciliationData(tasks)
 
     case Event(TaskLoadingFailed(error), _) =>
@@ -124,8 +124,8 @@ object ReconciliationActor {
   case class ReconciliationData(tasks: Iterable[Task]) extends Data
 
   def props(
-    driverHolder: MarathonSchedulerDriverHolder,
-    taskTracker:  InstanceTracker,
-    config:       SchedulerConfig): Props =
-    Props(new ReconciliationActor(driverHolder, taskTracker, config))
+             driverHolder: MarathonSchedulerDriverHolder,
+             instanceTracker:  InstanceTracker,
+             config:       SchedulerConfig): Props =
+    Props(new ReconciliationActor(driverHolder, instanceTracker, config))
 }

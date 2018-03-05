@@ -12,10 +12,10 @@ import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
 class MarathonStore[S <: MarathonState[_, S]](
-    store: PersistentStore,
-    metrics: Metrics,
-    newState: () => S,
-    prefix: String)(implicit ct: ClassTag[S]) extends EntityStore[S] {
+  store:    PersistentStore,
+  metrics:  Metrics,
+  newState: () => S,
+  prefix:   String)(implicit ct: ClassTag[S]) extends EntityStore[S] {
 
   import scala.concurrent.ExecutionContext.Implicits.global
   private[this] val log = LoggerFactory.getLogger(getClass)
