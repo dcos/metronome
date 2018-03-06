@@ -76,7 +76,7 @@ object QueuedJobRunConverter {
           case runSpec =>
             throw new IllegalArgumentException(s"Unexpected runSpec type - jobs are translated to Apps on Marathon level, got $runSpec")
         },
-        acceptedResourceRoles = Some(instanceInfo.runSpec.acceptedResourceRoles))
+        acceptedResourceRoles = instanceInfo.runSpec.acceptedResourceRoles)
     }
   }
 }

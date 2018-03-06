@@ -22,10 +22,6 @@ import scala.concurrent.{ Await, ExecutionContext, Future }
 class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: RepositoryModule, lifecycleState: LifecycleState, actorsModule: ActorsModule, actorSystem: ActorSystem) {
   import SchedulerRepositoriesModule._
 
-  private[this] def directOrCachedStore[T <: mesosphere.marathon.state.MarathonState[_, T]](store: MarathonStore[T]): EntityStore[T] = {
-    if (config.enableStoreCache) new EntityStoreCache[T](store) else store
-  }
-
   lazy val zk: ZooKeeperClient = {
     require(
       config.zkSessionTimeout.toMillis < Integer.MAX_VALUE,
