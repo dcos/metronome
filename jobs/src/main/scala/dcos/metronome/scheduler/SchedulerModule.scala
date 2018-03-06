@@ -40,12 +40,12 @@ class SchedulerModule(
   persistenceModule: SchedulerRepositoriesModule,
   pluginModule:      PluginModule,
   lifecycleState:    LifecycleState,
-  crashStrategy:     CrashStrategy) {
+  crashStrategy:     CrashStrategy,
+  actorsModule:      ActorsModule) {
 
   private[this] lazy val scallopConf: AllConf = config.scallopConf
 
   private[this] lazy val random = Random
-  private[this] lazy val actorsModule = new ActorsModule(actorSystem)
 
   private[this] lazy val eventBus: EventStream = actorSystem.eventStream
 
@@ -100,7 +100,7 @@ class SchedulerModule(
       lookupInstance = instanceTrackerModule.instanceTracker.instance,
       taskStatusPublisher = taskStatusProcessor.publish)(actorsModule.materializer)
 
-    new LauncherModule(scallopConf, instanceCreationHandler, schedulerDriverHolder, offerMatcher, pluginModule.pluginManager, offerStreamInput)
+    new LauncherModule(scallopConf, instanceCreationHandler, schedulerDriverHolder, offerMatcher, pluginModule.pluginManager, offerStreamInput)(clock)
   }
 
   private[this] lazy val taskTerminationModule: TaskTerminationModule = new TaskTerminationModule(

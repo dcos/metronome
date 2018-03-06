@@ -25,7 +25,6 @@ class ApiModule(
   jobInfoService:     JobInfoService,
   pluginManager:      PluginManager,
   httpErrorHandler:   HttpErrorHandler,
-  metrics:            Metrics,
   assets:             Assets,
   launchQueueService: LaunchQueueService) {
 

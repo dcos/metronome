@@ -109,8 +109,6 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
 
   lazy val behavior: Behavior = BehaviorFixture.empty
 
-  lazy val metrics: Metrics = behavior.metrics
-
   lazy val pluginManager: PluginManager = PluginManager.None
 
   lazy val jobSpecService: JobSpecService = JobSpecServiceFixture.simpleJobSpecService()

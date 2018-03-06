@@ -2,25 +2,24 @@ package dcos.metronome
 package repository
 
 import java.net.InetSocketAddress
-import java.util.UUID
 
-import com.sun.javaws.exceptions.InvalidArgumentException
+import akka.actor.ActorSystem
 import com.twitter.common.quantity.{ Amount, Time }
 import com.twitter.common.zookeeper.ZooKeeperClient
 import dcos.metronome.migration.Migration
 import dcos.metronome.migration.impl.MigrationImpl
 import dcos.metronome.scheduler.SchedulerConfig
 import dcos.metronome.utils.state.{ EntityStore, EntityStoreCache, MarathonStore, PersistentStore }
-import mesosphere.marathon.core.base.LifecycleState
-import mesosphere.marathon.storage.{ CuratorZk, StorageConfig, StorageModule }
-import mesosphere.marathon.storage.repository.{ AppRepository, FrameworkIdRepository, GroupRepository, InstanceRepository }
+import mesosphere.marathon.core.base.{ ActorsModule, LifecycleState }
+import mesosphere.marathon.storage.repository.{ FrameworkIdRepository, GroupRepository, InstanceRepository }
+import mesosphere.marathon.storage.{ StorageConfig, StorageModule }
 import org.apache.zookeeper.KeeperException
 import org.slf4j.{ Logger, LoggerFactory }
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.{ Await, ExecutionContext, Future }
 
-class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: RepositoryModule, lifecycleState: LifecycleState) {
+class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: RepositoryModule, lifecycleState: LifecycleState, actorsModule: ActorsModule, actorSystem: ActorSystem) {
   import SchedulerRepositoriesModule._
 
   private[this] def directOrCachedStore[T <: mesosphere.marathon.state.MarathonState[_, T]](store: MarathonStore[T]): EntityStore[T] = {
@@ -56,7 +55,7 @@ class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: Rep
   private[this] lazy val persistentStore: PersistentStore = repositoryModule.zkStore
 
   lazy val storageConfig = StorageConfig(config.scallopConf, lifecycleState)
-  lazy val storageModule = StorageModule(config.scallopConf, lifecycleState)
+  lazy val storageModule = StorageModule(config.scallopConf, lifecycleState)(actorsModule.materializer, ExecutionContext.global, actorSystem.scheduler, actorSystem)
 
   lazy val instanceRepository: InstanceRepository = storageModule.instanceRepository
   lazy val groupRepository: GroupRepository = storageModule.groupRepository

@@ -5,8 +5,9 @@ import com.wix.accord._
 import com.wix.accord.dsl._
 import mesosphere.marathon.plugin
 import mesosphere.marathon.state.PathId
+import scala.collection.immutable.Seq
 
-case class JobId(path: List[String]) extends plugin.PathId {
+case class JobId(path: Seq[String]) extends plugin.PathId {
 
   def safePath: String = path.mkString("_")
 

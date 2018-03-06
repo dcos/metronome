@@ -97,6 +97,7 @@ class ReconciliationActor(
   private[this] def reconcileExplicitly(tasks: Iterable[Task]): Unit = {
     driverHolder.driver.foreach { driver =>
       log.info("Performing explicit reconciliation for {} tasks", tasks.size)
+      import scala.collection.JavaConverters._
       val statuses = tasks.flatMap(_.status.mesosStatus).asJavaCollection
       driver.reconcileTasks(statuses)
     }

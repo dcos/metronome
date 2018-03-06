@@ -8,7 +8,7 @@ import mesosphere.marathon
 import mesosphere.marathon.core.health.HealthCheck
 import mesosphere.marathon.core.readiness.ReadinessCheck
 import mesosphere.marathon.raml.Resources
-import mesosphere.marathon.state.{ Container, Container => _, Volume => _, _ }
+import mesosphere.marathon.state.{ AppDefinition, BackoffStrategy, Container, DockerVolume, EnvVarValue, FetchUri, PathId, PortDefinition, RunSpec, Secret, UpgradeStrategy, VersionInfo }
 
 import scala.collection.immutable.Seq
 import scala.concurrent.duration._

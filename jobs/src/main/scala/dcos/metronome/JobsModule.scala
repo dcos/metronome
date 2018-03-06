@@ -11,7 +11,7 @@ import dcos.metronome.jobspec.JobSpecModule
 import dcos.metronome.queue.LaunchQueueModule
 import dcos.metronome.repository.{ RepositoryModule, SchedulerRepositoriesModule }
 import dcos.metronome.scheduler.SchedulerModule
-import mesosphere.marathon.core.base.{ JvmExitsCrashStrategy, LifecycleState }
+import mesosphere.marathon.core.base.{ ActorsModule, JvmExitsCrashStrategy, LifecycleState }
 import mesosphere.marathon.core.plugin.{ PluginManager, PluginModule }
 
 class JobsModule(
@@ -28,7 +28,9 @@ class JobsModule(
 
   lazy val repositoryModule = new RepositoryModule(config)
 
-  lazy val schedulerRepositoriesModule = new SchedulerRepositoriesModule(config, repositoryModule, lifecycleState)
+  private[this] lazy val actorsModule = new ActorsModule(actorSystem)
+
+  lazy val schedulerRepositoriesModule = new SchedulerRepositoriesModule(config, repositoryModule, lifecycleState, actorsModule, actorSystem)
 
   lazy val schedulerModule: SchedulerModule = new SchedulerModule(
     config,
@@ -37,7 +39,8 @@ class JobsModule(
     schedulerRepositoriesModule,
     pluginModule,
     lifecycleState,
-    crashStrategy)
+    crashStrategy,
+    actorsModule)
 
   lazy val jobRunModule = {
     val launchQueue = schedulerModule.launchQueueModule.launchQueue
