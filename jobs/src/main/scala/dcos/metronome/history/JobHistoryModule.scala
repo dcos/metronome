@@ -4,7 +4,7 @@ package history
 import java.time.Clock
 
 import akka.actor.{ ActorRef, ActorSystem }
-import dcos.metronome.behavior.Behavior
+import dcos.metronome.measurement.MethodMeasurement
 import dcos.metronome.history.impl.{ JobHistoryServiceActor, JobHistoryServiceDelegate }
 import dcos.metronome.model.{ JobHistory, JobId }
 import dcos.metronome.repository.Repository
@@ -15,11 +15,11 @@ class JobHistoryModule(
   actorSystem:      ActorSystem,
   clock:            Clock,
   repository:       Repository[JobId, JobHistory],
-  behavior:         Behavior,
+  measured:         MethodMeasurement,
   leadershipModule: LeadershipModule) {
 
   lazy val jobHistoryServiceActor: ActorRef = leadershipModule.startWhenLeader(
-    JobHistoryServiceActor.props(config, clock, repository, behavior), "JobHistoryServiceActor")
+    JobHistoryServiceActor.props(config, clock, repository), "JobHistoryServiceActor")
 
-  lazy val jobHistoryService: JobHistoryService = behavior(new JobHistoryServiceDelegate(jobHistoryServiceActor, config))
+  lazy val jobHistoryService: JobHistoryService = measured(new JobHistoryServiceDelegate(jobHistoryServiceActor, config))
 }

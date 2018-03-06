@@ -1,18 +1,18 @@
 package dcos.metronome
-package behavior.impl
+package measurement.impl
 
 import java.lang.reflect.Method
 
 import com.softwaremill.macwire.aop.{ Interceptor, ProxyingInterceptor }
-import dcos.metronome.behavior.{ BehaviorConfig, Behavior, Metrics }
-import nl.grons.metrics.scala.{ Meter, Timer }
+import dcos.metronome.measurement.{ MethodMeasurement, MeasurementConfig }
+import mesosphere.marathon.metrics.{ Metrics, MinMaxCounter, ServiceMetric, Timer }
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
-class BehaviorImpl(val config: BehaviorConfig, val metrics: Metrics) extends Behavior {
+class KamonServiceMeasurement(val config: MeasurementConfig) extends MethodMeasurement {
 
   private[this] val log = LoggerFactory.getLogger(getClass)
 
@@ -21,37 +21,36 @@ class BehaviorImpl(val config: BehaviorConfig, val metrics: Metrics) extends Beh
   }
 
   def timedInvocationWithExceptionCount[T](classTag: ClassTag[T]): Interceptor = {
-    val builder = metrics.builder(classTag)
     var methodTimer = Map.empty[String, Timer]
     def timer(method: Method): Timer = {
       methodTimer.getOrElse(method.getName, {
         log.debug(s"Create new timer for method: ${method.getName} in class ${classTag.runtimeClass.getName}")
-        val timer = builder.timer(s"time.${method.getName}")
+        val timer = Metrics.timer(ServiceMetric, classTag.runtimeClass, "${method.getName}")
         methodTimer += method.getName -> timer
         timer
       })
     }
-    var methodExceptionCount = Map.empty[String, Meter]
-    def methodException(method: Method, ex: Throwable): Meter = {
+    var methodExceptionCount = Map.empty[String, MinMaxCounter]
+    def methodException(method: Method, ex: Throwable): MinMaxCounter = {
       val name = s"exception.${method.getName}.${ex.getClass.getName}"
       methodExceptionCount.getOrElse(name, {
         log.debug(s"Create new count for method: ${method.getName} exception: ${ex.getClass.getName} in class ${classTag.runtimeClass.getName}")
-        val meter = builder.meter(name)
-        methodExceptionCount += name -> meter
-        meter
+        val counter = Metrics.minMaxCounter(ServiceMetric, classTag.runtimeClass, name)
+        methodExceptionCount += name -> counter
+        counter
       })
     }
     ProxyingInterceptor.apply { ctx =>
       val metricTimer = timer(ctx.method)
       if (ctx.method.getReturnType.isAssignableFrom(classOf[Future[Any]])) {
         import mesosphere.util.CallerThreadExecutionContext.callerThreadExecutionContext
-        metricTimer.timeFuture(ctx.proceed().asInstanceOf[Future[Any]]).recover {
+        metricTimer.apply(ctx.proceed().asInstanceOf[Future[Any]]).recover {
           case NonFatal(ex: Throwable) =>
-            methodException(ctx.method, ex).mark()
+            methodException(ctx.method, ex).increment()
             throw ex
         }
       } else {
-        metricTimer.time(ctx.proceed())
+        metricTimer.blocking(ctx.proceed())
       }
     }
   }

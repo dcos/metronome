@@ -1,5 +1,5 @@
 package dcos.metronome
-package behavior
+package measurement
 
 import scala.reflect.ClassTag
 
@@ -10,7 +10,7 @@ import scala.reflect.ClassTag
   * Supported behaviors:
   *  - metric support for services and actors
   */
-trait Behavior {
+trait MethodMeasurement {
 
   /**
     * Use this method for wiring services (construction time only!)
@@ -24,17 +24,10 @@ trait Behavior {
   def apply[T <: AnyRef](t: T)(implicit classTag: ClassTag[T]): T
 
   /**
-    * Access to the metrics component.
-    *
-    * @return the metrics component.
-    */
-  def metrics: Metrics
-
-  /**
     * The behavior configuration.
     * Note: This is needed for enabling actor behavior, which has to be handled inside the actor.
     *
     * @return the behavior configuration.
     */
-  def config: BehaviorConfig
+  def config: MeasurementConfig
 }

@@ -4,24 +4,24 @@ package history.impl
 import java.time.Clock
 
 import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
-import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.history.JobHistoryConfig
+import dcos.metronome.measurement.MethodMeasurement
 import dcos.metronome.model._
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
 
 import scala.collection.concurrent.TrieMap
 
-class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: Repository[JobId, JobHistory], val behavior: Behavior)
-    extends Actor with ActorLogging with LoadContentOnStartup[JobId, JobHistory] with ActorBehavior {
-  import JobHistoryServiceActor._
+class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: Repository[JobId, JobHistory])
+    extends Actor with ActorLogging with LoadContentOnStartup[JobId, JobHistory] {
   import JobHistoryPersistenceActor._
+  import JobHistoryServiceActor._
 
   val jobHistoryMap = TrieMap.empty[JobId, JobHistory].withDefault(JobHistory.empty)
   var persistenceActor: ActorRef = _
 
   override def preStart(): Unit = {
     super.preStart()
-    persistenceActor = context.actorOf(JobHistoryPersistenceActor.props(repo, behavior))
+    persistenceActor = context.actorOf(JobHistoryPersistenceActor.props(repo))
     context.system.eventStream.subscribe(self, classOf[Event.JobRunEvent])
     context.system.eventStream.subscribe(self, classOf[Event.JobSpecDeleted])
   }
@@ -30,7 +30,7 @@ class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: R
     context.system.eventStream.unsubscribe(self)
   }
 
-  override def receive: Receive = around {
+  override def receive: Receive = {
     //event stream events
     case Event.JobRunStarted(run, _, _)      => started(run)
     case Event.JobRunFinished(run, _, _)     => finished(run)
@@ -91,7 +91,7 @@ object JobHistoryServiceActor {
   case class GetJobHistory(id: JobId)
   case class ListJobHistories(filter: JobHistory => Boolean)
 
-  def props(config: JobHistoryConfig, clock: Clock, repo: Repository[JobId, JobHistory], behavior: Behavior): Props = {
-    Props(new JobHistoryServiceActor(config, clock, repo, behavior))
+  def props(config: JobHistoryConfig, clock: Clock, repo: Repository[JobId, JobHistory]): Props = {
+    Props(new JobHistoryServiceActor(config, clock, repo))
   }
 }

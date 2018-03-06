@@ -8,7 +8,6 @@ import akka.actor.{ Actor, ActorSystem, Props, Status }
 import akka.testkit._
 import akka.pattern.ask
 import akka.util.Timeout
-import dcos.metronome.behavior.BehaviorFixture
 import dcos.metronome.{ JobSpecAlreadyExists, JobSpecChangeInFlight, JobSpecDoesNotExist }
 import dcos.metronome.model.{ CronSpec, JobId, JobSpec, ScheduleSpec }
 import dcos.metronome.repository.impl.InMemoryRepository

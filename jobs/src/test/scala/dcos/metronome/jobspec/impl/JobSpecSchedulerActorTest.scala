@@ -5,7 +5,6 @@ import java.time.{ Clock, LocalDateTime, ZoneId, ZoneOffset }
 
 import akka.actor.ActorSystem
 import akka.testkit.{ ImplicitSender, TestActorRef, TestKit }
-import dcos.metronome.behavior.BehaviorFixture
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.model._
 import dcos.metronome.utils.test.Mockito

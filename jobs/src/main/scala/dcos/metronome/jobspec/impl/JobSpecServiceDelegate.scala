@@ -7,6 +7,7 @@ import akka.util.Timeout
 import dcos.metronome.jobspec.impl.JobSpecServiceActor._
 import dcos.metronome.jobspec.{ JobSpecConfig, JobSpecService }
 import dcos.metronome.model.{ JobId, JobSpec }
+import mesosphere.marathon.metrics.Metrics
 
 import scala.concurrent.Future
 

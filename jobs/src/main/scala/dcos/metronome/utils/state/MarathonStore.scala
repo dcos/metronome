@@ -1,7 +1,6 @@
 package dcos.metronome.utils.state
 
 import com.google.protobuf.InvalidProtocolBufferException
-import dcos.metronome.behavior.Metrics
 import mesosphere.marathon.StoreCommandFailedException
 import org.slf4j.LoggerFactory
 
@@ -12,7 +11,6 @@ import scala.util.control.NonFatal
 
 class MarathonStore[S <: MarathonState[_, S]](
   store:    PersistentStore,
-  metrics:  Metrics,
   newState: () => S,
   prefix:   String)(implicit ct: ClassTag[S]) extends EntityStore[S] {
 

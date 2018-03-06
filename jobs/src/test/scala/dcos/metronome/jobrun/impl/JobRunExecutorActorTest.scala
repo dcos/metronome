@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{ActorContext, ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import dcos.metronome.{JobRunFailed, SimulatedScheduler}
-import dcos.metronome.behavior.BehaviorFixture
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.impl.JobRunExecutorActor.ForwardStatusUpdate
 import dcos.metronome.model._

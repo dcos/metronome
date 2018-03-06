@@ -5,9 +5,9 @@ import java.time.Clock
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Scheduler, Stash }
-import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
+import dcos.metronome.measurement.MethodMeasurement
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.MarathonSchedulerDriverHolder
@@ -16,8 +16,8 @@ import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.Task.LaunchedEphemeral
 import mesosphere.marathon.core.task.tracker.InstanceTracker
 
-import scala.concurrent.{ Await, Promise }
 import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.concurrent.{ Await, Promise }
 
 /**
   * Handles one job run from start until the job either completes successful or failed.
@@ -32,7 +32,7 @@ class JobRunExecutorActor(
   instanceTracker:            InstanceTracker,
   driverHolder:               MarathonSchedulerDriverHolder,
   clock:                      Clock,
-  val behavior:               Behavior)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorBehavior {
+  val behavior:               MethodMeasurement)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
   import TaskStates._
@@ -219,7 +219,7 @@ class JobRunExecutorActor(
 
   // Behavior
 
-  override def receive: Receive = around {
+  override def receive: Receive = {
     case Initialized(Nil) =>
       log.info("initializing - no existing tasks in the queue")
       becomeStarting(jobRun)
@@ -255,7 +255,7 @@ class JobRunExecutorActor(
       becomeAborting()
   }
 
-  def creating: Receive = around {
+  def creating: Receive = {
     receiveKill orElse receiveStartTimeout orElse {
       case JobRunCreated(_, updatedJobRun, _) =>
         becomeStarting(updatedJobRun)
@@ -265,7 +265,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def starting: Receive = around {
+  def starting: Receive = {
     receiveKill orElse receiveStartTimeout orElse {
       case ForwardStatusUpdate(update) if isActive(update.taskState) =>
         becomeActive(update)
@@ -287,7 +287,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def active: Receive = around {
+  def active: Receive = {
     receiveKill orElse {
       case ForwardStatusUpdate(update) if isFinished(update.taskState) =>
         becomeFinishing(jobRun.copy(
@@ -304,7 +304,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def finishing: Receive = around {
+  def finishing: Receive = {
     receiveKill orElse {
       case JobRunDeleted(_, persisted, _) =>
         log.info(s"Execution of JobRun ${jobRun.id} has been finished")
@@ -325,7 +325,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def failing: Receive = around {
+  def failing: Receive = {
     receiveKill orElse {
       case JobRunDeleted(_, persisted, _) =>
         log.info(s"Execution of JobRun ${jobRun.id} has failed")
@@ -342,7 +342,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def aborting: Receive = around {
+  def aborting: Receive = {
     // We can't handle a successful deletion and a failure differently
     case JobRunDeleted(_, persisted, _) =>
       log.info(s"Execution of JobRun ${jobRun.id} was aborted")
@@ -359,7 +359,7 @@ class JobRunExecutorActor(
       context.become(terminal)
   }
 
-  def terminal: Receive = around {
+  def terminal: Receive = {
     case _ => log.debug("Actor terminal; not handling or expecting any more messages")
   }
 
@@ -388,7 +388,7 @@ object JobRunExecutorActor {
     instanceTracker:            InstanceTracker,
     driverHolder:               MarathonSchedulerDriverHolder,
     clock:                      Clock,
-    behavior:                   Behavior)(implicit scheduler: Scheduler): Props = Props(
+    behavior:                   MethodMeasurement)(implicit scheduler: Scheduler): Props = Props(
     new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
       launchQueue, instanceTracker, driverHolder, clock, behavior))
 }

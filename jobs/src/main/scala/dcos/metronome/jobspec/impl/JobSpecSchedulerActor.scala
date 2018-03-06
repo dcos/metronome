@@ -5,8 +5,8 @@ import java.time.{ Clock, Instant }
 import java.util.concurrent.TimeUnit
 
 import akka.actor._
-import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.jobrun.JobRunService
+import dcos.metronome.measurement.MethodMeasurement
 import dcos.metronome.model.{ JobSpec, ScheduleSpec }
 
 import scala.concurrent.duration._
@@ -19,7 +19,7 @@ class JobSpecSchedulerActor(
   initSpec:     JobSpec,
   clock:        Clock,
   runService:   JobRunService,
-  val behavior: Behavior) extends Actor with Stash with ActorLogging with ActorBehavior {
+  val behavior: MethodMeasurement) extends Actor with Stash with ActorLogging {
 
   import JobSpecSchedulerActor._
   import context.dispatcher
@@ -36,7 +36,7 @@ class JobSpecSchedulerActor(
     cancelSchedule()
   }
 
-  override def receive: Receive = around {
+  override def receive: Receive = {
     case StartJob(schedule)     => runJob(schedule)
     case UpdateJobSpec(newSpec) => updateSpec(newSpec)
   }
@@ -82,7 +82,7 @@ object JobSpecSchedulerActor {
   case class StartJob(schedule: ScheduleSpec)
   case class UpdateJobSpec(newSpec: JobSpec)
 
-  def props(spec: JobSpec, clock: Clock, runService: JobRunService, behavior: Behavior): Props = {
+  def props(spec: JobSpec, clock: Clock, runService: JobRunService, behavior: MethodMeasurement): Props = {
     Props(new JobSpecSchedulerActor(spec, clock, runService, behavior))
   }
 }

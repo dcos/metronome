@@ -6,7 +6,6 @@ import java.util.concurrent.LinkedBlockingDeque
 
 import akka.actor.{ ActorSystem, Props }
 import akka.testkit._
-import dcos.metronome.behavior.BehaviorFixture
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.jobrun.impl.JobRunExecutorActor.{ Aborted, Finished }
 import dcos.metronome.jobrun.impl.JobRunServiceActor._

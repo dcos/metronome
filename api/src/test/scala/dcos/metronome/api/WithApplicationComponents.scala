@@ -2,7 +2,7 @@ package dcos.metronome
 package api
 
 import controllers.Assets
-import dcos.metronome.behavior.{ Behavior, BehaviorFixture, Metrics }
+import dcos.metronome.measurement.MethodMeasurement
 import dcos.metronome.history.{ JobHistoryService, JobHistoryServiceFixture }
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobinfo.impl.JobInfoServiceImpl
@@ -106,8 +106,6 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
   }
 
   override lazy val httpErrorHandler = new ErrorHandler
-
-  lazy val behavior: Behavior = BehaviorFixture.empty
 
   lazy val pluginManager: PluginManager = PluginManager.None
 

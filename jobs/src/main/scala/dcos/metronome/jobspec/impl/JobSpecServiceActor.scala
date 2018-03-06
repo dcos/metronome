@@ -2,10 +2,8 @@ package dcos.metronome
 package jobspec.impl
 
 import akka.actor._
-import dcos.metronome.behavior.{ ActorBehavior, Behavior }
-import dcos.metronome.model.{ JobId, Event, JobSpec }
+import dcos.metronome.model.{ Event, JobId, JobSpec }
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
-import dcos.metronome.{ JobSpecAlreadyExists, JobSpecChangeInFlight, JobSpecDoesNotExist }
 
 import scala.collection.concurrent.TrieMap
 
@@ -16,8 +14,7 @@ import scala.collection.concurrent.TrieMap
 class JobSpecServiceActor(
   val repo:                Repository[JobId, JobSpec],
   persistenceActorFactory: JobId => Props,
-  schedulerActorFactory:   JobSpec => Props,
-  val behavior:            Behavior) extends LoadContentOnStartup[JobId, JobSpec] with ActorBehavior {
+  schedulerActorFactory:   JobSpec => Props) extends LoadContentOnStartup[JobId, JobSpec] {
   import JobSpecPersistenceActor._
   import JobSpecServiceActor._
 
@@ -26,7 +23,7 @@ class JobSpecServiceActor(
   private[impl] val scheduleActors = TrieMap.empty[JobId, ActorRef]
   private[impl] val persistenceActors = TrieMap.empty[JobId, ActorRef]
 
-  override def receive: Receive = around {
+  override def receive: Receive = {
     // crud messages
     case CreateJobSpec(jobSpec)             => createJobSpec(jobSpec)
     case UpdateJobSpec(id, change)          => updateJobSpec(id, change)
@@ -190,6 +187,5 @@ object JobSpecServiceActor {
   def props(
     repo:                    Repository[JobId, JobSpec],
     persistenceActorFactory: JobId => Props,
-    schedulerActorFactory:   JobSpec => Props,
-    behavior:                Behavior): Props = Props(new JobSpecServiceActor(repo, persistenceActorFactory, schedulerActorFactory, behavior))
+    schedulerActorFactory:   JobSpec => Props): Props = Props(new JobSpecServiceActor(repo, persistenceActorFactory, schedulerActorFactory))
 }

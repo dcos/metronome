@@ -4,10 +4,10 @@ import java.time.Clock
 
 import akka.actor.ActorSystem
 import dcos.metronome.history.JobHistoryModule
-import dcos.metronome.behavior.BehaviorModule
 import dcos.metronome.jobinfo.JobInfoModule
 import dcos.metronome.jobrun.JobRunModule
 import dcos.metronome.jobspec.JobSpecModule
+import dcos.metronome.measurement.impl.KamonServiceMeasurement
 import dcos.metronome.queue.LaunchQueueModule
 import dcos.metronome.repository.{ RepositoryModule, SchedulerRepositoriesModule }
 import dcos.metronome.scheduler.SchedulerModule
@@ -24,7 +24,7 @@ class JobsModule(
   private[this] lazy val pluginModule = new PluginModule(config.scallopConf, crashStrategy)
   def pluginManger: PluginManager = pluginModule.pluginManager
 
-  lazy val behaviorModule = new BehaviorModule(config, metricsModule.metricsRegistry, metricsModule.healthCheckRegistry)
+  lazy val serviceMeasurement = new KamonServiceMeasurement(config)
 
   lazy val repositoryModule = new RepositoryModule(config)
 
@@ -46,7 +46,7 @@ class JobsModule(
     val launchQueue = schedulerModule.launchQueueModule.launchQueue
     val instanceTracker = schedulerModule.instanceTrackerModule.instanceTracker
     val driverHolder = schedulerModule.schedulerDriverHolder
-    new JobRunModule(config, actorSystem, clock, repositoryModule.jobRunRepository, launchQueue, instanceTracker, driverHolder, behaviorModule.behavior, schedulerModule.leadershipModule)
+    new JobRunModule(config, actorSystem, clock, repositoryModule.jobRunRepository, launchQueue, instanceTracker, driverHolder, serviceMeasurement, schedulerModule.leadershipModule)
   }
 
   lazy val jobSpecModule = new JobSpecModule(
@@ -55,7 +55,7 @@ class JobsModule(
     clock,
     repositoryModule.jobSpecRepository,
     jobRunModule.jobRunService,
-    behaviorModule.behavior,
+    serviceMeasurement,
     schedulerModule.leadershipModule)
 
   lazy val jobHistoryModule = new JobHistoryModule(
@@ -63,13 +63,13 @@ class JobsModule(
     actorSystem,
     clock,
     repositoryModule.jobHistoryRepository,
-    behaviorModule.behavior,
+    serviceMeasurement,
     schedulerModule.leadershipModule)
 
   lazy val jobInfoModule = new JobInfoModule(
     jobSpecModule.jobSpecService,
     jobRunModule.jobRunService,
-    behaviorModule.behavior,
+    serviceMeasurement,
     jobHistoryModule.jobHistoryService)
 
   lazy val queueModule = new LaunchQueueModule(schedulerModule.launchQueueModule.launchQueue)

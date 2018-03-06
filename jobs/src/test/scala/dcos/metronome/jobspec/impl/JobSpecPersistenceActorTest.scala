@@ -3,7 +3,6 @@ package jobspec.impl
 
 import akka.actor.ActorSystem
 import akka.testkit._
-import dcos.metronome.behavior.BehaviorFixture
 import dcos.metronome.model.{ JobId, JobSpec }
 import dcos.metronome.repository.Repository
 import dcos.metronome.utils.test.Mockito
