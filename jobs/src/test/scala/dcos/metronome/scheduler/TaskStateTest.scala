@@ -2,21 +2,22 @@ package dcos.metronome
 package scheduler
 
 import dcos.metronome.utils.test.Mockito
-import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }
+import mesosphere.marathon.core.condition.Condition
+import org.scalatest.{FunSuite, GivenWhenThen, Matchers}
 import org.apache.mesos
 
 class TaskStateTest extends FunSuite with Mockito with Matchers with GivenWhenThen {
 
   test("Mesos TaskState -> TaskState") {
-    TaskState(taskStatus(mesos.Protos.TaskState.TASK_ERROR)) shouldBe TaskState.Failed
-    TaskState(taskStatus(mesos.Protos.TaskState.TASK_FAILED)) shouldBe TaskState.Failed
-    TaskState(taskStatus(mesos.Protos.TaskState.TASK_FINISHED)) shouldBe TaskState.Finished
-    TaskState(taskStatus(mesos.Protos.TaskState.TASK_KILLED)) shouldBe TaskState.Killed
-    TaskState(taskStatus(mesos.Protos.TaskState.TASK_KILLING)) shouldBe TaskState.Running
-    TaskState(taskStatus(mesos.Protos.TaskState.TASK_LOST)) shouldBe TaskState.Failed
-    TaskState(taskStatus(mesos.Protos.TaskState.TASK_RUNNING)) shouldBe TaskState.Running
-    TaskState(taskStatus(mesos.Protos.TaskState.TASK_STAGING)) shouldBe TaskState.Staging
-    TaskState(taskStatus(mesos.Protos.TaskState.TASK_STARTING)) shouldBe TaskState.Starting
+    TaskState(Condition.Error) shouldBe TaskState.Failed
+    TaskState(Condition.Failed) shouldBe TaskState.Failed
+    TaskState(Condition.Finished) shouldBe TaskState.Finished
+    TaskState(Condition.Killed) shouldBe TaskState.Killed
+    TaskState(Condition.Killing) shouldBe TaskState.Running
+    TaskState(Condition.Unreachable) shouldBe TaskState.Failed
+    TaskState(Condition.Running) shouldBe TaskState.Running
+    TaskState(Condition.Staging) shouldBe TaskState.Staging
+    TaskState(Condition.Starting) shouldBe TaskState.Starting
   }
 
   def taskStatus(state: mesos.Protos.TaskState): mesos.Protos.TaskStatus = {
