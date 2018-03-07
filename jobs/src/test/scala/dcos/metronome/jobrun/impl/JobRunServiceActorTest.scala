@@ -221,7 +221,6 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     val dummyQueue = new LinkedBlockingDeque[TestActor.Message]()
     val dummyProp = Props(new TestActor(dummyQueue))
     val repo = new InMemoryRepository[JobRunId, JobRun]
-    val behavior = BehaviorFixture.empty
 
     var createExecutor: (JobRun, Promise[JobResult]) => Props = (_, _) => dummyProp
     def serviceActor = TestActorRef[JobRunServiceActor](JobRunServiceActor.props(clock, createExecutor, repo, behavior))

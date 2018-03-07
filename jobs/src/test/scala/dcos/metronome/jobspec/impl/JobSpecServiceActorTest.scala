@@ -262,7 +262,6 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     val dummyQueue = new LinkedBlockingDeque[TestActor.Message]()
     val dummyProp = Props(new TestActor(dummyQueue))
     val jobSpec = JobSpec(JobId("test"))
-    val behavior = BehaviorFixture.empty
-    val jobSpecService = TestActorRef[JobSpecServiceActor](JobSpecServiceActor.props(repository, (id: JobId) => dummyProp, _ => dummyProp, behavior))
+    val jobSpecService = TestActorRef[JobSpecServiceActor](JobSpecServiceActor.props(repository, (id: JobId) => dummyProp, _ => dummyProp))
   }
 }

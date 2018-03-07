@@ -9,6 +9,7 @@ import akka.testkit.{ ImplicitSender, TestActorRef, TestKit, TestProbe }
 import dcos.metronome.{ JobRunFailed, SimulatedScheduler }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.impl.JobRunExecutorActor.ForwardStatusUpdate
+import dcos.metronome.measurement.MethodMeasurementFixture
 import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
 import dcos.metronome.utils.glue.MarathonImplicits._
@@ -16,7 +17,7 @@ import dcos.metronome.utils.test.Mockito
 import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.core.task.tracker.{ InstanceTracker }
+import mesosphere.marathon.core.task.tracker.InstanceTracker
 import mesosphere.marathon.state.{ RunSpec, Timestamp }
 import org.apache.mesos.SchedulerDriver
 import org.apache.mesos
@@ -295,7 +296,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     verify(f.driver).killTask(taskId.mesosTaskId)
 
     And("The launch queue is purged")
-    verify(f.launchQueue).asyncPurge(jobRun.id.toRunSpecId)
+    verify(f.launchQueue).purge(jobRun.id.toRunSpecId)
 
     And("The jobRun is reported failed")
     val secondUpdateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
@@ -319,7 +320,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val successfulJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Success, clock.instant(), None, None, Map.empty)
     val actorRef: ActorRef = executorActor(successfulJobRun)
 
-    verify(launchQueue, timeout(1000)).asyncPurge(successfulJobRun.id.toRunSpecId)
+    verify(launchQueue, timeout(1000)).purge(successfulJobRun.id.toRunSpecId)
     val parentUpdate = parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
     parentUpdate.startedJobRun.jobRun.status shouldBe JobRunStatus.Success
     persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
@@ -570,7 +571,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     import f._
 
     Then("The launch queue is purged")
-    verify(launchQueue, timeout(1000)).asyncPurge(jobRun.id.toRunSpecId)
+    verify(launchQueue, timeout(1000)).purge(jobRun.id.toRunSpecId)
 
     And("The JobRun is deleted")
     f.persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
@@ -594,7 +595,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     import f._
 
     Then("The launch queue is purged")
-    verify(launchQueue, timeout(1000)).asyncPurge(jobRun.id.toRunSpecId)
+    verify(launchQueue, timeout(1000)).purge(jobRun.id.toRunSpecId)
 
     And("The JobRun is deleted")
     f.persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
@@ -651,7 +652,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val promise: Promise[JobResult] = Promise[JobResult]
     val parent = TestProbe()
     implicit val scheduler = new SimulatedScheduler(clock)
-    val behaviour = BehaviorFixture.empty
+    val behaviour = MethodMeasurementFixture.empty
     def executorActor(jobRun: JobRun, startingDeadline: Option[Duration] = None): TestActorRef[JobRunExecutorActor] = {
       import JobRunExecutorActorTest._
       val actorRef = TestActorRef[JobRunExecutorActor](JobRunExecutorActor.props(jobRun, promise, persistenceActorFactory,
@@ -703,7 +704,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     def setupRunningExecutorActor(): (ActorRef, JobRun) = {
       val activeJob = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Active, clock.instant(), None, None,
         Map(Task.Id("taskId") -> JobRunTask(Task.Id("taskId"), null, None, TaskState.Running)))
-      val actorRef: ActorRef = eTaskStateTest.scalaxecutorActor(activeJob)
+      val actorRef: ActorRef = executorActor(activeJob)
       val runSpecId = activeJob.id.toRunSpecId
       instanceTracker.appTasksLaunchedSync(runSpecId) returns Seq(
         mockTask(taskId, Timestamp(clock.instant().toEpochMilli), mesos.Protos.TaskState.TASK_RUNNING))
