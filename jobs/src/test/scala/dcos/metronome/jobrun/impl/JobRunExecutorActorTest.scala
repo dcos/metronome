@@ -2,11 +2,9 @@ package dcos.metronome
 package jobrun.impl
 
 import java.time.{ Clock, Instant, LocalDateTime, ZoneOffset }
-import java.util.concurrent.TimeUnit
 
 import akka.actor.{ ActorContext, ActorRef, ActorSystem }
 import akka.testkit.{ ImplicitSender, TestActorRef, TestKit, TestProbe }
-import dcos.metronome.{ JobRunFailed, SimulatedScheduler }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.impl.JobRunExecutorActor.ForwardStatusUpdate
 import dcos.metronome.measurement.MethodMeasurementFixture
@@ -15,7 +13,9 @@ import dcos.metronome.scheduler.TaskState
 import dcos.metronome.utils.glue.MarathonImplicits._
 import dcos.metronome.utils.test.Mockito
 import mesosphere.marathon.MarathonSchedulerDriverHolder
+import mesosphere.marathon.core.instance.Instance
 import mesosphere.marathon.core.launchqueue.LaunchQueue
+import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedInstanceInfo
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.tracker.InstanceTracker
 import mesosphere.marathon.state.{ RunSpec, Timestamp }
@@ -349,7 +349,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Active, clock.instant(), None, None, Map.empty)
     val runSpecId = activeJobRun.id.toRunSpecId
     f.launchQueue.get(runSpecId) returns None
-    instanceTracker.appTasksLaunchedSync(runSpecId) returns Seq.empty
+    instanceTracker.specInstancesSync(runSpecId) returns Seq.empty
 
     When("the actor is initialized")
     val actorRef: ActorRef = executorActor(activeJobRun)
@@ -366,15 +366,17 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Starting, clock.instant(), None, None, Map.empty)
     val runSpecId = activeJobRun.id.toRunSpecId
     val runSpec: RunSpec = activeJobRun.toRunSpec
-    val queuedTaskInfo = QueuedTaskInfo(
+    val queuedTaskInfo = QueuedInstanceInfo(
       runSpec = runSpec,
       inProgress = false,
-      tasksLeftToLaunch = 0,
-      finalTaskCount = 0,
-      tasksLost = 0,
-      backOffUntil = Timestamp(0))
+      instancesLeftToLaunch = 0,
+      finalInstanceCount = 0,
+      backOffUntil = Timestamp(0),
+      startedAt = Timestamp(clock.instant()))
     f.launchQueue.get(runSpecId) returns Some(queuedTaskInfo)
-    instanceTracker.appTasksLaunchedSync(runSpecId) returns Seq.empty
+    //    TODO: wants marathon.Seq instead of Seq
+    //    this is in the Prelude in marathon
+    instanceTracker.specInstancesSync(runSpecId) returns Seq.empty[Instance]
 
     When("the actor is initialized")
     val actorRef: ActorRef = executorActor(activeJobRun)
@@ -394,15 +396,17 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Active, clock.instant(), None, None, Map.empty)
     val runSpecId = activeJobRun.id.toRunSpecId
     val runSpec: RunSpec = activeJobRun.toRunSpec
-    val queuedTaskInfo = QueuedTaskInfo(
+    val queuedTaskInfo = QueuedInstanceInfo(
       runSpec = runSpec,
-      inProgress = true,
-      tasksLeftToLaunch = 0,
-      finalTaskCount = 1,
-      tasksLost = 0,
-      backOffUntil = Timestamp(0))
+      inProgress = false,
+      instancesLeftToLaunch = 0,
+      finalInstanceCount = 1,
+      backOffUntil = Timestamp(0),
+      startedAt = Timestamp(clock.instant()))
     launchQueue.get(runSpecId) returns Some(queuedTaskInfo)
-    instanceTracker.appTasksLaunchedSync(runSpecId) returns Seq(
+    //    TODO: needs instance instead of Task.LaunchedEphemeral
+    //    TODO: likely has seq issues Prelude in marathon
+    instanceTracker.specInstancesSync(runSpecId) returns Seq(
       mockTask(taskId, Timestamp(clock.instant().toEpochMilli), mesos.Protos.TaskState.TASK_RUNNING))
 
     When("the actor is initialized")
@@ -491,7 +495,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
     And("RunSpec is submitted to LaunchQueue with a Docker forcePullImage")
     verify(f.launchQueue, atLeast(1)).add(argument.capture(), any)
-    argument.getValue.container.get.docker().get.forcePullImage shouldBe true
+    argument.getValue.container.get.docker.get.forcePullImage shouldBe true
   }
 
   test("aborts a job run if starting deadline is reached") {
@@ -706,7 +710,8 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
         Map(Task.Id("taskId") -> JobRunTask(Task.Id("taskId"), null, None, TaskState.Running)))
       val actorRef: ActorRef = executorActor(activeJob)
       val runSpecId = activeJob.id.toRunSpecId
-      instanceTracker.appTasksLaunchedSync(runSpecId) returns Seq(
+      // TODO: needs Seq[Instance] instead of Seq[Task.LaunchedEphermal]
+      instanceTracker.specInstancesSync(runSpecId) returns Seq(
         mockTask(taskId, Timestamp(clock.instant().toEpochMilli), mesos.Protos.TaskState.TASK_RUNNING))
       (actorRef, activeJob)
     }
