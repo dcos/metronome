@@ -10,6 +10,7 @@ import sbt.{ExclusionRule, _}
 import sbtprotobuf.{ProtobufPlugin => PB}
 import sbtprotobuf.ProtobufPlugin.Keys.ProtobufConfig
 import com.typesafe.sbt.SbtScalariform._
+import com.typesafe.sbt.SbtAspectj._
 
 import scalariform.formatter.preferences._
 
@@ -56,6 +57,11 @@ object Build extends sbt.Build {
         Dependency.jsonValidate,
         Dependency.Test.scalatest,
         Dependency.Test.scalatestPlay
+      ).map(
+        _.excludeAll(excludeSlf4jLog4j12)
+          .excludeAll(excludeLog4j)
+          .excludeAll(excludeJCL)
+          .excludeAll(excludeAkkaHttpExperimental)
       )
     )
   ).enablePlugins(PlayScala).disablePlugins(PlayLayoutPlugin)
@@ -120,7 +126,7 @@ object Build extends sbt.Build {
       "emueller-bintray" at "http://dl.bintray.com/emueller/maven"
     ),
     fork in Test := true
-  )
+  ) ++ aspectjSettings
 
   lazy val formatSettings = scalariformSettings ++ Seq(
     ScalariformKeys.preferences := FormattingPreferences()

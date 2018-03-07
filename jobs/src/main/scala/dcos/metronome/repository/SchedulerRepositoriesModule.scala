@@ -51,7 +51,7 @@ class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: Rep
   private[this] lazy val persistentStore: PersistentStore = repositoryModule.zkStore
 
   lazy val storageConfig = StorageConfig(config.scallopConf, lifecycleState)
-  lazy val storageModule = StorageModule(config.scallopConf, lifecycleState)(actorsModule.materializer, ExecutionContext.global, actorSystem.scheduler, actorSystem)
+  lazy val storageModule: StorageModule = StorageModule(config.scallopConf, lifecycleState)(actorsModule.materializer, ExecutionContext.global, actorSystem.scheduler, actorSystem)
 
   lazy val instanceRepository: InstanceRepository = storageModule.instanceRepository
   lazy val groupRepository: GroupRepository = storageModule.groupRepository
