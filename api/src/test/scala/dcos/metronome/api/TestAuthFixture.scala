@@ -6,6 +6,7 @@ import mesosphere.marathon.core.plugin.{ PluginDefinitions, PluginManager }
 import mesosphere.marathon.plugin.auth.{ AuthorizedAction, Identity, Authorizer, Authenticator }
 import mesosphere.marathon.plugin.http.{ HttpResponse, HttpRequest }
 import play.api.http.Status
+import scala.collection.immutable.Seq
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag

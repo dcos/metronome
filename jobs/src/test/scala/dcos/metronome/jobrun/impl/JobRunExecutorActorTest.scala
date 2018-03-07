@@ -18,13 +18,15 @@ import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedInstanceInfo
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.tracker.InstanceTracker
-import mesosphere.marathon.state.{ RunSpec, Timestamp }
+import mesosphere.marathon.plugin.ApplicationSpec
+import mesosphere.marathon.state.{ AppDefinition, RunSpec, Timestamp }
 import org.apache.mesos.SchedulerDriver
 import org.apache.mesos
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, FunSuiteLike, GivenWhenThen, Matchers }
 
+import scala.collection.immutable.Seq
 import scala.concurrent.{ Promise, duration }
 import scala.concurrent.duration._
 
@@ -407,7 +409,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     //    TODO: needs instance instead of Task.LaunchedEphemeral
     //    TODO: likely has seq issues Prelude in marathon
     instanceTracker.specInstancesSync(runSpecId) returns Seq(
-      mockTask(taskId, Timestamp(clock.instant().toEpochMilli), mesos.Protos.TaskState.TASK_RUNNING))
+      Instance(instanceId, null, null, Map(taskId -> mockTask(taskId, Timestamp(clock.instant().toEpochMilli), mesos.Protos.TaskState.TASK_RUNNING)), null, null))
 
     When("the actor is initialized")
     val actorRef: ActorRef = executorActor(activeJobRun)
@@ -469,7 +471,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     msg.jobRun.status shouldBe JobRunStatus.Starting
     f.persistenceActor.reply(JobRunPersistenceActor.JobRunCreated(f.persistenceActor.ref, jobRun, Unit))
     import org.mockito.ArgumentCaptor
-    val argument: ArgumentCaptor[RunSpec] = ArgumentCaptor.forClass(classOf[RunSpec])
+    val argument: ArgumentCaptor[AppDefinition] = ArgumentCaptor.forClass(classOf[AppDefinition])
 
     And("RunSpec is submitted to LaunchQueue with correct taskKillGracePeriod")
     verify(f.launchQueue, atLeast(1)).add(argument.capture(), any)
@@ -637,6 +639,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
   class Fixture {
     val runSpecId = JobId("/test")
     val taskId = Task.Id.forRunSpec(runSpecId.toPathId)
+    val instanceId = Instance.Id.forRunSpec(runSpecId.toPathId)
     val defaultJobSpec = JobSpec(runSpecId, Some("test"))
     val clock = new SettableClock(Clock.fixed(LocalDateTime.parse("2016-06-01T08:50:12.000").toInstant(ZoneOffset.UTC), ZoneOffset.UTC))
     val launchQueue: LaunchQueue = mock[LaunchQueue]
@@ -674,7 +677,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       val task = mock[Task.LaunchedEphemeral]
       task.taskId returns taskId
       task.status returns status
-      task.mesosStatus returns Some(mesosStatus)
+      task.status.mesosStatus returns Some(mesosStatus)
       task
     }
 
@@ -710,9 +713,13 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
         Map(Task.Id("taskId") -> JobRunTask(Task.Id("taskId"), null, None, TaskState.Running)))
       val actorRef: ActorRef = executorActor(activeJob)
       val runSpecId = activeJob.id.toRunSpecId
-      // TODO: needs Seq[Instance] instead of Seq[Task.LaunchedEphermal]
       instanceTracker.specInstancesSync(runSpecId) returns Seq(
-        mockTask(taskId, Timestamp(clock.instant().toEpochMilli), mesos.Protos.TaskState.TASK_RUNNING))
+        Instance(
+          instanceId,
+          null,
+          null,
+          Map(taskId -> mockTask(taskId, Timestamp(clock.instant().toEpochMilli), mesos.Protos.TaskState.TASK_RUNNING)),
+          null, null))
       (actorRef, activeJob)
     }
 
