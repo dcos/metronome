@@ -3,6 +3,7 @@ package jobrun.impl
 
 import java.time.{ Clock, Instant, LocalDateTime, ZoneOffset }
 
+import akka.Done
 import akka.actor.{ ActorContext, ActorRef, ActorSystem }
 import akka.testkit.{ ImplicitSender, TestActorRef, TestKit, TestProbe }
 import dcos.metronome.eventbus.TaskStateChangedEvent
@@ -13,13 +14,15 @@ import dcos.metronome.scheduler.TaskState
 import dcos.metronome.utils.glue.MarathonImplicits._
 import dcos.metronome.utils.test.Mockito
 import mesosphere.marathon.MarathonSchedulerDriverHolder
+import mesosphere.marathon.core.condition.Condition
 import mesosphere.marathon.core.instance.Instance
+import mesosphere.marathon.core.instance.Instance.AgentInfo
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedInstanceInfo
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.tracker.InstanceTracker
 import mesosphere.marathon.plugin.ApplicationSpec
-import mesosphere.marathon.state.{ AppDefinition, RunSpec, Timestamp }
+import mesosphere.marathon.state.{ AppDefinition, RunSpec, Timestamp, UnreachableDisabled }
 import org.apache.mesos.SchedulerDriver
 import org.apache.mesos
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
@@ -27,7 +30,7 @@ import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, FunSuiteLike, GivenWhenThen, Matchers }
 
 import scala.collection.immutable.Seq
-import scala.concurrent.{ Promise, duration }
+import scala.concurrent.{ Future, Promise, duration }
 import scala.concurrent.duration._
 
 class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
@@ -409,7 +412,12 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     //    TODO: needs instance instead of Task.LaunchedEphemeral
     //    TODO: likely has seq issues Prelude in marathon
     instanceTracker.specInstancesSync(runSpecId) returns Seq(
-      Instance(instanceId, null, null, Map(taskId -> mockTask(taskId, Timestamp(clock.instant().toEpochMilli), mesos.Protos.TaskState.TASK_RUNNING)), null, null))
+      Instance(
+        instanceId,
+        AgentInfo("localhost", None, Nil),
+        Instance.InstanceState(Condition.Running, Timestamp.now(clock), None, None),
+        Map(taskId -> mockTask(taskId, Timestamp.now(clock), mesos.Protos.TaskState.TASK_RUNNING)),
+        Timestamp.now(clock), UnreachableDisabled))
 
     When("the actor is initialized")
     val actorRef: ActorRef = executorActor(activeJobRun)
@@ -643,6 +651,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val defaultJobSpec = JobSpec(runSpecId, Some("test"))
     val clock = new SettableClock(Clock.fixed(LocalDateTime.parse("2016-06-01T08:50:12.000").toInstant(ZoneOffset.UTC), ZoneOffset.UTC))
     val launchQueue: LaunchQueue = mock[LaunchQueue]
+    launchQueue.asyncPurge(any).returns(Future.successful(Done))
     val instanceTracker: InstanceTracker = mock[InstanceTracker]
     val driver = mock[SchedulerDriver]
     val driverHolder: MarathonSchedulerDriverHolder = {
@@ -716,10 +725,10 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       instanceTracker.specInstancesSync(runSpecId) returns Seq(
         Instance(
           instanceId,
-          null,
-          null,
-          Map(taskId -> mockTask(taskId, Timestamp(clock.instant().toEpochMilli), mesos.Protos.TaskState.TASK_RUNNING)),
-          null, null))
+          AgentInfo("localhost", None, Nil),
+          Instance.InstanceState(Condition.Running, Timestamp.now(clock), None, None),
+          Map(taskId -> mockTask(taskId, Timestamp.now(clock), mesos.Protos.TaskState.TASK_RUNNING)),
+          Timestamp.now(clock), UnreachableDisabled))
       (actorRef, activeJob)
     }
 
