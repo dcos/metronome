@@ -296,7 +296,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     verify(f.driver).killTask(taskId.mesosTaskId)
 
     And("The launch queue is purged")
-    verify(f.launchQueue).purge(jobRun.id.toRunSpecId)
+    verify(f.launchQueue).asyncPurge(jobRun.id.toRunSpecId)
 
     And("The jobRun is reported failed")
     val secondUpdateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
@@ -320,7 +320,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val successfulJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Success, clock.instant(), None, None, Map.empty)
     val actorRef: ActorRef = executorActor(successfulJobRun)
 
-    verify(launchQueue, timeout(1000)).purge(successfulJobRun.id.toRunSpecId)
+    verify(launchQueue, timeout(1000)).asyncPurge(successfulJobRun.id.toRunSpecId)
     val parentUpdate = parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
     parentUpdate.startedJobRun.jobRun.status shouldBe JobRunStatus.Success
     persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
@@ -571,7 +571,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     import f._
 
     Then("The launch queue is purged")
-    verify(launchQueue, timeout(1000)).purge(jobRun.id.toRunSpecId)
+    verify(launchQueue, timeout(1000)).asyncPurge(jobRun.id.toRunSpecId)
 
     And("The JobRun is deleted")
     f.persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
@@ -595,7 +595,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     import f._
 
     Then("The launch queue is purged")
-    verify(launchQueue, timeout(1000)).purge(jobRun.id.toRunSpecId)
+    verify(launchQueue, timeout(1000)).asyncPurge(jobRun.id.toRunSpecId)
 
     And("The JobRun is deleted")
     f.persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]

@@ -9,6 +9,7 @@ import akka.testkit._
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.jobrun.impl.JobRunExecutorActor.{ Aborted, Finished }
 import dcos.metronome.jobrun.impl.JobRunServiceActor._
+import dcos.metronome.measurement.MethodMeasurementFixture
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.InMemoryRepository
 import dcos.metronome.utils.test.Mockito
@@ -221,6 +222,7 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     val dummyQueue = new LinkedBlockingDeque[TestActor.Message]()
     val dummyProp = Props(new TestActor(dummyQueue))
     val repo = new InMemoryRepository[JobRunId, JobRun]
+    val behavior = MethodMeasurementFixture.empty
 
     var createExecutor: (JobRun, Promise[JobResult]) => Props = (_, _) => dummyProp
     def serviceActor = TestActorRef[JobRunServiceActor](JobRunServiceActor.props(clock, createExecutor, repo, behavior))
