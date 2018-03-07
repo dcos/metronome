@@ -3,7 +3,6 @@ package repository.impl.kv.marshaller
 
 import java.time.Instant
 
-import dcos.metronome.Protos
 import dcos.metronome.model.{ JobHistory, JobId, JobRunInfo }
 import dcos.metronome.repository.impl.kv.EntityMarshaller
 import org.slf4j.LoggerFactory
@@ -14,7 +13,7 @@ import scala.collection.mutable
 object JobHistoryMarshaller extends EntityMarshaller[JobHistory] {
   import JobHistoryConversions._
 
-  val log = LoggerFactory.getLogger(JobHistoryMarshaller.getClass)
+  lazy val log = LoggerFactory.getLogger(getClass)
 
   override def toBytes(jobHistory: JobHistory): IndexedSeq[Byte] = {
     val builder = Protos.JobHistory.newBuilder

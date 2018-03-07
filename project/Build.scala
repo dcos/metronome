@@ -1,15 +1,16 @@
-import com.amazonaws.auth.{InstanceProfileCredentialsProvider, EnvironmentVariableCredentialsProvider}
+import com.amazonaws.auth.{EnvironmentVariableCredentialsProvider, InstanceProfileCredentialsProvider}
 import com.typesafe.sbt.packager
 import com.typesafe.sbt.packager.universal.UniversalDeployPlugin
 import ohnosequences.sbt.SbtS3Resolver
 import ohnosequences.sbt.SbtS3Resolver._
 import play.sbt.routes.RoutesKeys
-import play.sbt.{ PlayLayoutPlugin, PlayScala }
+import play.sbt.{PlayLayoutPlugin, PlayScala}
 import sbt.Keys._
-import sbt._
-import sbtprotobuf.{ ProtobufPlugin => PB }
+import sbt.{ExclusionRule, _}
+import sbtprotobuf.{ProtobufPlugin => PB}
 import sbtprotobuf.ProtobufPlugin.Keys.ProtobufConfig
 import com.typesafe.sbt.SbtScalariform._
+
 import scalariform.formatter.preferences._
 
 
@@ -59,6 +60,11 @@ object Build extends sbt.Build {
     )
   ).enablePlugins(PlayScala).disablePlugins(PlayLayoutPlugin)
 
+  val excludeSlf4jLog4j12 = ExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12")
+  val excludeLog4j = ExclusionRule(organization = "log4j", name = "log4j")
+  val excludeJCL = ExclusionRule(organization = "commons-logging", name = "commons-logging")
+  val excludeAkkaHttpExperimental = ExclusionRule(organization = "com.typesafe.akka", name = "akka-http-experimental_2.11")
+
   lazy val jobs = Project(
     id = "jobs",
     base = file("jobs"),
@@ -79,6 +85,11 @@ object Build extends sbt.Build {
         Dependency.twitterZk,
         Dependency.Test.akkaTestKit,
         Dependency.Test.mockito
+      ).map(
+        _.excludeAll(excludeSlf4jLog4j12)
+          .excludeAll(excludeLog4j)
+          .excludeAll(excludeJCL)
+          .excludeAll(excludeAkkaHttpExperimental)
       )
     )
   )
