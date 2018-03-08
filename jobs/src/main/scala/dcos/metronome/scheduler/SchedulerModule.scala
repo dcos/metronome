@@ -62,7 +62,6 @@ class SchedulerModule(
     crashStrategy)
   lazy val leadershipModule: LeadershipModule = {
     val actorRefFactory: ActorRefFactory = actorsModule.actorRefFactory
-    val electionService: ElectionService = electionModule.service
 
     LeadershipModule(actorRefFactory)
   }
@@ -148,6 +147,7 @@ class SchedulerModule(
   private[this] lazy val periodicOperations: PeriodicOperations = new PeriodicOperationsImpl()
 
   lazy val schedulerService: SchedulerService = new SchedulerServiceImpl(
+    persistenceModule.storageModule.persistenceStore,
     leadershipModule.coordinator(),
     config,
     electionModule.service,

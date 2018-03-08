@@ -9,6 +9,7 @@ import dcos.metronome.scheduler.{ PeriodicOperations, PrePostDriverCallback, Sch
 import mesosphere.marathon.core.election.{ ElectionCandidate, ElectionService }
 import mesosphere.marathon.core.leadership.LeadershipCoordinator
 import mesosphere.marathon.SchedulerDriverFactory
+import mesosphere.marathon.core.storage.store.PersistenceStore
 import org.apache.mesos.SchedulerDriver
 import org.slf4j.LoggerFactory
 
@@ -21,6 +22,7 @@ import scala.util.Failure
   * Wrapper class for the scheduler
   */
 private[scheduler] class SchedulerServiceImpl(
+  persistenceStore:       PersistenceStore[_, _, _],
   leadershipCoordinator:  LeadershipCoordinator,
   config:                 SchedulerConfig,
   electionService:        ElectionService,
@@ -83,6 +85,9 @@ private[scheduler] class SchedulerServiceImpl(
 
   def startLeadership(): Unit = synchronized {
     log.info("As new leader running the driver")
+
+    // allow interactions with the persistence store
+    persistenceStore.markOpen()
 
     // execute tasks, only the leader is allowed to
     migration.migrate()
