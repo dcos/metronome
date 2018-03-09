@@ -155,7 +155,7 @@ object Build extends sbt.Build {
       // Test deps versions
       val AsyncAwait = "0.9.7"
       val ScalaTest = "2.2.6"
-      val MacWire = "2.2.2"
+      val MacWire = "2.2.5"
       val Marathon = "1.5.6-19-g2d4e150"
       val MarathonPluginInterface = "1.5.6-19-g2d4e150"
       val Play = "2.5.18"
@@ -164,10 +164,10 @@ object Build extends sbt.Build {
       val WixAccord = "0.7.1"
       val Akka = "2.4.20"
       val Mockito = "2.0.54-beta"
-      val Metrics = "3.5.4_a2.3"
+      val Metrics = "3.5.5"
       val JsonValidate = "0.7.0"
       val TwitterCommons = "0.0.76"
-      val TwitterZk = "6.34.0"
+      val TwitterZk = "6.40.0"
     }
 
     val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
