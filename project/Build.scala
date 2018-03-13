@@ -88,6 +88,7 @@ object Build extends sbt.Build {
         Dependency.akka,
         Dependency.twitterCommons,
         Dependency.twitterZk,
+        Dependency.Test.scalatest,
         Dependency.Test.akkaTestKit,
         Dependency.Test.mockito
       ).map(
