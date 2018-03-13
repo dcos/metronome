@@ -27,4 +27,4 @@ addSbtPlugin("com.github.gseitz" % "sbt-protobuf" % "0.6.3")
 
 addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0-RC13")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-aspectj" % "0.10.6") // because of Kamon
+addSbtPlugin("com.gilt.sbt" % "sbt-aspectjweaver" % "0.0.2") // because of kamon-akka
