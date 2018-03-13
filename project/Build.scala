@@ -29,8 +29,7 @@ object Build extends sbt.Build {
       libraryDependencies ++= Seq(
         Dependency.macWireMacros,
         Dependency.macWireUtil,
-        Dependency.macWireProxy,
-        Dependency.metrics
+        Dependency.macWireProxy
       )
     )
   )
@@ -55,7 +54,6 @@ object Build extends sbt.Build {
         Dependency.yaml,
         Dependency.cronUtils,
         Dependency.threeten,
-        Dependency.metrics,
         Dependency.jsonValidate,
         Dependency.Test.scalatest,
         Dependency.Test.scalatestPlay
@@ -88,7 +86,6 @@ object Build extends sbt.Build {
         Dependency.threeten,
         Dependency.cronUtils,
         Dependency.akka,
-        Dependency.metrics,
         Dependency.twitterCommons,
         Dependency.twitterZk,
         Dependency.Test.akkaTestKit,
@@ -170,7 +167,6 @@ object Build extends sbt.Build {
       val WixAccord = "0.7.1"
       val Akka = "2.4.20"
       val Mockito = "2.0.54-beta"
-      val Metrics = "3.5.5"
       val JsonValidate = "0.7.0"
       val TwitterCommons = "0.0.76"
       val TwitterZk = "6.40.0"
@@ -189,7 +185,6 @@ object Build extends sbt.Build {
     val threeten = "org.threeten" % "threetenbp" % V.Threeten
     val wixAccord = "com.wix" %% "accord-core" % V.WixAccord
     val akka = "com.typesafe.akka" %%  "akka-actor" % V.Akka
-    val metrics = "nl.grons" %% "metrics-scala" % V.Metrics
     val jsonValidate = "com.eclipsesource" %% "play-json-schema-validator" % V.JsonValidate
     val twitterCommons = "com.twitter.common.zookeeper" % "candidate" % V.TwitterCommons
     val twitterZk = "com.twitter" %% "util-zk" % V.TwitterZk
