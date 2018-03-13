@@ -4,6 +4,7 @@ import java.time.Clock
 
 import akka.actor.ActorSystem
 import com.softwaremill.macwire._
+import com.typesafe.config.ConfigFactory
 import controllers.Assets
 import dcos.metronome.api.v1.LeaderProxyFilter
 import dcos.metronome.api.{ ApiModule, ErrorHandler }
@@ -27,7 +28,7 @@ class JobApplicationLoader extends ApplicationLoader {
   def load(context: Context): Application = {
     val jobComponents = new JobComponents(context)
 
-    Kamon.start()
+    Kamon.start(jobComponents.configuration.underlying)
     Metrics.start(jobComponents.actorSystem)
 
     Future {
