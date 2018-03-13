@@ -1,22 +1,16 @@
 package dcos.metronome
 package api.v1.controllers
 
-import java.io.StringWriter
-import java.util.concurrent.TimeUnit
-
-import com.codahale.metrics.json.MetricsModule
-import com.fasterxml.jackson.databind.ObjectMapper
 import dcos.metronome.api.RestController
 import dcos.metronome.api.v1.models.MetronomeInfoWrites
-import mesosphere.marathon.io.IO
 import mesosphere.marathon.metrics.Metrics
+import mesosphere.marathon.raml.MetricsConversion._
+import mesosphere.marathon.raml.Raml
 import play.api.http.ContentTypes
+import play.api.libs.json.Json
 import play.api.mvc.Action
 
 class ApplicationController() extends RestController {
-
-  private[this] val metricsMapper = new ObjectMapper().registerModule(
-    new MetricsModule(TimeUnit.SECONDS, TimeUnit.SECONDS, false))
 
   def ping = Action { Ok("pong") }
 
@@ -25,10 +19,7 @@ class ApplicationController() extends RestController {
   }
 
   def showMetrics = Action {
-    val metricsJsonString = IO.using(new StringWriter()) { writer =>
-      metricsMapper.writer().writeValue(writer, Metrics.snapshot())
-      writer.getBuffer.toString
-    }
+    val metricsJsonString = Json.stringify(Json.toJson(Raml.toRaml(Metrics.snapshot())))
     Ok(metricsJsonString).as(ContentTypes.JSON)
   }
 }
