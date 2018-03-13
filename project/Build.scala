@@ -1,7 +1,9 @@
 import com.amazonaws.auth.{EnvironmentVariableCredentialsProvider, InstanceProfileCredentialsProvider}
+<<<<<<< HEAD
 import com.typesafe.sbt.SbtScalariform._
+=======
+>>>>>>> Revert "Start JVM with aspectj weaver"
 import com.typesafe.sbt.packager
-import com.typesafe.sbt.packager.Keys.bashScriptExtraDefines
 import com.typesafe.sbt.packager.universal.UniversalDeployPlugin
 import ohnosequences.sbt.SbtS3Resolver
 import ohnosequences.sbt.SbtS3Resolver._
@@ -9,8 +11,10 @@ import play.sbt.routes.RoutesKeys
 import play.sbt.{PlayLayoutPlugin, PlayScala}
 import sbt.Keys._
 import sbt.{ExclusionRule, _}
-import sbtprotobuf.ProtobufPlugin.Keys.ProtobufConfig
 import sbtprotobuf.{ProtobufPlugin => PB}
+import sbtprotobuf.ProtobufPlugin.Keys.ProtobufConfig
+import com.typesafe.sbt.SbtScalariform._
+import com.typesafe.sbt.SbtAspectj._
 
 import scalariform.formatter.preferences._
 
@@ -64,8 +68,13 @@ object Build extends sbt.Build {
           .excludeAll(excludeKamonAutoweave)
           .excludeAll(excludeKamonScala)
       )
+<<<<<<< HEAD
       )
     ).enablePlugins(PlayScala).disablePlugins(PlayLayoutPlugin)
+=======
+    )
+  ).enablePlugins(PlayScala).disablePlugins(PlayLayoutPlugin)
+>>>>>>> Revert "Start JVM with aspectj weaver"
 
   val excludeSlf4jLog4j12 = ExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12")
   val excludeKamonAkka = ExclusionRule(organization = "io.kamon", name = "kamon-akka-2.4")
@@ -133,7 +142,7 @@ object Build extends sbt.Build {
       "emueller-bintray" at "http://dl.bintray.com/emueller/maven"
     ),
     fork in Test := true
-  )
+  ) ++ aspectjSettings
 
   lazy val formatSettings = scalariformSettings ++ Seq(
     ScalariformKeys.preferences := FormattingPreferences()
