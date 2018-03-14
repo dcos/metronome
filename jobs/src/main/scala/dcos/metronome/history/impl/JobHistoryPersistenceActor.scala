@@ -7,7 +7,7 @@ import dcos.metronome.model.{ JobId, JobHistory }
 import dcos.metronome.repository.{ Repository, NoConcurrentRepoChange }
 
 class JobHistoryPersistenceActor(
-  repo: Repository[JobId, JobHistory]) extends NoConcurrentRepoChange[JobId, JobHistory, Unit] {
+  repo: Repository[JobId, JobHistory], val measurement: MethodMeasurement) extends NoConcurrentRepoChange[JobId, JobHistory, Unit] {
   import JobHistoryPersistenceActor._
   import context.dispatcher
 
@@ -47,7 +47,7 @@ object JobHistoryPersistenceActor {
   case class JobHistoryDeleted(sender: ActorRef, jobHistory: JobHistory, nothing: Unit) extends JobHistoryChange
   case class PersistFailed(sender: ActorRef, id: JobId, ex: Throwable, nothing: Unit) extends Failed
 
-  def props(repository: Repository[JobId, JobHistory]): Props = {
-    Props(new JobHistoryPersistenceActor(repository))
+  def props(repository: Repository[JobId, JobHistory], measurement: MethodMeasurement): Props = {
+    Props(new JobHistoryPersistenceActor(repository, measurement))
   }
 }

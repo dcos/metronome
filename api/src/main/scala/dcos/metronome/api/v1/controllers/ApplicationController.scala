@@ -19,6 +19,7 @@ class ApplicationController() extends RestController {
   }
 
   def showMetrics = Action {
+    println(Metrics.snapshot().metrics)
     val metricsJsonString = Json.stringify(Json.toJson(Raml.toRaml(Metrics.snapshot())))
     Ok(metricsJsonString).as(ContentTypes.JSON)
   }

@@ -2,14 +2,15 @@ package dcos.metronome
 package jobspec.impl
 
 import akka.actor._
-import dcos.metronome.measurement.MethodMeasurement
+import dcos.metronome.measurement.{ ActorMeasurement, MethodMeasurement }
 import dcos.metronome.model.{ JobId, JobSpec }
-import dcos.metronome.repository.NoConcurrentRepoChange.{ Failed, Change }
+import dcos.metronome.repository.NoConcurrentRepoChange.{ Change, Failed }
 import dcos.metronome.repository.{ NoConcurrentRepoChange, Repository }
 
 class JobSpecPersistenceActor(
-  id:   JobId,
-  repo: Repository[JobId, JobSpec]) extends NoConcurrentRepoChange[JobId, JobSpec, ActorRef] {
+  id:              JobId,
+  repo:            Repository[JobId, JobSpec],
+  val measurement: MethodMeasurement) extends NoConcurrentRepoChange[JobId, JobSpec, ActorRef] with ActorMeasurement {
   import JobSpecPersistenceActor._
   import context.dispatcher
 
@@ -53,7 +54,7 @@ object JobSpecPersistenceActor {
 
   case class PersistFailed(sender: ActorRef, id: JobId, ex: Throwable, delegate: ActorRef) extends Failed
 
-  def props(id: JobId, repository: Repository[JobId, JobSpec]): Props = {
-    Props(new JobSpecPersistenceActor(id, repository))
+  def props(id: JobId, repository: Repository[JobId, JobSpec], measurement: MethodMeasurement): Props = {
+    Props(new JobSpecPersistenceActor(id, repository, measurement))
   }
 }

@@ -8,6 +8,7 @@ import akka.actor.{ Actor, ActorSystem, Props, Status }
 import akka.testkit._
 import akka.pattern.ask
 import akka.util.Timeout
+import dcos.metronome.measurement.MethodMeasurementFixture
 import dcos.metronome.{ JobSpecAlreadyExists, JobSpecChangeInFlight, JobSpecDoesNotExist }
 import dcos.metronome.model.{ CronSpec, JobId, JobSpec, ScheduleSpec }
 import dcos.metronome.repository.impl.InMemoryRepository
@@ -262,6 +263,6 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     val dummyQueue = new LinkedBlockingDeque[TestActor.Message]()
     val dummyProp = Props(new TestActor(dummyQueue))
     val jobSpec = JobSpec(JobId("test"))
-    val jobSpecService = TestActorRef[JobSpecServiceActor](JobSpecServiceActor.props(repository, (id: JobId) => dummyProp, _ => dummyProp))
+    val jobSpecService = TestActorRef[JobSpecServiceActor](JobSpecServiceActor.props(repository, (id: JobId) => dummyProp, _ => dummyProp, MethodMeasurementFixture.empty))
   }
 }

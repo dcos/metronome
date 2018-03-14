@@ -25,7 +25,7 @@ class KamonServiceMeasurement(val config: MeasurementConfig) extends MethodMeasu
     def timer(method: Method): Timer = {
       methodTimer.getOrElse(method.getName, {
         log.debug(s"Create new timer for method: ${method.getName} in class ${classTag.runtimeClass.getName}")
-        val timer = Metrics.timer(ServiceMetric, classTag.runtimeClass, "${method.getName}")
+        val timer = Metrics.timer(ServiceMetric, classTag.runtimeClass, s"${method.getName}")
         methodTimer += method.getName -> timer
         timer
       })
@@ -42,6 +42,7 @@ class KamonServiceMeasurement(val config: MeasurementConfig) extends MethodMeasu
     }
     ProxyingInterceptor.apply { ctx =>
       val metricTimer = timer(ctx.method)
+      println(s"Is assignable? ${ctx.method.getReturnType.isAssignableFrom(classOf[Future[Any]])}")
       if (ctx.method.getReturnType.isAssignableFrom(classOf[Future[Any]])) {
         import mesosphere.util.CallerThreadExecutionContext.callerThreadExecutionContext
         metricTimer.apply(ctx.proceed().asInstanceOf[Future[Any]]).recover {

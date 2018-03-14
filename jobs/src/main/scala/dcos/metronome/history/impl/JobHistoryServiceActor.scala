@@ -5,14 +5,14 @@ import java.time.Clock
 
 import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
 import dcos.metronome.history.JobHistoryConfig
-import dcos.metronome.measurement.MethodMeasurement
+import dcos.metronome.measurement.{ ActorMeasurement, MethodMeasurement }
 import dcos.metronome.model._
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
 
 import scala.collection.concurrent.TrieMap
 
-class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: Repository[JobId, JobHistory])
-    extends Actor with ActorLogging with LoadContentOnStartup[JobId, JobHistory] {
+class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: Repository[JobId, JobHistory], val measurement: MethodMeasurement)
+    extends Actor with ActorLogging with LoadContentOnStartup[JobId, JobHistory] with ActorMeasurement {
   import JobHistoryPersistenceActor._
   import JobHistoryServiceActor._
 
@@ -21,7 +21,7 @@ class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: R
 
   override def preStart(): Unit = {
     super.preStart()
-    persistenceActor = context.actorOf(JobHistoryPersistenceActor.props(repo))
+    persistenceActor = context.actorOf(JobHistoryPersistenceActor.props(repo, measurement))
     context.system.eventStream.subscribe(self, classOf[Event.JobRunEvent])
     context.system.eventStream.subscribe(self, classOf[Event.JobSpecDeleted])
   }
@@ -30,7 +30,7 @@ class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: R
     context.system.eventStream.unsubscribe(self)
   }
 
-  override def receive: Receive = {
+  override def receive: Receive = measure {
     //event stream events
     case Event.JobRunStarted(run, _, _)      => started(run)
     case Event.JobRunFinished(run, _, _)     => finished(run)
@@ -91,7 +91,7 @@ object JobHistoryServiceActor {
   case class GetJobHistory(id: JobId)
   case class ListJobHistories(filter: JobHistory => Boolean)
 
-  def props(config: JobHistoryConfig, clock: Clock, repo: Repository[JobId, JobHistory]): Props = {
-    Props(new JobHistoryServiceActor(config, clock, repo))
+  def props(config: JobHistoryConfig, clock: Clock, repo: Repository[JobId, JobHistory], measurement: MethodMeasurement): Props = {
+    Props(new JobHistoryServiceActor(config, clock, repo, measurement))
   }
 }

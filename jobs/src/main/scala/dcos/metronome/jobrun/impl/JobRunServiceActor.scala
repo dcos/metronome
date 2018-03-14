@@ -6,7 +6,7 @@ import java.time.Clock
 import akka.actor._
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.measurement.MethodMeasurement
+import dcos.metronome.measurement.{ ActorMeasurement, MethodMeasurement }
 import dcos.metronome.model._
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
 
@@ -21,7 +21,7 @@ class JobRunServiceActor(
   clock:           Clock,
   executorFactory: (JobRun, Promise[JobResult]) => Props,
   val repo:        Repository[JobRunId, JobRun],
-  val behavior:    MethodMeasurement) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash {
+  val measurement: MethodMeasurement) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash with ActorMeasurement {
 
   import JobRunExecutorActor._
   import JobRunServiceActor._
@@ -40,7 +40,7 @@ class JobRunServiceActor(
   private[impl] val allRunExecutors = TrieMap.empty[JobRunId, ActorRef]
   private[impl] val actorsWaitingForKill = TrieMap.empty[JobRunId, Set[ActorRef]].withDefaultValue(Set.empty)
 
-  override def receive: Receive = {
+  override def receive: Receive = measure {
     // api messages
     case ListRuns(filter)              => sender() ! allJobRuns.values.filter(startedJobRun => filter(startedJobRun.jobRun))
     case GetJobRun(id)                 => sender() ! allJobRuns.get(id)

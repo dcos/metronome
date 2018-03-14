@@ -2,6 +2,7 @@ package dcos.metronome
 package jobspec.impl
 
 import akka.actor._
+import dcos.metronome.measurement.{ ActorMeasurement, MethodMeasurement }
 import dcos.metronome.model.{ Event, JobId, JobSpec }
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
 
@@ -14,7 +15,8 @@ import scala.collection.concurrent.TrieMap
 class JobSpecServiceActor(
   val repo:                Repository[JobId, JobSpec],
   persistenceActorFactory: JobId => Props,
-  schedulerActorFactory:   JobSpec => Props) extends LoadContentOnStartup[JobId, JobSpec] {
+  schedulerActorFactory:   JobSpec => Props,
+  val measurement:         MethodMeasurement) extends LoadContentOnStartup[JobId, JobSpec] with ActorMeasurement {
   import JobSpecPersistenceActor._
   import JobSpecServiceActor._
 
@@ -23,7 +25,7 @@ class JobSpecServiceActor(
   private[impl] val scheduleActors = TrieMap.empty[JobId, ActorRef]
   private[impl] val persistenceActors = TrieMap.empty[JobId, ActorRef]
 
-  override def receive: Receive = {
+  override def receive: Receive = measure {
     // crud messages
     case CreateJobSpec(jobSpec)             => createJobSpec(jobSpec)
     case UpdateJobSpec(id, change)          => updateJobSpec(id, change)
@@ -187,5 +189,6 @@ object JobSpecServiceActor {
   def props(
     repo:                    Repository[JobId, JobSpec],
     persistenceActorFactory: JobId => Props,
-    schedulerActorFactory:   JobSpec => Props): Props = Props(new JobSpecServiceActor(repo, persistenceActorFactory, schedulerActorFactory))
+    schedulerActorFactory:   JobSpec => Props,
+    measurement:             MethodMeasurement): Props = Props(new JobSpecServiceActor(repo, persistenceActorFactory, schedulerActorFactory, measurement))
 }

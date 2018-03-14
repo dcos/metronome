@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Scheduler, Stash }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.measurement.MethodMeasurement
+import dcos.metronome.measurement.{ ActorMeasurement, MethodMeasurement }
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.MarathonSchedulerDriverHolder
@@ -32,7 +32,7 @@ class JobRunExecutorActor(
   instanceTracker:            InstanceTracker,
   driverHolder:               MarathonSchedulerDriverHolder,
   clock:                      Clock,
-  val behavior:               MethodMeasurement)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging {
+  val measurement:            MethodMeasurement)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorMeasurement {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
   import TaskStates._
@@ -219,7 +219,7 @@ class JobRunExecutorActor(
 
   // Behavior
 
-  override def receive: Receive = {
+  override def receive: Receive = measure {
     case Initialized(Nil) =>
       log.info("initializing - no existing tasks in the queue")
       becomeStarting(jobRun)
@@ -243,19 +243,19 @@ class JobRunExecutorActor(
     case _ => stash()
   }
 
-  def receiveStartTimeout: Receive = {
+  def receiveStartTimeout: Receive = measure {
     case StartTimeout =>
       log.info(s"StartingDeadline timeout of ${jobRun.startingDeadline.get} expired for JobRun ${jobRun.id} created at ${jobRun.createdAt}")
       becomeAborting()
   }
 
-  def receiveKill: Receive = {
+  def receiveKill: Receive = measure {
     case KillCurrentJobRun =>
       log.info(s"Kill execution of JobRun ${jobRun.id}")
       becomeAborting()
   }
 
-  def creating: Receive = {
+  def creating: Receive = measure {
     receiveKill orElse receiveStartTimeout orElse {
       case JobRunCreated(_, updatedJobRun, _) =>
         becomeStarting(updatedJobRun)
@@ -265,7 +265,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def starting: Receive = {
+  def starting: Receive = measure {
     receiveKill orElse receiveStartTimeout orElse {
       case ForwardStatusUpdate(update) if isActive(update.taskState) =>
         becomeActive(update)
@@ -287,7 +287,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def active: Receive = {
+  def active: Receive = measure {
     receiveKill orElse {
       case ForwardStatusUpdate(update) if isFinished(update.taskState) =>
         becomeFinishing(jobRun.copy(
@@ -304,7 +304,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def finishing: Receive = {
+  def finishing: Receive = measure {
     receiveKill orElse {
       case JobRunDeleted(_, persisted, _) =>
         log.info(s"Execution of JobRun ${jobRun.id} has been finished")
@@ -325,7 +325,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def failing: Receive = {
+  def failing: Receive = measure {
     receiveKill orElse {
       case JobRunDeleted(_, persisted, _) =>
         log.info(s"Execution of JobRun ${jobRun.id} has failed")
@@ -342,7 +342,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def aborting: Receive = {
+  def aborting: Receive = measure {
     // We can't handle a successful deletion and a failure differently
     case JobRunDeleted(_, persisted, _) =>
       log.info(s"Execution of JobRun ${jobRun.id} was aborted")
@@ -359,7 +359,7 @@ class JobRunExecutorActor(
       context.become(terminal)
   }
 
-  def terminal: Receive = {
+  def terminal: Receive = measure {
     case _ => log.debug("Actor terminal; not handling or expecting any more messages")
   }
 

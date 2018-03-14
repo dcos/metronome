@@ -20,11 +20,11 @@ class JobSpecModule(
   measured:          MethodMeasurement,
   leadershipModule:  LeadershipModule) {
 
-  private[this] def persistenceActor(id: JobId) = JobSpecPersistenceActor.props(id, jobSpecRepository)
+  private[this] def persistenceActor(id: JobId) = JobSpecPersistenceActor.props(id, jobSpecRepository, measured)
   private[this] def scheduleActor(jobSpec: JobSpec) = JobSpecSchedulerActor.props(jobSpec, clock, runService, measured)
 
   val serviceActor = leadershipModule.startWhenLeader(
-    JobSpecServiceActor.props(jobSpecRepository, persistenceActor, scheduleActor), "JobSpecServiceActor")
+    JobSpecServiceActor.props(jobSpecRepository, persistenceActor, scheduleActor, measured), "JobSpecServiceActor")
 
   def jobSpecService: JobSpecService = measured(new JobSpecServiceDelegate(config, serviceActor))
 }

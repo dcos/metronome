@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor._
 import dcos.metronome.jobrun.JobRunService
-import dcos.metronome.measurement.MethodMeasurement
+import dcos.metronome.measurement.{ ActorMeasurement, MethodMeasurement }
 import dcos.metronome.model.{ JobSpec, ScheduleSpec }
 
 import scala.concurrent.duration._
@@ -16,10 +16,10 @@ import scala.concurrent.duration._
   * If the JobSpec has a schedule, the schedule is triggered in this actor.
   */
 class JobSpecSchedulerActor(
-  initSpec:     JobSpec,
-  clock:        Clock,
-  runService:   JobRunService,
-  val behavior: MethodMeasurement) extends Actor with Stash with ActorLogging {
+  initSpec:        JobSpec,
+  clock:           Clock,
+  runService:      JobRunService,
+  val measurement: MethodMeasurement) extends Actor with Stash with ActorLogging with ActorMeasurement {
 
   import JobSpecSchedulerActor._
   import context.dispatcher
@@ -36,7 +36,7 @@ class JobSpecSchedulerActor(
     cancelSchedule()
   }
 
-  override def receive: Receive = {
+  override def receive: Receive = measure {
     case StartJob(schedule)     => runJob(schedule)
     case UpdateJobSpec(newSpec) => updateSpec(newSpec)
   }

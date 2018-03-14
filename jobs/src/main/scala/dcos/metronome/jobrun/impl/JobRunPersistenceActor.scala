@@ -2,7 +2,7 @@ package dcos.metronome
 package jobrun.impl
 
 import akka.actor._
-import dcos.metronome.measurement.MethodMeasurement
+import dcos.metronome.measurement.{ ActorMeasurement, MethodMeasurement }
 import dcos.metronome.model.{ JobRun, JobRunId }
 import dcos.metronome.repository.{ NoConcurrentRepoChange, Repository }
 
@@ -10,13 +10,13 @@ import dcos.metronome.repository.{ NoConcurrentRepoChange, Repository }
   * Handles persistence for one JobExecutor.
   */
 class JobRunPersistenceActor(
-  id:           JobRunId,
-  repo:         Repository[JobRunId, JobRun],
-  val behavior: MethodMeasurement) extends NoConcurrentRepoChange[JobRunId, JobRun, Unit] {
+  id:              JobRunId,
+  repo:            Repository[JobRunId, JobRun],
+  val measurement: MethodMeasurement) extends NoConcurrentRepoChange[JobRunId, JobRun, Unit] with ActorMeasurement {
   import JobRunPersistenceActor._
   import context.dispatcher
 
-  override def receive: Receive = {
+  override def receive: Receive = measure {
     case Create(jobRun) => create(jobRun)
     case Update(change) => update(change)
     case Delete(orig)   => delete(orig)

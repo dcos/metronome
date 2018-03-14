@@ -135,6 +135,6 @@ class JobSpecPersistenceActorTest extends TestKit(ActorSystem("test")) with FunS
     val repository = mock[Repository[JobId, JobSpec]]
     val id = JobId("/test")
     val jobSpec = JobSpec(id)
-    def persistenceActor = system.actorOf(JobSpecPersistenceActor.props(id, repository))
+    def persistenceActor = system.actorOf(JobSpecPersistenceActor.props(id, repository, MethodMeasurementFixture.empty))
   }
 }
