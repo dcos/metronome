@@ -57,6 +57,8 @@ object Build extends sbt.Build {
         Dependency.cronUtils,
         Dependency.threeten,
         Dependency.jsonValidate,
+        Dependency.iteratees,
+        Dependency.playAhcWS,
         Dependency.Test.scalatest,
         Dependency.Test.scalatestPlay
       ).map(
@@ -174,7 +176,7 @@ object Build extends sbt.Build {
       val MacWire = "2.2.5"
       val Marathon = "1.5.6-19-g2d4e150"
       val MarathonPluginInterface = "1.5.6-19-g2d4e150"
-      val Play = "2.5.18"
+      val Play = "2.6.7"
       val CronUtils = "6.0.4"
       val Threeten = "1.3.3"
       val WixAccord = "0.7.1"
@@ -186,6 +188,8 @@ object Build extends sbt.Build {
     }
 
     val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
+    val iteratees = "com.typesafe.play" %% "play-iteratees" % "2.6.1"
+    val playAhcWS   = "com.typesafe.play" %% "play-ahc-ws" % V.Play
     val playJson = "com.typesafe.play" %% "play-json" % V.Play
     val playWS = "com.typesafe.play" %% "play-ws" % V.Play
     val yaml = "net.jcazevedo" %% "moultingyaml" % "0.2"
