@@ -15,7 +15,6 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
 class JobRunControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with ScalaFutures with GivenWhenThen with BeforeAndAfter {
-
   implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
   "POST /jobs/{id}/runs" should {

@@ -182,7 +182,7 @@ object Build extends sbt.Build {
       val WixAccord = "0.7.1"
       val Akka = "2.4.20"
       val Mockito = "2.0.54-beta"
-      val JsonValidate = "0.7.0"
+      val JsonValidate = "0.9.4"
       val TwitterCommons = "0.0.76"
       val TwitterZk = "6.40.0"
     }
