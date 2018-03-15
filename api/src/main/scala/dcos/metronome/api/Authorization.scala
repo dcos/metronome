@@ -65,7 +65,7 @@ trait Authorization extends RestController {
     def apply(identity: Identity) = new AuthorizedActionBuilder(Some(identity))
   }
 
-  class AuthorizedActionBuilder(authorize: Option[Identity] = None) extends ActionBuilder[AuthorizedRequest, BodyParsers.Default] {
+  class AuthorizedActionBuilder(authorize: Option[Identity] = None) extends ActionBuilder[AuthorizedRequest, AnyContent] {
 
     def invokeBlock[A](request: Request[A], block: AuthorizedRequest[A] => Future[Result]) = {
       val facade = PluginFacade.withRequest(request, config)
@@ -76,7 +76,7 @@ trait Authorization extends RestController {
       }
     }
 
-    override def parser: BodyParser[BodyParsers.Default] = ???
+    override def parser: BodyParser[AnyContent] = new BodyParsers.Default()(actorsModule.materializer)
 
     override protected def executionContext: ExecutionContext = ExecutionContext.global
   }
