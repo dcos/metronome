@@ -1,5 +1,7 @@
 package dcos.metronome
 
+import java.time.Clock
+
 import akka.actor.ActorSystem
 import dcos.metronome.history.JobHistoryModule
 import dcos.metronome.behavior.BehaviorModule
@@ -9,7 +11,6 @@ import dcos.metronome.jobspec.JobSpecModule
 import dcos.metronome.queue.LaunchQueueModule
 import dcos.metronome.repository.{ RepositoryModule, SchedulerRepositoriesModule }
 import dcos.metronome.scheduler.SchedulerModule
-import dcos.metronome.utils.time.Clock
 import mesosphere.marathon.core.plugin.{ PluginManager, PluginModule }
 
 class JobsModule(

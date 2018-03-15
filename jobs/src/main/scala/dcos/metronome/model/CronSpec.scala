@@ -1,12 +1,16 @@
 package dcos.metronome
 package model
 
-import com.cronutils.model.definition.{ CronDefinition, CronDefinitionBuilder }
+import java.time.{ Instant, ZoneId, ZonedDateTime }
+
+import com.cronutils.model.definition.{ CronConstraint, CronDefinition, CronDefinitionBuilder }
 import com.cronutils.model.time.ExecutionTime
 import com.cronutils.model.Cron
+import com.cronutils.model.field.expression.{ Between, On }
+import com.cronutils.model.field.value.IntegerFieldValue
+import com.cronutils.model.field.{ CronField, CronFieldName }
 import com.cronutils.parser.CronParser
-import org.joda.time.{ DateTime, DateTimeZone }
-import org.threeten.bp.{ Instant, ZoneId, ZonedDateTime }
+import org.threeten.bp.{ Instant => ThreeTenInstant, ZoneId => ThreeTenZoneId, ZonedDateTime => ThreeTenZonedDateTime }
 
 import scala.util.control.NonFatal
 
@@ -14,22 +18,22 @@ class CronSpec(val cron: Cron) {
 
   private[this] lazy val executionTime: ExecutionTime = ExecutionTime.forCron(cron)
 
-  def nextExecution(from: DateTime): DateTime = {
-    val fromDateTime: ZonedDateTime = jodaToThreetenTime(from)
-    threetenToJodaTime(executionTime.nextExecution(fromDateTime).get())
+  def nextExecution(from: ZonedDateTime): ZonedDateTime = {
+    val fromDateTime: ThreeTenZonedDateTime = javaTimeToThreetenTime(from)
+    threetenToJavaTime(executionTime.nextExecution(fromDateTime).get())
   }
 
-  def lastExecution(from: DateTime): DateTime = {
-    val fromDateTime: ZonedDateTime = jodaToThreetenTime(from)
-    threetenToJodaTime(executionTime.lastExecution(fromDateTime).get())
+  def lastExecution(from: ZonedDateTime): ZonedDateTime = {
+    val fromDateTime: ThreeTenZonedDateTime = javaTimeToThreetenTime(from)
+    threetenToJavaTime(executionTime.lastExecution(fromDateTime).get())
   }
 
-  private def threetenToJodaTime(from: ZonedDateTime): DateTime = {
-    new DateTime(from.toInstant().toEpochMilli(), DateTimeZone.forID(from.getZone().getId()))
+  private def threetenToJavaTime(from: ThreeTenZonedDateTime): ZonedDateTime = {
+    ZonedDateTime.ofInstant(Instant.ofEpochMilli(from.toInstant.toEpochMilli), ZoneId.of(from.getZone.getId))
   }
 
-  private def jodaToThreetenTime(from: DateTime): ZonedDateTime = {
-    ZonedDateTime.ofInstant(Instant.ofEpochMilli(from.getMillis()), ZoneId.of(from.getZone().getID))
+  private def javaTimeToThreetenTime(from: ZonedDateTime): ThreeTenZonedDateTime = {
+    ThreeTenZonedDateTime.ofInstant(ThreeTenInstant.ofEpochMilli(from.toInstant.toEpochMilli), ThreeTenZoneId.of(from.getZone.toString))
   }
 
   override def hashCode(): Int = cron.hashCode()
@@ -54,6 +58,7 @@ object CronSpec {
       .supportsHash().supportsL().supportsW().and()
       .withYear().optional().and()
       .matchDayOfWeekAndDayOfMonth() // the regular UNIX cron definition permits matching either DoW or DoM
+      .withCronValidation(new CronDaysInMonthValidation)
       .instance()
 
   def isValid(cronString: String): Boolean = unapply(cronString).isDefined
@@ -67,6 +72,47 @@ object CronSpec {
       Some(new CronSpec(new CronParser(cronDefinition).parse(cronString)))
     } catch {
       case NonFatal(_) => None
+    }
+  }
+}
+
+object CronSpecValidation {
+  val validDayOfMonth = "Day of the month must exist in the provided month (e.g. February has only <= 29 days so running cron on Feb 30 is invalid)"
+}
+
+/**
+  * Day of month validation is missing from cron-utils which will cause it to search endlessly for a day that doesn't exist.
+  * This validator covers that use case disallowing schedules like 0 0 31 2 * (run on Feb 31.)
+  */
+class CronDaysInMonthValidation extends CronConstraint(CronSpecValidation.validDayOfMonth) {
+  def daysExistInAMonths(days: Seq[Int], months: Seq[Int]): Boolean = {
+    months.exists(m => days.exists(d => dayExistInAMonth(d, m)))
+  }
+  val maxDaysOfMonth = Array(31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+  def dayExistInAMonth(day: Int, month: Int): Boolean = {
+    day <= maxDaysOfMonth(month - 1)
+  }
+
+  def getValuesFromCron(field: CronField): Seq[Int] = field.getExpression match {
+    case fieldValue: On => Seq(fieldValue.getTime.getValue)
+    case fieldValue: Between =>
+      (fieldValue.getFrom, fieldValue.getTo) match {
+        case (f: IntegerFieldValue, t: IntegerFieldValue) => Array.range(f.getValue, t.getValue).toSeq
+        case _ => Seq.empty
+      }
+    case _ => Seq.empty
+  }
+
+  override def validate(cron: Cron): Boolean = {
+    val maybeDay = Option(cron.retrieve(CronFieldName.DAY_OF_MONTH))
+    val maybeMonth = Option(cron.retrieve(CronFieldName.MONTH))
+
+    (maybeDay, maybeMonth) match {
+      case (Some(dayField), Some(monthField)) =>
+        val days = getValuesFromCron(dayField)
+        val months = getValuesFromCron(monthField)
+        days.isEmpty || months.isEmpty || daysExistInAMonths(days, months)
+      case _ => true // nothing to validate
     }
   }
 }

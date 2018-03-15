@@ -1,8 +1,9 @@
 package dcos.metronome
 package repository.impl.kv.marshaller
 
+import java.time.ZoneId
+
 import dcos.metronome.model._
-import org.joda.time.DateTimeZone
 import org.scalatest.{ FunSuite, Matchers }
 
 import scala.collection.immutable._
@@ -53,7 +54,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers {
       schedules = Seq(ScheduleSpec(
         id = "my-schedule",
         cron = CronSpec("* * * * *"),
-        timeZone = DateTimeZone.UTC,
+        timeZone = ZoneId.of("UTC"),
         concurrencyPolicy = ConcurrencyPolicy.Allow,
         enabled = true)),
       run = runSpec)

@@ -1,13 +1,14 @@
 package dcos.metronome
 package jobrun.impl
 
+import java.time.Clock
+
 import akka.actor._
 import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
-import dcos.metronome.utils.time.Clock
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.Promise
@@ -69,7 +70,7 @@ class JobRunServiceActor(
       log.info(s"Skipping scheduled run for ${spec.id} based on concurrency policy")
     } else {
       val startingDeadline: Option[Duration] = schedule.map(_.startingDeadline)
-      val jobRun = JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.now(), None, startingDeadline, Map.empty)
+      val jobRun = JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.instant(), None, startingDeadline, Map.empty)
       val startedJobRun = startJobRun(jobRun)
       sender() ! startedJobRun
     }

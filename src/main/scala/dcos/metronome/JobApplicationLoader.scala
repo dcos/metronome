@@ -1,10 +1,11 @@
 package dcos.metronome
 
+import java.time.Clock
+
 import com.softwaremill.macwire._
 import controllers.Assets
 import dcos.metronome.api.v1.LeaderProxyFilter
 import dcos.metronome.api.{ ApiModule, ErrorHandler }
-import dcos.metronome.utils.time.{ Clock, SystemClock }
 import org.asynchttpclient.AsyncHttpClientConfig
 import org.joda.time.DateTimeZone
 import play.api.ApplicationLoader.Context
@@ -39,7 +40,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
   }
   lazy val assets: Assets = wire[Assets]
 
-  lazy val clock: Clock = new SystemClock(DateTimeZone.UTC)
+  lazy val clock: Clock = Clock.systemUTC()
 
   override lazy val httpErrorHandler = new ErrorHandler
 
