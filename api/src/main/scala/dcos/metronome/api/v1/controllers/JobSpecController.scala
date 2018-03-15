@@ -3,7 +3,7 @@ package api.v1.controllers
 
 import dcos.metronome.api.v1.models._
 import dcos.metronome.api.v1.models.schema._
-import dcos.metronome.api.{ ApiConfig, ErrorDetail, Authorization, UnknownJob }
+import dcos.metronome.api.{ ApiConfig, Authorization, ErrorDetail, UnknownJob }
 import dcos.metronome.jobinfo.JobInfo.Embed
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobrun.JobRunService
@@ -12,6 +12,7 @@ import dcos.metronome.model.{ JobId, JobSpec }
 import dcos.metronome.{ JobSpecAlreadyExists, JobSpecDoesNotExist }
 import mesosphere.marathon.plugin.auth._
 import JobId._
+import akka.stream.Materializer
 import play.api.mvc.Result
 
 import scala.async.Async.{ async, await }
@@ -23,7 +24,8 @@ class JobSpecController(
   jobInfoService:    JobInfoService,
   val authenticator: Authenticator,
   val authorizer:    Authorizer,
-  val config:        ApiConfig) extends Authorization {
+  val config:        ApiConfig,
+  val mat:           Materializer) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 

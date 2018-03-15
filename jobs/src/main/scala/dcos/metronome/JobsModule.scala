@@ -28,7 +28,7 @@ class JobsModule(
 
   lazy val repositoryModule = new RepositoryModule(config)
 
-  private[this] lazy val actorsModule = new ActorsModule(actorSystem)
+  lazy val actorsModule = new ActorsModule(actorSystem)
 
   lazy val schedulerRepositoriesModule = new SchedulerRepositoriesModule(config, repositoryModule, lifecycleState, actorsModule, actorSystem)
 

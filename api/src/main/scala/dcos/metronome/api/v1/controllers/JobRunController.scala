@@ -1,6 +1,7 @@
 package dcos.metronome
 package api.v1.controllers
 
+import akka.stream.Materializer
 import dcos.metronome.JobRunDoesNotExist
 import dcos.metronome.api.v1.models._
 import dcos.metronome.api.{ ApiConfig, Authorization, UnknownJob, UnknownJobRun }
@@ -16,7 +17,8 @@ class JobRunController(
   jobRunService:     JobRunService,
   val authenticator: Authenticator,
   val authorizer:    Authorizer,
-  val config:        ApiConfig) extends Authorization {
+  val config:        ApiConfig,
+  val mat:           Materializer) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 

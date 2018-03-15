@@ -1,6 +1,7 @@
 package dcos.metronome
 package api
 
+import akka.stream.Materializer
 import akka.util.ByteString
 import dcos.metronome.jobinfo.JobSpecSelector
 import dcos.metronome.jobrun.StartedJobRun
@@ -54,6 +55,8 @@ trait Authorization extends RestController {
   def authorizer: Authorizer
   def config: ApiConfig
 
+  implicit val mat: Materializer
+
   //play default execution context
   import play.api.libs.concurrent.Execution.Implicits._
 
@@ -76,7 +79,7 @@ trait Authorization extends RestController {
       }
     }
 
-    override def parser: BodyParser[AnyContent] = new BodyParsers.Default()(actorsModule.materializer)
+    override def parser: BodyParser[AnyContent] = new BodyParsers.Default()
 
     override protected def executionContext: ExecutionContext = ExecutionContext.global
   }

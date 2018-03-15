@@ -10,6 +10,7 @@ import dcos.metronome.jobrun.{ JobRunService, JobRunServiceFixture }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import dcos.metronome.queue.{ LaunchQueueService, QueueServiceFixture }
+import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ Suite, TestData }
 import org.scalatestplus.play.{ OneAppPerSuite, OneAppPerTest, OneServerPerSuite, OneServerPerTest }
@@ -107,6 +108,8 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
   }
 
   override lazy val httpErrorHandler = new ErrorHandler
+
+  lazy val actorsModule = new ActorsModule(actorSystem)
 
   lazy val pluginManager: PluginManager = PluginManager.None
 

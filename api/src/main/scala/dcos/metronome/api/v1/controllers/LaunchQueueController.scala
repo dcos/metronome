@@ -1,6 +1,7 @@
 package dcos.metronome
 package api.v1.controllers
 
+import akka.stream.Materializer
 import dcos.metronome.api.v1.models.QueuedJobRunMapWrites
 import dcos.metronome.api.{ ApiConfig, Authorization }
 import dcos.metronome.queue.LaunchQueueService
@@ -10,7 +11,8 @@ class LaunchQueueController(
   queueService:      LaunchQueueService,
   val authenticator: Authenticator,
   val authorizer:    Authorizer,
-  val config:        ApiConfig) extends Authorization {
+  val config:        ApiConfig,
+  val mat:           Materializer) extends Authorization {
 
   def queue() = AuthorizedAction.apply { implicit request =>
     Ok(QueuedJobRunMapWrites.writes(queueService.list().filter(request.isAllowed).groupBy(_.jobId)))
