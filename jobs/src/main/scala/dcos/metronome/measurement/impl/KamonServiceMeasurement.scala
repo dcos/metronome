@@ -23,10 +23,11 @@ class KamonServiceMeasurement(val config: MeasurementConfig) extends MethodMeasu
   def timedInvocationWithExceptionCount[T](classTag: ClassTag[T]): Interceptor = {
     var methodTimer = Map.empty[String, Timer]
     def timer(method: Method): Timer = {
-      methodTimer.getOrElse(method.getName, {
+      val name = s"time.${removeScalaParts(method.getName)}"
+      methodTimer.getOrElse(name, {
         log.debug(s"Create new timer for method: ${method.getName} in class ${classTag.runtimeClass.getName}")
-        val timer = Metrics.timer(ServiceMetric, classTag.runtimeClass, s"${method.getName}")
-        methodTimer += method.getName -> timer
+        val timer = Metrics.timer(ServiceMetric, classTag.runtimeClass, s"$name")
+        methodTimer += name -> timer
         timer
       })
     }
@@ -42,7 +43,6 @@ class KamonServiceMeasurement(val config: MeasurementConfig) extends MethodMeasu
     }
     ProxyingInterceptor.apply { ctx =>
       val metricTimer = timer(ctx.method)
-      println(s"Is assignable? ${ctx.method.getReturnType.isAssignableFrom(classOf[Future[Any]])}")
       if (ctx.method.getReturnType.isAssignableFrom(classOf[Future[Any]])) {
         import mesosphere.util.CallerThreadExecutionContext.callerThreadExecutionContext
         metricTimer.apply(ctx.proceed().asInstanceOf[Future[Any]]).recover {
@@ -55,4 +55,16 @@ class KamonServiceMeasurement(val config: MeasurementConfig) extends MethodMeasu
       }
     }
   }
+
+  // borrowed from metrics_scala with minor improvements
+  private def removeScalaParts(s: String) =
+    s.replaceAllLiterally("$$anonfun", ".")
+      .replaceAllLiterally("$$anon", ".anon")
+      .replaceAllLiterally("$default", "")
+      .replaceAllLiterally("$mcV$sp", ".")
+      .replaceAllLiterally("$apply", ".")
+      .replaceAll("""\$\d*""", ".")
+      .replaceAllLiterally(".package.", ".")
+      .split('.') // filter out empty segments
+      .filter(_.nonEmpty).mkString(".")
 }
