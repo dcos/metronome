@@ -17,7 +17,7 @@ object JobSpecMarshaller extends EntityMarshaller[JobSpec] {
   override def toBytes(jobSpec: JobSpec): IndexedSeq[Byte] = {
     import JobSpecConversions.JobSpecToProto
 
-    jobSpec.toProto.toByteArray
+    jobSpec.toProto.toByteArray.to[IndexedSeq]
   }
 
   override def fromBytes(bytes: IndexedSeq[Byte]): Option[JobSpec] =

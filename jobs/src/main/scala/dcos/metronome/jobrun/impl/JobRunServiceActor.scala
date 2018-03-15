@@ -6,7 +6,7 @@ import java.time.Clock
 import akka.actor._
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.measurement.{ ActorMeasurement, MethodMeasurement }
+import dcos.metronome.measurement.{ ActorMeasurement, ServiceMeasurement }
 import dcos.metronome.model._
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
 
@@ -21,7 +21,7 @@ class JobRunServiceActor(
   clock:           Clock,
   executorFactory: (JobRun, Promise[JobResult]) => Props,
   val repo:        Repository[JobRunId, JobRun],
-  val measurement: MethodMeasurement) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash with ActorMeasurement {
+  val measurement: ServiceMeasurement) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash with ActorMeasurement {
 
   import JobRunExecutorActor._
   import JobRunServiceActor._
@@ -169,6 +169,6 @@ object JobRunServiceActor {
     clock:           Clock,
     executorFactory: (JobRun, Promise[JobResult]) => Props,
     repo:            Repository[JobRunId, JobRun],
-    behavior:        MethodMeasurement): Props = Props(new JobRunServiceActor(clock, executorFactory, repo, behavior))
+    behavior:        ServiceMeasurement): Props = Props(new JobRunServiceActor(clock, executorFactory, repo, behavior))
 
 }

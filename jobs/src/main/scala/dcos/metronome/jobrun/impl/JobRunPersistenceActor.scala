@@ -2,7 +2,7 @@ package dcos.metronome
 package jobrun.impl
 
 import akka.actor._
-import dcos.metronome.measurement.{ ActorMeasurement, MethodMeasurement }
+import dcos.metronome.measurement.{ ActorMeasurement, ServiceMeasurement }
 import dcos.metronome.model.{ JobRun, JobRunId }
 import dcos.metronome.repository.{ NoConcurrentRepoChange, Repository }
 
@@ -12,7 +12,7 @@ import dcos.metronome.repository.{ NoConcurrentRepoChange, Repository }
 class JobRunPersistenceActor(
   id:              JobRunId,
   repo:            Repository[JobRunId, JobRun],
-  val measurement: MethodMeasurement) extends NoConcurrentRepoChange[JobRunId, JobRun, Unit] with ActorMeasurement {
+  val measurement: ServiceMeasurement) extends NoConcurrentRepoChange[JobRunId, JobRun, Unit] with ActorMeasurement {
   import JobRunPersistenceActor._
   import context.dispatcher
 
@@ -52,7 +52,7 @@ object JobRunPersistenceActor {
   case class JobRunDeleted(sender: ActorRef, jobRun: JobRun, nothing: Unit) extends JobRunChange
   case class PersistFailed(sender: ActorRef, id: JobRunId, ex: Throwable, nothing: Unit) extends Failed
 
-  def props(id: JobRunId, repository: Repository[JobRunId, JobRun], behavior: MethodMeasurement): Props = {
+  def props(id: JobRunId, repository: Repository[JobRunId, JobRun], behavior: ServiceMeasurement): Props = {
     Props(new JobRunPersistenceActor(id, repository, behavior))
   }
 }

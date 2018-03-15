@@ -68,7 +68,7 @@ class KeyValueRepositoryTest extends FunSuite with Matchers with Mockito {
   case class Model(id: JobId)
   object ModelMarshaller extends EntityMarshaller[Model] {
     override def log: Logger = ???
-    override def toBytes(model: Model): IndexedSeq[Byte] = model.id.toString.getBytes
+    override def toBytes(model: Model): IndexedSeq[Byte] = model.id.toString.getBytes.to[IndexedSeq]
     override def fromBytes(bytes: IndexedSeq[Byte]): Option[Model] =
       Some(Model(JobId(new String(bytes.map(_.toChar).toArray))))
   }

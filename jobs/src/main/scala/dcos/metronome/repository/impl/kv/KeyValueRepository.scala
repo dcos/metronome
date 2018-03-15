@@ -21,7 +21,7 @@ abstract class KeyValueRepository[Id, Model](
     val path = pathResolver.toPath(id)
 
     def updateEntity(entity: PersistentEntity): Future[Model] = {
-      val changed = marshaller.fromBytes(entity.bytes) match {
+      val changed = marshaller.fromBytes(entity.bytes.to[IndexedSeq]) match {
         case Some(model) => change(model)
         case None        => throw PersistenceFailed(id.toString, "Entity could not be deserialized!")
       }
@@ -37,7 +37,7 @@ abstract class KeyValueRepository[Id, Model](
   override def get(id: Id): Future[Option[Model]] = {
     val path = pathResolver.toPath(id)
     store.load(path).map {
-      _.flatMap(entity => marshaller.fromBytes(entity.bytes))
+      _.flatMap(entity => marshaller.fromBytes(entity.bytes.to[IndexedSeq]))
     }
   }
 

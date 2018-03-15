@@ -2,7 +2,7 @@ package dcos.metronome
 package jobspec.impl
 
 import akka.actor._
-import dcos.metronome.measurement.{ ActorMeasurement, MethodMeasurement }
+import dcos.metronome.measurement.{ ActorMeasurement, ServiceMeasurement }
 import dcos.metronome.model.{ Event, JobId, JobSpec }
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
 
@@ -16,7 +16,7 @@ class JobSpecServiceActor(
   val repo:                Repository[JobId, JobSpec],
   persistenceActorFactory: JobId => Props,
   schedulerActorFactory:   JobSpec => Props,
-  val measurement:         MethodMeasurement) extends LoadContentOnStartup[JobId, JobSpec] with ActorMeasurement {
+  val measurement:         ServiceMeasurement) extends LoadContentOnStartup[JobId, JobSpec] with ActorMeasurement {
   import JobSpecPersistenceActor._
   import JobSpecServiceActor._
 
@@ -190,5 +190,5 @@ object JobSpecServiceActor {
     repo:                    Repository[JobId, JobSpec],
     persistenceActorFactory: JobId => Props,
     schedulerActorFactory:   JobSpec => Props,
-    measurement:             MethodMeasurement): Props = Props(new JobSpecServiceActor(repo, persistenceActorFactory, schedulerActorFactory, measurement))
+    measurement:             ServiceMeasurement): Props = Props(new JobSpecServiceActor(repo, persistenceActorFactory, schedulerActorFactory, measurement))
 }

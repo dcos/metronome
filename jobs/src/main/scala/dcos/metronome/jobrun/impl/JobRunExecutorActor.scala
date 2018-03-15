@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Scheduler, Stash }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.measurement.{ ActorMeasurement, MethodMeasurement }
+import dcos.metronome.measurement.{ ActorMeasurement, ServiceMeasurement }
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.MarathonSchedulerDriverHolder
@@ -32,7 +32,7 @@ class JobRunExecutorActor(
   instanceTracker:            InstanceTracker,
   driverHolder:               MarathonSchedulerDriverHolder,
   clock:                      Clock,
-  val measurement:            MethodMeasurement)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorMeasurement {
+  val measurement:            ServiceMeasurement)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorMeasurement {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
   import TaskStates._
@@ -388,9 +388,9 @@ object JobRunExecutorActor {
     instanceTracker:            InstanceTracker,
     driverHolder:               MarathonSchedulerDriverHolder,
     clock:                      Clock,
-    behavior:                   MethodMeasurement)(implicit scheduler: Scheduler): Props = Props(
+    measurement:                ServiceMeasurement)(implicit scheduler: Scheduler): Props = Props(
     new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
-      launchQueue, instanceTracker, driverHolder, clock, behavior))
+      launchQueue, instanceTracker, driverHolder, clock, measurement))
 }
 
 object TaskStates {

@@ -4,7 +4,7 @@ package jobspec
 import java.time.Clock
 
 import akka.actor.ActorSystem
-import dcos.metronome.measurement.MethodMeasurement
+import dcos.metronome.measurement.ServiceMeasurement
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.impl.{ JobSpecPersistenceActor, JobSpecSchedulerActor, JobSpecServiceActor, JobSpecServiceDelegate }
 import dcos.metronome.model.{ JobId, JobSpec }
@@ -17,7 +17,7 @@ class JobSpecModule(
   clock:             Clock,
   jobSpecRepository: Repository[JobId, JobSpec],
   runService:        JobRunService,
-  measured:          MethodMeasurement,
+  measured:          ServiceMeasurement,
   leadershipModule:  LeadershipModule) {
 
   private[this] def persistenceActor(id: JobId) = JobSpecPersistenceActor.props(id, jobSpecRepository, measured)

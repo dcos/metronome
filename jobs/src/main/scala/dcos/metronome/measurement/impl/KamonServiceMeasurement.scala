@@ -4,7 +4,7 @@ package measurement.impl
 import java.lang.reflect.Method
 
 import com.softwaremill.macwire.aop.{ Interceptor, ProxyingInterceptor }
-import dcos.metronome.measurement.{ MethodMeasurement, MeasurementConfig }
+import dcos.metronome.measurement.{ ServiceMeasurement, MeasurementConfig }
 import mesosphere.marathon.metrics.{ Metrics, MinMaxCounter, ServiceMetric, Timer }
 import org.slf4j.LoggerFactory
 
@@ -12,7 +12,7 @@ import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
-class KamonServiceMeasurement(val config: MeasurementConfig) extends MethodMeasurement {
+class KamonServiceMeasurement(val config: MeasurementConfig) extends ServiceMeasurement {
 
   private[this] val log = LoggerFactory.getLogger(getClass)
 

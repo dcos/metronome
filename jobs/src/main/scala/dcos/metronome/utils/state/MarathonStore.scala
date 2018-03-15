@@ -1,4 +1,5 @@
-package dcos.metronome.utils.state
+package dcos.metronome
+package utils.state
 
 import com.google.protobuf.InvalidProtocolBufferException
 import mesosphere.marathon.StoreCommandFailedException
@@ -42,11 +43,11 @@ class MarathonStore[S <: MarathonState[_, S]](
       val res = store.load(prefix + key).flatMap {
         case Some(entity) =>
           val updated = f(() => stateFromBytes(entity.bytes.toArray))
-          val updatedEntity = entity.withNewContent(updated.toProtoByteArray)
+          val updatedEntity = entity.withNewContent(updated.toProtoByteArray.to[IndexedSeq])
           store.update(updatedEntity)
         case None =>
           val created = f(() => newState()).toProtoByteArray
-          store.create(prefix + key, created)
+          store.create(prefix + key, created.to[IndexedSeq])
       }
       res.map { entity =>
         val result = stateFromBytes(entity.bytes.toArray)

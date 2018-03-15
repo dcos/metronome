@@ -1,4 +1,5 @@
-package dcos.metronome.utils.state
+package dcos.metronome
+package utils.state
 
 import scala.concurrent.Future
 

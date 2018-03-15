@@ -1,4 +1,5 @@
-package dcos.metronome.utils.state
+package dcos.metronome
+package utils.state
 
 import java.util.UUID
 
@@ -71,7 +72,7 @@ class ZKStore(val client: ZkClient, root: ZNode, compressionConf: CompressionCon
 
   override def allIds(): Future[Seq[ID]] = {
     root.getChildren().asScala
-      .map(_.children.map(_.name))
+      .map(_.children.map(_.name).to[Seq])
       .recover(exceptionTransform("Can not list all identifiers"))
   }
 
@@ -79,7 +80,7 @@ class ZKStore(val client: ZkClient, root: ZNode, compressionConf: CompressionCon
     val rootNode = this.root(parent)
 
     rootNode.getChildren().asScala
-      .map(_.children.map(_.name))
+      .map(_.children.map(_.name).to[Seq])
       .recover(exceptionTransform(s"Can not list children of $parent"))
   }
 
@@ -143,7 +144,7 @@ object ZKData {
     try {
       val proto = Protos.ZKStoreEntry.parseFrom(bytes)
       val content = if (proto.getCompressed) uncompress(proto.getValue.toByteArray) else proto.getValue.toByteArray
-      new ZKData(proto.getName, UUIDUtil.uuid(proto.getUuid.toByteArray), content)
+      new ZKData(proto.getName, UUIDUtil.uuid(proto.getUuid.toByteArray), content.to[IndexedSeq])
     } catch {
       case ex: InvalidProtocolBufferException =>
         throw new StoreCommandFailedException(s"Can not deserialize Protobuf from ${bytes.length}", ex)

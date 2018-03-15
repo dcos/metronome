@@ -2,7 +2,7 @@ package dcos.metronome
 package api
 
 import controllers.Assets
-import dcos.metronome.measurement.MethodMeasurement
+import dcos.metronome.measurement.ServiceMeasurement
 import dcos.metronome.history.{ JobHistoryService, JobHistoryServiceFixture }
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobinfo.impl.JobInfoServiceImpl

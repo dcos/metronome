@@ -9,7 +9,7 @@ import scala.util.control.NonFatal
 
 trait ActorMeasurement { actor: Actor with ActorLogging =>
 
-  def measurement: MethodMeasurement
+  def measurement: ServiceMeasurement
 
   /**
     * This timer measures the time for message receipt.
@@ -42,7 +42,6 @@ trait ActorMeasurement { actor: Actor with ActorLogging =>
     */
   private def timePartialFunction[A, B](pf: PartialFunction[A, B]): PartialFunction[A, B] = new PartialFunction[A, B] {
     def apply(a: A): B = {
-      println("Actor time partial function")
       receiveTimer.blocking(pf.apply(a))
     }
 

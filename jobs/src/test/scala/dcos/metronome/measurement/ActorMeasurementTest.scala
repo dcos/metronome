@@ -5,7 +5,7 @@ import akka.Done
 import akka.actor.{ Actor, ActorLogging, ActorRefFactory, ActorSystem, Props }
 import akka.testkit.{ TestActorRef, TestKit }
 import dcos.metronome.measurement.impl.KamonServiceMeasurement
-import dcos.metronome.measurement.{ ActorMeasurement, MeasurementConfig, MethodMeasurement }
+import dcos.metronome.measurement.{ ActorMeasurement, MeasurementConfig, ServiceMeasurement }
 import kamon.Kamon
 import kamon.metric.{ DefaultEntitySnapshot, Entity, EntitySnapshot }
 import kamon.metric.SubscriptionsDispatcher.TickMetricSnapshot
@@ -85,11 +85,11 @@ class ActorMeasurementTest extends TestKit(ActorSystem("test")) with FunSuiteLik
     Kamon.start()
     Metrics.start(ActorSystem("metrics"))
 
-    def dummyActorWithMetrics(behavior: MethodMeasurement) = TestActorRef[DummyActorWithMeasurement](Props(new DummyActorWithMeasurement(behavior)))
+    def dummyActorWithMetrics(behavior: ServiceMeasurement) = TestActorRef[DummyActorWithMeasurement](Props(new DummyActorWithMeasurement(behavior)))
   }
 }
 
-class DummyActorWithMeasurement(val measurement: MethodMeasurement) extends Actor with ActorLogging with ActorMeasurement {
+class DummyActorWithMeasurement(val measurement: ServiceMeasurement) extends Actor with ActorLogging with ActorMeasurement {
   override def receive: Receive = measure {
     case DummyPromise(promise) => promise.success(true)
   }

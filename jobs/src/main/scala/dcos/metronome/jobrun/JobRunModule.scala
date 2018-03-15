@@ -4,7 +4,7 @@ package jobrun
 import java.time.Clock
 
 import akka.actor.{ ActorContext, ActorSystem, Props }
-import dcos.metronome.measurement.MethodMeasurement
+import dcos.metronome.measurement.ServiceMeasurement
 import dcos.metronome.jobrun.impl.{ JobRunExecutorActor, JobRunPersistenceActor, JobRunServiceActor, JobRunServiceDelegate }
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId }
 import dcos.metronome.repository.Repository
@@ -23,7 +23,7 @@ class JobRunModule(
   launchQueue:      LaunchQueue,
   instanceTracker:  InstanceTracker,
   driverHolder:     MarathonSchedulerDriverHolder,
-  behavior:         MethodMeasurement,
+  behavior:         ServiceMeasurement,
   leadershipModule: LeadershipModule) {
 
   import com.softwaremill.macwire._

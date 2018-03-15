@@ -27,7 +27,7 @@ object JobHistoryMarshaller extends EntityMarshaller[JobHistory] {
     jobHistory.lastSuccessAt.foreach(lastSuccessAt => builder.setLastSuccessAt(lastSuccessAt.toEpochMilli))
     jobHistory.lastFailureAt.foreach(lastFailureAt => builder.setLastFailureAt(lastFailureAt.toEpochMilli))
 
-    builder.build.toByteArray
+    builder.build.toByteArray.to[IndexedSeq]
   }
 
   override def fromBytes(bytes: IndexedSeq[Byte]): Option[JobHistory] =

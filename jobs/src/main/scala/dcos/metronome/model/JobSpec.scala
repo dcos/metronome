@@ -21,8 +21,8 @@ case class JobSpec(
   override val acceptedResourceRoles: Set[String] = Set.empty
   override val secrets: Map[String, Secret] = Map.empty
   override val env: Map[String, EnvVarValue] = mesosphere.marathon.state.EnvVarValue(run.env)
-  override val volumes: scala.Seq[AppVolumeSpec] = Seq.empty
-  override val networks: scala.Seq[NetworkSpec] = Seq.empty
+  override val volumes: Seq[AppVolumeSpec] = Seq.empty
+  override val networks: Seq[NetworkSpec] = Seq.empty
 }
 
 object JobSpec {

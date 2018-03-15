@@ -30,12 +30,7 @@ object QueuedJobRunConverter {
 
   implicit class MarathonContainerToDockerSpec(val container: Option[Container]) extends AnyVal {
 
-    def toModel: Option[DockerSpec] = {
-      if (container.isEmpty || container.get.docker.isEmpty)
-        return None
-      val docker = container.get.docker.get
-      Some(DockerSpec(docker.image, docker.forcePullImage))
-    }
+    def toModel: Option[DockerSpec] = container.flatMap(c => c.docker).map(d => DockerSpec(d.image, d.forcePullImage))
   }
 
   implicit class RunSpecToJobRunSpec(val run: AppDefinition) extends AnyVal {
@@ -68,14 +63,15 @@ object QueuedJobRunConverter {
   implicit class QueuedTaskInfoToQueuedJobRunInfo(val instanceInfo: QueuedInstanceInfo) extends AnyVal {
 
     def toModel: QueuedJobRunInfo = {
+      val jobRunSpec = instanceInfo.runSpec match {
+        case app: AppDefinition => app.toModel
+        case runSpec =>
+          throw new IllegalArgumentException(s"Unexpected runSpec type - jobs are translated to Apps on Marathon level, got $runSpec")
+      }
       QueuedJobRunInfo(
         id = instanceInfo.runSpec.id,
         backOffUntil = instanceInfo.backOffUntil,
-        run = instanceInfo.runSpec match {
-          case app: AppDefinition => app.toModel
-          case runSpec =>
-            throw new IllegalArgumentException(s"Unexpected runSpec type - jobs are translated to Apps on Marathon level, got $runSpec")
-        },
+        run = jobRunSpec,
         acceptedResourceRoles = instanceInfo.runSpec.acceptedResourceRoles)
     }
   }

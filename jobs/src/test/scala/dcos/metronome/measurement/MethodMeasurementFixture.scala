@@ -3,7 +3,7 @@ import scala.reflect.ClassTag
 
 object MethodMeasurementFixture {
 
-  def empty: MethodMeasurement = new MethodMeasurement {
+  def empty: ServiceMeasurement = new ServiceMeasurement {
     /**
       * Use this method for wiring services (construction time only!)
       * This will eventually (if configured) create a proxy, that implements T and adds the configured behavior.
