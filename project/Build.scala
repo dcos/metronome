@@ -172,7 +172,7 @@ object Build extends sbt.Build {
     object V {
       // Test deps versions
       val AsyncAwait = "0.9.7"
-      val ScalaTest = "2.2.6"
+      val ScalaTest = "3.0.5"
       val MacWire = "2.2.5"
       val Marathon = "1.5.6-19-g2d4e150"
       val MarathonPluginInterface = "1.5.6-19-g2d4e150"
@@ -208,7 +208,7 @@ object Build extends sbt.Build {
 
     object Test {
       val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"
-      val scalatestPlay = "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % "test"
+      val scalatestPlay = "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % "test"
       val akkaTestKit = "com.typesafe.akka" %%  "akka-testkit" % V.Akka % "test"
       val mockito = "org.mockito" % "mockito-core" % V.Mockito % "test"
     }

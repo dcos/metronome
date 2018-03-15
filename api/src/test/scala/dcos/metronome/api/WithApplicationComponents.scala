@@ -12,7 +12,7 @@ import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import dcos.metronome.queue.{ LaunchQueueService, QueueServiceFixture }
 import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.plugin.PluginManager
-import org.scalatest.{ Suite, TestData }
+import org.scalatest.{ TestSuite, TestData }
 import org.scalatestplus.play.{ OneAppPerSuite, OneAppPerTest, OneServerPerSuite, OneServerPerTest }
 import play.api.ApplicationLoader.Context
 import play.api.i18n.I18nComponents
@@ -72,22 +72,15 @@ trait WithApplicationComponents[C <: BuiltInComponents] {
 trait OneAppPerTestWithComponents[T <: BuiltInComponents]
     extends OneAppPerTest
     with WithApplicationComponents[T] {
-  this: Suite =>
+  this: TestSuite =>
 
   override def newAppForTest(testData: TestData): Application = newApplication
-}
-
-trait OneAppPerSuiteWithComponents[T <: BuiltInComponents]
-    extends OneAppPerSuite
-    with WithApplicationComponents[T] {
-  this: Suite =>
-  override implicit lazy val app: Application = newApplication
 }
 
 trait OneServerPerTestWithComponents[T <: BuiltInComponents]
     extends OneServerPerTest
     with WithApplicationComponents[T] {
-  this: Suite =>
+  this: TestSuite =>
 
   override def newAppForTest(testData: TestData): Application = newApplication
 }
@@ -95,7 +88,7 @@ trait OneServerPerTestWithComponents[T <: BuiltInComponents]
 trait OneServerPerSuiteWithComponents[T <: BuiltInComponents]
     extends OneServerPerSuite
     with WithApplicationComponents[T] {
-  this: Suite =>
+  this: TestSuite =>
 
   override implicit lazy val app: Application = newApplication
 }
