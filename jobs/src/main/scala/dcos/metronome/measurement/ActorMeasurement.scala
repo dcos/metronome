@@ -42,7 +42,6 @@ trait ActorMeasurement { actor: Actor with ActorLogging =>
     */
   private def timePartialFunction[A, B](pf: PartialFunction[A, B]): PartialFunction[A, B] = new PartialFunction[A, B] {
     def apply(a: A): B = {
-      println("Actor time partial function")
       receiveTimer.blocking(pf.apply(a))
     }
 

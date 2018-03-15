@@ -82,7 +82,7 @@ object JobSpecSchedulerActor {
   case class StartJob(schedule: ScheduleSpec)
   case class UpdateJobSpec(newSpec: JobSpec)
 
-  def props(spec: JobSpec, clock: Clock, runService: JobRunService, behavior: MethodMeasurement): Props = {
-    Props(new JobSpecSchedulerActor(spec, clock, runService, behavior))
+  def props(spec: JobSpec, clock: Clock, runService: JobRunService, measurement: MethodMeasurement): Props = {
+    Props(new JobSpecSchedulerActor(spec, clock, runService, measurement))
   }
 }

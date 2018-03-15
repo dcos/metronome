@@ -52,7 +52,7 @@ object JobRunPersistenceActor {
   case class JobRunDeleted(sender: ActorRef, jobRun: JobRun, nothing: Unit) extends JobRunChange
   case class PersistFailed(sender: ActorRef, id: JobRunId, ex: Throwable, nothing: Unit) extends Failed
 
-  def props(id: JobRunId, repository: Repository[JobRunId, JobRun], behavior: MethodMeasurement): Props = {
-    Props(new JobRunPersistenceActor(id, repository, behavior))
+  def props(id: JobRunId, repository: Repository[JobRunId, JobRun], measurement: MethodMeasurement): Props = {
+    Props(new JobRunPersistenceActor(id, repository, measurement))
   }
 }

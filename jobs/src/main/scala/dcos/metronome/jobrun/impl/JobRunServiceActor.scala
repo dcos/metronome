@@ -169,6 +169,6 @@ object JobRunServiceActor {
     clock:           Clock,
     executorFactory: (JobRun, Promise[JobResult]) => Props,
     repo:            Repository[JobRunId, JobRun],
-    behavior:        MethodMeasurement): Props = Props(new JobRunServiceActor(clock, executorFactory, repo, behavior))
+    measurement:     MethodMeasurement): Props = Props(new JobRunServiceActor(clock, executorFactory, repo, measurement))
 
 }

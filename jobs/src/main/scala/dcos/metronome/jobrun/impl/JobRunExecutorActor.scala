@@ -388,9 +388,9 @@ object JobRunExecutorActor {
     instanceTracker:            InstanceTracker,
     driverHolder:               MarathonSchedulerDriverHolder,
     clock:                      Clock,
-    behavior:                   MethodMeasurement)(implicit scheduler: Scheduler): Props = Props(
+    measurement:                MethodMeasurement)(implicit scheduler: Scheduler): Props = Props(
     new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
-      launchQueue, instanceTracker, driverHolder, clock, behavior))
+      launchQueue, instanceTracker, driverHolder, clock, measurement))
 }
 
 object TaskStates {

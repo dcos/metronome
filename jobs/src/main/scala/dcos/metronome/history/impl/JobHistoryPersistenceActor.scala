@@ -11,7 +11,7 @@ class JobHistoryPersistenceActor(
   import JobHistoryPersistenceActor._
   import context.dispatcher
 
-  override def receive: Receive = {
+  override def receive: Receive = measure {
     case Create(id, jobRun) => create(id, jobRun)
     case Update(id, change) => update(id, change)
     case Delete(id, orig)   => delete(id, orig)

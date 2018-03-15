@@ -85,7 +85,7 @@ class ActorMeasurementTest extends TestKit(ActorSystem("test")) with FunSuiteLik
     Kamon.start()
     Metrics.start(ActorSystem("metrics"))
 
-    def dummyActorWithMetrics(behavior: MethodMeasurement) = TestActorRef[DummyActorWithMeasurement](Props(new DummyActorWithMeasurement(behavior)))
+    def dummyActorWithMetrics(measurement: MethodMeasurement) = TestActorRef[DummyActorWithMeasurement](Props(new DummyActorWithMeasurement(measurement)))
   }
 }
 

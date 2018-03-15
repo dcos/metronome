@@ -23,20 +23,20 @@ class JobRunModule(
   launchQueue:      LaunchQueue,
   instanceTracker:  InstanceTracker,
   driverHolder:     MarathonSchedulerDriverHolder,
-  behavior:         MethodMeasurement,
+  measurement:      MethodMeasurement,
   leadershipModule: LeadershipModule) {
 
   import com.softwaremill.macwire._
 
   private[this] def executorFactory(jobRun: JobRun, promise: Promise[JobResult]): Props = {
     val persistenceActorFactory = (id: JobRunId, context: ActorContext) =>
-      context.actorOf(JobRunPersistenceActor.props(id, jobRunRepository, behavior))
+      context.actorOf(JobRunPersistenceActor.props(id, jobRunRepository, measurement))
     JobRunExecutorActor.props(jobRun, promise, persistenceActorFactory,
-      launchQueue, instanceTracker, driverHolder, clock, behavior)(actorSystem.scheduler)
+      launchQueue, instanceTracker, driverHolder, clock, measurement)(actorSystem.scheduler)
   }
 
   val jobRunServiceActor = leadershipModule.startWhenLeader(
-    JobRunServiceActor.props(clock, executorFactory, jobRunRepository, behavior), "JobRunService")
+    JobRunServiceActor.props(clock, executorFactory, jobRunRepository, measurement), "JobRunService")
 
-  def jobRunService: JobRunService = behavior(wire[JobRunServiceDelegate])
+  def jobRunService: JobRunService = measurement(wire[JobRunServiceDelegate])
 }

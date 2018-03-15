@@ -11,8 +11,6 @@ import scala.concurrent.duration._
 import scala.sys.SystemProperties
 import scala.util.Try
 
-import scala.collection.immutable.Seq
-
 class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiConfig {
   import ConfigurationImplicits._
 
