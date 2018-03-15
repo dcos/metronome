@@ -2,6 +2,7 @@ package dcos.metronome
 
 import java.time.Clock
 
+import controllers.AssetsComponents
 import akka.actor.ActorSystem
 import com.softwaremill.macwire._
 import com.typesafe.config.ConfigFactory
@@ -11,11 +12,10 @@ import dcos.metronome.api.{ ApiModule, ErrorHandler }
 import kamon.Kamon
 import mesosphere.marathon.metrics.Metrics
 import play.shaded.ahc.org.asynchttpclient.AsyncHttpClientConfig
-
 import play.api.ApplicationLoader.Context
 import play.api._
 import play.api.i18n._
-import play.api.libs.ws.ahc.{ AhcConfigBuilder, AhcWSClient, AhcWSClientConfig }
+import play.api.libs.ws.ahc.{ AhcConfigBuilder, AhcWSClient, AhcWSClientConfig, StandaloneAhcWSClient }
 import play.api.libs.ws.{ WSClient, WSConfigParser }
 import play.api.mvc.EssentialFilter
 import play.api.routing.Router
@@ -40,13 +40,11 @@ class JobApplicationLoader extends ApplicationLoader {
   }
 }
 
-class JobComponents(context: Context) extends BuiltInComponentsFromContext(context) with I18nComponents {
+class JobComponents(context: Context) extends BuiltInComponentsFromContext(context) with I18nComponents with AssetsComponents {
   // set up logger
   LoggerConfigurator(context.environment.classLoader).foreach {
     _.configure(context.environment)
   }
-  lazy val assets: Assets = wire[Assets]
-
   lazy val clock: Clock = Clock.systemUTC()
 
   override lazy val httpErrorHandler = new ErrorHandler
@@ -71,16 +69,16 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     val config = new AhcWSClientConfig(wsClientConfig = parser.parse())
     val builder = new AhcConfigBuilder(config)
     // org.asynchttpclient.AsyncHttpClientConfig.AdditionalChannelInitializer
-    val logging = new AsyncHttpClientConfig.AdditionalChannelInitializer() {
-      override def initChannel(channel: play.shaded.ahc.io.netty.channel.Channel): Unit = {
-        channel.pipeline..addFirst("log", new io.netty.handler.logging.LoggingHandler(classOf[WSClient]))
-      }
-    }
+    //    val logging = new AsyncHttpClientConfig.AdditionalChannelInitializer() {
+    //      override def initChannel(channel: play.shaded.ahc.io.netty.channel.Channel): Unit = {
+    //        channel.pipeline.addFirst("log", new io.netty.handler.logging.LoggingHandler(classOf[WSClient]))
+    //      }
+    //    }
     val ahcBuilder = builder.configure()
     // play.shaded.ahc.org.asynchttpclient.AsyncHttpClientConfig.AdditionalChannelInitializer
-    ahcBuilder.setHttpAdditionalChannelInitializer(logging)
+    //    ahcBuilder.setHttpAdditionalChannelInitializer(logging)
     val ahcConfig = ahcBuilder.build()
-    new AhcWSClient(ahcConfig)
+    new AhcWSClient(StandaloneAhcWSClient())
   }
 
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(
