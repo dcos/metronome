@@ -1,5 +1,10 @@
 # Version 0.5.0
 
+Metronome uses Marathon for scheduling and interacting with Mesos.   The underlying implementation has moved to Marathon 1.5.6-19 
+and now has all the bug fixes up to this version of Marathon along with the ability to add features added to Marathon including 
+UCR and advance Docker support.  This change includes a move from Joda time to Java8 date/time.
+
+
 ## Breaking changes
 We moved to a different Metrics library and the metrics are not always compatible or the same as existing metrics;
 however, the metrics are also now more accurate, use less memory, and are expected to get better throughout the release.

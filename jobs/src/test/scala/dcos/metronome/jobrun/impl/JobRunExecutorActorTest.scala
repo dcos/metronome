@@ -379,7 +379,6 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       backOffUntil = Timestamp(0),
       startedAt = Timestamp(clock.instant()))
     f.launchQueue.get(runSpecId) returns Some(queuedTaskInfo)
-    //    this is in the Prelude in marathon
     instanceTracker.specInstancesSync(runSpecId) returns Seq.empty[Instance]
 
     When("the actor is initialized")

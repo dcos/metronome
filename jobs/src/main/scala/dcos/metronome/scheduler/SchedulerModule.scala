@@ -88,7 +88,7 @@ class SchedulerModule(
       leadershipModule)
 
   lazy val taskStatusProcessor: TaskStatusUpdateProcessor = new TaskStatusUpdateProcessorImpl(
-    clock, instanceTrackerModule.instanceTracker, instanceTrackerModule.stateOpProcessor, schedulerDriverHolder, taskKillService, eventBus)
+    clock, instanceTrackerModule.instanceTracker, instanceTrackerModule.stateOpProcessor, schedulerDriverHolder, killService, eventBus)
 
   private[this] lazy val launcherModule: LauncherModule = {
     val instanceCreationHandler: InstanceCreationHandler = instanceTrackerModule.instanceCreationHandler
@@ -108,14 +108,14 @@ class SchedulerModule(
     schedulerDriverHolder,
     config.taskKillConfig,
     clock)
-  lazy val taskKillService: KillService = taskTerminationModule.taskKillService
+  lazy val killService: KillService = taskTerminationModule.taskKillService
 
   private[this] lazy val scheduler: MarathonScheduler = {
     val instanceTracker: InstanceTracker = instanceTrackerModule.instanceTracker
     val stateOpProcessor: TaskStateOpProcessor = instanceTrackerModule.stateOpProcessor
     val offerProcessor: OfferProcessor = launcherModule.offerProcessor
     val taskStatusProcessor: TaskStatusUpdateProcessor = new TaskStatusUpdateProcessorImpl(
-      clock, instanceTracker, stateOpProcessor, schedulerDriverHolder, taskKillService, eventBus)
+      clock, instanceTracker, stateOpProcessor, schedulerDriverHolder, killService, eventBus)
     val leaderInfo = config.mesosLeaderUiUrl match {
       case someUrl @ Some(_) => ConstMesosLeaderInfo(someUrl)
       case None              => new MutableMesosLeaderInfo
@@ -190,5 +190,5 @@ class SchedulerModule(
   taskJobsModule.handleOverdueTasks(
     instanceTrackerModule.instanceTracker,
     instanceTrackerModule.stateOpProcessor,
-    taskKillService)
+    killService)
 }
