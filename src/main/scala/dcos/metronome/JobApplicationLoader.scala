@@ -21,6 +21,7 @@ import play.api.mvc.EssentialFilter
 import play.api.routing.Router
 import play.components.BodyParserComponents
 
+import scala.collection.Seq
 import scala.concurrent.Future
 
 /**
@@ -68,17 +69,15 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
   lazy val wsClient: WSClient = {
     val parser = new WSConfigParser(configuration.underlying, environment.classLoader)
-    val config = new AhcWSClientConfig(wsClientConfig = parser.parse())
+    val config = AhcWSClientConfig(wsClientConfig = parser.parse())
     val builder = new AhcConfigBuilder(config)
-    // org.asynchttpclient.AsyncHttpClientConfig.AdditionalChannelInitializer
-    //    val logging = new AsyncHttpClientConfig.AdditionalChannelInitializer() {
-    //      override def initChannel(channel: play.shaded.ahc.io.netty.channel.Channel): Unit = {
-    //        channel.pipeline.addFirst("log", new io.netty.handler.logging.LoggingHandler(classOf[WSClient]))
-    //      }
-    //    }
+    val logging = new AsyncHttpClientConfig.AdditionalChannelInitializer() {
+      override def initChannel(channel: play.shaded.ahc.io.netty.channel.Channel): Unit = {
+        channel.pipeline.addFirst("log", new play.shaded.ahc.io.netty.handler.logging.LoggingHandler(classOf[WSClient]))
+      }
+    }
     val ahcBuilder = builder.configure()
-    // play.shaded.ahc.org.asynchttpclient.AsyncHttpClientConfig.AdditionalChannelInitializer
-    //    ahcBuilder.setHttpAdditionalChannelInitializer(logging)
+    ahcBuilder.setHttpAdditionalChannelInitializer(logging)
     val ahcConfig = ahcBuilder.build()
     new AhcWSClient(StandaloneAhcWSClient()(jobsModule.actorsModule.materializer))
   }
