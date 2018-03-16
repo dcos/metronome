@@ -3,7 +3,6 @@ package queue
 
 import dcos.metronome.model.QueuedJobRunInfo
 import dcos.metronome.queue.impl.LaunchQueueServiceImpl
-import scala.collection.immutable.Seq
 
 object QueueServiceFixture {
 

@@ -12,8 +12,6 @@ import dcos.metronome.utils.test.Mockito
 import org.scalatest._
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 
-import scala.collection.immutable._
-
 class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSuiteLike with BeforeAndAfterAll with GivenWhenThen with ScalaFutures with Matchers with Eventually with ImplicitSender with Mockito {
 
   import JobSpecSchedulerActor._

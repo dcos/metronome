@@ -29,7 +29,6 @@ import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, FunSuiteLike, GivenWhenThen, Matchers }
 
-import scala.collection.immutable.Seq
 import scala.concurrent.{ Future, Promise, duration }
 import scala.concurrent.duration._
 

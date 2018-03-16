@@ -7,8 +7,6 @@ import dcos.metronome.model.JobRunSpec._
 import mesosphere.marathon.api.v2.Validation._
 import mesosphere.marathon.plugin.{ AppVolumeSpec, ApplicationSpec, EnvVarValue, NetworkSpec, Secret }
 
-import scala.collection.immutable._
-
 case class JobSpec(
   id:          JobId,
   description: Option[String]      = JobSpec.DefaultDescription,

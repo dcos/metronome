@@ -14,8 +14,6 @@ import play.api.libs.json._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
-import scala.collection.immutable._
-
 class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with GivenWhenThen with ScalaFutures with BeforeAndAfter {
 
   import ScheduledJobSpecController._

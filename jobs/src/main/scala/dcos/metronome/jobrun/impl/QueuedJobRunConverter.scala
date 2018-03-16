@@ -7,8 +7,6 @@ import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedInstanceInfo
 import mesosphere.marathon.state.{ AppDefinition, Container, RunSpec }
 import org.slf4j.LoggerFactory
 
-import scala.collection.immutable.Seq
-
 object QueuedJobRunConverter {
 
   private[impl] val log = LoggerFactory.getLogger(getClass)

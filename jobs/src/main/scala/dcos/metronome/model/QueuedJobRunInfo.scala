@@ -4,8 +4,6 @@ package model
 import mesosphere.marathon.plugin.{ AppVolumeSpec, ApplicationSpec, EnvVarValue, NetworkSpec, PathId, Secret }
 import mesosphere.marathon.state.Timestamp
 
-import scala.collection.immutable.Map
-
 case class QueuedJobRunInfo(
   // is the full id used by marathon which includes the jobid/runid example: /startdeadline/201801221711083L7i6
   id:                    PathId,

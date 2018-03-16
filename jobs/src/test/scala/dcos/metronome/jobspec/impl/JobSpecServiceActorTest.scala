@@ -239,7 +239,6 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
   }
 
   test("A disabled jobSpec will not be started") {
-    import scala.collection.immutable.Seq
     Given("A disabled jobSpec")
     val f = new Fixture
     val disabledJobSpec = JobSpec(JobId("disabled"), schedules = Seq(ScheduleSpec(id = "minutely", cron = CronSpec("*/1 * * * *"), enabled = false)))

@@ -13,7 +13,6 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.collection.immutable._
 
 class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutures with Matchers {
 

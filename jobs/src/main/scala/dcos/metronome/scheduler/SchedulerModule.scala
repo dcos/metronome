@@ -33,7 +33,6 @@ import mesosphere.marathon.storage.repository.InstanceRepository
 import mesosphere.util.state._
 import org.apache.mesos.Protos.Offer
 
-import scala.collection.immutable.Seq
 import scala.util.Random
 
 class SchedulerModule(

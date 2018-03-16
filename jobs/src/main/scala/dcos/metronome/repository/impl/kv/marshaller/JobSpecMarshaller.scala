@@ -8,7 +8,6 @@ import dcos.metronome.repository.impl.kv.EntityMarshaller
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.collection.immutable.Seq
 import scala.collection.mutable
 
 object JobSpecMarshaller extends EntityMarshaller[JobSpec] {

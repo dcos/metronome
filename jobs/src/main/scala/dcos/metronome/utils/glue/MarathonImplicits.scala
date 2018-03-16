@@ -10,7 +10,6 @@ import mesosphere.marathon.core.readiness.ReadinessCheck
 import mesosphere.marathon.raml.Resources
 import mesosphere.marathon.state.{ AppDefinition, BackoffStrategy, Container, DockerVolume, EnvVarValue, FetchUri, PathId, PortDefinition, RunSpec, Secret, UpgradeStrategy, VersionInfo }
 
-import scala.collection.immutable.Seq
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 

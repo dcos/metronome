@@ -5,7 +5,6 @@ import com.google.protobuf.InvalidProtocolBufferException
 import mesosphere.marathon.StoreCommandFailedException
 import org.slf4j.LoggerFactory
 
-import scala.collection.immutable.Seq
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
