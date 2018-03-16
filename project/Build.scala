@@ -1,8 +1,4 @@
 import com.amazonaws.auth.{EnvironmentVariableCredentialsProvider, InstanceProfileCredentialsProvider}
-<<<<<<< HEAD
-import com.typesafe.sbt.SbtScalariform._
-=======
->>>>>>> Revert "Start JVM with aspectj weaver"
 import com.typesafe.sbt.packager
 import com.typesafe.sbt.packager.universal.UniversalDeployPlugin
 import ohnosequences.sbt.SbtS3Resolver
@@ -70,13 +66,8 @@ object Build extends sbt.Build {
           .excludeAll(excludeKamonAutoweave)
           .excludeAll(excludeKamonScala)
       )
-<<<<<<< HEAD
-      )
-    ).enablePlugins(PlayScala).disablePlugins(PlayLayoutPlugin)
-=======
     )
   ).enablePlugins(PlayScala).disablePlugins(PlayLayoutPlugin)
->>>>>>> Revert "Start JVM with aspectj weaver"
 
   val excludeSlf4jLog4j12 = ExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12")
   val excludeKamonAkka = ExclusionRule(organization = "io.kamon", name = "kamon-akka-2.4")
