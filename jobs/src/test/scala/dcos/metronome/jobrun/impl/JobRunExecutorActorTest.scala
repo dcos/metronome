@@ -401,14 +401,12 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val runSpec: RunSpec = activeJobRun.toRunSpec
     val queuedTaskInfo = QueuedInstanceInfo(
       runSpec = runSpec,
-      inProgress = false,
+      inProgress = true,
       instancesLeftToLaunch = 0,
       finalInstanceCount = 1,
       backOffUntil = Timestamp(0),
       startedAt = Timestamp(clock.instant()))
     launchQueue.get(runSpecId) returns Some(queuedTaskInfo)
-    //    TODO: needs instance instead of Task.LaunchedEphemeral
-    //    TODO: likely has seq issues Prelude in marathon
     instanceTracker.specInstancesSync(runSpecId) returns Seq(
       Instance(
         instanceId,

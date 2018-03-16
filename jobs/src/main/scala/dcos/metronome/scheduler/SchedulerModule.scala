@@ -5,6 +5,8 @@ import java.time.Clock
 
 import akka.actor.{ ActorRefFactory, ActorSystem }
 import akka.event.EventStream
+import akka.stream.OverflowStrategy
+import akka.stream.scaladsl.{ Sink, Source }
 import dcos.metronome.repository.SchedulerRepositoriesModule
 import dcos.metronome.scheduler.impl.{ NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor, SchedulerServiceImpl }
 import mesosphere.marathon._
@@ -29,6 +31,7 @@ import mesosphere.marathon.core.task.update.impl.TaskStatusUpdateProcessorImpl
 import mesosphere.marathon.core.task.update.impl.steps.ContinueOnErrorStep
 import mesosphere.marathon.storage.repository.InstanceRepository
 import mesosphere.util.state._
+import org.apache.mesos.Protos.Offer
 
 import scala.collection.immutable.Seq
 import scala.util.Random
@@ -95,9 +98,7 @@ class SchedulerModule(
     val offerMatcher: OfferMatcher = StopOnFirstMatchingOfferMatcher(
       offerMatcherReconcilerModule.offerMatcherReconciler,
       offerMatcherManagerModule.globalOfferMatcher)
-    val offerStreamInput = UnreachableReservedOfferMonitor.run(
-      lookupInstance = instanceTrackerModule.instanceTracker.instance,
-      taskStatusPublisher = taskStatusProcessor.publish)(actorsModule.materializer)
+    val offerStreamInput = Source.queue[Offer](1, OverflowStrategy.dropHead).to(Sink.ignore).run()(actorsModule.materializer)
 
     new LauncherModule(scallopConf, instanceCreationHandler, schedulerDriverHolder, offerMatcher, pluginModule.pluginManager, offerStreamInput)(clock)
   }

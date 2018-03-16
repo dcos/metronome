@@ -93,7 +93,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       "--kill_retry_timeout" -> Some(killRetryTimeout.toString))
       .collect { case (name, Some(value)) => (name, value) }
       .flatMap { case (name, value) => Seq(name, value) }
-    new AllConf(options.toList ++ flags.flatten)
+    new AllConf(options.to[Seq] ++ flags.flatten)
   }
 
   override lazy val reconciliationInterval: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.reconciliation.interval").getOrElse(15.minutes)
