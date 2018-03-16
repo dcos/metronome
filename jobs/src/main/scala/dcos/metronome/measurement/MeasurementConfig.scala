@@ -1,7 +1,7 @@
 package dcos.metronome
-package behavior
+package measurement
 
-trait BehaviorConfig {
+trait MeasurementConfig {
 
   def withMetrics: Boolean
 

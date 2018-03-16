@@ -25,7 +25,6 @@ class ApplicationControllerTest extends PlaySpec with OneAppPerTestWithComponent
       val metrics = route(app, FakeRequest(GET, "/v1/metrics")).get
       status(metrics) mustBe OK
       contentType(metrics) mustBe Some("application/json")
-      contentAsJson(metrics) \ "version" mustBe JsDefined(JsString("3.0.0"))
     }
   }
 

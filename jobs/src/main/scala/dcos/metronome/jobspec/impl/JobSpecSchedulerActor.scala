@@ -5,12 +5,10 @@ import java.time.{ Clock, Instant }
 import java.util.concurrent.TimeUnit
 
 import akka.actor._
-import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.jobrun.JobRunService
-import dcos.metronome.model.{ ConcurrencyPolicy, JobSpec, ScheduleSpec }
-import org.joda.time.{ DateTime, Seconds }
+import dcos.metronome.measurement.{ ActorMeasurement, ServiceMeasurement }
+import dcos.metronome.model.{ JobSpec, ScheduleSpec }
 
-import scala.concurrent.Await
 import scala.concurrent.duration._
 
 /**
@@ -18,10 +16,10 @@ import scala.concurrent.duration._
   * If the JobSpec has a schedule, the schedule is triggered in this actor.
   */
 class JobSpecSchedulerActor(
-  initSpec:     JobSpec,
-  clock:        Clock,
-  runService:   JobRunService,
-  val behavior: Behavior) extends Actor with Stash with ActorLogging with ActorBehavior {
+  initSpec:        JobSpec,
+  clock:           Clock,
+  runService:      JobRunService,
+  val measurement: ServiceMeasurement) extends Actor with Stash with ActorLogging with ActorMeasurement {
 
   import JobSpecSchedulerActor._
   import context.dispatcher
@@ -38,7 +36,7 @@ class JobSpecSchedulerActor(
     cancelSchedule()
   }
 
-  override def receive: Receive = around {
+  override def receive: Receive = measure {
     case StartJob(schedule)     => runJob(schedule)
     case UpdateJobSpec(newSpec) => updateSpec(newSpec)
   }
@@ -84,7 +82,7 @@ object JobSpecSchedulerActor {
   case class StartJob(schedule: ScheduleSpec)
   case class UpdateJobSpec(newSpec: JobSpec)
 
-  def props(spec: JobSpec, clock: Clock, runService: JobRunService, behavior: Behavior): Props = {
-    Props(new JobSpecSchedulerActor(spec, clock, runService, behavior))
+  def props(spec: JobSpec, clock: Clock, runService: JobRunService, measurement: ServiceMeasurement): Props = {
+    Props(new JobSpecSchedulerActor(spec, clock, runService, measurement))
   }
 }

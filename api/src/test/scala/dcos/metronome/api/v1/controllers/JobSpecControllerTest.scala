@@ -14,8 +14,6 @@ import play.api.libs.json._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
-import scala.collection.immutable._
-
 class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with GivenWhenThen with ScalaFutures with BeforeAndAfter {
 
   implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
@@ -80,7 +78,6 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(Json.parse(specJson))).get
 
       Then("The job is created")
-      println(contentAsString(response))
       status(response) mustBe CREATED
       contentType(response) mustBe Some("application/json")
     }

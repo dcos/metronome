@@ -16,7 +16,7 @@ class JobRunMarshallerTest extends FunSuite with Matchers {
 
   test("unmarshal with invalid proto data should return None") {
     val invalidBytes = "foobar".getBytes
-    JobRunMarshaller.fromBytes(invalidBytes) should be(None)
+    JobRunMarshaller.fromBytes(invalidBytes.to[IndexedSeq]) should be(None)
   }
 
   class Fixture {

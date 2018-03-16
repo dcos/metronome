@@ -2,12 +2,15 @@ package dcos.metronome
 
 import java.time.Clock
 
+import akka.actor.ActorSystem
 import com.softwaremill.macwire._
+import com.typesafe.config.ConfigFactory
 import controllers.Assets
 import dcos.metronome.api.v1.LeaderProxyFilter
 import dcos.metronome.api.{ ApiModule, ErrorHandler }
+import kamon.Kamon
+import mesosphere.marathon.metrics.Metrics
 import org.asynchttpclient.AsyncHttpClientConfig
-import org.joda.time.DateTimeZone
 import play.api.ApplicationLoader.Context
 import play.api._
 import play.api.i18n._
@@ -24,6 +27,9 @@ import scala.concurrent.Future
 class JobApplicationLoader extends ApplicationLoader {
   def load(context: Context): Application = {
     val jobComponents = new JobComponents(context)
+
+    Kamon.start(jobComponents.configuration.underlying)
+    Metrics.start(jobComponents.actorSystem)
 
     Future {
       jobComponents.schedulerService.run()
@@ -53,7 +59,6 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     jobsModule.jobInfoModule.jobInfoService,
     jobsModule.pluginManger,
     httpErrorHandler,
-    jobsModule.behaviorModule.metrics,
     assets,
     jobsModule.queueModule.launchQueueService)
 

@@ -8,12 +8,11 @@ import dcos.metronome.migration.Migration
 import dcos.metronome.scheduler.{ PeriodicOperations, PrePostDriverCallback, SchedulerConfig, SchedulerService }
 import mesosphere.marathon.core.election.{ ElectionCandidate, ElectionService }
 import mesosphere.marathon.core.leadership.LeadershipCoordinator
-import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.SchedulerDriverFactory
+import mesosphere.marathon.core.storage.store.PersistenceStore
 import org.apache.mesos.SchedulerDriver
 import org.slf4j.LoggerFactory
 
-import scala.collection.immutable.Seq
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
 import scala.util.Failure
@@ -22,12 +21,12 @@ import scala.util.Failure
   * Wrapper class for the scheduler
   */
 private[scheduler] class SchedulerServiceImpl(
+  persistenceStore:       PersistenceStore[_, _, _],
   leadershipCoordinator:  LeadershipCoordinator,
   config:                 SchedulerConfig,
   electionService:        ElectionService,
   prePostDriverCallbacks: Seq[PrePostDriverCallback],
   driverFactory:          SchedulerDriverFactory,
-  metrics:                Metrics,
   migration:              Migration,
   periodicOperations:     PeriodicOperations)
     extends SchedulerService with ElectionCandidate {
@@ -86,6 +85,9 @@ private[scheduler] class SchedulerServiceImpl(
   def startLeadership(): Unit = synchronized {
     log.info("As new leader running the driver")
 
+    // allow interactions with the persistence store
+    persistenceStore.markOpen()
+
     // execute tasks, only the leader is allowed to
     migration.migrate()
 
@@ -121,7 +123,7 @@ private[scheduler] class SchedulerServiceImpl(
         }
 
         // tell leader election that we step back, but want to be re-elected if isRunning is true.
-        electionService.abdicateLeadership(error = result.isFailure, reoffer = isRunningLatch.getCount > 0)
+        electionService.abdicateLeadership()
 
         log.info(s"Call postDriverRuns callbacks on ${prePostDriverCallbacks.mkString(", ")}")
         Await.result(Future.sequence(prePostDriverCallbacks.map(_.postDriverTerminates)), config.zkTimeout)

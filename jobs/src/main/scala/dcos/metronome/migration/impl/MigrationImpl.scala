@@ -3,7 +3,7 @@ package migration.impl
 
 import dcos.metronome.migration.Migration
 import dcos.metronome.repository.impl.kv.{ JobHistoryPathResolver, JobRunPathResolver, JobSpecPathResolver }
-import mesosphere.util.state.{ PersistentStore, PersistentStoreManagement, PersistentStoreWithNestedPathsSupport }
+import dcos.metronome.utils.state.{ PersistentStore, PersistentStoreManagement, PersistentStoreWithNestedPathsSupport }
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.Duration

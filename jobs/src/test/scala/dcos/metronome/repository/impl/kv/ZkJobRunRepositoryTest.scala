@@ -2,8 +2,8 @@ package dcos.metronome
 package repository.impl.kv
 
 import dcos.metronome.model.{ JobId, JobRunId }
+import dcos.metronome.utils.state.PersistentStoreWithNestedPathsSupport
 import dcos.metronome.utils.test.Mockito
-import mesosphere.util.state.PersistentStoreWithNestedPathsSupport
 import org.scalatest.{ FunSuite, Matchers }
 import org.scalatest.concurrent.ScalaFutures._
 

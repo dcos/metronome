@@ -7,7 +7,6 @@ import com.wix.accord.dsl.{ size, valid, validator }
 import mesosphere.marathon.api.v2.Validation.every
 
 import scala.concurrent.duration._
-import scala.collection.immutable._
 
 case class Artifact(uri: String, extract: Boolean = true, executable: Boolean = false, cache: Boolean = false)
 

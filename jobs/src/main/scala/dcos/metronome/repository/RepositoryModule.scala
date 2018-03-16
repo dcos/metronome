@@ -5,7 +5,7 @@ import com.twitter.util.JavaTimer
 import com.twitter.zk.{ NativeConnector, ZNode, ZkClient }
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.kv.{ ZkConfig, ZkJobHistoryRepository, ZkJobRunRepository, ZkJobSpecRepository }
-import mesosphere.util.state.zk.{ CompressionConf, ZKStore }
+import dcos.metronome.utils.state.{ CompressionConf, ZKStore }
 
 import scala.concurrent.ExecutionContext
 

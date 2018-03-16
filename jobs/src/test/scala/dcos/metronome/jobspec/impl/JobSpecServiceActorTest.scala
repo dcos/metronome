@@ -8,7 +8,7 @@ import akka.actor.{ Actor, ActorSystem, Props, Status }
 import akka.testkit._
 import akka.pattern.ask
 import akka.util.Timeout
-import dcos.metronome.behavior.BehaviorFixture
+import dcos.metronome.measurement.MethodMeasurementFixture
 import dcos.metronome.{ JobSpecAlreadyExists, JobSpecChangeInFlight, JobSpecDoesNotExist }
 import dcos.metronome.model.{ CronSpec, JobId, JobSpec, ScheduleSpec }
 import dcos.metronome.repository.impl.InMemoryRepository
@@ -239,7 +239,6 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
   }
 
   test("A disabled jobSpec will not be started") {
-    import scala.collection.immutable.Seq
     Given("A disabled jobSpec")
     val f = new Fixture
     val disabledJobSpec = JobSpec(JobId("disabled"), schedules = Seq(ScheduleSpec(id = "minutely", cron = CronSpec("*/1 * * * *"), enabled = false)))
@@ -263,7 +262,6 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     val dummyQueue = new LinkedBlockingDeque[TestActor.Message]()
     val dummyProp = Props(new TestActor(dummyQueue))
     val jobSpec = JobSpec(JobId("test"))
-    val behavior = BehaviorFixture.empty
-    val jobSpecService = TestActorRef[JobSpecServiceActor](JobSpecServiceActor.props(repository, (id: JobId) => dummyProp, _ => dummyProp, behavior))
+    val jobSpecService = TestActorRef[JobSpecServiceActor](JobSpecServiceActor.props(repository, (id: JobId) => dummyProp, _ => dummyProp, MethodMeasurementFixture.empty))
   }
 }

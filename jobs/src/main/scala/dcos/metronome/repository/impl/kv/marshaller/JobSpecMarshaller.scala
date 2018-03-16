@@ -3,14 +3,11 @@ package repository.impl.kv.marshaller
 
 import java.time.ZoneId
 
-import dcos.metronome.Protos
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.kv.EntityMarshaller
-import org.joda.time.DateTimeZone
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.collection.immutable.Seq
 import scala.collection.mutable
 
 object JobSpecMarshaller extends EntityMarshaller[JobSpec] {
@@ -19,7 +16,7 @@ object JobSpecMarshaller extends EntityMarshaller[JobSpec] {
   override def toBytes(jobSpec: JobSpec): IndexedSeq[Byte] = {
     import JobSpecConversions.JobSpecToProto
 
-    jobSpec.toProto.toByteArray
+    jobSpec.toProto.toByteArray.to[IndexedSeq]
   }
 
   override def fromBytes(bytes: IndexedSeq[Byte]): Option[JobSpec] =

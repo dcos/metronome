@@ -5,21 +5,19 @@ import java.time.Clock
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Scheduler, Stash }
-import dcos.metronome.{ JobRunFailed, UnexpectedTaskState }
-import dcos.metronome.behavior.{ ActorBehavior, Behavior }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
+import dcos.metronome.measurement.{ ActorMeasurement, ServiceMeasurement }
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.Task.LaunchedEphemeral
-import mesosphere.marathon.core.task.tracker.TaskTracker
-import org.joda.time.Seconds
+import mesosphere.marathon.core.task.tracker.InstanceTracker
 
-import scala.concurrent.Promise
 import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.concurrent.{ Await, Promise }
 
 /**
   * Handles one job run from start until the job either completes successful or failed.
@@ -31,10 +29,10 @@ class JobRunExecutorActor(
   promise:                    Promise[JobResult],
   persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
   launchQueue:                LaunchQueue,
-  taskTracker:                TaskTracker,
+  instanceTracker:            InstanceTracker,
   driverHolder:               MarathonSchedulerDriverHolder,
   clock:                      Clock,
-  val behavior:               Behavior)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorBehavior {
+  val measurement:            ServiceMeasurement)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging with ActorMeasurement {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
   import TaskStates._
@@ -130,13 +128,13 @@ class JobRunExecutorActor(
   }
 
   def tasksFromTaskTracker(): Iterable[JobRunTask] = {
-    taskTracker.appTasksLaunchedSync(runSpecId).collect {
+    instanceTracker.specInstancesSync(runSpecId).map(a => a.appTask).collect {
       case task: LaunchedEphemeral => JobRunTask(task)
       case task: Task              => throw UnexpectedTaskState(task)
     }
   }
 
-  def existsInLaunchQueue(): Boolean = launchQueue.get(runSpecId).exists(_.finalTaskCount > 0)
+  def existsInLaunchQueue(): Boolean = launchQueue.get(runSpecId).exists(i => i.finalInstanceCount > 0)
 
   def updatedTasks(update: TaskStateChangedEvent): Map[Task.Id, JobRunTask] = {
     // Note: there is a certain inaccuracy when we receive a finished task that's not in the Map
@@ -159,7 +157,7 @@ class JobRunExecutorActor(
   }
 
   def becomeFinishing(updatedJobRun: JobRun): Unit = {
-    launchQueue.purge(runSpecId)
+    Await.result(launchQueue.asyncPurge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
     jobRun = updatedJobRun
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
@@ -190,7 +188,7 @@ class JobRunExecutorActor(
 
   // FIXME: compare to becomeFinishing, there's lots of DRY violation
   def becomeFailing(updatedJobRun: JobRun): Unit = {
-    launchQueue.purge(runSpecId)
+    Await.result(launchQueue.asyncPurge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
     jobRun = updatedJobRun
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
@@ -206,7 +204,7 @@ class JobRunExecutorActor(
     jobRun.tasks.values.filter(t => isActive(t.status)).foreach { t =>
       driverHolder.driver.foreach(_.killTask(t.id.mesosTaskId))
     }
-    launchQueue.purge(runSpecId)
+    Await.result(launchQueue.asyncPurge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
 
     // Abort the jobRun
     jobRun = jobRun.copy(
@@ -221,7 +219,7 @@ class JobRunExecutorActor(
 
   // Behavior
 
-  override def receive: Receive = around {
+  override def receive: Receive = measure {
     case Initialized(Nil) =>
       log.info("initializing - no existing tasks in the queue")
       becomeStarting(jobRun)
@@ -245,19 +243,19 @@ class JobRunExecutorActor(
     case _ => stash()
   }
 
-  def receiveStartTimeout: Receive = {
+  def receiveStartTimeout: Receive = measure {
     case StartTimeout =>
       log.info(s"StartingDeadline timeout of ${jobRun.startingDeadline.get} expired for JobRun ${jobRun.id} created at ${jobRun.createdAt}")
       becomeAborting()
   }
 
-  def receiveKill: Receive = {
+  def receiveKill: Receive = measure {
     case KillCurrentJobRun =>
       log.info(s"Kill execution of JobRun ${jobRun.id}")
       becomeAborting()
   }
 
-  def creating: Receive = around {
+  def creating: Receive = measure {
     receiveKill orElse receiveStartTimeout orElse {
       case JobRunCreated(_, updatedJobRun, _) =>
         becomeStarting(updatedJobRun)
@@ -267,7 +265,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def starting: Receive = around {
+  def starting: Receive = measure {
     receiveKill orElse receiveStartTimeout orElse {
       case ForwardStatusUpdate(update) if isActive(update.taskState) =>
         becomeActive(update)
@@ -289,7 +287,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def active: Receive = around {
+  def active: Receive = measure {
     receiveKill orElse {
       case ForwardStatusUpdate(update) if isFinished(update.taskState) =>
         becomeFinishing(jobRun.copy(
@@ -306,7 +304,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def finishing: Receive = around {
+  def finishing: Receive = measure {
     receiveKill orElse {
       case JobRunDeleted(_, persisted, _) =>
         log.info(s"Execution of JobRun ${jobRun.id} has been finished")
@@ -327,7 +325,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def failing: Receive = around {
+  def failing: Receive = measure {
     receiveKill orElse {
       case JobRunDeleted(_, persisted, _) =>
         log.info(s"Execution of JobRun ${jobRun.id} has failed")
@@ -344,7 +342,7 @@ class JobRunExecutorActor(
     }
   }
 
-  def aborting: Receive = around {
+  def aborting: Receive = measure {
     // We can't handle a successful deletion and a failure differently
     case JobRunDeleted(_, persisted, _) =>
       log.info(s"Execution of JobRun ${jobRun.id} was aborted")
@@ -361,7 +359,7 @@ class JobRunExecutorActor(
       context.become(terminal)
   }
 
-  def terminal: Receive = around {
+  def terminal: Receive = measure {
     case _ => log.debug("Actor terminal; not handling or expecting any more messages")
   }
 
@@ -387,12 +385,12 @@ object JobRunExecutorActor {
     promise:                    Promise[JobResult],
     persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
     launchQueue:                LaunchQueue,
-    taskTracker:                TaskTracker,
+    instanceTracker:            InstanceTracker,
     driverHolder:               MarathonSchedulerDriverHolder,
     clock:                      Clock,
-    behavior:                   Behavior)(implicit scheduler: Scheduler): Props = Props(
+    measurement:                ServiceMeasurement)(implicit scheduler: Scheduler): Props = Props(
     new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
-      launchQueue, taskTracker, driverHolder, clock, behavior))
+      launchQueue, instanceTracker, driverHolder, clock, measurement))
 }
 
 object TaskStates {

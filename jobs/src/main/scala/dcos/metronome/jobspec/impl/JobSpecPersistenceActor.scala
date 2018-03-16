@@ -2,19 +2,19 @@ package dcos.metronome
 package jobspec.impl
 
 import akka.actor._
-import dcos.metronome.behavior.Behavior
+import dcos.metronome.measurement.{ ActorMeasurement, ServiceMeasurement }
 import dcos.metronome.model.{ JobId, JobSpec }
-import dcos.metronome.repository.NoConcurrentRepoChange.{ Failed, Change }
+import dcos.metronome.repository.NoConcurrentRepoChange.{ Change, Failed }
 import dcos.metronome.repository.{ NoConcurrentRepoChange, Repository }
 
 class JobSpecPersistenceActor(
-  id:           JobId,
-  repo:         Repository[JobId, JobSpec],
-  val behavior: Behavior) extends NoConcurrentRepoChange[JobId, JobSpec, ActorRef] {
+  id:              JobId,
+  repo:            Repository[JobId, JobSpec],
+  val measurement: ServiceMeasurement) extends NoConcurrentRepoChange[JobId, JobSpec, ActorRef] with ActorMeasurement {
   import JobSpecPersistenceActor._
   import context.dispatcher
 
-  override def receive: Receive = around {
+  override def receive: Receive = measure {
     case Create(jobSpec, delegate) => create(jobSpec, delegate)
     case Update(change, delegate)  => update(change, delegate)
     case Delete(orig, delegate)    => delete(orig, delegate)
@@ -54,7 +54,7 @@ object JobSpecPersistenceActor {
 
   case class PersistFailed(sender: ActorRef, id: JobId, ex: Throwable, delegate: ActorRef) extends Failed
 
-  def props(id: JobId, repository: Repository[JobId, JobSpec], behavior: Behavior): Props = {
-    Props(new JobSpecPersistenceActor(id, repository, behavior))
+  def props(id: JobId, repository: Repository[JobId, JobSpec], measurement: ServiceMeasurement): Props = {
+    Props(new JobSpecPersistenceActor(id, repository, measurement))
   }
 }

@@ -5,7 +5,6 @@ import java.time.Instant
 
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.task.Task
-import org.joda.time.DateTime
 
 case class TaskStateChangedEvent(
   taskId:    Task.Id,

@@ -6,8 +6,6 @@ import java.time.ZoneId
 import dcos.metronome.model._
 import org.scalatest.{ FunSuite, Matchers }
 
-import scala.collection.immutable._
-
 class JobSpecMarshallerTest extends FunSuite with Matchers {
   test("round-trip of a complete JobSpec with cmd") {
     val f = new Fixture
@@ -24,7 +22,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers {
 
   test("unmarshal with invalid proto data should return None") {
     val invalidBytes = "foobar".getBytes
-    JobSpecMarshaller.fromBytes(invalidBytes) should be (None)
+    JobSpecMarshaller.fromBytes(invalidBytes.to[IndexedSeq]) should be (None)
   }
 
   class Fixture {

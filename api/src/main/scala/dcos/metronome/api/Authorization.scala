@@ -83,9 +83,9 @@ object PluginFacade {
   def withRequest(request: RequestHeader, config: ApiConfig): HttpRequest = new HttpRequest {
     override def method: String = request.method
     override def requestPath: String = request.path
-    override def header(name: String): Seq[String] = request.headers.getAll(name)
+    override def header(name: String): Seq[String] = request.headers.getAll(name).to[Seq]
     override def cookie(name: String): Option[String] = request.cookies.get(name).map(_.value)
-    override def queryParam(name: String): Seq[String] = request.getQueryString(name).toSeq
+    override def queryParam(name: String): Seq[String] = request.getQueryString(name).to[Seq]
     override def remoteAddr: String = request.remoteAddress
     override def remotePort: Int = 0 //not available
     override def localPort: Int = config.effectivePort

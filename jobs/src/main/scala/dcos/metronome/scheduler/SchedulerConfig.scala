@@ -3,13 +3,13 @@ package scheduler
 
 import dcos.metronome.repository.impl.kv.ZkConfig
 import mesosphere.marathon.AllConf
-import mesosphere.marathon.core.task.termination.TaskKillConfig
+import mesosphere.marathon.core.task.termination.KillConfig
 
 import scala.concurrent.duration.FiniteDuration
 
 trait SchedulerConfig extends ZkConfig {
   def scallopConf: AllConf
-  def taskKillConfig: TaskKillConfig
+  def taskKillConfig: KillConfig
   def leaderPreparationTimeout: FiniteDuration
   def hostnameWithPort: String
   def zkTimeout: FiniteDuration

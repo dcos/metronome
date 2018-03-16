@@ -15,7 +15,16 @@ get:
               },
               "gauges": {
                 "name.of.gauge": {
-                  "value": 7248
+                  "value": 7248,
+                  "max": 0,
+                  "mean": 0.0,
+                  "min": 0,
+                  "p50": 0.0,
+                  "p75": 0.0,
+                  "p95": 0.0,
+                  "p98": 0.0,
+                  "p99": 0.0,
+                  "p999": 0.0,
                 }
               },
               "histograms": {
@@ -33,36 +42,37 @@ get:
                   "stddev": 0.0
                 }
               },
-              "meters": {
-                "name.of.meter": {
-                  "count": 0,
-                  "m15_rate": 0.0,
-                  "m1_rate": 0.0,
-                  "m5_rate": 0.0,
-                  "mean_rate": 0.0,
-                  "units": "events/second"
+              "min-max-counters": {
+                "name.of.min-max-counter": {
+                  "count": 549,
+                  "min": 0,
+                  "max": 0,
+                  "p50": 0,
+                  "p75": 0,
+                  "p98": 0,
+                  "p99": 0,
+                  "p999": 0,
+                  "mean": 0
                 }
               },
-              "timers": {
-                "name.of.timer": {
-                  "count": 1,
-                  "duration_units": "seconds",
-                  "m15_rate": 0.2,
-                  "m1_rate": 0.2,
-                  "m5_rate": 0.2,
-                  "max": 0.0021718640000000003,
-                  "mean": 0.0021718640000000003,
-                  "mean_rate": 0.13897812037014803,
-                  "min": 0.0021718640000000003,
-                  "p50": 0.0021718640000000003,
-                  "p75": 0.0021718640000000003,
-                  "p95": 0.0021718640000000003,
-                  "p98": 0.0021718640000000003,
-                  "p99": 0.0021718640000000003,
-                  "p999": 0.0021718640000000003,
-                  "rate_units": "calls/second",
-                  "stddev": 0.0
+              "system-metric": {
+                "name.of.jvm.metric": {
+                  "count": 18,
+                  "min": 0,
+                  "max": 67584,
+                  "p50": 2048,
+                  "p75": 4096,
+                  "p98": 67584,
+                  "p99": 67584,
+                  "p999": 67584,
+                  "mean": 7509.33349609375,
+                  "tags": { },
+                  "unit": {
+                    "name": "bytes",
+                    "label": "b"
+                  }
                 }
               },
-              "version": "3.0.0"
+              "start": "2018-03-15T09:49:03.975Z",
+              "end": "2018-03-15T09:49:03.975Z",
             }

@@ -3,7 +3,7 @@ package dcos.metronome
 import dcos.metronome.api.ApiConfig
 import dcos.metronome.repository.impl.kv.ZkConfig
 import mesosphere.marathon.AllConf
-import mesosphere.marathon.core.task.termination.TaskKillConfig
+import mesosphere.marathon.core.task.termination.KillConfig
 import play.api.Configuration
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
@@ -93,7 +93,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       "--kill_retry_timeout" -> Some(killRetryTimeout.toString))
       .collect { case (name, Some(value)) => (name, value) }
       .flatMap { case (name, value) => Seq(name, value) }
-    new AllConf(options.toSeq ++ flags.flatten)
+    new AllConf(options.to[Seq] ++ flags.flatten)
   }
 
   override lazy val reconciliationInterval: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.reconciliation.interval").getOrElse(15.minutes)
@@ -111,7 +111,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
 
   override lazy val maxActorStartupTime: FiniteDuration = configuration.getFiniteDuration("metronome.akka.actor.startup.max").getOrElse(10.seconds)
 
-  override def taskKillConfig: TaskKillConfig = scallopConf
+  override def taskKillConfig: KillConfig = scallopConf
 }
 
 private[this] object ConfigurationImplicits {

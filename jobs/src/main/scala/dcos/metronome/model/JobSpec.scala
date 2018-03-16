@@ -1,26 +1,26 @@
 package dcos.metronome
 package model
 
-import com.wix.accord.dsl._
 import com.wix.accord.Validator
+import com.wix.accord.dsl._
+import dcos.metronome.model.JobRunSpec._
 import mesosphere.marathon.api.v2.Validation._
-import mesosphere.marathon.plugin.{ Secret, EnvVarValue, RunSpec }
-
-import scala.collection.immutable._
-import JobRunSpec._
+import mesosphere.marathon.plugin.{ AppVolumeSpec, ApplicationSpec, EnvVarValue, NetworkSpec, Secret }
 
 case class JobSpec(
   id:          JobId,
   description: Option[String]      = JobSpec.DefaultDescription,
   labels:      Map[String, String] = JobSpec.DefaultLabels,
   schedules:   Seq[ScheduleSpec]   = JobSpec.DefaultSchedule,
-  run:         JobRunSpec          = JobSpec.DefaultRunSpec) extends RunSpec {
+  run:         JobRunSpec          = JobSpec.DefaultRunSpec) extends ApplicationSpec {
   def schedule(id: String): Option[ScheduleSpec] = schedules.find(_.id == id)
 
-  override def user: Option[String] = run.user
-  override def acceptedResourceRoles: Option[Predef.Set[String]] = None
-  override def secrets: Map[String, Secret] = Map.empty
-  override def env: Map[String, EnvVarValue] = mesosphere.marathon.state.EnvVarValue(run.env)
+  override val user: Option[String] = run.user
+  override val acceptedResourceRoles: Set[String] = Set.empty
+  override val secrets: Map[String, Secret] = Map.empty
+  override val env: Map[String, EnvVarValue] = mesosphere.marathon.state.EnvVarValue(run.env)
+  override val volumes: Seq[AppVolumeSpec] = Seq.empty
+  override val networks: Seq[NetworkSpec] = Seq.empty
 }
 
 object JobSpec {

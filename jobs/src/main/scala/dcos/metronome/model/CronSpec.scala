@@ -97,7 +97,7 @@ class CronDaysInMonthValidation extends CronConstraint(CronSpecValidation.validD
     case fieldValue: On => Seq(fieldValue.getTime.getValue)
     case fieldValue: Between =>
       (fieldValue.getFrom, fieldValue.getTo) match {
-        case (f: IntegerFieldValue, t: IntegerFieldValue) => Array.range(f.getValue, t.getValue).toSeq
+        case (f: IntegerFieldValue, t: IntegerFieldValue) => Array.range(f.getValue, t.getValue).to[Seq]
         case _ => Seq.empty
       }
     case _ => Seq.empty

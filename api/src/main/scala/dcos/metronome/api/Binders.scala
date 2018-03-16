@@ -32,7 +32,7 @@ object Binders {
     * This binder binds query parameter to JobIds
     */
   implicit val pathQueryBinder: QueryStringBindable[JobId] = new QueryStringBindable[JobId] {
-    override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, JobId]] = {
+    override def bind(key: String, params: Map[String, scala.collection.Seq[String]]): Option[Either[String, JobId]] = {
       val jobId = params.get(key).flatMap(_.headOption)
       try {
         jobId.map(value => Right(validateOrThrow(JobId(value))))
@@ -44,7 +44,7 @@ object Binders {
   }
 
   implicit val embedQueryBinder: QueryStringBindable[Set[Embed]] = new QueryStringBindable[Set[Embed]] {
-    override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Set[Embed]]] = {
+    override def bind(key: String, params: Map[String, scala.collection.Seq[String]]): Option[Either[String, Set[Embed]]] = {
       val embeds = params.getOrElse(key, Seq.empty).flatMap(_.split(","))
       val valid = embeds.flatMap(Embed.names.get)
       if (valid.size != embeds.size) Some(Left(s"Unknown embed options. Valid options are: ${Embed.names.keys.mkString(", ")}"))

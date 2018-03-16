@@ -2,7 +2,7 @@ package dcos.metronome
 package jobrun.impl
 
 import akka.actor._
-import dcos.metronome.behavior.{ ActorBehavior, Behavior }
+import dcos.metronome.measurement.{ ActorMeasurement, ServiceMeasurement }
 import dcos.metronome.model.{ JobRun, JobRunId }
 import dcos.metronome.repository.{ NoConcurrentRepoChange, Repository }
 
@@ -10,13 +10,13 @@ import dcos.metronome.repository.{ NoConcurrentRepoChange, Repository }
   * Handles persistence for one JobExecutor.
   */
 class JobRunPersistenceActor(
-  id:           JobRunId,
-  repo:         Repository[JobRunId, JobRun],
-  val behavior: Behavior) extends NoConcurrentRepoChange[JobRunId, JobRun, Unit] {
+  id:              JobRunId,
+  repo:            Repository[JobRunId, JobRun],
+  val measurement: ServiceMeasurement) extends NoConcurrentRepoChange[JobRunId, JobRun, Unit] with ActorMeasurement {
   import JobRunPersistenceActor._
   import context.dispatcher
 
-  override def receive: Receive = around {
+  override def receive: Receive = measure {
     case Create(jobRun) => create(jobRun)
     case Update(change) => update(change)
     case Delete(orig)   => delete(orig)
@@ -52,7 +52,7 @@ object JobRunPersistenceActor {
   case class JobRunDeleted(sender: ActorRef, jobRun: JobRun, nothing: Unit) extends JobRunChange
   case class PersistFailed(sender: ActorRef, id: JobRunId, ex: Throwable, nothing: Unit) extends Failed
 
-  def props(id: JobRunId, repository: Repository[JobRunId, JobRun], behavior: Behavior): Props = {
-    Props(new JobRunPersistenceActor(id, repository, behavior))
+  def props(id: JobRunId, repository: Repository[JobRunId, JobRun], measurement: ServiceMeasurement): Props = {
+    Props(new JobRunPersistenceActor(id, repository, measurement))
   }
 }

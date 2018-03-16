@@ -1,3 +1,23 @@
+# Version 0.5.0
+
+Metronome uses Marathon for scheduling and interacting with Mesos.   The underlying implementation has moved to Marathon 1.5.6-19 
+and now has all the bug fixes up to this version of Marathon along with the ability to add features added to Marathon including 
+UCR and advance Docker support.  This change includes a move from Joda time to Java8 date/time.
+
+
+## Breaking changes
+We moved to a different Metrics library and the metrics are not always compatible or the same as existing metrics;
+however, the metrics are also now more accurate, use less memory, and are expected to get better throughout the release.
+Where it was possible, we maintained the original metric names/groupings/etc, but some are in new locations or have
+slightly different semantics. Any monitoring dashboards should be updated.
+
+For Metronome specific metrics, you can find your old metrics under in the same path, only prefixed with "service" 
+so e.g. 'dcos.metronome.jobspec.impl.JobSpecServiceActor.receiveTimer' is now
+'service.dcos.metronome.jobspec.impl.JobSpecServiceActor.receiveTimer'.
+
+The format of the v1/metrics endpoint also changed in a backward incompatible manner - please see the documentation 
+for the current way the metrics are served.
+
 # Version 0.4.1
 
 ## Bugs and Tracking

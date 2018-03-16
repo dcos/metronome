@@ -54,16 +54,16 @@ trait ZkConfig {
 
   import scala.collection.JavaConverters._
   lazy val zkDefaultCreationACL: Seq[ACL] = (zkUsername, zkPassword) match {
-    case (Some(_), Some(_)) => ZooDefs.Ids.CREATOR_ALL_ACL.asScala
-    case _                  => ZooDefs.Ids.OPEN_ACL_UNSAFE.asScala
+    case (Some(_), Some(_)) => ZooDefs.Ids.CREATOR_ALL_ACL.asScala.to[Seq]
+    case _                  => ZooDefs.Ids.OPEN_ACL_UNSAFE.asScala.to[Seq]
   }
 
   def zkHostAddresses: Seq[InetSocketAddress] =
-    for (s <- zkHosts.split(",")) yield {
+    (for (s <- zkHosts.split(",")) yield {
       val splits = s.split(":")
       require(splits.length == 2, "expected host:port for zk servers")
       new InetSocketAddress(splits(0), splits(1).toInt)
-    }
+    }).to[Seq]
 
 }
 

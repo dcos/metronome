@@ -20,7 +20,7 @@ object JobRunMarshaller extends EntityMarshaller[JobRun] {
   override def toBytes(jobRun: JobRun): IndexedSeq[Byte] = {
     import JobRunConversions.JobRunToProto
 
-    jobRun.toProto.toByteArray
+    jobRun.toProto.toByteArray.to[IndexedSeq]
   }
 
   override def fromBytes(bytes: IndexedSeq[Byte]): Option[JobRun] =

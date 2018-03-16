@@ -6,7 +6,6 @@ import java.time.Instant
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.Task.LaunchedEphemeral
-import org.joda.time.DateTime
 
 import scala.concurrent.duration.Duration
 
@@ -31,7 +30,7 @@ object JobRunTask {
     // so it is somewhat safe to derive that completedAt for these tasks is always None!
     JobRunTask(
       id = task.taskId,
-      startedAt = Instant.ofEpochMilli(task.status.stagedAt.toDateTime.getMillis),
+      startedAt = Instant.ofEpochMilli(task.status.stagedAt.millis),
       completedAt = None,
       status = TaskState(task))
   }

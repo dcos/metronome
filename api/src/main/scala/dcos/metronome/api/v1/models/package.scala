@@ -10,7 +10,6 @@ import dcos.metronome.jobinfo.JobInfo
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
-import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedTaskInfo
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.plugin.PathId
 import mesosphere.marathon.state.{ RunSpec, Timestamp }
@@ -19,7 +18,6 @@ import play.api.libs.json.Reads._
 import play.api.libs.json.{ Json, _ }
 
 import scala.collection.JavaConverters._
-import scala.collection.immutable.Seq
 import scala.concurrent.duration._
 
 package object models {
