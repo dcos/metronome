@@ -39,7 +39,7 @@ object TaskState {
   // FIXME: Task should have a distinct status, always
   // Possible way to achieve this: let the Task have a status
   // and make sure a taskStateChange always provides a task or that status
-  def apply(task: Task.LaunchedEphemeral): TaskState = {
+  def apply(task: Task): TaskState = {
     val default: TaskState = TaskState.Created
     apply(task.status.condition).getOrElse(default)
   }

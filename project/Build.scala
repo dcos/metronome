@@ -71,11 +71,11 @@ object Build extends sbt.Build {
 
   val excludeSlf4jLog4j12 = ExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12")
   val excludeKamonAkka = ExclusionRule(organization = "io.kamon", name = "kamon-akka-2.4")
-  val excludeKamonAutoweave = ExclusionRule(organization = "io.kamon", name = "kamon-autoweave_2.11")
-  val excludeKamonScala = ExclusionRule(organization = "io.kamon", name = "kamon-scala_2.11")
+  val excludeKamonAutoweave = ExclusionRule(organization = "io.kamon", name = "kamon-autoweave_2.12")
+  val excludeKamonScala = ExclusionRule(organization = "io.kamon", name = "kamon-scala_2.12")
   val excludeLog4j = ExclusionRule(organization = "log4j", name = "log4j")
   val excludeJCL = ExclusionRule(organization = "commons-logging", name = "commons-logging")
-  val excludeAkkaHttpExperimental = ExclusionRule(organization = "com.typesafe.akka", name = "akka-http-experimental_2.11")
+  val excludeAkkaHttpExperimental = ExclusionRule(organization = "com.typesafe.akka", name = "akka-http-experimental_2.12")
 
   lazy val jobs = Project(
     id = "jobs",
@@ -113,7 +113,7 @@ object Build extends sbt.Build {
 
   lazy val baseSettings = Seq(
     organization := "dcos",
-    scalaVersion := "2.11.8",
+    scalaVersion := "2.12.4",
     crossScalaVersions := Seq(scalaVersion.value),
     scalacOptions in (Compile, doc) ++= Seq(
       "-encoding", "UTF-8",
@@ -165,8 +165,8 @@ object Build extends sbt.Build {
       val AsyncAwait = "0.9.7"
       val ScalaTest = "3.0.5"
       val MacWire = "2.2.5"
-      val Marathon = "1.5.6-19-g2d4e150"
-      val MarathonPluginInterface = "1.5.6-19-g2d4e150"
+      val Marathon = "1.6.322"
+      val MarathonPluginInterface = "1.6.322"
       val Play = "2.6.7"
       val CronUtils = "6.0.4"
       val Threeten = "1.3.3"
@@ -183,11 +183,11 @@ object Build extends sbt.Build {
     val playAhcWS   = "com.typesafe.play" %% "play-ahc-ws" % V.Play
     val playJson = "com.typesafe.play" %% "play-json" % V.Play
     val playWS = "com.typesafe.play" %% "play-ws" % V.Play
-    val yaml = "net.jcazevedo" %% "moultingyaml" % "0.2"
+    val yaml = "net.jcazevedo" %% "moultingyaml" % "0.4.0"
     val macWireMacros = "com.softwaremill.macwire" %% "macros" % V.MacWire % "provided"
     val macWireUtil = "com.softwaremill.macwire" %% "util" % V.MacWire
     val macWireProxy = "com.softwaremill.macwire" %% "proxy" % V.MacWire
-    val marathon = "mesosphere.marathon" %% "marathon" % V.Marathon exclude("com.typesafe.play", "*") exclude("mesosphere.marathon", "ui") exclude("mesosphere", "chaos") exclude("org.apache.hadoop", "hadoop-hdfs") exclude("org.apache.hadoop", "hadoop-common") exclude("org.eclipse.jetty", "*") exclude("mesosphere.marathon", "plugin-interface_2.11")
+    val marathon = "mesosphere.marathon" %% "marathon" % V.Marathon exclude("com.typesafe.play", "*") exclude("mesosphere.marathon", "ui") exclude("mesosphere", "chaos") exclude("org.apache.hadoop", "hadoop-hdfs") exclude("org.apache.hadoop", "hadoop-common") exclude("org.eclipse.jetty", "*") exclude("mesosphere.marathon", "plugin-interface_2.12")
     val marathonPlugin = "mesosphere.marathon" %% "plugin-interface" % V.MarathonPluginInterface
     val cronUtils = "com.cronutils" % "cron-utils" % V.CronUtils exclude("org.threeten", "threetenbp")
     val threeten = "org.threeten" % "threetenbp" % V.Threeten

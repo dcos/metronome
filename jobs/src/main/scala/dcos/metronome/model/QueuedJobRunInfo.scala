@@ -1,7 +1,7 @@
 package dcos.metronome
 package model
 
-import mesosphere.marathon.plugin.{ AppVolumeSpec, ApplicationSpec, EnvVarValue, NetworkSpec, PathId, Secret }
+import mesosphere.marathon.plugin.{ ApplicationSpec, EnvVarValue, NetworkSpec, PathId, Secret, VolumeMountSpec, VolumeSpec }
 import mesosphere.marathon.state.Timestamp
 
 case class QueuedJobRunInfo(
@@ -16,6 +16,7 @@ case class QueuedJobRunInfo(
   override val secrets: Map[String, Secret] = Map.empty
   override val env: Map[String, EnvVarValue] = mesosphere.marathon.state.EnvVarValue(run.env)
   override val labels = Map.empty[String, String]
-  override val volumes: Seq[AppVolumeSpec] = Seq.empty
+  override val volumes: Seq[VolumeSpec] = Seq.empty
   override val networks: Seq[NetworkSpec] = Seq.empty
+  override val volumeMounts: Seq[VolumeMountSpec] = Seq.empty
 }

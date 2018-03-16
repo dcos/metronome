@@ -13,7 +13,6 @@ import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.core.task.Task.LaunchedEphemeral
 import mesosphere.marathon.core.task.tracker.InstanceTracker
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
@@ -129,8 +128,8 @@ class JobRunExecutorActor(
 
   def tasksFromTaskTracker(): Iterable[JobRunTask] = {
     instanceTracker.specInstancesSync(runSpecId).map(a => a.appTask).collect {
-      case task: LaunchedEphemeral => JobRunTask(task)
-      case task: Task              => throw UnexpectedTaskState(task)
+      case task: Task => JobRunTask(task)
+      case task: Task => throw UnexpectedTaskState(task)
     }
   }
 

@@ -5,7 +5,6 @@ import java.time.Instant
 
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.core.task.Task.LaunchedEphemeral
 
 import scala.concurrent.duration.Duration
 
@@ -25,7 +24,7 @@ case class JobRunTask(
   status:      TaskState)
 
 object JobRunTask {
-  def apply(task: LaunchedEphemeral): JobRunTask = {
+  def apply(task: Task): JobRunTask = {
     // Note: Terminal LaunchedEphemeral tasks are expunged from the repo
     // so it is somewhat safe to derive that completedAt for these tasks is always None!
     JobRunTask(
