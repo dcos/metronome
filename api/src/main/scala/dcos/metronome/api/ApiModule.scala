@@ -14,6 +14,7 @@ import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.plugin.PluginManager
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
 import play.api.http.HttpErrorHandler
+import play.api.mvc.{ AnyContent, BodyParser, PlayBodyParsers }
 import play.api.routing.Router
 import router.Routes
 
@@ -26,7 +27,8 @@ class ApiModule(
   httpErrorHandler:   HttpErrorHandler,
   assets:             Assets,
   launchQueueService: LaunchQueueService,
-  actorsModule:       ActorsModule) {
+  actorsModule:       ActorsModule,
+  playParsers:        BodyParser[AnyContent]) {
 
   lazy val mat = actorsModule.materializer
 

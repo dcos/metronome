@@ -13,19 +13,20 @@ import dcos.metronome.{ JobSpecAlreadyExists, JobSpecDoesNotExist }
 import mesosphere.marathon.plugin.auth._
 import JobId._
 import akka.stream.Materializer
-import play.api.mvc.Result
+import play.api.mvc.{ AnyContent, BodyParser, PlayBodyParsers, Result }
 
 import scala.async.Async.{ async, await }
 import scala.concurrent.Future
 
 class JobSpecController(
-  jobSpecService:    JobSpecService,
-  jobRunService:     JobRunService,
-  jobInfoService:    JobInfoService,
-  val authenticator: Authenticator,
-  val authorizer:    Authorizer,
-  val config:        ApiConfig,
-  val mat:           Materializer) extends Authorization {
+  jobSpecService:        JobSpecService,
+  jobRunService:         JobRunService,
+  jobInfoService:        JobInfoService,
+  val authenticator:     Authenticator,
+  val authorizer:        Authorizer,
+  val config:            ApiConfig,
+  val mat:               Materializer,
+  val defaultBodyParser: BodyParser[AnyContent]) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 

@@ -54,6 +54,7 @@ trait Authorization extends RestController {
   def authenticator: Authenticator
   def authorizer: Authorizer
   def config: ApiConfig
+  def defaultBodyParser: BodyParser[AnyContent]
 
   implicit val mat: Materializer
 
@@ -79,7 +80,7 @@ trait Authorization extends RestController {
       }
     }
 
-    override def parser: BodyParser[AnyContent] = new BodyParsers.Default()
+    override def parser: BodyParser[AnyContent] = defaultBodyParser
 
     override protected def executionContext: ExecutionContext = ExecutionContext.global
   }

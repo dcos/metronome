@@ -11,13 +11,15 @@ import mesosphere.marathon.api.v2.json.Formats.FormatWithDefault
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer, CreateRunSpec, UpdateRunSpec }
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import play.api.mvc.{ AnyContent, BodyParser, PlayBodyParsers }
 
 class ScheduledJobSpecController(
-  jobSpecService:    JobSpecService,
-  val authenticator: Authenticator,
-  val authorizer:    Authorizer,
-  val config:        ApiConfig,
-  val mat:           Materializer) extends Authorization {
+  jobSpecService:        JobSpecService,
+  val authenticator:     Authenticator,
+  val authorizer:        Authorizer,
+  val config:            ApiConfig,
+  val mat:               Materializer,
+  val defaultBodyParser: BodyParser[AnyContent]) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
   import ScheduledJobSpecController._

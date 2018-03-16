@@ -9,16 +9,18 @@ import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobId, JobRunId }
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer, UpdateRunSpec, ViewRunSpec }
+import play.api.mvc.{ AnyContent, BodyParser, PlayBodyParsers }
 
 import scala.async.Async.{ async, await }
 
 class JobRunController(
-  jobSpecService:    JobSpecService,
-  jobRunService:     JobRunService,
-  val authenticator: Authenticator,
-  val authorizer:    Authorizer,
-  val config:        ApiConfig,
-  val mat:           Materializer) extends Authorization {
+  jobSpecService:        JobSpecService,
+  jobRunService:         JobRunService,
+  val authenticator:     Authenticator,
+  val authorizer:        Authorizer,
+  val config:            ApiConfig,
+  val mat:               Materializer,
+  val defaultBodyParser: BodyParser[AnyContent]) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 

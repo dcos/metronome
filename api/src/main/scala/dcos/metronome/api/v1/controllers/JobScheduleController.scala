@@ -10,17 +10,18 @@ import dcos.metronome.model.{ JobId, JobSpec, ScheduleSpec }
 import mesosphere.marathon.plugin.auth._
 import JobId._
 import akka.stream.Materializer
-import play.api.mvc.Result
+import play.api.mvc.{ AnyContent, BodyParser, PlayBodyParsers, Result }
 
 import scala.async.Async.{ async, await }
 import scala.concurrent.Future
 
 class JobScheduleController(
-  jobSpecService:    JobSpecService,
-  val authenticator: Authenticator,
-  val authorizer:    Authorizer,
-  val config:        ApiConfig,
-  val mat:           Materializer) extends Authorization {
+  jobSpecService:        JobSpecService,
+  val authenticator:     Authenticator,
+  val authorizer:        Authorizer,
+  val config:            ApiConfig,
+  val mat:               Materializer,
+  val defaultBodyParser: BodyParser[AnyContent]) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 

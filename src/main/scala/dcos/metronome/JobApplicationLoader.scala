@@ -19,6 +19,7 @@ import play.api.libs.ws.ahc.{ AhcConfigBuilder, AhcWSClient, AhcWSClientConfig, 
 import play.api.libs.ws.{ WSClient, WSConfigParser }
 import play.api.mvc.EssentialFilter
 import play.api.routing.Router
+import play.components.BodyParserComponents
 
 import scala.concurrent.Future
 
@@ -60,7 +61,8 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     httpErrorHandler,
     assets,
     jobsModule.queueModule.launchQueueService,
-    jobsModule.actorsModule)
+    jobsModule.actorsModule,
+    defaultBodyParser)
 
   def schedulerService = jobsModule.schedulerModule.schedulerService
 
@@ -78,7 +80,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     // play.shaded.ahc.org.asynchttpclient.AsyncHttpClientConfig.AdditionalChannelInitializer
     //    ahcBuilder.setHttpAdditionalChannelInitializer(logging)
     val ahcConfig = ahcBuilder.build()
-    new AhcWSClient(StandaloneAhcWSClient())
+    new AhcWSClient(StandaloneAhcWSClient()(jobsModule.actorsModule.materializer))
   }
 
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(
