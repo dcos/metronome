@@ -17,7 +17,7 @@ class ServerSpec extends PlaySpec
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(Span(1, Second), Span(50, Millis))
   override def createComponents(context: Context) = new MockApiComponents(context) with AhcWSComponents
 
-  "Server query should" should {
+  "Server query" should {
     "work" in {
       implicit val ec = app.materializer.executionContext
       val wsClient = components.wsClient

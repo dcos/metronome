@@ -409,10 +409,10 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     instanceTracker.specInstancesSync(runSpecId) returns Seq(
       Instance(
         instanceId,
-        AgentInfo("localhost", None, Nil),
+        AgentInfo("localhost", None, None, None, Seq.empty),
         Instance.InstanceState(Condition.Running, Timestamp.now(clock), None, None),
         Map(taskId -> mockTask(taskId, Timestamp.now(clock), mesos.Protos.TaskState.TASK_RUNNING)),
-        Timestamp.now(clock), UnreachableDisabled))
+        Timestamp.now(clock), UnreachableDisabled, None))
 
     When("the actor is initialized")
     val actorRef: ActorRef = executorActor(activeJobRun)
@@ -672,13 +672,13 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       actorRef
     }
 
-    def mockTask(taskId: Task.Id, stagedAt: Timestamp, mesosState: mesos.Protos.TaskState): Task.LaunchedEphemeral = {
+    def mockTask(taskId: Task.Id, stagedAt: Timestamp, mesosState: mesos.Protos.TaskState): Task = {
       val status: Task.Status = mock[Task.Status]
       status.stagedAt returns stagedAt
       val mesosStatus: mesos.Protos.TaskStatus = mesos.Protos.TaskStatus.newBuilder()
         .setState(mesosState)
         .buildPartial()
-      val task = mock[Task.LaunchedEphemeral]
+      val task = mock[Task]
       task.taskId returns taskId
       task.status returns status
       task.status.mesosStatus returns Some(mesosStatus)
@@ -720,10 +720,10 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       instanceTracker.specInstancesSync(runSpecId) returns Seq(
         Instance(
           instanceId,
-          AgentInfo("localhost", None, Nil),
+          AgentInfo("localhost", None, None, None, Seq.empty),
           Instance.InstanceState(Condition.Running, Timestamp.now(clock), None, None),
           Map(taskId -> mockTask(taskId, Timestamp.now(clock), mesos.Protos.TaskState.TASK_RUNNING)),
-          Timestamp.now(clock), UnreachableDisabled))
+          Timestamp.now(clock), UnreachableDisabled, None))
       (actorRef, activeJob)
     }
 
