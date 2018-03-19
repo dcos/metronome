@@ -11,7 +11,7 @@ import dcos.metronome.api.v1.LeaderProxyFilter
 import dcos.metronome.api.{ ApiModule, ErrorHandler }
 import kamon.Kamon
 import mesosphere.marathon.metrics.Metrics
-import play.shaded.ahc.org.asynchttpclient.AsyncHttpClientConfig
+import play.shaded.ahc.org.asynchttpclient.{ AsyncHttpClientConfig, DefaultAsyncHttpClient }
 import play.api.ApplicationLoader.Context
 import play.api._
 import play.api.i18n._
@@ -79,7 +79,8 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     val ahcBuilder = builder.configure()
     ahcBuilder.setHttpAdditionalChannelInitializer(logging)
     val ahcConfig = ahcBuilder.build()
-    new AhcWSClient(StandaloneAhcWSClient()(jobsModule.actorsModule.materializer))
+    val asyncHttpClient = new DefaultAsyncHttpClient(ahcConfig)
+    new AhcWSClient(new StandaloneAhcWSClient(asyncHttpClient)(jobsModule.actorsModule.materializer))
   }
 
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(

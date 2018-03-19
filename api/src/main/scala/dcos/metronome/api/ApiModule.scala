@@ -12,9 +12,9 @@ import dcos.metronome.queue.LaunchQueueService
 import mesosphere.marathon.core.auth.AuthModule
 import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.plugin.PluginManager
-import mesosphere.marathon.plugin.auth.{Authenticator, Authorizer}
+import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
 import play.api.http.HttpErrorHandler
-import play.api.mvc.{AnyContent, BodyParser}
+import play.api.mvc.{ AnyContent, BodyParser }
 import play.api.routing.Router
 import router.Routes
 
