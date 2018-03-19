@@ -55,7 +55,7 @@ class JobRunExecutorActor(
       case JobRunStatus.Initial =>
         becomeCreating()
       case JobRunStatus.Starting | JobRunStatus.Active =>
-        val existingTasks = tasksFromTaskTracker()
+        val existingTasks = tasksFromInstanceTracker()
         existingTasks match {
           case tasks if tasks.nonEmpty =>
             // the actor was probably just restarted and we did not lose contents of the launch queue
@@ -126,7 +126,7 @@ class JobRunExecutorActor(
     startingDeadlineTimer = None
   }
 
-  def tasksFromTaskTracker(): Iterable[JobRunTask] = {
+  def tasksFromInstanceTracker(): Iterable[JobRunTask] = {
     instanceTracker.specInstancesSync(runSpecId).map(a => a.appTask).collect {
       case task: Task => JobRunTask(task)
       case task => throw UnexpectedTaskState(task)
