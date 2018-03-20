@@ -31,3 +31,4 @@ ci/si_pipeline.sh
 
 # kamon libsigar native libs
 jobs/native/
+native/
