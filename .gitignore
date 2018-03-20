@@ -28,3 +28,6 @@ protobuf-*/
 # si_provision.sh files
 ci/launch_cluster.sh
 ci/si_pipeline.sh
+
+# kamon libsigar native libs
+jobs/native/

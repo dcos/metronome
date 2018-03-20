@@ -129,7 +129,7 @@ class JobRunExecutorActor(
   def tasksFromInstanceTracker(): Iterable[JobRunTask] = {
     instanceTracker.specInstancesSync(runSpecId).map(a => a.appTask).collect {
       case task: Task => JobRunTask(task)
-      case task => throw UnexpectedTaskState(task)
+      case task       => throw UnexpectedTaskState(task)
     }
   }
 
