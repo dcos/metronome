@@ -19,6 +19,8 @@ class RestController extends Controller {
 
   object validate extends BodyParsers {
 
+    val schemaValidator = new SchemaValidator()
+
     def json[A](implicit reader: Reads[A], schema: JsonSchema[A], validator: Validator[A]): BodyParser[A] = {
       jsonWith[A](identity)
     }
@@ -40,7 +42,7 @@ class RestController extends Controller {
         }
 
         def schemaValidate(jsValue: JsValue): Either[Result, A] = {
-          SchemaValidator.validate(schema.schemaType)(jsValue) match {
+          schemaValidator.validate(schema.schemaType, jsValue) match {
             case JsSuccess(value, _) => readObject(value)
             case error: JsError      => Left(UnprocessableEntity(Json.toJson(error)))
           }

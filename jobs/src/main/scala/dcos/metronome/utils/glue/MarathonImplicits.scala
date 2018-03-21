@@ -8,7 +8,7 @@ import mesosphere.marathon
 import mesosphere.marathon.core.health.HealthCheck
 import mesosphere.marathon.core.readiness.ReadinessCheck
 import mesosphere.marathon.raml.Resources
-import mesosphere.marathon.state.{ AppDefinition, BackoffStrategy, Container, DockerVolume, EnvVarValue, FetchUri, PathId, PortDefinition, RunSpec, Secret, UpgradeStrategy, VersionInfo }
+import mesosphere.marathon.state.{ AppDefinition, BackoffStrategy, Container, EnvVarValue, FetchUri, HostVolume, PathId, PortDefinition, RunSpec, Secret, UpgradeStrategy, VersionInfo, VolumeMount }
 
 import scala.concurrent.duration._
 import scala.language.implicitConversions
@@ -26,10 +26,9 @@ object MarathonImplicits {
   }
 
   implicit class ModelToVolume(val volume: Volume) extends AnyVal {
-    def toMarathon: mesosphere.marathon.state.Volume = DockerVolume(
-      containerPath = volume.containerPath,
-      hostPath = volume.hostPath,
-      mode = volume.mode.toProto)
+    def toMarathon: mesosphere.marathon.state.VolumeWithMount[HostVolume] = mesosphere.marathon.state.VolumeWithMount(
+      volume = HostVolume(None, volume.hostPath),
+      mount = VolumeMount(None, volume.containerPath, volume.mode == Mode.RO))
   }
 
   implicit class ArtifactToFetchUri(val artifact: Artifact) extends AnyVal {
@@ -104,7 +103,6 @@ object MarathonImplicits {
         labels = jobSpec.labels,
         acceptedResourceRoles = Set.empty,
         versionInfo = VersionInfo.NoVersion,
-        residency = None,
         secrets = Map.empty[String, Secret])
     }
   }

@@ -1,7 +1,7 @@
 package dcos.metronome
 package api
 
-import controllers.Assets
+import controllers.{ Assets, AssetsComponents }
 import dcos.metronome.measurement.ServiceMeasurement
 import dcos.metronome.history.{ JobHistoryService, JobHistoryServiceFixture }
 import dcos.metronome.jobinfo.JobInfoService
@@ -10,8 +10,9 @@ import dcos.metronome.jobrun.{ JobRunService, JobRunServiceFixture }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import dcos.metronome.queue.{ LaunchQueueService, QueueServiceFixture }
+import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.plugin.PluginManager
-import org.scalatest.{ Suite, TestData }
+import org.scalatest.{ TestSuite, TestData }
 import org.scalatestplus.play.{ OneAppPerSuite, OneAppPerTest, OneServerPerSuite, OneServerPerTest }
 import play.api.ApplicationLoader.Context
 import play.api.i18n.I18nComponents
@@ -20,6 +21,7 @@ import play.api.routing.Router
 import scala.concurrent.duration._
 import scala.concurrent.duration.Duration
 import play.api._
+import play.filters.HttpFiltersComponents
 
 /**
   * A trait that provides a components in scope and creates new components when newApplication is called
@@ -70,22 +72,15 @@ trait WithApplicationComponents[C <: BuiltInComponents] {
 trait OneAppPerTestWithComponents[T <: BuiltInComponents]
     extends OneAppPerTest
     with WithApplicationComponents[T] {
-  this: Suite =>
+  this: TestSuite =>
 
   override def newAppForTest(testData: TestData): Application = newApplication
-}
-
-trait OneAppPerSuiteWithComponents[T <: BuiltInComponents]
-    extends OneAppPerSuite
-    with WithApplicationComponents[T] {
-  this: Suite =>
-  override implicit lazy val app: Application = newApplication
 }
 
 trait OneServerPerTestWithComponents[T <: BuiltInComponents]
     extends OneServerPerTest
     with WithApplicationComponents[T] {
-  this: Suite =>
+  this: TestSuite =>
 
   override def newAppForTest(testData: TestData): Application = newApplication
 }
@@ -93,12 +88,12 @@ trait OneServerPerTestWithComponents[T <: BuiltInComponents]
 trait OneServerPerSuiteWithComponents[T <: BuiltInComponents]
     extends OneServerPerSuite
     with WithApplicationComponents[T] {
-  this: Suite =>
+  this: TestSuite =>
 
   override implicit lazy val app: Application = newApplication
 }
 
-class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(context) with I18nComponents {
+class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(context) with I18nComponents with AssetsComponents with HttpFiltersComponents {
   import com.softwaremill.macwire._
   // set up logger
   LoggerConfigurator(context.environment.classLoader).foreach {
@@ -106,6 +101,8 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
   }
 
   override lazy val httpErrorHandler = new ErrorHandler
+
+  lazy val actorsModule = new ActorsModule(actorSystem)
 
   lazy val pluginManager: PluginManager = PluginManager.None
 
@@ -116,8 +113,6 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
   lazy val jobHistoryService: JobHistoryService = JobHistoryServiceFixture.simpleHistoryService(Seq.empty)
 
   lazy val jobInfoService: JobInfoService = wire[JobInfoServiceImpl]
-
-  lazy val assets: Assets = wire[Assets]
 
   lazy val queueService: LaunchQueueService = QueueServiceFixture.simpleQueueService()
 

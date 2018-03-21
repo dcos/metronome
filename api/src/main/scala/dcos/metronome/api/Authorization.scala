@@ -1,6 +1,7 @@
 package dcos.metronome
 package api
 
+import akka.stream.Materializer
 import akka.util.ByteString
 import dcos.metronome.jobinfo.JobSpecSelector
 import dcos.metronome.jobrun.StartedJobRun
@@ -10,7 +11,7 @@ import mesosphere.marathon.plugin.http.{ HttpRequest, HttpResponse }
 import play.api.http.{ HeaderNames, HttpEntity, Status }
 import play.api.mvc._
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 
 /**
   * A request that adds the User for the current call
@@ -53,6 +54,9 @@ trait Authorization extends RestController {
   def authenticator: Authenticator
   def authorizer: Authorizer
   def config: ApiConfig
+  def defaultBodyParser: BodyParser[AnyContent]
+
+  implicit val mat: Materializer
 
   //play default execution context
   import play.api.libs.concurrent.Execution.Implicits._
@@ -65,7 +69,7 @@ trait Authorization extends RestController {
     def apply(identity: Identity) = new AuthorizedActionBuilder(Some(identity))
   }
 
-  class AuthorizedActionBuilder(authorize: Option[Identity] = None) extends ActionBuilder[AuthorizedRequest] {
+  class AuthorizedActionBuilder(authorize: Option[Identity] = None) extends ActionBuilder[AuthorizedRequest, AnyContent] {
 
     def invokeBlock[A](request: Request[A], block: AuthorizedRequest[A] => Future[Result]) = {
       val facade = PluginFacade.withRequest(request, config)
@@ -75,6 +79,10 @@ trait Authorization extends RestController {
         case None           => Future.successful(notAuthenticated)
       }
     }
+
+    override def parser: BodyParser[AnyContent] = defaultBodyParser
+
+    override protected def executionContext: ExecutionContext = ExecutionContext.global
   }
 }
 

@@ -2,6 +2,7 @@ package dcos.metronome
 package scheduler
 
 import java.time.Clock
+import java.util.concurrent.Executors
 
 import akka.actor.{ ActorRefFactory, ActorSystem }
 import akka.event.EventStream
@@ -14,7 +15,6 @@ import mesosphere.marathon.core.base.{ ActorsModule, CrashStrategy, LifecycleSta
 import mesosphere.marathon.core.election.{ ElectionModule, ElectionService }
 import mesosphere.marathon.core.flow.FlowModule
 import mesosphere.marathon.core.instance.update.InstanceChangeHandler
-import mesosphere.marathon.core.launcher.impl.UnreachableReservedOfferMonitor
 import mesosphere.marathon.core.launcher.{ LauncherModule, OfferProcessor }
 import mesosphere.marathon.core.launchqueue.LaunchQueueModule
 import mesosphere.marathon.core.leadership.LeadershipModule
@@ -33,6 +33,7 @@ import mesosphere.marathon.storage.repository.InstanceRepository
 import mesosphere.util.state._
 import org.apache.mesos.Protos.Offer
 
+import scala.concurrent.ExecutionContext
 import scala.util.Random
 
 class SchedulerModule(
@@ -55,13 +56,15 @@ class SchedulerModule(
 
   private[this] lazy val hostPort: String = config.hostnameWithPort
 
+  private[this] val electionExecutor = Executors.newSingleThreadExecutor()
+
   private[this] lazy val electionModule: ElectionModule = new ElectionModule(
     scallopConf,
     actorSystem,
     eventBus,
     hostPort,
-    lifecycleState,
-    crashStrategy)
+    crashStrategy,
+    ExecutionContext.fromExecutor(electionExecutor))
   lazy val leadershipModule: LeadershipModule = {
     val actorRefFactory: ActorRefFactory = actorsModule.actorRefFactory
 
@@ -77,8 +80,9 @@ class SchedulerModule(
 
   private[this] lazy val offerMatcherManagerModule = new OfferMatcherManagerModule(
     // infrastructure
-    clock, random, scallopConf, actorSystem.scheduler,
-    leadershipModule)
+    clock, random, scallopConf,
+    leadershipModule,
+    () => scheduler.getLocalRegion)
 
   private[this] lazy val offerMatcherReconcilerModule =
     new OfferMatcherReconciliationModule(
@@ -93,7 +97,7 @@ class SchedulerModule(
     clock, instanceTrackerModule.instanceTracker, instanceTrackerModule.stateOpProcessor, schedulerDriverHolder, killService, eventBus)
 
   private[this] lazy val launcherModule: LauncherModule = {
-    val instanceCreationHandler: InstanceCreationHandler = instanceTrackerModule.instanceCreationHandler
+    val instanceCreationHandler: InstanceStateOpProcessor = instanceTrackerModule.stateOpProcessor
     val offerMatcher: OfferMatcher = StopOnFirstMatchingOfferMatcher(
       offerMatcherReconcilerModule.offerMatcherReconciler,
       offerMatcherManagerModule.globalOfferMatcher)
@@ -112,7 +116,7 @@ class SchedulerModule(
 
   private[this] lazy val scheduler: MarathonScheduler = {
     val instanceTracker: InstanceTracker = instanceTrackerModule.instanceTracker
-    val stateOpProcessor: TaskStateOpProcessor = instanceTrackerModule.stateOpProcessor
+    val stateOpProcessor: InstanceStateOpProcessor = instanceTrackerModule.stateOpProcessor
     val offerProcessor: OfferProcessor = launcherModule.offerProcessor
     val taskStatusProcessor: TaskStatusUpdateProcessor = new TaskStatusUpdateProcessorImpl(
       clock, instanceTracker, stateOpProcessor, schedulerDriverHolder, killService, eventBus)
@@ -176,7 +180,8 @@ class SchedulerModule(
     offerMatcherManagerModule.subOfferMatcherManager,
     maybeOfferReviver = flowModule.maybeOfferReviver(clock, scallopConf, eventBus, offersWanted, schedulerDriverHolder),
     taskTracker = instanceTrackerModule.instanceTracker,
-    taskOpFactory = launcherModule.taskOpFactory)
+    taskOpFactory = launcherModule.taskOpFactory,
+    () => scheduler.getLocalRegion)
 
   leadershipModule.startWhenLeader(
     props = ReconciliationActor.props(schedulerDriverHolder, instanceTrackerModule.instanceTracker, config),

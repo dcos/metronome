@@ -10,9 +10,11 @@ import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.queue.LaunchQueueService
 import mesosphere.marathon.core.auth.AuthModule
+import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.plugin.PluginManager
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
 import play.api.http.HttpErrorHandler
+import play.api.mvc.{ AnyContent, BodyParser }
 import play.api.routing.Router
 import router.Routes
 
@@ -24,7 +26,11 @@ class ApiModule(
   pluginManager:      PluginManager,
   httpErrorHandler:   HttpErrorHandler,
   assets:             Assets,
-  launchQueueService: LaunchQueueService) {
+  launchQueueService: LaunchQueueService,
+  actorsModule:       ActorsModule,
+  playParsers:        BodyParser[AnyContent]) {
+
+  lazy val mat = actorsModule.materializer
 
   lazy val applicationController = wire[ApplicationController]
 

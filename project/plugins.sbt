@@ -1,7 +1,7 @@
 resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 
 // The Play plugin
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.5.18")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.7")
 
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.8.2")
 
@@ -19,10 +19,12 @@ addSbtPlugin("ohnosequences" % "sbt-s3-resolver" % "0.10.1")
 
 resolvers += Classpaths.sbtPluginReleases
 
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.0.4")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.1")
 
-addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.0.0")
+addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.2.2")
 
 addSbtPlugin("com.github.gseitz" % "sbt-protobuf" % "0.6.3")
 
 addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0-RC13")
+
+addSbtPlugin("com.typesafe.sbt" % "sbt-aspectj" % "0.10.6") // because of Kamon

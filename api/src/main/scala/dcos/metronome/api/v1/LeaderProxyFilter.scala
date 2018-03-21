@@ -7,7 +7,7 @@ import mesosphere.marathon.core.election.ElectionService
 import org.slf4j.LoggerFactory
 import play.api.http.HttpEntity
 import play.api.libs.streams.Accumulator
-import play.api.libs.ws.{ WSClient, StreamedBody }
+import play.api.libs.ws.WSClient
 import play.api.mvc._
 
 class LeaderProxyFilter(ws: WSClient, electionService: ElectionService, config: ApiConfig) extends EssentialFilter with Results {
@@ -43,9 +43,9 @@ class LeaderProxyFilter(ws: WSClient, electionService: ElectionService, config: 
     Accumulator.source[ByteString].mapFuture { source =>
       ws.url(s"$scheme://$leaderHostPort${request.path}?${request.rawQueryString}")
         .withMethod(request.method)
-        .withHeaders(headers: _*)
+        .withHttpHeaders(headers: _*)
         .withRequestTimeout(config.leaderProxyTimeout)
-        .withBody(StreamedBody(source))
+        .withBody(source)
         .execute()
         .map{ r =>
           val proxyHeaders = Map(HEADER_LEADER -> leaderHostPort, HEADER_VIA -> localHostPort)

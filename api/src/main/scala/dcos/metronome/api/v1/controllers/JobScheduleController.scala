@@ -6,19 +6,22 @@ import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
 import dcos.metronome.api.v1.models.schema._
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.model.{ JobId, ScheduleSpec, JobSpec }
+import dcos.metronome.model.{ JobId, JobSpec, ScheduleSpec }
 import mesosphere.marathon.plugin.auth._
 import JobId._
-import play.api.mvc.Result
+import akka.stream.Materializer
+import play.api.mvc.{ AnyContent, BodyParser, PlayBodyParsers, Result }
 
 import scala.async.Async.{ async, await }
 import scala.concurrent.Future
 
 class JobScheduleController(
-  jobSpecService:    JobSpecService,
-  val authenticator: Authenticator,
-  val authorizer:    Authorizer,
-  val config:        ApiConfig) extends Authorization {
+  jobSpecService:        JobSpecService,
+  val authenticator:     Authenticator,
+  val authorizer:        Authorizer,
+  val config:            ApiConfig,
+  val mat:               Materializer,
+  val defaultBodyParser: BodyParser[AnyContent]) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 

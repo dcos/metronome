@@ -1,21 +1,25 @@
 package dcos.metronome
 package api.v0.controllers
 
+import akka.stream.Materializer
 import dcos.metronome.{ JobSpecAlreadyExists, JobSpecDoesNotExist }
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.model.{ JobId, JobSpec, JobRunSpec, ScheduleSpec }
+import dcos.metronome.model.{ JobId, JobRunSpec, JobSpec, ScheduleSpec }
 import mesosphere.marathon.api.v2.json.Formats.FormatWithDefault
-import mesosphere.marathon.plugin.auth.{ UpdateRunSpec, CreateRunSpec, Authenticator, Authorizer }
+import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer, CreateRunSpec, UpdateRunSpec }
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import play.api.mvc.{ AnyContent, BodyParser, PlayBodyParsers }
 
 class ScheduledJobSpecController(
-  jobSpecService:    JobSpecService,
-  val authenticator: Authenticator,
-  val authorizer:    Authorizer,
-  val config:        ApiConfig) extends Authorization {
+  jobSpecService:        JobSpecService,
+  val authenticator:     Authenticator,
+  val authorizer:        Authorizer,
+  val config:            ApiConfig,
+  val mat:               Materializer,
+  val defaultBodyParser: BodyParser[AnyContent]) extends Authorization {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
   import ScheduledJobSpecController._

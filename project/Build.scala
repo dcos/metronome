@@ -1,7 +1,5 @@
 import com.amazonaws.auth.{EnvironmentVariableCredentialsProvider, InstanceProfileCredentialsProvider}
-import com.typesafe.sbt.SbtScalariform._
 import com.typesafe.sbt.packager
-import com.typesafe.sbt.packager.Keys.bashScriptExtraDefines
 import com.typesafe.sbt.packager.universal.UniversalDeployPlugin
 import ohnosequences.sbt.SbtS3Resolver
 import ohnosequences.sbt.SbtS3Resolver._
@@ -9,8 +7,10 @@ import play.sbt.routes.RoutesKeys
 import play.sbt.{PlayLayoutPlugin, PlayScala}
 import sbt.Keys._
 import sbt.{ExclusionRule, _}
-import sbtprotobuf.ProtobufPlugin.Keys.ProtobufConfig
 import sbtprotobuf.{ProtobufPlugin => PB}
+import sbtprotobuf.ProtobufPlugin.Keys.ProtobufConfig
+import com.typesafe.sbt.SbtScalariform._
+import com.typesafe.sbt.SbtAspectj._
 
 import scalariform.formatter.preferences._
 
@@ -53,6 +53,8 @@ object Build extends sbt.Build {
         Dependency.cronUtils,
         Dependency.threeten,
         Dependency.jsonValidate,
+        Dependency.iteratees,
+        Dependency.playAhcWS,
         Dependency.Test.scalatest,
         Dependency.Test.scalatestPlay
       ).map(
@@ -64,16 +66,16 @@ object Build extends sbt.Build {
           .excludeAll(excludeKamonAutoweave)
           .excludeAll(excludeKamonScala)
       )
-      )
-    ).enablePlugins(PlayScala).disablePlugins(PlayLayoutPlugin)
+    )
+  ).enablePlugins(PlayScala).disablePlugins(PlayLayoutPlugin)
 
   val excludeSlf4jLog4j12 = ExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12")
   val excludeKamonAkka = ExclusionRule(organization = "io.kamon", name = "kamon-akka-2.4")
-  val excludeKamonAutoweave = ExclusionRule(organization = "io.kamon", name = "kamon-autoweave_2.11")
-  val excludeKamonScala = ExclusionRule(organization = "io.kamon", name = "kamon-scala_2.11")
+  val excludeKamonAutoweave = ExclusionRule(organization = "io.kamon", name = "kamon-autoweave_2.12")
+  val excludeKamonScala = ExclusionRule(organization = "io.kamon", name = "kamon-scala_2.12")
   val excludeLog4j = ExclusionRule(organization = "log4j", name = "log4j")
   val excludeJCL = ExclusionRule(organization = "commons-logging", name = "commons-logging")
-  val excludeAkkaHttpExperimental = ExclusionRule(organization = "com.typesafe.akka", name = "akka-http-experimental_2.11")
+  val excludeAkkaHttpExperimental = ExclusionRule(organization = "com.typesafe.akka", name = "akka-http-experimental_2.12")
 
   lazy val jobs = Project(
     id = "jobs",
@@ -111,7 +113,7 @@ object Build extends sbt.Build {
 
   lazy val baseSettings = Seq(
     organization := "dcos",
-    scalaVersion := "2.11.8",
+    scalaVersion := "2.12.4",
     crossScalaVersions := Seq(scalaVersion.value),
     scalacOptions in (Compile, doc) ++= Seq(
       "-encoding", "UTF-8",
@@ -133,7 +135,7 @@ object Build extends sbt.Build {
       "emueller-bintray" at "http://dl.bintray.com/emueller/maven"
     ),
     fork in Test := true
-  )
+  ) ++ aspectjSettings
 
   lazy val formatSettings = scalariformSettings ++ Seq(
     ScalariformKeys.preferences := FormattingPreferences()
@@ -161,29 +163,31 @@ object Build extends sbt.Build {
     object V {
       // Test deps versions
       val AsyncAwait = "0.9.7"
-      val ScalaTest = "2.2.6"
+      val ScalaTest = "3.0.5"
       val MacWire = "2.2.5"
-      val Marathon = "1.5.6-19-g2d4e150"
-      val MarathonPluginInterface = "1.5.6-19-g2d4e150"
-      val Play = "2.5.18"
+      val Marathon = "1.6.322"
+      val MarathonPluginInterface = "1.6.322"
+      val Play = "2.6.7"
       val CronUtils = "6.0.4"
       val Threeten = "1.3.3"
       val WixAccord = "0.7.1"
       val Akka = "2.4.20"
       val Mockito = "2.0.54-beta"
-      val JsonValidate = "0.7.0"
+      val JsonValidate = "0.9.4"
       val TwitterCommons = "0.0.76"
       val TwitterZk = "6.40.0"
     }
 
     val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
+    val iteratees = "com.typesafe.play" %% "play-iteratees" % "2.6.1"
+    val playAhcWS   = "com.typesafe.play" %% "play-ahc-ws" % V.Play
     val playJson = "com.typesafe.play" %% "play-json" % V.Play
     val playWS = "com.typesafe.play" %% "play-ws" % V.Play
-    val yaml = "net.jcazevedo" %% "moultingyaml" % "0.2"
+    val yaml = "net.jcazevedo" %% "moultingyaml" % "0.4.0"
     val macWireMacros = "com.softwaremill.macwire" %% "macros" % V.MacWire % "provided"
     val macWireUtil = "com.softwaremill.macwire" %% "util" % V.MacWire
     val macWireProxy = "com.softwaremill.macwire" %% "proxy" % V.MacWire
-    val marathon = "mesosphere.marathon" %% "marathon" % V.Marathon exclude("com.typesafe.play", "*") exclude("mesosphere.marathon", "ui") exclude("mesosphere", "chaos") exclude("org.apache.hadoop", "hadoop-hdfs") exclude("org.apache.hadoop", "hadoop-common") exclude("org.eclipse.jetty", "*") exclude("mesosphere.marathon", "plugin-interface_2.11")
+    val marathon = "mesosphere.marathon" %% "marathon" % V.Marathon exclude("com.typesafe.play", "*") exclude("mesosphere.marathon", "ui") exclude("mesosphere", "chaos") exclude("org.apache.hadoop", "hadoop-hdfs") exclude("org.apache.hadoop", "hadoop-common") exclude("org.eclipse.jetty", "*") exclude("mesosphere.marathon", "plugin-interface_2.12")
     val marathonPlugin = "mesosphere.marathon" %% "plugin-interface" % V.MarathonPluginInterface
     val cronUtils = "com.cronutils" % "cron-utils" % V.CronUtils exclude("org.threeten", "threetenbp")
     val threeten = "org.threeten" % "threetenbp" % V.Threeten
@@ -195,7 +199,7 @@ object Build extends sbt.Build {
 
     object Test {
       val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"
-      val scalatestPlay = "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % "test"
+      val scalatestPlay = "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % "test"
       val akkaTestKit = "com.typesafe.akka" %%  "akka-testkit" % V.Akka % "test"
       val mockito = "org.mockito" % "mockito-core" % V.Mockito % "test"
     }
