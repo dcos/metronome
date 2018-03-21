@@ -1,7 +1,6 @@
 package dcos.metronome
 package api.v1.controllers
 
-import dcos.metronome.JobSpecDoesNotExist
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
 import dcos.metronome.api.v1.models.schema._
@@ -10,7 +9,7 @@ import dcos.metronome.model.{ JobId, JobSpec, ScheduleSpec }
 import mesosphere.marathon.plugin.auth._
 import JobId._
 import akka.stream.Materializer
-import play.api.mvc.{ AnyContent, BodyParser, PlayBodyParsers, Result }
+import play.api.mvc.{ AnyContent, BodyParser, Result }
 
 import scala.async.Async.{ async, await }
 import scala.concurrent.Future

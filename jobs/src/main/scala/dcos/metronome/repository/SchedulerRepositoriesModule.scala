@@ -9,7 +9,7 @@ import com.twitter.common.zookeeper.ZooKeeperClient
 import dcos.metronome.migration.Migration
 import dcos.metronome.migration.impl.MigrationImpl
 import dcos.metronome.scheduler.SchedulerConfig
-import dcos.metronome.utils.state.{ EntityStore, EntityStoreCache, MarathonStore, PersistentStore }
+import dcos.metronome.utils.state.PersistentStore
 import mesosphere.marathon.core.base.{ ActorsModule, LifecycleState }
 import mesosphere.marathon.storage.repository.{ FrameworkIdRepository, GroupRepository, InstanceRepository }
 import mesosphere.marathon.storage.{ StorageConfig, StorageModule }

@@ -9,11 +9,10 @@ import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobId, JobSpec }
-import dcos.metronome.{ JobSpecAlreadyExists, JobSpecDoesNotExist }
 import mesosphere.marathon.plugin.auth._
 import JobId._
 import akka.stream.Materializer
-import play.api.mvc.{ AnyContent, BodyParser, PlayBodyParsers, Result }
+import play.api.mvc.{ AnyContent, BodyParser, Result }
 
 import scala.async.Async.{ async, await }
 import scala.concurrent.Future

@@ -5,7 +5,6 @@ import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents }
 import org.scalatestplus.play.PlaySpec
 import org.scalatest.Matchers._
 import play.api.ApplicationLoader.Context
-import play.api.libs.json.{ JsString, JsDefined }
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 

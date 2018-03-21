@@ -3,10 +3,7 @@ package dcos.metronome
 import java.time.Clock
 
 import controllers.AssetsComponents
-import akka.actor.ActorSystem
 import com.softwaremill.macwire._
-import com.typesafe.config.ConfigFactory
-import controllers.Assets
 import dcos.metronome.api.v1.LeaderProxyFilter
 import dcos.metronome.api.{ ApiModule, ErrorHandler }
 import kamon.Kamon
@@ -19,7 +16,6 @@ import play.api.libs.ws.ahc.{ AhcConfigBuilder, AhcWSClient, AhcWSClientConfig, 
 import play.api.libs.ws.{ WSClient, WSConfigParser }
 import play.api.mvc.EssentialFilter
 import play.api.routing.Router
-import play.components.BodyParserComponents
 
 import scala.collection.Seq
 import scala.concurrent.Future

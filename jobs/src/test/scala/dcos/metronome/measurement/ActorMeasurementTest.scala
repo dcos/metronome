@@ -1,15 +1,13 @@
 package dcos.metronome
 package behavior
 
-import akka.Done
-import akka.actor.{ Actor, ActorLogging, ActorRefFactory, ActorSystem, Props }
+import akka.actor.{ Actor, ActorLogging, ActorSystem, Props }
 import akka.testkit.{ TestActorRef, TestKit }
 import dcos.metronome.measurement.impl.KamonServiceMeasurement
 import dcos.metronome.measurement.{ ActorMeasurement, MeasurementConfig, ServiceMeasurement }
 import kamon.Kamon
-import kamon.metric.{ DefaultEntitySnapshot, Entity, EntitySnapshot }
-import kamon.metric.SubscriptionsDispatcher.TickMetricSnapshot
-import kamon.metric.instrument.{ CollectionContext, CompactHdrSnapshot, Histogram }
+import kamon.metric.{ Entity, EntitySnapshot }
+import kamon.metric.instrument.{ CompactHdrSnapshot }
 import mesosphere.marathon.metrics.Metrics
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ FunSuiteLike, GivenWhenThen, Matchers }

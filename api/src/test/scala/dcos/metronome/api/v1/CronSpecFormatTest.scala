@@ -1,7 +1,7 @@
 package dcos.metronome
 package api.v1
 
-import java.time.{ LocalDateTime, ZoneId, ZoneOffset, ZonedDateTime }
+import java.time.{ LocalDateTime, ZoneId, ZonedDateTime }
 
 import dcos.metronome.api.v1.models._
 import dcos.metronome.model.{ CronSpec, CronSpecValidation }

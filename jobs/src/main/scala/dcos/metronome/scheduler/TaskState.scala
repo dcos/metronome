@@ -3,8 +3,6 @@ package scheduler
 
 import mesosphere.marathon.core.condition.Condition
 import mesosphere.marathon.core.task.Task
-import mesosphere.mesos.protos.TaskStatus
-import org.apache.mesos
 /**
   * Internal representation of mesos task states including tasks that have been created but are not yet confirmed.
   */
