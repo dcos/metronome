@@ -86,7 +86,6 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       "--mesos_authentication_secret_file" -> mesosAuthenticationSecretsFile,
       "--env_vars_prefix" -> taskEnvVarsPrefix,
       "--on_elected_prepare_timeout" -> Some(leaderPreparationTimeout.toMillis.toString),
-      "--task_lost_expunge_gc" -> Some(taskLostExpungeGcTimeout.toMillis.toString),
       "--task_lost_expunge_initial_delay" -> Some(taskLostExpungeInitialDelay.toMillis.toString),
       "--task_lost_expunge_interval" -> Some(taskLostExpungeInterval.toMillis.toString),
       "--kill_chunk_size" -> Some(killChunkSize.toString),

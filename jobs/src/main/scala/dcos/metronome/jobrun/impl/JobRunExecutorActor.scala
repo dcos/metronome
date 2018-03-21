@@ -13,7 +13,6 @@ import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.core.task.Task.LaunchedEphemeral
 import mesosphere.marathon.core.task.tracker.InstanceTracker
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
@@ -56,7 +55,7 @@ class JobRunExecutorActor(
       case JobRunStatus.Initial =>
         becomeCreating()
       case JobRunStatus.Starting | JobRunStatus.Active =>
-        val existingTasks = tasksFromTaskTracker()
+        val existingTasks = tasksFromInstanceTracker()
         existingTasks match {
           case tasks if tasks.nonEmpty =>
             // the actor was probably just restarted and we did not lose contents of the launch queue
@@ -127,10 +126,10 @@ class JobRunExecutorActor(
     startingDeadlineTimer = None
   }
 
-  def tasksFromTaskTracker(): Iterable[JobRunTask] = {
+  def tasksFromInstanceTracker(): Iterable[JobRunTask] = {
     instanceTracker.specInstancesSync(runSpecId).map(a => a.appTask).collect {
-      case task: LaunchedEphemeral => JobRunTask(task)
-      case task: Task              => throw UnexpectedTaskState(task)
+      case task: Task => JobRunTask(task)
+      case task       => throw UnexpectedTaskState(task)
     }
   }
 

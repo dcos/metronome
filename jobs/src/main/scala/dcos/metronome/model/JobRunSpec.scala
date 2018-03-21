@@ -50,7 +50,7 @@ object JobRunSpec {
       if (jobRunSpec.cmd.isDefined || jobRunSpec.docker.exists(d => d.image.nonEmpty))
         Success
       else
-        RuleViolation(jobRunSpec, JobRunSpecMessages.cmdOrDockerValidation, None)
+        RuleViolation(jobRunSpec, JobRunSpecMessages.cmdOrDockerValidation)
     }
   }
 }

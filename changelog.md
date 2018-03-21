@@ -1,11 +1,19 @@
 # Version 0.5.0
 
-Metronome uses Marathon for scheduling and interacting with Mesos.   The underlying implementation has moved to Marathon 1.5.6-19 
-and now has all the bug fixes up to this version of Marathon along with the ability to add features added to Marathon including 
-UCR and advance Docker support.  This change includes a move from Joda time to Java8 date/time.
+Metronome uses Marathon as a library for scheduling. We have bumped the dependency to the current Marathon, which is 1.6.322. 
+This brings a lot of bug fixes and new features from the last 3 versions of Marathon. At the same time, it allows
+us to add UCR and secrets support.
+
+* [METRONOME-238](https://jira.mesosphere.com/browse/METRONOME-238) Migrate from joda time to java time
 
 
 ## Breaking changes
+
+### Command line parameters
+Command line parameter `task.lost.expunge.gc` was removed because the underlying algorithm change and this 
+one no longer has any effect.
+
+### Metrics
 We moved to a different Metrics library and the metrics are not always compatible or the same as existing metrics;
 however, the metrics are also now more accurate, use less memory, and are expected to get better throughout the release.
 Where it was possible, we maintained the original metric names/groupings/etc, but some are in new locations or have
