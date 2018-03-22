@@ -4,7 +4,7 @@ package jobrun.impl
 import dcos.metronome.model._
 import mesosphere.marathon.Protos.Constraint
 import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedInstanceInfo
-import mesosphere.marathon.state.{ AppDefinition, Container, RunSpec }
+import mesosphere.marathon.state.{ AppDefinition, Container }
 import org.slf4j.LoggerFactory
 
 object QueuedJobRunConverter {

@@ -11,7 +11,7 @@ import mesosphere.marathon.api.v2.json.Formats.FormatWithDefault
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer, CreateRunSpec, UpdateRunSpec }
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import play.api.mvc.{ AnyContent, BodyParser, PlayBodyParsers }
+import play.api.mvc.{ AnyContent, BodyParser }
 
 class ScheduledJobSpecController(
   jobSpecService:        JobSpecService,

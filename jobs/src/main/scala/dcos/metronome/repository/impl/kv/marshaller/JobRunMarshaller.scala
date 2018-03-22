@@ -4,7 +4,6 @@ package repository.impl.kv.marshaller
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
-import dcos.metronome.Protos
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.kv.EntityMarshaller
 import dcos.metronome.scheduler.TaskState

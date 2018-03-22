@@ -6,7 +6,7 @@ import dcos.metronome.api.v1.models.QueuedJobRunMapWrites
 import dcos.metronome.api.{ ApiConfig, Authorization }
 import dcos.metronome.queue.LaunchQueueService
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
-import play.api.mvc.{ AnyContent, BodyParser, PlayBodyParsers }
+import play.api.mvc.{ AnyContent, BodyParser }
 
 class LaunchQueueController(
   queueService:          LaunchQueueService,

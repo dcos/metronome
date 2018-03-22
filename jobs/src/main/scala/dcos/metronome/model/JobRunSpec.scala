@@ -1,10 +1,7 @@
 package dcos.metronome
 package model
 
-import com.wix.accord.dsl._
-import com.wix.accord.{ RuleViolation, Success, Validator }
-import com.wix.accord.dsl.{ size, valid, validator }
-import mesosphere.marathon.api.v2.Validation.every
+import com.wix.accord.Validator
 
 import scala.concurrent.duration._
 

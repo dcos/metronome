@@ -1,7 +1,6 @@
 package dcos.metronome
 package repository.impl
 
-import dcos.metronome.PersistenceFailed
 import dcos.metronome.repository.Repository
 import mesosphere.marathon.StoreCommandFailedException
 

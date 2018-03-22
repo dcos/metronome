@@ -1,8 +1,7 @@
 package dcos.metronome
 package api
 
-import controllers.{ Assets, AssetsComponents }
-import dcos.metronome.measurement.ServiceMeasurement
+import controllers.{ AssetsComponents }
 import dcos.metronome.history.{ JobHistoryService, JobHistoryServiceFixture }
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobinfo.impl.JobInfoServiceImpl
@@ -13,7 +12,7 @@ import dcos.metronome.queue.{ LaunchQueueService, QueueServiceFixture }
 import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ TestSuite, TestData }
-import org.scalatestplus.play.{ OneAppPerSuite, OneAppPerTest, OneServerPerSuite, OneServerPerTest }
+import org.scalatestplus.play.{ OneAppPerTest, OneServerPerSuite, OneServerPerTest }
 import play.api.ApplicationLoader.Context
 import play.api.i18n.I18nComponents
 import play.api.routing.Router

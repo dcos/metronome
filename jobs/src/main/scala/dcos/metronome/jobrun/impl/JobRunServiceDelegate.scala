@@ -8,7 +8,6 @@ import dcos.metronome.jobrun.{ JobRunConfig, JobRunService, StartedJobRun }
 import dcos.metronome.model._
 
 import scala.concurrent.Future
-import scala.concurrent.duration.Duration
 
 private[jobrun] class JobRunServiceDelegate(
   config:   JobRunConfig,

@@ -2,7 +2,6 @@ package dcos.metronome
 package measurement
 
 import akka.actor.{ Actor, ActorLogging }
-import kamon.Kamon
 import mesosphere.marathon.metrics.{ Metrics, ServiceMetric }
 
 import scala.util.control.NonFatal

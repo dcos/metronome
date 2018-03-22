@@ -2,14 +2,13 @@ package dcos.metronome
 package api.v1.controllers
 
 import akka.stream.Materializer
-import dcos.metronome.JobRunDoesNotExist
 import dcos.metronome.api.v1.models._
 import dcos.metronome.api.{ ApiConfig, Authorization, UnknownJob, UnknownJobRun }
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobId, JobRunId }
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer, UpdateRunSpec, ViewRunSpec }
-import play.api.mvc.{ AnyContent, BodyParser, PlayBodyParsers }
+import play.api.mvc.{ AnyContent, BodyParser }
 
 import scala.async.Async.{ async, await }
 
