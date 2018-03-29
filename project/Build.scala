@@ -56,6 +56,7 @@ object Build extends sbt.Build {
         Dependency.iteratees,
         Dependency.playAhcWS,
         Dependency.Test.scalatest,
+        Dependency.Test.scalaCheck,
         Dependency.Test.scalatestPlay
       ).map(
         _.excludeAll(excludeSlf4jLog4j12)
@@ -96,7 +97,10 @@ object Build extends sbt.Build {
         Dependency.twitterZk,
         Dependency.Test.scalatest,
         Dependency.Test.akkaTestKit,
-        Dependency.Test.mockito
+        Dependency.Test.mockito,
+        Dependency.Test.scalatest,
+        Dependency.Test.scalaCheck
+
       ).map(
         _.excludeAll(excludeSlf4jLog4j12)
           .excludeAll(excludeLog4j)
@@ -164,6 +168,7 @@ object Build extends sbt.Build {
       // Test deps versions
       val AsyncAwait = "0.9.7"
       val ScalaTest = "3.0.5"
+      val ScalaCheck = "1.13.4"
       val MacWire = "2.2.5"
       val Marathon = "1.6.322"
       val MarathonPluginInterface = "1.6.322"
@@ -199,6 +204,7 @@ object Build extends sbt.Build {
 
     object Test {
       val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"
+      val scalaCheck = "org.scalacheck" %% "scalacheck" % V.ScalaCheck % "test"
       val scalatestPlay = "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % "test"
       val akkaTestKit = "com.typesafe.akka" %%  "akka-testkit" % V.Akka % "test"
       val mockito = "org.mockito" % "mockito-core" % V.Mockito % "test"

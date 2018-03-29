@@ -99,7 +99,17 @@
           "patternProperties": {
             ".*": {
               "oneOf": [
-                { "type": "string" }
+                { "type": "string" },
+                {
+                  "type": "object",
+                  "description": "An environment variable set to a secret",
+                  "properties": {
+                    "secret": {
+                      "type": "string",
+                      "documentation": "The name of the secret to refer to. At runtime, the value of the secret will be injected into the value of the variable."
+                    }
+                  }
+                }
               ]
             }
           }
@@ -190,6 +200,21 @@
               }
             },
             "required": ["containerPath", "hostPath", "mode"]
+          }
+        },
+        "secrets": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "type": "object",
+              "description": "An environment variable set to a secret",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "documentation": "The name of the secret to refer to. At runtime, the value of the secret will be injected into the value of the variable."
+                }
+              }
+            }
           }
         }
       },
