@@ -138,6 +138,18 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       Then("a forbidden response is send")
       status(unauthorized) mustBe FORBIDDEN
     }
+
+    "create a job with secrets" in {
+      Given("No job")
+
+      When("A job is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpecWithSecretsJson)).get
+
+      Then("The job is created")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+      contentAsJson(response) mustBe jobSpecWithSecretsJson
+    }
   }
 
   "GET /jobs" should {
@@ -377,6 +389,11 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
   val jobSpec1Json = Json.toJson(jobSpec1)
   val jobSpec2 = spec("spec2")
   val jobSpec2Json = Json.toJson(jobSpec2)
+  val jobSpecWithSecrets = {
+    val jobSpec = spec("spec-with-secrets")
+    jobSpec.copy(run = jobSpec.run.copy(env = Map("secretVar" -> EnvVarSecret("secretId")), secrets = Map("secretId" -> SecretDef("source"))))
+  }
+  val jobSpecWithSecretsJson = Json.toJson(jobSpecWithSecrets)
   val auth = new TestAuthFixture
 
   before {
