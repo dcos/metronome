@@ -9,8 +9,6 @@ import mesosphere.marathon.api.v2.Validation._
 import mesosphere.marathon
 import mesosphere.marathon.plugin.{ ApplicationSpec, NetworkSpec, Secret, VolumeSpec, VolumeMountSpec }
 
-import scala.collection.immutable._
-
 case class JobSpec(
   id:          JobId,
   description: Option[String]      = JobSpec.DefaultDescription,

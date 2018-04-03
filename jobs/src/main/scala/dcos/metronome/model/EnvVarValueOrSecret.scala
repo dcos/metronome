@@ -9,8 +9,8 @@ object EnvVarValue {
     def reads(json: play.api.libs.json.JsValue): play.api.libs.json.JsResult[EnvVarValue] = {
       json.validate[String].map(EnvVarValue.apply)
     }
-    def writes(o: EnvVarValue): play.api.libs.json.JsValue = {
-      play.api.libs.json.JsString(o.value)
+    def writes(envVarValue: EnvVarValue): play.api.libs.json.JsValue = {
+      play.api.libs.json.JsString(envVarValue.value)
     }
   }
 }
@@ -31,10 +31,10 @@ object EnvVarValueOrSecret {
     def reads(json: play.api.libs.json.JsValue): play.api.libs.json.JsResult[EnvVarValueOrSecret] = {
       json.validate[EnvVarValue].orElse(json.validate[EnvVarSecret])
     }
-    def writes(o: EnvVarValueOrSecret): play.api.libs.json.JsValue = {
-      o match {
-        case f: EnvVarValue  => play.api.libs.json.Json.toJson(f)(EnvVarValue.playJsonFormat)
-        case f: EnvVarSecret => play.api.libs.json.Json.toJson(f)(EnvVarSecret.playJsonFormat)
+    def writes(envOrSecret: EnvVarValueOrSecret): play.api.libs.json.JsValue = {
+      envOrSecret match {
+        case envVarValue: EnvVarValue   => play.api.libs.json.Json.toJson(envVarValue)(EnvVarValue.playJsonFormat)
+        case envVarSecret: EnvVarSecret => play.api.libs.json.Json.toJson(envVarSecret)(EnvVarSecret.playJsonFormat)
       }
     }
   }

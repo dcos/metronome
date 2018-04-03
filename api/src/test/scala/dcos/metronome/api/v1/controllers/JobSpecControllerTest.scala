@@ -150,6 +150,30 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe jobSpecWithSecretsJson
     }
+
+    "indicate a problem when creating a job without a secret definition" in {
+      Given("No job")
+
+      When("A job is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpecWithSecretVarsOnlyJson)).get
+
+      Then("A validation error is returned")
+      status(response) mustBe UNPROCESSABLE_ENTITY
+      contentType(response) mustBe Some("application/json")
+      //      contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))
+    }
+
+    "indicate a problem when creating a job without a secret name" in {
+      Given("No job")
+
+      When("A job is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpecWithSecretDefsOnlyJson)).get
+
+      Then("A validation error is returned")
+      status(response) mustBe UNPROCESSABLE_ENTITY
+      contentType(response) mustBe Some("application/json")
+      //      contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))
+    }
   }
 
   "GET /jobs" should {
@@ -393,7 +417,17 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
     val jobSpec = spec("spec-with-secrets")
     jobSpec.copy(run = jobSpec.run.copy(env = Map("secretVar" -> EnvVarSecret("secretId")), secrets = Map("secretId" -> SecretDef("source"))))
   }
+  val jobSpecWithSecretVarsOnly = {
+    val jobSpec = spec("spec-with-secret-vars-only")
+    jobSpec.copy(run = jobSpec.run.copy(env = Map("secretVar" -> EnvVarSecret("secretId"))))
+  }
+  val jobSpecWithSecretDefsOnly = {
+    val jobSpec = spec("spec-with-secret-defs-only")
+    jobSpec.copy(run = jobSpec.run.copy(secrets = Map("secretId" -> SecretDef("source"))))
+  }
   val jobSpecWithSecretsJson = Json.toJson(jobSpecWithSecrets)
+  val jobSpecWithSecretVarsOnlyJson = Json.toJson(jobSpecWithSecretVarsOnly)
+  val jobSpecWithSecretDefsOnlyJson = Json.toJson(jobSpecWithSecretDefsOnly)
   val auth = new TestAuthFixture
 
   before {

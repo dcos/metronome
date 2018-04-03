@@ -46,14 +46,27 @@ object JobRunSpec {
     import ViolationBuilder._
 
     override def apply(jobRunSpec: JobRunSpec): Result = {
-      if (jobRunSpec.cmd.isDefined || jobRunSpec.docker.exists(d => d.image.nonEmpty))
-        Success
-      else
-        RuleViolation(jobRunSpec, JobRunSpecMessages.cmdOrDockerValidation)
+      var violations = Set.empty[Result]
+
+      def check(test: Boolean, errorMessage: String) = {
+        if (!test) {
+          violations += RuleViolation(jobRunSpec, errorMessage)
+        }
+      }
+      val envVarDefinedSecretNames = jobRunSpec.env.values.collect { case EnvVarSecret(secretName) => secretName }.toSet
+      val providedSecretNames = jobRunSpec.secrets.keySet
+
+      check(jobRunSpec.cmd.isDefined || jobRunSpec.docker.exists(d => d.image.nonEmpty), JobRunSpecMessages.cmdOrDockerValidation)
+      check(envVarDefinedSecretNames == providedSecretNames, JobRunSpecMessages.secretsValidation(envVarDefinedSecretNames, providedSecretNames))
+
+      violations.headOption.getOrElse(Success)
     }
   }
 }
 
 object JobRunSpecMessages {
   val cmdOrDockerValidation = "Cmd or docker image must be specified"
+  def secretsValidation(envVarSecretsName: Set[String], providedSecretsNames: Set[String]) = {
+    s"Secret names are different from provided secrets. Defined: ${envVarSecretsName.mkString(", ")}, Provided: ${providedSecretsNames.mkString(", ")}"
+  }
 }

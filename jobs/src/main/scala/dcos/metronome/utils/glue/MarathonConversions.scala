@@ -7,8 +7,8 @@ object MarathonConversions {
 
   def envVarToMarathon(envVars: Map[String, EnvVarValueOrSecret]): Map[String, marathon.state.EnvVarValue] = {
     envVars.mapValues {
-      case EnvVarValue(v)               => marathon.state.EnvVarString(v)
-      case EnvVarSecret(secret: String) => marathon.state.EnvVarSecretRef(secret)
+      case EnvVarValue(value)   => marathon.state.EnvVarString(value)
+      case EnvVarSecret(secret) => marathon.state.EnvVarSecretRef(secret)
     }
   }
 
