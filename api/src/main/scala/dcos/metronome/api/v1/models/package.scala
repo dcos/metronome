@@ -155,14 +155,15 @@ package object models {
     (__ \ "cmd").formatNullable[String] ~
     (__ \ "args").formatNullable[Seq[String]] ~
     (__ \ "user").formatNullable[String] ~
-    (__ \ "env").formatNullable[Map[String, String]].withDefault(JobRunSpec.DefaultEnv) ~
+    (__ \ "env").formatNullable[Map[String, EnvVarValueOrSecret]].withDefault(JobRunSpec.DefaultEnv) ~
     (__ \ "placement").formatNullable[PlacementSpec].withDefault(JobRunSpec.DefaultPlacement) ~
     (__ \ "artifacts").formatNullable[Seq[Artifact]].withDefault(JobRunSpec.DefaultArtifacts) ~
     (__ \ "maxLaunchDelay").formatNullable[Duration].withDefault(JobRunSpec.DefaultMaxLaunchDelay) ~
     (__ \ "docker").formatNullable[DockerSpec] ~
     (__ \ "volumes").formatNullable[Seq[Volume]].withDefault(JobRunSpec.DefaultVolumes) ~
     (__ \ "restart").formatNullable[RestartSpec].withDefault(JobRunSpec.DefaultRestartSpec) ~
-    (__ \ "taskKillGracePeriodSeconds").formatNullable[FiniteDuration])(JobRunSpec.apply, unlift(JobRunSpec.unapply))
+    (__ \ "taskKillGracePeriodSeconds").formatNullable[FiniteDuration] ~
+    (__ \ "secrets").formatNullable[Map[String, SecretDef]].withDefault(JobRunSpec.DefaultSecrets))(JobRunSpec.apply, unlift(JobRunSpec.unapply))
 
   implicit lazy val JobSpecFormat: Format[JobSpec] = (
     (__ \ "id").format[JobId] ~

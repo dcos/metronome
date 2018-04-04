@@ -8,7 +8,7 @@ import mesosphere.marathon
 import mesosphere.marathon.core.health.HealthCheck
 import mesosphere.marathon.core.readiness.ReadinessCheck
 import mesosphere.marathon.raml.Resources
-import mesosphere.marathon.state.{ AppDefinition, BackoffStrategy, Container, EnvVarValue, FetchUri, HostVolume, PathId, PortDefinition, RunSpec, Secret, UpgradeStrategy, VersionInfo, VolumeMount }
+import mesosphere.marathon.state.{ AppDefinition, BackoffStrategy, Container, FetchUri, HostVolume, PathId, PortDefinition, RunSpec, Secret, UpgradeStrategy, VersionInfo, VolumeMount }
 
 import scala.concurrent.duration._
 import scala.language.implicitConversions
@@ -82,7 +82,7 @@ object MarathonImplicits {
         cmd = jobSpec.run.cmd,
         args = jobSpec.run.args.getOrElse(Seq.empty),
         user = jobSpec.run.user,
-        env = EnvVarValue(jobSpec.run.env),
+        env = MarathonConversions.envVarToMarathon(jobSpec.run.env),
         instances = 1,
         resources = Resources(cpus = jobSpec.run.cpus, mem = jobSpec.run.mem, disk = jobSpec.run.disk),
         executor = "//cmd",
@@ -103,7 +103,7 @@ object MarathonImplicits {
         labels = jobSpec.labels,
         acceptedResourceRoles = Set.empty,
         versionInfo = VersionInfo.NoVersion,
-        secrets = Map.empty[String, Secret])
+        secrets = MarathonConversions.secretsToMarathon(jobSpec.run.secrets))
     }
   }
 }
