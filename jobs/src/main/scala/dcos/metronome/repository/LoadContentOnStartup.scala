@@ -53,14 +53,12 @@ trait LoadContentOnStartup[Id, Model] extends Actor with Stash with ActorLogging
     repo.get(id).recoverWith {
       case ex: StoreCommandFailedException =>
         ex.getCause match {
-          case cause: InvalidProtocolBufferException =>
-            log.error(s"ID $id has corrupt data and will be ignored.  Zk will need to be manually repaired.  Exception message: ${cause.getMessage}")
-            Future.successful(None)
           case cause: NoNodeException =>
             log.error(s"ID $id or job-specs znode missing. Zk will need to be manually repaired.  Exception message: ${cause.getMessage}")
             Future.successful(None)
           case cause: Throwable =>
             log.error(s"Unexpected exception occurred in reading zk at startup.  Exception message: ${cause.getMessage}")
+            // We need crash strategy similar to marathon, for now we can NOT continue with such a zk failure.
             System.exit(-1)
             Future.failed(cause)
         }
