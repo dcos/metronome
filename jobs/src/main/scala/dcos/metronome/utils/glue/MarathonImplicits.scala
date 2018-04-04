@@ -4,11 +4,10 @@ package utils.glue
 import java.util.concurrent.TimeUnit
 
 import dcos.metronome.model._
-import dcos.metronome.scheduler.SchedulerConfig
 import mesosphere.marathon
 import mesosphere.marathon.core.health.HealthCheck
 import mesosphere.marathon.core.readiness.ReadinessCheck
-import mesosphere.marathon.state.{ AppDefinition, Container, EnvVarValue, FetchUri, PathId, PortDefinition, RunSpec, Secret, UpgradeStrategy }
+import mesosphere.marathon.state.{ AppDefinition, Container, FetchUri, PathId, PortDefinition, RunSpec, Secret, UpgradeStrategy }
 
 import scala.collection.immutable.Seq
 import scala.concurrent.duration._
@@ -87,7 +86,7 @@ object MarathonImplicits {
         cmd = jobSpec.run.cmd,
         args = jobSpec.run.args,
         user = jobSpec.run.user,
-        env = EnvVarValue(jobSpec.run.env),
+        env = MarathonConversions.envVarToMarathon(jobSpec.run.env),
         instances = 1,
         cpus = jobSpec.run.cpus,
         mem = jobSpec.run.mem,
@@ -112,7 +111,7 @@ object MarathonImplicits {
         ipAddress = None,
         versionInfo = AppDefinition.VersionInfo.NoVersion,
         residency = None,
-        secrets = Map.empty[String, Secret])
+        secrets = MarathonConversions.secretsToMarathon(jobSpec.run.secrets))
     }
   }
 }

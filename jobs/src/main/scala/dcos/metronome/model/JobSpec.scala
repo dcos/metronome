@@ -7,7 +7,10 @@ import mesosphere.marathon.api.v2.Validation._
 import mesosphere.marathon.plugin.{ Secret, EnvVarValue, RunSpec }
 
 import scala.collection.immutable._
-import JobRunSpec._
+import dcos.metronome.model.JobRunSpec._
+import dcos.metronome.utils.glue.MarathonConversions
+import mesosphere.marathon.api.v2.Validation._
+import mesosphere.marathon
 
 case class JobSpec(
   id:          JobId,
@@ -17,10 +20,10 @@ case class JobSpec(
   run:         JobRunSpec          = JobSpec.DefaultRunSpec) extends RunSpec {
   def schedule(id: String): Option[ScheduleSpec] = schedules.find(_.id == id)
 
-  override def user: Option[String] = run.user
-  override def acceptedResourceRoles: Option[Predef.Set[String]] = None
-  override def secrets: Map[String, Secret] = Map.empty
-  override def env: Map[String, EnvVarValue] = mesosphere.marathon.state.EnvVarValue(run.env)
+  override val user: Option[String] = run.user
+  override val acceptedResourceRoles: Option[Predef.Set[String]] = None
+  override val secrets: Map[String, Secret] = MarathonConversions.secretsToMarathon(run.secrets)
+  override val env: Map[String, marathon.state.EnvVarValue] = MarathonConversions.envVarToMarathon(run.env)
 }
 
 object JobSpec {
