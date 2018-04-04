@@ -4,7 +4,14 @@ Metronome uses Marathon as a library for scheduling. We have bumped the dependen
 This brings a lot of bug fixes and new features from the last 3 versions of Marathon. At the same time, it allows
 us to add UCR and secrets support.
 
+## Features 
+
+* [METRONOME-246](https://jira.mesosphere.com/browse/METRONOME-246) Support secrets in Metronome
+
+## Bugs and Tracking
+
 * [METRONOME-238](https://jira.mesosphere.com/browse/METRONOME-238) Migrate from joda time to java time
+* [METRONOME-218](https://jira.mesosphere.com/browse/METRONOME-218) HTTP 500 Errors Based on ZK Storage
 
 
 ## Breaking changes
