@@ -5,6 +5,7 @@ This brings a lot of bug fixes and new features from the last 3 versions of Mara
 us to add UCR and secrets support.
 
 * [METRONOME-238](https://jira.mesosphere.com/browse/METRONOME-238) Migrate from joda time to java time
+* [METRONOME-246](https://jira.mesosphere.com/browse/METRONOME-246) Support secrets in Metronome
 
 
 ## Breaking changes
