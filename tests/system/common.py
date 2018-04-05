@@ -3,11 +3,14 @@
 from datetime import timedelta
 from dcos import http
 
+import json
 import shakedown
+import shlex
 import time
 import pytest
 
 from dcos import metronome
+from json.decoder import JSONDecodeError
 from retrying import retry
 
 
@@ -165,3 +168,75 @@ def not_required_masters_exact_count(count):
 
 def masters_exact(count):
     return pytest.mark.skipif('not_required_masters_exact_count({})'.format(count))
+
+
+def install_enterprise_cli_package():
+    """Install `dcos-enterprise-cli` package. It is required by the `dcos security`
+       command to create secrets, manage service accounts etc.
+    """
+    print('Installing dcos-enterprise-cli package')
+    cmd = 'package install dcos-enterprise-cli --cli --yes'
+    stdout, stderr, return_code = shakedown.run_dcos_command(cmd, raise_on_error=True)
+
+
+def is_enterprise_cli_package_installed():
+    """Returns `True` if `dcos-enterprise-cli` package is installed."""
+    stdout, stderr, return_code = shakedown.run_dcos_command('package list --json')
+    print('package list command returned code:{}, stderr:{}, stdout: {}'.format(return_code, stderr, stdout))
+    try:
+        result_json = json.loads(stdout)
+    except JSONDecodeError as error:
+        raise DCOSException('Could not parse: "{}"'.format(stdout))(error)
+    return any(cmd['name'] == 'dcos-enterprise-cli' for cmd in result_json)
+
+
+def has_secret(secret_name):
+    """Returns `True` if the secret with given name exists in the vault.
+       This method uses `dcos security secrets` command and assumes that `dcos-enterprise-cli`
+       package is installed.
+
+       :param secret_name: secret name
+       :type secret_name: str
+    """
+    stdout, stderr, return_code = shakedown.run_dcos_command('security secrets list / --json')
+    if stdout:
+        result_json = json.loads(stdout)
+        return secret_name in result_json
+    return False
+
+
+def delete_secret(secret_name):
+    """Delete a secret with a given name from the vault.
+       This method uses `dcos security org` command and assumes that `dcos-enterprise-cli`
+       package is installed.
+
+       :param secret_name: secret name
+       :type secret_name: str
+    """
+    print('Removing existing secret {}'.format(secret_name))
+    stdout, stderr, return_code = shakedown.run_dcos_command('security secrets delete {}'.format(secret_name))
+    assert return_code == 0, "Failed to remove existing secret"
+
+
+def create_secret(name, value=None, description=None):
+    """Create a secret with a passed `{name}` and optional `{value}`.
+       This method uses `dcos security secrets` command and assumes that `dcos-enterprise-cli`
+       package is installed.
+
+       :param name: secret name
+       :type name: str
+       :param value: optional secret value
+       :type value: str
+       :param description: option secret description
+       :type description: str
+    """
+    print('Creating new secret {}:{}'.format(name, value))
+
+    value_opt = '-v {}'.format(shlex.quote(value)) if value else ''
+    description_opt = '-d "{}"'.format(description) if description else ''
+
+    stdout, stderr, return_code = shakedown.run_dcos_command('security secrets create {} {} "{}"'.format(
+        value_opt,
+        description_opt,
+        name), print_output=True)
+    assert return_code == 0, "Failed to create a secret"

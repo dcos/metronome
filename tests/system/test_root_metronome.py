@@ -10,7 +10,8 @@ import common
 import shakedown
 import pytest
 
-from common import job_no_schedule, schedule, not_required_masters_exact_count # NOQA F401
+from common import job_no_schedule, schedule, not_required_masters_exact_count  # NOQA F401
+from shakedown import dcos_version_less_than, marthon_version_less_than, required_masters, required_public_agents  # NOQA F401
 from dcos import metronome
 from retrying import retry
 
@@ -239,6 +240,14 @@ def test_docker_job():
         assert len(client.get_runs(job_id)) == 1
 
 
+@shakedown.dcos_1_10
+@pytest.mark.skipif("shakedown.ee_version() is None")
+def test_secret_env_var(secret_fixture):
+
+    secret_name, secret_value = secret_fixture
+    print("secret name: {}, value: {}".format(secret_name, secret_value))
+
+
 @common.masters_exact(1)
 @pytest.mark.skip(reason="we need to wait until METRONOME-100 gets to testing/master")
 def test_metronome_shutdown_with_no_extra_tasks():
@@ -283,3 +292,15 @@ def job(job_json):
             client.remove_job(job_id, True)
         except Exception as e:
             print(e)
+
+
+@pytest.fixture(scope="function")
+def secret_fixture():
+    if not common.is_enterprise_cli_package_installed():
+        common.install_enterprise_cli_package()
+
+    secret_name = '/mysecret'
+    secret_value = 'super_secret_password'
+    common.create_secret(secret_name, secret_value)
+    yield secret_name, secret_value
+    common.delete_secret(secret_name)
