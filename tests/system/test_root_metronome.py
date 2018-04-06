@@ -257,7 +257,7 @@ def test_secret_env_var(secret_fixture):
             assert len(client.get_runs(job_id)) == 1
             run_id = client.get_runs(job_id)[0]['id']
             stdout, stderr, return_code = shakedown.run_dcos_command("task log {} secret-env".format(run_id))
-            assert  secret_value == stdout.rstrip()
+            assert secret_value == stdout.rstrip()
 
 
 @common.masters_exact(1)

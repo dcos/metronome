@@ -26,6 +26,7 @@ def job_no_schedule(id='pikachu', cmd='sleep 10000'):
         }
     }
 
+
 def job_with_secrets(id='pikachu',
                      cmd='echo $SECRET_ENV >> $MESOS_SANDBOX/secret-env; sleep 5',
                      secret_name='secret_name'):
@@ -39,12 +40,12 @@ def job_with_secrets(id='pikachu',
             'disk': 0,
             "env": {
                 "SECRET_ENV": {
-                "secret": "secret1"
+                    "secret": "secret1"
                 }
             },
             "secrets": {
                 "secret1": {
-                "source": secret_name
+                    "source": secret_name
                 }
             }
         }
