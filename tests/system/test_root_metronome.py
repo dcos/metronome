@@ -245,7 +245,19 @@ def test_docker_job():
 def test_secret_env_var(secret_fixture):
 
     secret_name, secret_value = secret_fixture
-    print("secret name: {}, value: {}".format(secret_name, secret_value))
+
+    client = metronome.create_client()
+    job_id = uuid.uuid4().hex
+    job_def = common.job_with_secrets(job_id, secret_name=secret_name)
+    with job(job_def):
+        client.run_job(job_id)
+
+        @retry(wait_fixed=1000, stop_max_delay=5000)
+        def task_exist():
+            assert len(client.get_runs(job_id)) == 1
+            run_id = client.get_runs(job_id)[0]['id']
+            stdout, stderr, return_code = shakedown.run_dcos_command("task log {} secret-env".format(run_id))
+            assert  secret_value == stdout.rstrip()
 
 
 @common.masters_exact(1)
