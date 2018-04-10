@@ -14,7 +14,7 @@ import scala.util.{ Failure, Success, Try }
   * Provides build information details regarding Metronome and Marathon at runtime.
   */
 case object MetronomeBuildInfo {
-  private val metronomeJar = "\\bmesosphere\\.metronome\\.metronome-[0-9.]+".r
+  private val metronomeJar = "\\bdcos\\.jobs-[0-9.]+".r
 
   private lazy val devBuildVersion = {
     // parsing version in ThisBuild := "0.3.0"
