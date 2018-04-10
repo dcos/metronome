@@ -253,12 +253,13 @@ def test_secret_env_var(secret_fixture):
         client.run_job(job_id)
 
         @retry(wait_fixed=1000, stop_max_delay=5000)
-        def task_exist():
-            assert len(client.get_runs(job_id)) == 1
+        def job_run_has_secret():
+            assert len(client.get_runs(job_id)) == 1, "trigger job should be running"
             run_id = client.get_runs(job_id)[0]['id']
             stdout, stderr, return_code = shakedown.run_dcos_command("task log {} secret-env".format(run_id))
-            assert secret_value == stdout.rstrip()
+            assert secret_value == stdout.rstrip(), "secret value in stdout log Incorrect or missing"
 
+        job_run_has_secret()
 
 @common.masters_exact(1)
 @pytest.mark.skip(reason="we need to wait until METRONOME-100 gets to testing/master")
