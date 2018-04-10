@@ -4,7 +4,7 @@ package model
 import com.wix.accord.dsl._
 import com.wix.accord.Validator
 import mesosphere.marathon.api.v2.Validation._
-import mesosphere.marathon.plugin.{ Secret, EnvVarValue, RunSpec }
+import mesosphere.marathon.plugin.{ Secret, RunSpec }
 
 import scala.collection.immutable._
 import dcos.metronome.model.JobRunSpec._
