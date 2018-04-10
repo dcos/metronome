@@ -50,11 +50,22 @@ object JobRunSpec {
     import ViolationBuilder._
 
     override def apply(jobRunSpec: JobRunSpec): Result = {
-      if (jobRunSpec.cmd.isDefined || jobRunSpec.docker.exists(d => d.image.nonEmpty))
-        Success
-      else
-        RuleViolation(jobRunSpec, JobRunSpecMessages.cmdOrDockerValidation, None)
+      var violations = Set.empty[Result]
+
+      def check(test: Boolean, errorMessage: String) = {
+        if (!test) {
+          violations += RuleViolation(jobRunSpec, errorMessage, None)
+        }
+      }
+      val envVarDefinedSecretNames = jobRunSpec.env.values.collect { case EnvVarSecret(secretName) => secretName }.toSet
+      val providedSecretNames = jobRunSpec.secrets.keySet
+
+      check(jobRunSpec.cmd.isDefined || jobRunSpec.docker.exists(d => d.image.nonEmpty), JobRunSpecMessages.cmdOrDockerValidation)
+      check(envVarDefinedSecretNames == providedSecretNames, JobRunSpecMessages.secretsValidation(envVarDefinedSecretNames, providedSecretNames))
+
+      violations.headOption.getOrElse(Success)
     }
+
   }
 }
 
