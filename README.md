@@ -45,6 +45,14 @@ use. Note that you still need to run ZooKeeper for storing state. The following
 command launches Metronome on Mesos in *local mode*.
 
     sbt run
+    
+If you want to run Metronome against real mesos cluster, you can use the following command.
+
+    ./run.sh
+
+The script is already pre-filled with a default values for zookeeper and mesos running locally. You can specify your own like this:
+
+    ./run.sh "zk://127.0.0.1:2181/metronome" "127.0.0.1:5050" "8989"
 
 
  ## Example Job with Placement Constraint
