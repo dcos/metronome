@@ -54,6 +54,7 @@ object Build extends sbt.Build {
         Dependency.metrics,
         Dependency.jsonValidate,
         Dependency.Test.scalatest,
+        Dependency.Test.scalaCheck,
         Dependency.Test.scalatestPlay
       )
     )
@@ -75,7 +76,9 @@ object Build extends sbt.Build {
         Dependency.akka,
         Dependency.metrics,
         Dependency.Test.akkaTestKit,
-        Dependency.Test.mockito
+        Dependency.Test.mockito,
+        Dependency.Test.scalatest,
+        Dependency.Test.scalaCheck
       )
     )
   )
@@ -135,6 +138,7 @@ object Build extends sbt.Build {
       // Test deps versions
       val AsyncAwait = "0.9.7"
       val ScalaTest = "2.2.6"
+      val ScalaCheck = "1.13.4"
       val MacWire = "2.2.2"
       val Marathon = "1.3.13"
       val Play = "2.5.18"
@@ -166,6 +170,7 @@ object Build extends sbt.Build {
     object Test {
       val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"
       val scalatestPlay = "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % "test"
+      val scalaCheck = "org.scalacheck" %% "scalacheck" % V.ScalaCheck % "test"
       val akkaTestKit = "com.typesafe.akka" %%  "akka-testkit" % V.Akka % "test"
       val mockito = "org.mockito" % "mockito-core" % V.Mockito % "test"
     }

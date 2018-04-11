@@ -36,7 +36,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers {
       cmd = Some("sleep 500"),
       args = None,
       user = Some("root"),
-      env = Map("key" -> "value"),
+      env = Map("key" -> EnvVarValue("value")),
       placement = PlacementSpec(constraints = Seq(ConstraintSpec("hostname", Operator.Eq, Some("localhost")))),
       artifacts = Seq(Artifact("http://www.foo.bar/file.tar.gz", extract = false, executable = true, cache = true)),
       maxLaunchDelay = 24.hours,

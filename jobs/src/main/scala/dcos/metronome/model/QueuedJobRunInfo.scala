@@ -1,7 +1,9 @@
 package dcos.metronome
 package model
 
-import mesosphere.marathon.plugin.{ EnvVarValue, PathId, RunSpec, Secret }
+import dcos.metronome.utils.glue.MarathonConversions
+import mesosphere.marathon.plugin.{ PathId, Secret, RunSpec }
+import mesosphere.marathon.plugin
 import mesosphere.marathon.state.Timestamp
 
 import scala.collection.immutable.Map
@@ -17,6 +19,6 @@ case class QueuedJobRunInfo(
   lazy val runId: String = id.path.last
   override def user: Option[String] = run.user
   override def secrets: Map[String, Secret] = Map.empty
-  override def env: Map[String, EnvVarValue] = mesosphere.marathon.state.EnvVarValue(run.env)
-  override def labels = Map.empty[String, String]
+  override val env: Map[String, plugin.EnvVarValue] = MarathonConversions.envVarToMarathon(run.env)
+  override val labels = Map.empty[String, String]
 }
