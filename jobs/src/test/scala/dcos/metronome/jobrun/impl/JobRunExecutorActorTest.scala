@@ -19,7 +19,7 @@ import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedTaskInfo
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.tracker.TaskTracker
-import mesosphere.marathon.state.{ RunSpec, Timestamp }
+import mesosphere.marathon.state.{ Parameter, RunSpec, Timestamp }
 import org.apache.mesos.SchedulerDriver
 import org.apache.mesos
 import org.joda.time.DateTime
@@ -27,6 +27,7 @@ import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, FunSuiteLike, GivenWhenThen, Matchers }
 
+import scala.collection.immutable.Seq
 import scala.concurrent.{ Promise, duration }
 import scala.concurrent.duration._
 
@@ -494,6 +495,50 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     And("RunSpec is submitted to LaunchQueue with a Docker forcePullImage")
     verify(f.launchQueue, atLeast(1)).add(argument.capture(), any)
     argument.getValue.container.get.docker().get.forcePullImage shouldBe true
+  }
+
+  test("privileged is passed to Marathon when launching task") {
+
+    val f = new Fixture
+
+    Given("a jobRunSpec with forcePullImage")
+    val jobSpec = JobSpec(
+      id = JobId("/test"),
+      run = JobRunSpec(docker = Some(DockerSpec("image", privileged = true))))
+    val (_, jobRun) = f.setupInitialExecutorActor(Some(jobSpec))
+
+    And("a new task is launched")
+    val msg = f.persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
+    msg.jobRun.status shouldBe JobRunStatus.Starting
+    f.persistenceActor.reply(JobRunPersistenceActor.JobRunCreated(f.persistenceActor.ref, jobRun, Unit))
+    import org.mockito.ArgumentCaptor
+    val argument: ArgumentCaptor[RunSpec] = ArgumentCaptor.forClass(classOf[RunSpec])
+
+    And("RunSpec is submitted to LaunchQueue with a Docker forcePullImage")
+    verify(f.launchQueue, atLeast(1)).add(argument.capture(), any)
+    argument.getValue.container.get.docker().get.privileged shouldBe true
+  }
+
+  test("docker parameters are passed to Marathon when launching task") {
+
+    val f = new Fixture
+
+    Given("a jobRunSpec with forcePullImage")
+    val jobSpec = JobSpec(
+      id = JobId("/test"),
+      run = JobRunSpec(docker = Some(DockerSpec("image", parameters = Seq(new Parameter("key", "value")).to[Seq]))))
+    val (_, jobRun) = f.setupInitialExecutorActor(Some(jobSpec))
+
+    And("a new task is launched")
+    val msg = f.persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
+    msg.jobRun.status shouldBe JobRunStatus.Starting
+    f.persistenceActor.reply(JobRunPersistenceActor.JobRunCreated(f.persistenceActor.ref, jobRun, Unit))
+    import org.mockito.ArgumentCaptor
+    val argument: ArgumentCaptor[RunSpec] = ArgumentCaptor.forClass(classOf[RunSpec])
+
+    And("RunSpec is submitted to LaunchQueue with a Docker forcePullImage")
+    verify(f.launchQueue, atLeast(1)).add(argument.capture(), any)
+    argument.getValue.container.get.docker().get.parameters shouldBe jobSpec.run.docker.get.parameters
   }
 
   test("aborts a job run if starting deadline is reached") {
