@@ -1,3 +1,13 @@
+# Version 0.4.2
+
+## Features
+* [METRONOME-248](https://jira.mesosphere.com/browse/METRONOME-248) Environment variable secrets exposed via API
+
+## Bugs fixed
+* [METRONOME-218](https://jira.mesosphere.com/browse/METRONOME-218) Improved behavior for situations when the underlying zookeeper node content is corrupt - we now fail loud and early
+
+Diff [0.4.1-0.4.2](https://github.com/dcos/metronome/compare/v0.4.1...v0.4.2)
+
 # Version 0.5.0
 
 Metronome uses Marathon as a library for scheduling. We have bumped the dependency to the current Marathon, which is 1.6.322. 
