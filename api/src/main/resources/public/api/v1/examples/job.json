@@ -21,6 +21,7 @@
     "docker": {
       "image": "foo/bla:test"
     },
+    "capabilities" : ["NET_ADMIN", "SYS_ADMIN", "SYSLOG"],
     "env": {
       "MON": "test",
       "CONNECT": "direct"
