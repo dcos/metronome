@@ -6,7 +6,7 @@ import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
-import dcos.metronome.model.{ CronSpec, JobId, JobSpec, ScheduleSpec }
+import dcos.metronome.model._
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
