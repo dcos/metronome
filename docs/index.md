@@ -15,5 +15,9 @@ Metronome documentation lives on the [DC/OS docs site](https://dcos.io/docs/1.10
 ## Contributing
 Learn how to [contribute to the Metronome project]({{ site.baseurl }}/docs/contributing.html).
 
+## Controlling Docker Runtime Capabilities
+Learn how to [change dockers runtime capabilities]({{ site.baseurl }}/docs/docker.html).
+
+
 ## API Reference
 Use the [Metronome REST API]({{ site.baseurl }}/docs/generated/api.html)
