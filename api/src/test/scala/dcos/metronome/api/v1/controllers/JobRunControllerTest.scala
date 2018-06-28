@@ -2,7 +2,7 @@ package dcos.metronome.api.v1.controllers
 
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
-import dcos.metronome.model.{ JobId, JobRunStatus, JobSpec }
+import dcos.metronome.model.{ JobId, JobRunSpec, JobRunStatus, JobSpec }
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
@@ -240,7 +240,7 @@ class JobRunControllerTest extends PlaySpec with OneAppPerTestWithComponents[Moc
 
   val auth = new TestAuthFixture
   val specId = JobId("spec")
-  val jobSpec = JobSpec(specId)
+  val jobSpec = JobSpec(specId, run = JobRunSpec(cmd = Some("cmd")))
   val jobSpecJson = Json.toJson(jobSpec)
 
   before {

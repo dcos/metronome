@@ -1,7 +1,7 @@
 package dcos.metronome.api.v1.controllers
 
 import dcos.metronome.api.v1.models._
-import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents, TestAuthFixture, UnknownJob, ErrorHandler }
+import dcos.metronome.api._
 import dcos.metronome.model._
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
@@ -339,6 +339,16 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       Then("a forbidden response is send")
       status(unauthorized) mustBe FORBIDDEN
     }
+
+    "fail for invalid jobspec" in {
+      Given("An invalid job spec")
+      val jobSpecJson = Json.toJson(JobSpec(JobId("spec1"), run = JobRunSpec()))
+      val failed = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpecJson)).get
+
+      Then("an error HTTP code is returned")
+      status(failed) mustBe UNPROCESSABLE_ENTITY
+      contentAsString(failed) must include(JobRunSpecMessages.cmdOrDockerValidation)
+    }
   }
 
   import scala.concurrent.duration._
@@ -361,4 +371,3 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
     override lazy val pluginManager: PluginManager = auth.pluginManager
   }
 }
-
