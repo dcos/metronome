@@ -13,6 +13,14 @@ message Label {
   optional string value = 2;
 }
 
+/**
+ * A generic (key, value) pair used in various places for parameters.
+ */
+message Parameter {
+  required string key = 1;
+  required string value = 2;
+}
+
 message JobHistory {
   optional string job_spec_id = 1;
   optional int64 success_count = 2;
@@ -149,6 +157,9 @@ message JobSpec {
       // is already downloaded on the agent.
       optional bool force_pull_image = 2;
 
+      optional bool privileged = 3 [default = false];
+
+      repeated Parameter parameters = 4;
     }
     optional DockerSpec docker = 11;
 
