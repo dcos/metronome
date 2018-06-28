@@ -4,11 +4,11 @@ title: Docker Run Configurations
 
 # Docker
 
-It is possible now to run jobs using docker's privilege mode and/or using docker run time parameters.  These can be used to control the [docker runtime privileges](https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities).
+It is now possible to run jobs using Docker's privilege mode and/or using Docker runtime parameters. These can be used to control the [docker runtime privileges](https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities).
 
 ## Privileged Mode
 
-Running docker in privileged mode is possible by setting `privileged=true` in the docker section of the job definition.
+Running Docker container in privileged mode is possible by setting `privileged: true` in the Docker section of the job definition.
 
 ```
 {
@@ -28,7 +28,7 @@ Running docker in privileged mode is possible by setting `privileged=true` in th
 
 ## Docker Parameters
 
-It is possible to set docker parameters now with job runs.   This enables the ability to change runtime capabilities of the job.   The example below removes all the default docker capabilities and adds SYSLOG.
+It is possible to set Docker parameters now with job runs. This makes it possible to change runtime capabilities of the job. The example below removes all the default docker capabilities and adds SYSLOG.
 
 ```
 {
