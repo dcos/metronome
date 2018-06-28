@@ -7,6 +7,7 @@ import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.task.Task
+import mesosphere.marathon.state.{ Parameter, Timestamp }
 import org.joda.time.{ DateTime, DateTimeZone }
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
@@ -135,8 +136,22 @@ package object models {
 
   implicit lazy val DockerSpecFormat: Format[DockerSpec] = (
     (__ \ "image").format[String] ~
+    (__ \ "privileged").formatNullable[Boolean].withDefault(false) ~
+    (__ \ "parameters").formatNullable[Seq[Parameter]].withDefault(DockerSpec.DefaultParameters) ~
     (__ \ "forcePullImage").formatNullable[Boolean].withDefault(false)
   ) (DockerSpec.apply, unlift(DockerSpec.unapply))
+
+  implicit lazy val ParameterWrites: Writes[mesosphere.marathon.state.Parameter] = new Writes[mesosphere.marathon.state.Parameter] {
+    override def writes(param: mesosphere.marathon.state.Parameter): JsValue = Json.obj(
+      "key" -> param.key,
+      "value" -> param.value
+    )
+  }
+
+  val ParameterReads: Reads[Parameter] = ((JsPath \ "key").read[String] and
+    (JsPath \ "value").read[String])((k, v) => mesosphere.marathon.state.Parameter(k, v))
+
+  implicit lazy val ParameterFormat: Format[mesosphere.marathon.state.Parameter] = Format(ParameterReads, ParameterWrites)
 
   implicit lazy val RestartSpecFormat: Format[RestartSpec] = (
     (__ \ "policy").formatNullable[RestartPolicy].withDefault(RestartSpec.DefaultRestartPolicy) ~

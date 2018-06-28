@@ -3,11 +3,11 @@ package dcos.metronome.repository.impl.kv.marshaller
 import dcos.metronome.Protos
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.kv.EntityMarshaller
+import mesosphere.marathon.state.Parameter
 import org.joda.time.DateTimeZone
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 
@@ -277,14 +277,40 @@ object RunSpecConversions {
     }.toList
   }
 
-  implicit class DockerSpecToProto(val dockerSpec: DockerSpec) extends AnyVal {
-    def toProto: Protos.JobSpec.RunSpec.DockerSpec = {
-      Protos.JobSpec.RunSpec.DockerSpec.newBuilder().setImage(dockerSpec.image).setForcePullImage(dockerSpec.forcePullImage).build()
+  implicit class ParametersToProto(val parameters: Seq[Parameter]) extends AnyVal {
+    def toProto: Iterable[Protos.Parameter] = parameters.map { parameter =>
+      val builder = Protos.Parameter.newBuilder
+      builder.setKey(parameter.key).setValue(parameter.value).build()
     }
   }
 
+  implicit class DockerSpecToProto(val dockerSpec: DockerSpec) extends AnyVal {
+    def toProto: Protos.JobSpec.RunSpec.DockerSpec = {
+      Protos.JobSpec.RunSpec.DockerSpec.newBuilder()
+        .setImage(dockerSpec.image)
+        .setForcePullImage(dockerSpec.forcePullImage)
+        .setPrivileged(dockerSpec.privileged)
+        .addAllParameters(dockerSpec.parameters.toProto.asJava)
+        .build()
+    }
+  }
+
+  implicit class ProtoToParameters(val parameters: mutable.Buffer[Protos.Parameter]) extends AnyVal {
+    def toModel: Seq[Parameter] = parameters.map { parameter =>
+      Parameter(
+        key = parameter.getKey,
+        value = parameter.getValue
+      )
+    }.toList
+  }
+
   implicit class ProtoToDockerSpec(val dockerSpec: Protos.JobSpec.RunSpec.DockerSpec) extends AnyVal {
-    def toModel: DockerSpec = DockerSpec(image = dockerSpec.getImage, forcePullImage = dockerSpec.getForcePullImage)
+    def toModel: DockerSpec = DockerSpec(
+      image = dockerSpec.getImage,
+      forcePullImage = dockerSpec.getForcePullImage,
+      privileged = dockerSpec.getPrivileged,
+      parameters = dockerSpec.getParametersList.asScala.toModel
+    )
   }
 
   implicit class EnvironmentToProto(val environment: Map[String, String]) extends AnyVal {

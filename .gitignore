@@ -24,3 +24,11 @@ sandboxes.tar.gz
 .DS_Store
 protobuf-*/
 *.tar.gz
+
+# si_provision.sh files
+ci/launch_cluster.sh
+ci/si_pipeline.sh
+
+# metrics needs
+jobs/native/
+native/
