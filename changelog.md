@@ -1,3 +1,15 @@
+# Version 0.3.6
+
+Diff [0.3.5-0.3.6](https://github.com/dcos/metronome/compare/v0.3.5...9f0a59cfa0efdeebe560079518fdd71f6ef6f2e4)
+
+## Features
+
+* [DCOS_OSS-2564](https://jira.mesosphere.com/browse/DCOS_OSS-2564) Allow Docker Params for Job Runs
+
+## Bugs and Tracking
+
+* [DCOS_OSS-2519](https://jira.mesosphere.com/browse/DCOS_OSS-2519) Metronome allows creating jobs with no command and no image.
+
 # Version 0.3.5
 
 Diff [0.3.4-0.3.5](https://github.com/dcos/metronome/compare/v0.3.4...8bbfda7d6b84a70b4ede28770eae64aeb1b3654)
