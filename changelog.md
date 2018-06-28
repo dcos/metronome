@@ -1,10 +1,10 @@
 # Version 0.3.6
 
-Diff [0.3.5-0.3.6](https://github.com/dcos/metronome/compare/v0.3.5...)
+Diff [0.3.5-0.3.6](https://github.com/dcos/metronome/compare/v0.3.5...9f0a59cfa0efdeebe560079518fdd71f6ef6f2e4)
 
 ## Features
 
-* [DCOS_OSS-2564](https://jira.mesosphere.com/browse/DCOS_OSS-2564)Allow Docker Params for Job Runs
+* [DCOS_OSS-2564](https://jira.mesosphere.com/browse/DCOS_OSS-2564) Allow Docker Params for Job Runs
 
 ## Bugs and Tracking
 
