@@ -4,16 +4,13 @@ package api.v1
 import java.time.{ Instant, ZoneId }
 import java.time.format.DateTimeFormatter
 
-import dcos.metronome.MetronomeInfo
 import dcos.metronome.api._
 import dcos.metronome.jobinfo.JobInfo
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.plugin.PathId
 import mesosphere.marathon.state.{ Parameter, Timestamp }
-import org.joda.time.{ DateTime, DateTimeZone }
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.{ Json, _ }
