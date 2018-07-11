@@ -2,7 +2,7 @@
 
 @Library('sec_ci_libs@v2-latest') _
 
-def master_branches = ["master", ] as String[]
+def master_branches = ["releases/0.4", "master", ] as String[]
 
 ansiColor('gnome-terminal') {
     // using mesos node because it's a lightweight alpine docker image instead of full VM
