@@ -26,6 +26,7 @@ import mesosphere.marathon.state._
 import org.apache.mesos.SchedulerDriver
 import org.apache.mesos
 import org.apache.zookeeper.KeeperException.NodeExistsException
+
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest._
