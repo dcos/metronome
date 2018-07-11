@@ -9,11 +9,12 @@ import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
 import dcos.metronome.scheduler.TaskState
 import dcos.metronome.utils.time.Clock
-import mesosphere.marathon.MarathonSchedulerDriverHolder
+import mesosphere.marathon.{ MarathonSchedulerDriverHolder, StoreCommandFailedException }
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.Task.LaunchedEphemeral
 import mesosphere.marathon.core.task.tracker.TaskTracker
+import org.apache.zookeeper.KeeperException.NodeExistsException
 import org.joda.time.Seconds
 
 import scala.concurrent.Promise
@@ -107,9 +108,15 @@ class JobRunExecutorActor(
   }
 
   def addTaskToLaunchQueue(): Unit = {
-    log.info("addTaskToLaunchQueue")
-    import dcos.metronome.utils.glue.MarathonImplicits._
-    launchQueue.add(jobRun.toRunSpec, count = 1)
+    if (existsInLaunchQueue()) {
+      // we have to handle a case when actor is restarted (e.g. because of exception) and it already put something into the queue
+      // during restart it is possible, that actor that was in state Starting will be restarted with state initial
+      log.info(s"Job run ${jobRun.id} already exists in LaunchQueue - not adding")
+    } else {
+      log.info("addTaskToLaunchQueue")
+      import dcos.metronome.utils.glue.MarathonImplicits._
+      launchQueue.add(jobRun.toRunSpec, count = 1)
+    }
   }
 
   def becomeActive(update: TaskStateChangedEvent): Unit = {
@@ -259,6 +266,10 @@ class JobRunExecutorActor(
     receiveKill orElse receiveStartTimeout orElse {
       case JobRunCreated(_, updatedJobRun, _) =>
         becomeStarting(updatedJobRun)
+
+      case PersistFailed(_, id, ex, _) if ex.isInstanceOf[StoreCommandFailedException] && ex.getCause.isInstanceOf[NodeExistsException] =>
+        // we need to be able to handle restarted actor that already created the ZK node in the previous run
+        becomeStarting(jobRun.copy(status = JobRunStatus.Starting))
 
       case PersistFailed(_, id, ex, _) =>
         becomeAborting()
