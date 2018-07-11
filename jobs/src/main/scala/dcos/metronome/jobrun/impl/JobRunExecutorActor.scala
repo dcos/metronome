@@ -109,6 +109,8 @@ class JobRunExecutorActor(
 
   def addTaskToLaunchQueue(): Unit = {
     if (existsInLaunchQueue()) {
+      // we have to handle a case when actor is restarted (e.g. because of exception) and it already put something into the queue
+      // during restart it is possible, that actor that was in state Starting will be restarted with state initial
       log.info(s"Job run ${jobRun.id} already exists in LaunchQueue - not adding")
     } else {
       log.info("addTaskToLaunchQueue")
@@ -266,6 +268,7 @@ class JobRunExecutorActor(
         becomeStarting(updatedJobRun)
 
       case PersistFailed(_, id, ex, _) if ex.isInstanceOf[StoreCommandFailedException] && ex.getCause.isInstanceOf[NodeExistsException] =>
+        // we need to be able to handle restarted actor that already created the ZK node in the previous run
         becomeStarting(jobRun.copy(status = JobRunStatus.Starting))
 
       case PersistFailed(_, id, ex, _) =>
