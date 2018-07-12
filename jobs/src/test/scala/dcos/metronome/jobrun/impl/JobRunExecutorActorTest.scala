@@ -11,7 +11,7 @@ import dcos.metronome.scheduler.TaskState
 import dcos.metronome.utils.glue.MarathonImplicits._
 import dcos.metronome.utils.test.Mockito
 import dcos.metronome.utils.time.FixedClock
-import mesosphere.marathon.MarathonSchedulerDriverHolder
+import mesosphere.marathon.{ MarathonSchedulerDriverHolder, StoreCommandFailedException }
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedTaskInfo
 import mesosphere.marathon.core.task.Task
@@ -19,6 +19,7 @@ import mesosphere.marathon.core.task.tracker.TaskTracker
 import mesosphere.marathon.state.{ Parameter, RunSpec, Timestamp }
 import org.apache.mesos.SchedulerDriver
 import org.apache.mesos
+import org.apache.zookeeper.KeeperException.NodeExistsException
 import org.joda.time.DateTime
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, FunSuiteLike, GivenWhenThen, Matchers }
@@ -352,7 +353,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val actorRef: ActorRef = executorActor(activeJobRun)
 
     Then("it will fetch info about queued or running tasks")
-    verify(f.launchQueue, timeout(1000)).get(runSpecId)
+    verify(f.launchQueue, atLeastOnce).get(runSpecId)
 
     And("a task is placed onto the launch queue")
     verify(launchQueue, timeout(1000)).add(any, any)
@@ -380,7 +381,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val actorRef: ActorRef = executorActor(activeJobRun)
 
     Then("it will fetch info about queued or running tasks")
-    verify(f.launchQueue, timeout(1000)).get(runSpecId)
+    verify(f.launchQueue, atLeastOnce).get(runSpecId)
 
     And("a task is placed onto the launch queue")
     verify(launchQueue, timeout(1000)).add(any, any)
@@ -503,6 +504,17 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     argument.getValue.container.get.docker().get.forcePullImage shouldBe true
   }
 
+  test("does not fail when job run already exists in ZK") {
+    val f = new Fixture
+    Given("a jobRun initial where node already exists")
+    val (actor, jobRun) = f.setupInitialExecutorActor()
+    val msg = f.persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
+    f.persistenceActor.reply(JobRunPersistenceActor.PersistFailed(f.persistenceActor.ref, jobRun.id, new StoreCommandFailedException("", new NodeExistsException()), ()))
+
+    Then("run goes to starting phase instead of restarting the actor and starting from the beginning")
+    verify(f.launchQueue).add(any, any)
+  }
+
   def verifyFailureActions(jobRun: JobRun, expectedTaskCount: Int, f: Fixture): Unit = {
     import f._
 
@@ -549,6 +561,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val clock = new FixedClock(DateTime.parse("2016-06-01T08:50:12.000Z"))
     val launchQueue: LaunchQueue = mock[LaunchQueue]
     val taskTracker: TaskTracker = mock[TaskTracker]
+    launchQueue.get(any).returns(None)
     val driver = mock[SchedulerDriver]
     val driverHolder: MarathonSchedulerDriverHolder = {
       val holder = new MarathonSchedulerDriverHolder
