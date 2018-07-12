@@ -27,7 +27,8 @@
     "mem": 32,
     "disk": 128,
     "docker": {
-      "image": "foo/bla:test"
+      "image": "foo/bla:test",
+      "privileged": true
     },
     "env": {
       "MON": "test",
