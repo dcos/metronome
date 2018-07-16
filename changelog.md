@@ -1,3 +1,23 @@
+# Version 0.4.3
+
+## Bugs and Tracking
+
+* [#231](https://github.com/dcos/metronome/pull/231) Exit when cannot load state from ZK.
+* [#230](https://github.com/dcos/metronome/pull/230) Gracefully handle errors during task launching.
+* [DCOS_OSS-2564](https://jira.mesosphere.com/browse/DCOS_OSS-2564) Docker params support.
+
+Diff [0.4.2-0.4.3](https://github.com/dcos/metronome/compare/v0.4.2...0.4.3)
+
+# Version 0.4.2
+
+## Features
+* [METRONOME-248](https://jira.mesosphere.com/browse/METRONOME-248) Environment variable secrets exposed via API
+
+## Bugs fixed
+* [METRONOME-218](https://jira.mesosphere.com/browse/METRONOME-218) Improved behavior for situations when the underlying zookeeper node content is corrupt - we now fail loud and early
+
+Diff [0.4.1-0.4.2](https://github.com/dcos/metronome/compare/v0.4.1...v0.4.2)
+
 # Version 0.4.1
 
 ## Bugs and Tracking
