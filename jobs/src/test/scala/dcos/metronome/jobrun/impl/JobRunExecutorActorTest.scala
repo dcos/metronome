@@ -26,11 +26,13 @@ import mesosphere.marathon.state._
 import org.apache.mesos.SchedulerDriver
 import org.apache.mesos
 import org.apache.zookeeper.KeeperException.NodeExistsException
+
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest._
 
 import scala.concurrent.{ Future, Promise, duration }
+import scala.collection.immutable.Seq
 import scala.concurrent.duration._
 
 class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
@@ -546,6 +548,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     verify(f.launchQueue, atLeast(1)).add(argument.capture(), any)
     argument.getValue.container.get.docker.get.parameters shouldBe jobSpec.run.docker.get.parameters
   }
+
   test("aborts a job run if starting deadline is reached") {
     import scala.concurrent.duration._
     val f = new Fixture
