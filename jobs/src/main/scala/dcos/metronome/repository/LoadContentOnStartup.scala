@@ -42,7 +42,7 @@ trait LoadContentOnStartup[Id, Model] extends Actor with Stash with ActorLogging
       case Success(result) => me ! Init(result)
       case Failure(ex) =>
         log.error(ex, "Can not load initial data. Give up.")
-        throw ex
+        System.exit(-1)
     }
   }
 
