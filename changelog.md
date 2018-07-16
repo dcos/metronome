@@ -2,7 +2,7 @@
 
 ## Bugs and Tracking
 
-* [#231](https://github.com/dcos/metronome/pull/231) Exit when cannot load state from ZK.
+* [#234](https://github.com/dcos/metronome/pull/234) Exit when cannot load state from ZK.
 * [#230](https://github.com/dcos/metronome/pull/230) Gracefully handle errors during task launching.
 * [DCOS_OSS-2564](https://jira.mesosphere.com/browse/DCOS_OSS-2564) Docker params support.
 
