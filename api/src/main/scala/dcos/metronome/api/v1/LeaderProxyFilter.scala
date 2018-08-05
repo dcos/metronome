@@ -47,9 +47,9 @@ class LeaderProxyFilter(ws: WSClient, electionService: ElectionService, config: 
         .withRequestTimeout(config.leaderProxyTimeout)
         .withBody(source)
         .execute()
-        .map{ r =>
+        .map { r =>
           val proxyHeaders = Map(HEADER_LEADER -> leaderHostPort, HEADER_VIA -> localHostPort)
-          val responseHeaders = r.allHeaders.map{ case (k, v) => k -> v.mkString(", ") }
+          val responseHeaders = r.allHeaders.map { case (k, v) => k -> v.mkString(", ") }
           val header = ResponseHeader(r.status, proxyHeaders ++ responseHeaders, Some(r.statusText))
           val body = HttpEntity.Strict(r.bodyAsBytes, None)
           Result(header, body)
