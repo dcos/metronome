@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory
 import play.api.http.HttpErrorHandler
 import play.api.http.Status._
 import play.api.libs.json.Json
-import play.api.mvc.{ RequestHeader, Result, Results }
+import play.api.mvc.{RequestHeader, Result, Results}
 import play.twirl.api.HtmlFormat
 
 import scala.concurrent.Future
@@ -22,7 +22,21 @@ class ErrorHandler extends HttpErrorHandler {
   }
 
   override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {
-    log.error(s"Error serving ${request.path}", exception)
+
+    /*
+      When a non-leading metronome is connected to by a client via the TLS port (9443 by default) and the leading master
+      registers with the plain http port, the proxy tries to redirect a TLS connection to the plain http port.
+      This results in the error which is expected and can be verbose in the logs.
+
+      The recommendation is to disable the plain HTTP port and always use TLS in this situation.   The condition is also
+      detected below and the verbose stacktrace is not logged.
+     */
+    if (exception.getMessage.contains("not an SSL/TLS record")) {
+      log.error(s"Error serving ${request.path} ${exception.getMessage}")
+    } else {
+      log.error(s"Error serving ${request.path}", exception)
+    }
+
     val json = Json.obj("requestPath" -> escape(request.path))
     Future.successful(Results.Status(INTERNAL_SERVER_ERROR)(json))
   }
