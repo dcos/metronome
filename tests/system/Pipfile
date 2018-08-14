@@ -14,6 +14,7 @@ python_version = "3.6"
 
 shakedown = {git = "https://github.com/dcos/shakedown.git", ref = "1.4.12"}
 dcos-launch = {git = "https://github.com/dcos/dcos-launch.git"}
+dcos-test-utils = {git = "https://github.com/dcos/dcos-test-utils", ref = "c9a4fc583a4a0bca18040ad4c7772e187e51aa74"}
 
 
 [dev-packages]

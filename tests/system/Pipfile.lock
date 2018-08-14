@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "84ec5abc38f1337bd1497b4000f37188a367cc754da11fcc8e1d6fbd8f0557ad"
+            "sha256": "f930fa019dc1b1034de60cffaabba6674a1fd735bea6cb9a40ac29665a0e1363"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -31,6 +31,10 @@
     "default": {
         "dcos-launch": {
             "git": "https://github.com/dcos/dcos-launch.git"
+        },
+        "dcos-test-utils": {
+            "git": "https://github.com/dcos/dcos-test-utils",
+            "ref": "c9a4fc583a4a0bca18040ad4c7772e187e51aa74"
         },
         "shakedown": {
             "git": "https://github.com/dcos/shakedown.git",
