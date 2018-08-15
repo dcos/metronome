@@ -24,6 +24,7 @@ DELETE /v1/jobs/:jobId/schedules/:scheduleId dcos.metronome.api.v1.controllers.J
 
 
 # Job run routes
+GET /v1/jobs/runs dcos.metronome.api.v1.controllers.JobRunController.getAllJobRuns()
 POST /v1/jobs/:jobId/runs dcos.metronome.api.v1.controllers.JobRunController.triggerJob(jobId: JobId)
 GET /v1/jobs/:jobId/runs dcos.metronome.api.v1.controllers.JobRunController.getJobRuns(jobId: JobId)
 GET /v1/jobs/:jobId/runs/:runId dcos.metronome.api.v1.controllers.JobRunController.getJobRun(jobId: JobId, runId)
