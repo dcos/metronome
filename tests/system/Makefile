@@ -14,10 +14,10 @@ help:
 
 init:
 	pip3 install pipenv
-	pipenv install --dev --skip-lock
+	pipenv sync
 
 build:
-	flake8 --count --max-line-length=120 system
+	pipenv run flake8 --count --max-line-length=120 system
 
 test:
 	pipenv run shakedown \
