@@ -14,7 +14,7 @@ object JobHistoryServiceFixture {
       Future.successful(lookup.get(jobSpecId))
     }
 
-    override def list(filter: (JobHistory) => Boolean): Future[Iterable[JobHistory]] = {
+    override def list(filter: JobHistory => Boolean): Future[Iterable[JobHistory]] = {
       Future.successful(lookup.values.filter(filter))
     }
   }

@@ -270,7 +270,7 @@ class JobRunExecutorActor(
       case JobRunCreated(_, updatedJobRun, _) =>
         becomeStarting(updatedJobRun)
 
-      case PersistFailed(_, id, ex, _) if ex.isInstanceOf[StoreCommandFailedException] && ex.getCause.isInstanceOf[NodeExistsException] =>
+      case PersistFailed(_, _, ex, _) if ex.isInstanceOf[StoreCommandFailedException] && ex.getCause.isInstanceOf[NodeExistsException] =>
         // we need to be able to handle restarted actor that already created the ZK node in the previous run
         becomeStarting(jobRun.copy(status = JobRunStatus.Starting))
 

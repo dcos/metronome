@@ -31,7 +31,7 @@ object JobSpecServiceFixture {
       override def clock: Clock = testClock
     }))
 
-    override def updateJobSpec(id: JobId, update: (JobSpec) => JobSpec): Future[JobSpec] = {
+    override def updateJobSpec(id: JobId, update: JobSpec => JobSpec): Future[JobSpec] = {
       specs.get(id) match {
         case Some(spec) =>
           try {
@@ -45,7 +45,7 @@ object JobSpecServiceFixture {
       }
     }
 
-    override def listJobSpecs(filter: (JobSpec) => Boolean): Future[Iterable[JobSpec]] = {
+    override def listJobSpecs(filter: JobSpec => Boolean): Future[Iterable[JobSpec]] = {
       successful(specs.values.filter(filter))
     }
 

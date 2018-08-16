@@ -3,7 +3,7 @@ package api
 
 import net.jcazevedo.moultingyaml.{ YamlValue, _ }
 import play.api.http.{ ContentTypeOf, MimeTypes, Writeable }
-import play.api.mvc._
+import play.api.mvc.{ Accepting, BodyParser, Codec, AbstractController }
 
 import scala.concurrent.Future
 

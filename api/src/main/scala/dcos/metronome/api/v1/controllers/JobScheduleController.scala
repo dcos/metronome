@@ -32,7 +32,7 @@ class JobScheduleController(
   def getSchedule(id: JobId, scheduleId: String) = AuthorizedAction.async { implicit request =>
     jobSpecService.getJobSpec(id).map {
       case Some(job) if job.schedule(scheduleId).isDefined => request.authorized(ViewRunSpec, job, Ok(job.schedule(scheduleId)))
-      case Some(job) => NotFound(UnknownSchedule(scheduleId))
+      case Some(_) => NotFound(UnknownSchedule(scheduleId))
       case None => NotFound(UnknownJob(id))
     }
   }
@@ -63,8 +63,8 @@ class JobScheduleController(
       jobSpecService.updateJobSpec(id, changeSchedule)
         .map(job => Ok(job.schedule(scheduleId)))
         .recover {
-          case JobSpecDoesNotExist(_)       => NotFound(UnknownJob(id))
-          case ex: IllegalArgumentException => NotFound(UnknownSchedule(scheduleId))
+          case JobSpecDoesNotExist(_)      => NotFound(UnknownJob(id))
+          case _: IllegalArgumentException => NotFound(UnknownSchedule(scheduleId))
         }
     }
   }

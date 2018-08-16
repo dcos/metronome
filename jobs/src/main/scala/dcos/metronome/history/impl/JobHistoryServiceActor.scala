@@ -35,7 +35,7 @@ class JobHistoryServiceActor(config: JobHistoryConfig, clock: Clock, val repo: R
     case Event.JobRunStarted(run, _, _)      => started(run)
     case Event.JobRunFinished(run, _, _)     => finished(run)
     case Event.JobRunFailed(run, _, _)       => failed(run)
-    case Event.JobRunUpdate(run, _, _)       => //ignore
+    case Event.JobRunUpdate(_, _, _)         => //ignore
     case Event.JobSpecDeleted(spec, _, _)    => deleteHistoryFor(spec)
 
     //service events

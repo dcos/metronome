@@ -41,7 +41,7 @@ class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: Rep
         client.get
         connectedToZk = true
       } catch {
-        case t: Throwable =>
+        case _: Throwable =>
           log.warn("Unable to connect to ZooKeeper, retrying...")
       }
     }

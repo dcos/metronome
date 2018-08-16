@@ -108,7 +108,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
       placement = PlacementSpec(constraints = Seq(ConstraintSpec("hostname", Operator.Eq, Some("localhost")))),
       artifacts = Seq(Artifact("http://www.foo.bar/file.tar.gz", extract = false, executable = true, cache = true)),
       maxLaunchDelay = 24.hours,
-      docker = Some(DockerSpec(image = "dcos/metronome", true)),
+      docker = Some(DockerSpec(image = "dcos/metronome", privileged = true)),
       volumes = Seq(
         Volume(containerPath = "/var/log", hostPath = "/sandbox/task1/var/log", mode = Mode.RW)),
       restart = RestartSpec(policy = RestartPolicy.OnFailure, activeDeadline = Some(15.days)),

@@ -1,7 +1,7 @@
 package dcos.metronome
 package api
 
-import controllers.{ AssetsComponents }
+import controllers.AssetsComponents
 import dcos.metronome.history.{ JobHistoryService, JobHistoryServiceFixture }
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobinfo.impl.JobInfoServiceImpl

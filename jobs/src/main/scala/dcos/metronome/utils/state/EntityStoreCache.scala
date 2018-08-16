@@ -47,7 +47,7 @@ class EntityStoreCache[T <: MarathonState[_, T]](store: EntityStore[T])
     }
   }
 
-  override def modify(key: String, onSuccess: (T) => Unit = _ => ())(update: Update): Future[T] =
+  override def modify(key: String, onSuccess: T => Unit = _ => ())(update: Update): Future[T] =
     directOrCached(store.modify(key, onSuccess)(update)) { cache =>
       def onModified(t: T): Unit = {
         cache.update(key, if (noVersionKey(key)) Some(t) else None)

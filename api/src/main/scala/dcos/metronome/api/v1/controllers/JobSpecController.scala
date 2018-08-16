@@ -32,7 +32,7 @@ class JobSpecController(
       jobSpecService.createJobSpec(jobSpec)
         .map(Created(_))
         .recover {
-          case JobSpecAlreadyExists(id) => Conflict(ErrorDetail("Job with this id already exists"))
+          case JobSpecAlreadyExists(_) => Conflict(ErrorDetail("Job with this id already exists"))
         }
     }
   }
@@ -52,7 +52,7 @@ class JobSpecController(
     request.authorizedAsync(UpdateRunSpec) { jobSpec =>
       def updateJob(job: JobSpec): JobSpec = jobSpec.copy(schedules = job.schedules)
       jobSpecService.updateJobSpec(id, updateJob).map(Ok(_)).recover {
-        case ex: JobSpecDoesNotExist => NotFound(UnknownJob(id))
+        case _: JobSpecDoesNotExist => NotFound(UnknownJob(id))
       }
     }
   }

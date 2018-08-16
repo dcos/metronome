@@ -28,7 +28,7 @@ class MarathonStore[S <: MarathonState[_, S]](
         }
       }
       .recover {
-        case ipe: InvalidProtocolBufferException =>
+        case _: InvalidProtocolBufferException =>
           log.warn(s"Unable to read $key due to a protocol buffer exception")
           None
         case NonFatal(ex) =>
@@ -36,7 +36,7 @@ class MarathonStore[S <: MarathonState[_, S]](
       }
   }
 
-  def modify(key: String, onSuccess: (S) => Unit = _ => ())(f: Update): Future[S] = {
+  def modify(key: String, onSuccess: S => Unit = _ => ())(f: Update): Future[S] = {
     lockManager.executeSequentially(key) {
       log.debug(s"Modify $prefix$key")
       val res = store.load(prefix + key).flatMap {

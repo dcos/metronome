@@ -75,7 +75,7 @@ class JobSpecServiceActor(
     }
   }
 
-  def withJob[T](id: JobId)(fn: (JobSpec) => T): Option[T] = {
+  def withJob[T](id: JobId)(fn: JobSpec => T): Option[T] = {
     val result = allJobs.get(id).map(fn)
     if (result.isEmpty) sender() ! Status.Failure(JobSpecDoesNotExist(id))
     result

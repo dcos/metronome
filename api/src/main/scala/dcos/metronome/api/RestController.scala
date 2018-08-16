@@ -19,7 +19,7 @@ class RestController extends Controller {
 
   object validate extends BodyParsers {
 
-    val schemaValidator = new SchemaValidator()
+    val schemaValidator = SchemaValidator()
 
     def json[A](implicit reader: Reads[A], schema: JsonSchema[A], validator: Validator[A]): BodyParser[A] = {
       jsonWith[A](identity)
