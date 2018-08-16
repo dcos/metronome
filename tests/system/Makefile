@@ -25,9 +25,9 @@ test:
       --stdout-inline \
       --ssl-no-verify \
       --timeout 360000 \
-      --pytest-option "--junitxml=../shakedown.xml" \
+      --pytest-option "--junitxml=../../shakedown.xml" \
       --pytest-option --verbose \
       --pytest-option --full-trace \
       --ssh-key-file "$(CLI_TEST_SSH_KEY)" \
       --ssh-user "centos" \
-      --dcos-url "$(DCOS_URL)" system
+      --dcos-url "$(DCOS_URL)" test_root_metronome.py
