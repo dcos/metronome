@@ -20,7 +20,8 @@ build:
 	pipenv run flake8 --count --max-line-length=120 system
 
 test:
-    @while [[ "$(curl -s -o $(DCOS_URL) -w ''%{http_code}'' localhost:9000)" != "200" ]]; do sleep 5; done
+	@while [[ "$(curl -s -o $(DCOS_URL) -w ''%{http_code}'' localhost:9000)" != "200" ]]; do sleep 5; done
+
 	pipenv run shakedown \
       --stdout all \
       --stdout-inline \
