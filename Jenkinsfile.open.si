@@ -29,7 +29,7 @@ node('py36') {
         } catch (Exception e) {
             currentBuild.result = 'FAILURE'
         } finally {
-            junit allowEmptyResults: true, testResults: 'shakedown.xml'
+            junit allowEmptyResults: true, testResults: "**/shakedown.xml"
             archive includes: "diagnostics.zip"
         }
     }
