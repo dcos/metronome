@@ -11,6 +11,7 @@ import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer, UpdateRunSpe
 import play.api.mvc.{ AnyContent, BodyParser }
 
 import scala.async.Async.{ async, await }
+import scala.concurrent.ExecutionContext
 
 class JobRunController(
   jobSpecService:        JobSpecService,
@@ -19,9 +20,7 @@ class JobRunController(
   val authorizer:        Authorizer,
   val config:            ApiConfig,
   val mat:               Materializer,
-  val defaultBodyParser: BodyParser[AnyContent]) extends Authorization {
-
-  import play.api.libs.concurrent.Execution.Implicits.defaultContext
+  val defaultBodyParser: BodyParser[AnyContent])(implicit ec: ExecutionContext) extends Authorization {
 
   def getAllJobRuns = AuthorizedAction.async { implicit request =>
     jobRunService.listRuns(request.isAllowed).map(Ok(_))

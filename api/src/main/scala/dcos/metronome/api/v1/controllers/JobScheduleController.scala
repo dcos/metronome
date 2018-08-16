@@ -12,7 +12,7 @@ import akka.stream.Materializer
 import play.api.mvc.{ AnyContent, BodyParser, Result }
 
 import scala.async.Async.{ async, await }
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 
 class JobScheduleController(
   jobSpecService:        JobSpecService,
@@ -20,9 +20,7 @@ class JobScheduleController(
   val authorizer:        Authorizer,
   val config:            ApiConfig,
   val mat:               Materializer,
-  val defaultBodyParser: BodyParser[AnyContent]) extends Authorization {
-
-  import play.api.libs.concurrent.Execution.Implicits.defaultContext
+  val defaultBodyParser: BodyParser[AnyContent])(implicit ec: ExecutionContext) extends Authorization {
 
   def getSchedules(id: JobId) = AuthorizedAction.async { implicit request =>
     jobSpecService.getJobSpec(id).map {

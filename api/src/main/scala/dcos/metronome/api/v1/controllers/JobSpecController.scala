@@ -15,7 +15,7 @@ import akka.stream.Materializer
 import play.api.mvc.{ AnyContent, BodyParser, Result }
 
 import scala.async.Async.{ async, await }
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 
 class JobSpecController(
   jobSpecService:        JobSpecService,
@@ -25,9 +25,7 @@ class JobSpecController(
   val authorizer:        Authorizer,
   val config:            ApiConfig,
   val mat:               Materializer,
-  val defaultBodyParser: BodyParser[AnyContent]) extends Authorization {
-
-  import play.api.libs.concurrent.Execution.Implicits.defaultContext
+  val defaultBodyParser: BodyParser[AnyContent])(implicit ec: ExecutionContext) extends Authorization {
 
   def createJob = AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
     request.authorizedAsync(CreateRunSpec) { jobSpec =>
