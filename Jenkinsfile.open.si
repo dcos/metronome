@@ -34,7 +34,7 @@ node('py36') {
                 channel: "#metronome",
                 tokenCredentialId: "4a6636e5-452e-41d2-aea3-9f28448196f3")
         } finally {
-            junit allowEmptyResults: true, testResults: 'shakedown.xml'
+            junit allowEmptyResults: true, testResults: "**/shakedown.xml"
             archive includes: "diagnostics.zip"
         }
     }

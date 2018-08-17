@@ -1,5 +1,5 @@
 define USAGE
-Marathon system integration tests ⚙️
+Metronome system integration tests ⚙️
 
 Commands:
   init      Install Python dependencies with pipenv
@@ -14,19 +14,24 @@ help:
 
 init:
 	pip3 install pipenv
-	pipenv install --dev --skip-lock
+	pipenv sync
 
 build:
-	flake8 --count --max-line-length=120 system
+	pipenv run flake8 --count --max-line-length=120 system
 
 test:
+    # we need to make sure that the cluster is ready before we let shakedown use it
+    # the script polls the DCOS_URL until the HTTP code indicates the server is ready
+	./wait_for_cluster.sh
+
 	pipenv run shakedown \
       --stdout all \
       --stdout-inline \
       --ssl-no-verify \
       --timeout 360000 \
-      --pytest-option "--junitxml=../shakedown.xml" \
+      --pytest-option "--junitxml=../../shakedown.xml" \
       --pytest-option --verbose \
       --pytest-option --full-trace \
       --ssh-key-file "$(CLI_TEST_SSH_KEY)" \
-      --dcos-url "$(DCOS_URL)" system
+      --ssh-user "centos" \
+      --dcos-url "$(DCOS_URL)" test_root_metronome.py
