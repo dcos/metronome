@@ -33,7 +33,7 @@ package object models {
 
   private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
     .withZone(ZoneId.systemDefault())
-  implicit val DateTimeFormat: Format[Instant] = Format (
+  implicit val DateTimeFormat: Format[Instant] = Format(
     Reads.instantReads(dateTimeFormatter),
     Writes[Instant] { instant => JsString(dateTimeFormatter.format(instant)) })
 
@@ -134,7 +134,7 @@ package object models {
     (__ \ "image").format[String] ~
     (__ \ "privileged").formatNullable[Boolean].withDefault(false) ~
     (__ \ "parameters").formatNullable[Seq[Parameter]].withDefault(DockerSpec.DefaultParameters) ~
-    (__ \ "forcePullImage").formatNullable[Boolean].withDefault(false)) (DockerSpec.apply, unlift(DockerSpec.unapply))
+    (__ \ "forcePullImage").formatNullable[Boolean].withDefault(false))(DockerSpec.apply, unlift(DockerSpec.unapply))
 
   implicit lazy val ParameterWrites: Writes[mesosphere.marathon.state.Parameter] = new Writes[mesosphere.marathon.state.Parameter] {
     override def writes(param: mesosphere.marathon.state.Parameter): JsValue = Json.obj(
@@ -149,7 +149,7 @@ package object models {
 
   implicit lazy val RestartSpecFormat: Format[RestartSpec] = (
     (__ \ "policy").formatNullable[RestartPolicy].withDefault(RestartSpec.DefaultRestartPolicy) ~
-    (__ \ "activeDeadlineSeconds").formatNullable[Duration]) (RestartSpec.apply, unlift(RestartSpec.unapply))
+    (__ \ "activeDeadlineSeconds").formatNullable[Duration])(RestartSpec.apply, unlift(RestartSpec.unapply))
 
   implicit lazy val FiniteDurationFormat: Format[FiniteDuration] = new Format[FiniteDuration] {
     override def writes(o: FiniteDuration): JsValue = JsNumber(o.toSeconds)
