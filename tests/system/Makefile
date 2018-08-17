@@ -20,6 +20,8 @@ build:
 	pipenv run flake8 --count --max-line-length=120 system
 
 test:
+    # we need to make sure that the cluster is ready before we let shakedown use it
+    # the script polls the DCOS_URL until the HTTP code indicates the server is ready
 	./wait_for_cluster.sh
 
 	pipenv run shakedown \
