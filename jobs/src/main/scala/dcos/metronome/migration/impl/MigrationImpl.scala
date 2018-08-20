@@ -25,7 +25,9 @@ class MigrationImpl(store: PersistentStore) extends Migration {
         await(store.createPath(JobSpecPathResolver.basePath))
         await(store.createPath(JobRunPathResolver.basePath))
         await(store.createPath(JobHistoryPathResolver.basePath))
-      case _: PersistentStore => Future.successful(())
+      case _: PersistentStore =>
+        log.info("Unsupported type of persistent store. Not running any migrations.")
+        Future.successful(())
     }
   }
 
