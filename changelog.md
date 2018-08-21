@@ -1,3 +1,11 @@
+# Version 0.4.4
+
+## Bugs and Tracking
+
+* [#244](https://github.com/dcos/metronome/pull/244) Wait for all parts of migration to be finished.
+
+Diff [0.4.2-0.4.3](https://github.com/dcos/metronome/compare/v0.4.3...0.4.4)
+
 # Version 0.4.3
 
 ## Bugs and Tracking
