@@ -28,6 +28,11 @@ node('py36') {
           }
         } catch (Exception e) {
             currentBuild.result = 'FAILURE'
+            slackSend(
+                message: "(;¬_¬) SI tests for Metronome (Open) failed in build `${env.BUILD_NUMBER}`. (<${env.BUILD_URL}|Open>)",
+                color: "danger",
+                channel: "#metronome",
+                tokenCredentialId: "4a6636e5-452e-41d2-aea3-9f28448196f3")
         } finally {
             junit allowEmptyResults: true, testResults: "**/shakedown.xml"
             archive includes: "diagnostics.zip"
