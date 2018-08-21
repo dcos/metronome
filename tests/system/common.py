@@ -9,7 +9,7 @@ import shlex
 import time
 import pytest
 
-from dcos import metronome
+from dcos import metronome, packagemanager, cosmos
 from json.decoder import JSONDecodeError
 from retrying import retry
 
@@ -132,6 +132,16 @@ def wait_for_metronome():
     try:
         response = http.get(url)
         assert response.status_code == 200, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last response: {response.content}"  # noqa
+    except Exception as e:
+        assert False, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last exception: {e}"  # noqa
+
+
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=5*60*1000, retry_on_exception=ignore_exception)  # 5 mins
+def wait_for_cosmos():
+    """ Waits for the Cosmos API to become responsive. """
+    cosmos_pm = packagemanager.PackageManager(cosmos.get_cosmos_url())
+    try:
+        cosmos_pm.has_capability('METRONOME')
     except Exception as e:
         assert False, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last exception: {e}"  # noqa
 

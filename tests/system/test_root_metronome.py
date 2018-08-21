@@ -290,6 +290,8 @@ def test_metronome_shutdown_with_no_extra_tasks():
 
 
 def setup_module(module):
+    common.wait_for_metronome()
+    common.wait_for_cosmos()
     agents = shakedown.get_private_agents()
     if len(agents) < 2:
         assert False, "Incorrect Agent count"
