@@ -101,9 +101,8 @@ class SchedulerModule(
     val offerMatcher: OfferMatcher = StopOnFirstMatchingOfferMatcher(
       offerMatcherReconcilerModule.offerMatcherReconciler,
       offerMatcherManagerModule.globalOfferMatcher)
-    val offerStreamInput = Source.queue[Offer](1, OverflowStrategy.dropHead).to(Sink.ignore).run()(actorsModule.materializer)
 
-    new LauncherModule(scallopConf, instanceTracker, schedulerDriverHolder, offerMatcher, pluginModule.pluginManager, offerStreamInput)(clock)
+    new LauncherModule(scallopConf, instanceTracker, schedulerDriverHolder, offerMatcher, pluginModule.pluginManager)(clock)
   }
 
   private[this] lazy val taskTerminationModule: TaskTerminationModule = new TaskTerminationModule(

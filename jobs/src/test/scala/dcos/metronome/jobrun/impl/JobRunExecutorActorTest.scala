@@ -14,7 +14,7 @@ import dcos.metronome.scheduler.TaskState
 import dcos.metronome.utils.glue.MarathonImplicits._
 import dcos.metronome.utils.test.Mockito
 import mesosphere.marathon.core.condition.Condition
-import mesosphere.marathon.core.instance.Instance
+import mesosphere.marathon.core.instance.{ Goal, Instance }
 import mesosphere.marathon.core.instance.Instance.AgentInfo
 import mesosphere.marathon.{ MarathonSchedulerDriverHolder, StoreCommandFailedException }
 import mesosphere.marathon.core.launchqueue.LaunchQueue
@@ -26,7 +26,6 @@ import mesosphere.marathon.state._
 import org.apache.mesos.SchedulerDriver
 import org.apache.mesos
 import org.apache.zookeeper.KeeperException.NodeExistsException
-
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest._
@@ -413,7 +412,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       Instance(
         instanceId,
         AgentInfo("localhost", None, None, None, Seq.empty),
-        Instance.InstanceState(Condition.Running, Timestamp.now(clock), None, None),
+        Instance.InstanceState(Condition.Running, Timestamp.now(clock), Some(Timestamp.now(clock)), None, Goal.Running),
         Map(taskId -> mockTask(taskId, Timestamp.now(clock), mesos.Protos.TaskState.TASK_RUNNING)),
         Timestamp.now(clock), UnreachableDisabled, None))
 
@@ -776,7 +775,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
         Instance(
           instanceId,
           AgentInfo("localhost", None, None, None, Seq.empty),
-          Instance.InstanceState(Condition.Running, Timestamp.now(clock), None, None),
+          Instance.InstanceState(Condition.Running, Timestamp.now(clock), Some(Timestamp.now(clock)), None, Goal.Running),
           Map(taskId -> mockTask(taskId, Timestamp.now(clock), mesos.Protos.TaskState.TASK_RUNNING)),
           Timestamp.now(clock), UnreachableDisabled, None))
       (actorRef, activeJob)
