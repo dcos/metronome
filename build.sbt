@@ -3,6 +3,7 @@ import com.amazonaws.auth.{
   EnvironmentVariableCredentialsProvider,
   InstanceProfileCredentialsProvider
 }
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import com.typesafe.sbt.SbtScalariform.autoImport._
 import com.typesafe.sbt.packager
@@ -80,10 +81,8 @@ lazy val publishSettings = Seq(
     s3resolver
       .value("Mesosphere Public Repo (S3)", s3("downloads.mesosphere.io/maven"))
   ),
-  s3credentials := new AWSCredentialsProviderChain(
-    new EnvironmentVariableCredentialsProvider(),
-    InstanceProfileCredentialsProvider.getInstance()
-  )
+  s3credentials := DefaultAWSCredentialsProviderChain.getInstance(),
+  s3region :=  com.amazonaws.services.s3.model.Region.US_Standard
 )
 
 lazy val nativePackageSettings = Seq(

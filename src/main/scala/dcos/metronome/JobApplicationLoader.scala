@@ -28,7 +28,7 @@ class JobApplicationLoader extends ApplicationLoader {
     val jobComponents = new JobComponents(context)
 
     Kamon.start(jobComponents.configuration.underlying)
-    Metrics.start(jobComponents.actorSystem)
+    Metrics.start(jobComponents.actorSystem, jobComponents.config.scallopConf)
 
     Future {
       jobComponents.schedulerService.run()

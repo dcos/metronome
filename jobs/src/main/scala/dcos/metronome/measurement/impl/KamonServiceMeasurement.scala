@@ -3,8 +3,9 @@ package measurement.impl
 
 import java.lang.reflect.Method
 
+import akka.dispatch.ExecutionContexts
 import com.softwaremill.macwire.aop.{ Interceptor, ProxyingInterceptor }
-import dcos.metronome.measurement.{ ServiceMeasurement, MeasurementConfig }
+import dcos.metronome.measurement.{ MeasurementConfig, ServiceMeasurement }
 import mesosphere.marathon.metrics.{ Metrics, MinMaxCounter, ServiceMetric, Timer }
 import org.slf4j.LoggerFactory
 
@@ -44,12 +45,11 @@ class KamonServiceMeasurement(val config: MeasurementConfig) extends ServiceMeas
     ProxyingInterceptor.apply { ctx =>
       val metricTimer = timer(ctx.method)
       if (ctx.method.getReturnType.isAssignableFrom(classOf[Future[Any]])) {
-        import mesosphere.util.CallerThreadExecutionContext.callerThreadExecutionContext
         metricTimer.apply(ctx.proceed().asInstanceOf[Future[Any]]).recover {
           case NonFatal(ex: Throwable) =>
             methodException(ctx.method, ex).increment()
             throw ex
-        }
+        }(mesosphere.marathon.core.async.ExecutionContexts.callerThread)
       } else {
         metricTimer.blocking(ctx.proceed())
       }

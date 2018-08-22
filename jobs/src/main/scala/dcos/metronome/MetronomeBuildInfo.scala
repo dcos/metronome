@@ -65,6 +65,6 @@ case object MetronomeBuildInfo {
 
   lazy val scalaVersion: String = getAttribute("Scala-Version").getOrElse("2.x.x")
 
-  lazy val marathonVersion: String = BuildInfo.version
+  lazy val marathonVersion: mesosphere.marathon.SemVer = BuildInfo.version
 
 }

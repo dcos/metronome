@@ -9,6 +9,7 @@ import dcos.metronome.jobinfo.JobInfo
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
+import mesosphere.marathon.SemVer
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.state.{ Parameter, Timestamp }
 import play.api.libs.functional.syntax._
@@ -252,6 +253,9 @@ package object models {
       })
   }
 
+  implicit lazy val SemVerWrites: Writes[SemVer] = new Writes[SemVer] {
+    override def writes(o: SemVer): JsValue = JsString(o.toString())
+  }
   implicit lazy val MetronomeInfoWrites: Writes[MetronomeInfo] = Json.writes[MetronomeInfo]
 
   implicit lazy val TimestampWrites: Writes[Timestamp] = new Writes[Timestamp] {
