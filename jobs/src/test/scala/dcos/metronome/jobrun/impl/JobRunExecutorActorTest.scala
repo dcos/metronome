@@ -83,7 +83,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     actor ! statusUpdate
 
     Then("The launch queue is purged")
-    verify(f.launchQueue).asyncPurge(activeJobRun.id.toRunSpecId)
+    verify(f.launchQueue).purge(activeJobRun.id.toRunSpecId)
 
     And("The JobRun deleted")
     f.persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
@@ -153,7 +153,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     actor ! JobRunExecutorActor.KillCurrentJobRun
 
     Then("The launch queue is purged")
-    verify(f.launchQueue).asyncPurge(jobRun.id.toRunSpecId)
+    verify(f.launchQueue).purge(jobRun.id.toRunSpecId)
 
     And("The JobRun is deleted")
     f.persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
@@ -185,7 +185,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     noMoreInteractions(f.driver)
 
     And("The launch queue is purged")
-    verify(f.launchQueue).asyncPurge(jobRun.id.toRunSpecId)
+    verify(f.launchQueue).purge(jobRun.id.toRunSpecId)
 
     And("The JobRun is reported failed")
     val updateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
@@ -228,7 +228,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     verify(f.driver).killTask(taskId.mesosTaskId)
 
     And("The launch queue is purged")
-    verify(f.launchQueue).asyncPurge(jobRun.id.toRunSpecId)
+    verify(f.launchQueue).purge(jobRun.id.toRunSpecId)
 
     And("The jobRun is reported failed")
     val secondUpdateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
@@ -269,7 +269,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     noMoreInteractions(f.driver)
 
     And("The launch queue is purged")
-    verify(f.launchQueue).asyncPurge(jobRun.id.toRunSpecId)
+    verify(f.launchQueue).purge(jobRun.id.toRunSpecId)
 
     And("The JobRun is reported aborted")
     val failMsg = f.parent.expectMsgType[JobRunExecutorActor.Aborted]
@@ -303,7 +303,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     verify(f.driver).killTask(taskId.mesosTaskId)
 
     And("The launch queue is purged")
-    verify(f.launchQueue).asyncPurge(jobRun.id.toRunSpecId)
+    verify(f.launchQueue).purge(jobRun.id.toRunSpecId)
 
     And("The jobRun is reported failed")
     val secondUpdateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
@@ -327,7 +327,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val successfulJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Success, clock.instant(), None, None, Map.empty)
     val actorRef: ActorRef = executorActor(successfulJobRun)
 
-    verify(launchQueue, timeout(1000)).asyncPurge(successfulJobRun.id.toRunSpecId)
+    verify(launchQueue, timeout(1000)).purge(successfulJobRun.id.toRunSpecId)
     val parentUpdate = parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
     parentUpdate.startedJobRun.jobRun.status shouldBe JobRunStatus.Success
     persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
@@ -355,7 +355,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     Given("a JobRun with status Active")
     val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Active, clock.instant(), None, None, Map.empty)
     val runSpecId = activeJobRun.id.toRunSpecId
-    f.launchQueue.get(runSpecId) returns None
+    f.launchQueue.get(runSpecId) returns Future.successful(None)
     instanceTracker.specInstancesSync(runSpecId) returns Seq.empty
 
     When("the actor is initialized")
@@ -380,7 +380,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       finalInstanceCount = 0,
       backOffUntil = Timestamp(0),
       startedAt = Timestamp(clock.instant()))
-    f.launchQueue.get(runSpecId) returns Some(queuedTaskInfo)
+    f.launchQueue.get(runSpecId) returns Future.successful(Some(queuedTaskInfo))
     instanceTracker.specInstancesSync(runSpecId) returns Seq.empty[Instance]
 
     When("the actor is initialized")
@@ -408,7 +408,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       finalInstanceCount = 1,
       backOffUntil = Timestamp(0),
       startedAt = Timestamp(clock.instant()))
-    launchQueue.get(runSpecId) returns Some(queuedTaskInfo)
+    launchQueue.get(runSpecId) returns Future.successful(Some(queuedTaskInfo))
     instanceTracker.specInstancesSync(runSpecId) returns Seq(
       Instance(
         instanceId,
@@ -634,7 +634,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     import f._
 
     Then("The launch queue is purged")
-    verify(launchQueue, timeout(1000)).asyncPurge(jobRun.id.toRunSpecId)
+    verify(launchQueue, timeout(1000)).purge(jobRun.id.toRunSpecId)
 
     And("The JobRun is deleted")
     f.persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
@@ -658,7 +658,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     import f._
 
     Then("The launch queue is purged")
-    verify(launchQueue, timeout(1000)).asyncPurge(jobRun.id.toRunSpecId)
+    verify(launchQueue, timeout(1000)).purge(jobRun.id.toRunSpecId)
 
     And("The JobRun is deleted")
     f.persistenceActor.expectMsgType[JobRunPersistenceActor.Delete]
@@ -700,9 +700,9 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val defaultJobSpec = JobSpec(runSpecId, Some("test"))
     val clock = new SettableClock(Clock.fixed(LocalDateTime.parse("2016-06-01T08:50:12.000").toInstant(ZoneOffset.UTC), ZoneOffset.UTC))
     val launchQueue: LaunchQueue = mock[LaunchQueue]
-    launchQueue.asyncPurge(any).returns(Future.successful(Done))
+    launchQueue.purge(any).returns(Future.successful(Done))
     val instanceTracker: InstanceTracker = mock[InstanceTracker]
-    launchQueue.get(any).returns(None)
+    launchQueue.get(any).returns(Future.successful(None))
     val driver = mock[SchedulerDriver]
     val driverHolder: MarathonSchedulerDriverHolder = {
       val holder = new MarathonSchedulerDriverHolder
@@ -769,7 +769,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
     def setupRunningExecutorActor(): (ActorRef, JobRun) = {
       val activeJob = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Active, clock.instant(), None, None,
-        Map(Task.Id("taskId") -> JobRunTask(Task.Id("taskId"), null, None, TaskState.Running)))
+        Map(Task.Id("app_682ebe64-0771-11e4-b05d-e0f84720c54e") -> JobRunTask(Task.Id("app_682ebe64-0771-11e4-b05d-e0f84720c54e"), null, None, TaskState.Running)))
       val actorRef: ActorRef = executorActor(activeJob)
       val runSpecId = activeJob.id.toRunSpecId
       instanceTracker.specInstancesSync(runSpecId) returns Seq(

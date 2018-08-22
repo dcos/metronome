@@ -15,6 +15,7 @@ import mesosphere.marathon.{ MarathonSchedulerDriverHolder, StoreCommandFailedEx
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
 import org.apache.zookeeper.KeeperException.NodeExistsException
+import scala.async.Async.{ async, await }
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.concurrent.{ Await, Promise }
@@ -106,7 +107,7 @@ class JobRunExecutorActor(
     startingDeadlineTimer = Some(scheduler.scheduleOnce(timeout, self, StartTimeout))
   }
 
-  def addTaskToLaunchQueue(): Unit = {
+  def addTaskToLaunchQueue(): Unit = async {
     if (existsInLaunchQueue()) {
       // we have to handle a case when actor is restarted (e.g. because of exception) and it already put something into the queue
       // during restart it is possible, that actor that was in state Starting will be restarted with state initial
@@ -140,7 +141,10 @@ class JobRunExecutorActor(
     }
   }
 
-  def existsInLaunchQueue(): Boolean = launchQueue.get(runSpecId).exists(i => i.finalInstanceCount > 0)
+  def existsInLaunchQueue(): Boolean = {
+    // timeout is enforced on LaunchQueue implementation side
+    Await.result(launchQueue.get(runSpecId), Duration.Inf).exists(i => i.finalInstanceCount > 0)
+  }
 
   def updatedTasks(update: TaskStateChangedEvent): Map[Task.Id, JobRunTask] = {
     // Note: there is a certain inaccuracy when we receive a finished task that's not in the Map
@@ -163,7 +167,7 @@ class JobRunExecutorActor(
   }
 
   def becomeFinishing(updatedJobRun: JobRun): Unit = {
-    Await.result(launchQueue.asyncPurge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
+    Await.result(launchQueue.purge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
     jobRun = updatedJobRun
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
@@ -194,7 +198,7 @@ class JobRunExecutorActor(
 
   // FIXME: compare to becomeFinishing, there's lots of DRY violation
   def becomeFailing(updatedJobRun: JobRun): Unit = {
-    Await.result(launchQueue.asyncPurge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
+    Await.result(launchQueue.purge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
     jobRun = updatedJobRun
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
@@ -210,7 +214,7 @@ class JobRunExecutorActor(
     jobRun.tasks.values.filter(t => isActive(t.status)).foreach { t =>
       driverHolder.driver.foreach(_.killTask(t.id.mesosTaskId))
     }
-    Await.result(launchQueue.asyncPurge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
+    Await.result(launchQueue.purge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
 
     // Abort the jobRun
     jobRun = jobRun.copy(

@@ -7,14 +7,16 @@ import dcos.metronome.measurement.impl.KamonServiceMeasurement
 import dcos.metronome.measurement.{ ActorMeasurement, MeasurementConfig, ServiceMeasurement }
 import kamon.Kamon
 import kamon.metric.{ Entity, EntitySnapshot }
-import kamon.metric.instrument.{ CompactHdrSnapshot }
-import mesosphere.marathon.metrics.Metrics
+import kamon.metric.instrument.CompactHdrSnapshot
+import mesosphere.marathon.metrics.{ Metrics, MetricsReporterConf }
 import org.scalatest.concurrent.ScalaFutures
+import dcos.metronome.utils.test.Mockito
+import mesosphere.marathon.AllConf
 import org.scalatest.{ FunSuiteLike, GivenWhenThen, Matchers }
 
 import scala.concurrent.Promise
 
-class ActorMeasurementTest extends TestKit(ActorSystem("test")) with FunSuiteLike with GivenWhenThen with ScalaFutures with Matchers {
+class ActorMeasurementTest extends TestKit(ActorSystem("test")) with FunSuiteLike with GivenWhenThen with ScalaFutures with Matchers with Mockito {
 
   def metricsOfActor(actorName: String) = Metrics.snapshot().metrics.filter {
     case (entity, _) => entity.name.contains("DummyActorWithMeasurement")
@@ -72,6 +74,8 @@ class ActorMeasurementTest extends TestKit(ActorSystem("test")) with FunSuiteLik
   }
 
   class Fixture {
+    import org.rogach.scallop.ScallopConf
+
     val measurementWithMetrics = new KamonServiceMeasurement(new MeasurementConfig {
       override def withMetrics: Boolean = true
     })
@@ -81,7 +85,8 @@ class ActorMeasurementTest extends TestKit(ActorSystem("test")) with FunSuiteLik
     })
 
     Kamon.start()
-    Metrics.start(ActorSystem("metrics"))
+    val metricsConf: MetricsReporterConf = new AllConf(Seq.empty)
+    Metrics.start(ActorSystem("metrics"), metricsConf)
 
     def dummyActorWithMetrics(behavior: ServiceMeasurement) = TestActorRef[DummyActorWithMeasurement](Props(new DummyActorWithMeasurement(behavior)))
   }

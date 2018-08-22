@@ -94,16 +94,16 @@ class SchedulerModule(
       leadershipModule)
 
   lazy val taskStatusProcessor: TaskStatusUpdateProcessor = new TaskStatusUpdateProcessorImpl(
-    clock, instanceTrackerModule.instanceTracker, instanceTrackerModule.stateOpProcessor, schedulerDriverHolder, killService, eventBus)
+    clock, instanceTrackerModule.instanceTracker, schedulerDriverHolder, killService, eventBus)
 
   private[this] lazy val launcherModule: LauncherModule = {
-    val instanceCreationHandler: InstanceStateOpProcessor = instanceTrackerModule.stateOpProcessor
+    val instanceTracker: InstanceTracker = instanceTrackerModule.instanceTracker
     val offerMatcher: OfferMatcher = StopOnFirstMatchingOfferMatcher(
       offerMatcherReconcilerModule.offerMatcherReconciler,
       offerMatcherManagerModule.globalOfferMatcher)
     val offerStreamInput = Source.queue[Offer](1, OverflowStrategy.dropHead).to(Sink.ignore).run()(actorsModule.materializer)
 
-    new LauncherModule(scallopConf, instanceCreationHandler, schedulerDriverHolder, offerMatcher, pluginModule.pluginManager, offerStreamInput)(clock)
+    new LauncherModule(scallopConf, instanceTracker, schedulerDriverHolder, offerMatcher, pluginModule.pluginManager, offerStreamInput)(clock)
   }
 
   private[this] lazy val taskTerminationModule: TaskTerminationModule = new TaskTerminationModule(
@@ -116,10 +116,9 @@ class SchedulerModule(
 
   private[this] lazy val scheduler: MarathonScheduler = {
     val instanceTracker: InstanceTracker = instanceTrackerModule.instanceTracker
-    val stateOpProcessor: InstanceStateOpProcessor = instanceTrackerModule.stateOpProcessor
     val offerProcessor: OfferProcessor = launcherModule.offerProcessor
     val taskStatusProcessor: TaskStatusUpdateProcessor = new TaskStatusUpdateProcessorImpl(
-      clock, instanceTracker, stateOpProcessor, schedulerDriverHolder, killService, eventBus)
+      clock, instanceTracker, schedulerDriverHolder, killService, eventBus)
     val leaderInfo = config.mesosLeaderUiUrl match {
       case someUrl @ Some(_) => ConstMesosLeaderInfo(someUrl)
       case None              => new MutableMesosLeaderInfo
@@ -189,11 +188,9 @@ class SchedulerModule(
 
   val taskJobsModule = new TaskJobsModule(config.scallopConf, leadershipModule, clock)
 
-  taskJobsModule.expungeOverdueLostTasks(
-    instanceTrackerModule.instanceTracker, instanceTrackerModule.stateOpProcessor)
+  taskJobsModule.expungeOverdueLostTasks(instanceTrackerModule.instanceTracker)
 
   taskJobsModule.handleOverdueTasks(
     instanceTrackerModule.instanceTracker,
-    instanceTrackerModule.stateOpProcessor,
     killService)
 }
