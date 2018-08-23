@@ -41,6 +41,7 @@ lazy val baseSettings = Seq(
     "-Xlint:deprecation"
   ),
   resolvers ++= Seq(
+    Resolver.JCenterRepository,
     "Mesosphere Public Repo" at "http://downloads.mesosphere.io/maven",
     "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/",
     "Spray Maven Repository" at "http://repo.spray.io/",
