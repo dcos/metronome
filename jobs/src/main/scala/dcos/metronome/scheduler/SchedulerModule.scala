@@ -29,6 +29,7 @@ import mesosphere.marathon.core.task.tracker._
 import mesosphere.marathon.core.task.update.TaskStatusUpdateProcessor
 import mesosphere.marathon.core.task.update.impl.TaskStatusUpdateProcessorImpl
 import mesosphere.marathon.core.task.update.impl.steps.ContinueOnErrorStep
+import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.storage.repository.InstanceRepository
 import mesosphere.util.state._
 import org.apache.mesos.Protos.Offer
@@ -37,6 +38,7 @@ import scala.concurrent.ExecutionContext
 import scala.util.Random
 
 class SchedulerModule(
+  metrics:           Metrics,
   config:            SchedulerConfig,
   actorSystem:       ActorSystem,
   clock:             Clock,
@@ -59,6 +61,7 @@ class SchedulerModule(
   private[this] val electionExecutor = Executors.newSingleThreadExecutor()
 
   private[this] lazy val electionModule: ElectionModule = new ElectionModule(
+    metrics,
     scallopConf,
     actorSystem,
     eventBus,
@@ -75,14 +78,14 @@ class SchedulerModule(
     val updateSteps: Seq[InstanceChangeHandler] = Seq(
       ContinueOnErrorStep(new NotifyOfTaskStateOperationStep(eventBus, clock)))
 
-    new InstanceTrackerModule(clock, scallopConf, leadershipModule, instanceRepository, updateSteps)(actorsModule.materializer)
+    new InstanceTrackerModule(metrics, clock, scallopConf, leadershipModule, instanceRepository, updateSteps)(actorsModule.materializer)
   }
 
   private[this] lazy val offerMatcherManagerModule = new OfferMatcherManagerModule(
     // infrastructure
-    clock, random, scallopConf,
+    metrics, clock, random, scallopConf,
     leadershipModule,
-    () => scheduler.getLocalRegion)
+    () => scheduler.getLocalRegion)(actorsModule.materializer)
 
   private[this] lazy val offerMatcherReconcilerModule =
     new OfferMatcherReconciliationModule(
@@ -91,10 +94,10 @@ class SchedulerModule(
       actorSystem.eventStream,
       instanceTrackerModule.instanceTracker,
       persistenceModule.groupRepository,
-      leadershipModule)
+      leadershipModule)(actorsModule.materializer)
 
   lazy val taskStatusProcessor: TaskStatusUpdateProcessor = new TaskStatusUpdateProcessorImpl(
-    clock, instanceTrackerModule.instanceTracker, schedulerDriverHolder, killService, eventBus)
+    metrics, clock, instanceTrackerModule.instanceTracker, schedulerDriverHolder, killService, eventBus)
 
   private[this] lazy val launcherModule: LauncherModule = {
     val instanceTracker: InstanceTracker = instanceTrackerModule.instanceTracker
@@ -102,7 +105,7 @@ class SchedulerModule(
       offerMatcherReconcilerModule.offerMatcherReconciler,
       offerMatcherManagerModule.globalOfferMatcher)
 
-    new LauncherModule(scallopConf, instanceTracker, schedulerDriverHolder, offerMatcher, pluginModule.pluginManager)(clock)
+    new LauncherModule(metrics, scallopConf, instanceTracker, schedulerDriverHolder, offerMatcher, pluginModule.pluginManager)(clock)
   }
 
   private[this] lazy val taskTerminationModule: TaskTerminationModule = new TaskTerminationModule(
@@ -117,7 +120,7 @@ class SchedulerModule(
     val instanceTracker: InstanceTracker = instanceTrackerModule.instanceTracker
     val offerProcessor: OfferProcessor = launcherModule.offerProcessor
     val taskStatusProcessor: TaskStatusUpdateProcessor = new TaskStatusUpdateProcessorImpl(
-      clock, instanceTracker, schedulerDriverHolder, killService, eventBus)
+      metrics, clock, instanceTracker, schedulerDriverHolder, killService, eventBus)
     val leaderInfo = config.mesosLeaderUiUrl match {
       case someUrl @ Some(_) => ConstMesosLeaderInfo(someUrl)
       case None              => new MutableMesosLeaderInfo
@@ -176,7 +179,7 @@ class SchedulerModule(
     leadershipModule,
     clock,
     offerMatcherManagerModule.subOfferMatcherManager,
-    maybeOfferReviver = flowModule.maybeOfferReviver(clock, scallopConf, eventBus, offersWanted, schedulerDriverHolder),
+    maybeOfferReviver = flowModule.maybeOfferReviver(metrics, clock, scallopConf, eventBus, offersWanted, schedulerDriverHolder),
     taskTracker = instanceTrackerModule.instanceTracker,
     taskOpFactory = launcherModule.taskOpFactory,
     () => scheduler.getLocalRegion)
