@@ -16,20 +16,16 @@ import mesosphere.marathon.core.base.{ ActorsModule, JvmExitsCrashStrategy, Life
 import mesosphere.marathon.core.plugin.{ PluginManager, PluginModule }
 
 class JobsModule(
-  config:      JobsConfig,
-  actorSystem: ActorSystem,
-  clock:       Clock) {
+  config:        JobsConfig,
+  actorSystem:   ActorSystem,
+  clock:         Clock,
+  metricsModule: MetricsModule) {
 
   private[this] lazy val crashStrategy = JvmExitsCrashStrategy
   private[this] lazy val lifecycleState = LifecycleState.WatchingJVM
   private[this] lazy val pluginModule = new PluginModule(config.scallopConf, crashStrategy)
   def pluginManger: PluginManager = pluginModule.pluginManager
 
-  /*
-    Using Metrics module from marathon.   We do NOT use Kamon, so we do NOT need the 2nd param config which is used
-    specifically to config Kamon.
-   */
-  lazy val metricsModule = MetricsModule(config.scallopConf, null)
   lazy val serviceMeasurement = new DropwizardServiceMeasurement(config, metricsModule.metrics)
 
   lazy val repositoryModule = new RepositoryModule(config)

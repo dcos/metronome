@@ -1,7 +1,7 @@
 package dcos.metronome
 package api
 
-import controllers.{ AssetsComponents }
+import controllers.AssetsComponents
 import dcos.metronome.history.{ JobHistoryService, JobHistoryServiceFixture }
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobinfo.impl.JobInfoServiceImpl
@@ -9,9 +9,11 @@ import dcos.metronome.jobrun.{ JobRunService, JobRunServiceFixture }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import dcos.metronome.queue.{ LaunchQueueService, QueueServiceFixture }
+import mesosphere.marathon.MetricsModule
 import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.plugin.PluginManager
-import org.scalatest.{ TestSuite, TestData }
+import mesosphere.marathon.metrics.dummy.DummyMetricsModule
+import org.scalatest.{ TestData, TestSuite }
 import org.scalatestplus.play.{ OneAppPerTest, OneServerPerSuite, OneServerPerTest }
 import play.api.ApplicationLoader.Context
 import play.api.i18n.I18nComponents
@@ -114,6 +116,8 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
   lazy val jobInfoService: JobInfoService = wire[JobInfoServiceImpl]
 
   lazy val queueService: LaunchQueueService = QueueServiceFixture.simpleQueueService()
+
+  lazy val metricsModule = new DummyMetricsModule()
 
   lazy val apiModule: ApiModule = wire[ApiModule]
 

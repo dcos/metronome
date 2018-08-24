@@ -4,7 +4,7 @@ package scheduler
 import java.time.Clock
 import java.util.concurrent.Executors
 
-import akka.actor.{ ActorRefFactory, ActorSystem }
+import akka.actor.{ ActorRefFactory, ActorSystem, Cancellable }
 import akka.event.EventStream
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{ Sink, Source }
@@ -31,6 +31,7 @@ import mesosphere.marathon.core.task.update.impl.TaskStatusUpdateProcessorImpl
 import mesosphere.marathon.core.task.update.impl.steps.ContinueOnErrorStep
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.storage.repository.InstanceRepository
+import mesosphere.marathon.stream.EnrichedFlow
 import mesosphere.util.state._
 import org.apache.mesos.Protos.Offer
 
@@ -169,10 +170,11 @@ class SchedulerModule(
   lazy val electionService: ElectionService = electionModule.service
 
   /** Combine offersWanted state from multiple sources. */
-  private[this] lazy val offersWanted =
+  private[this] lazy val offersWanted: Source[Boolean, Cancellable] = {
     offerMatcherManagerModule.globalOfferMatcherWantsOffers
-      .combineLatest(offerMatcherReconcilerModule.offersWantedObservable)
+      .via(EnrichedFlow.combineLatest(offerMatcherReconcilerModule.offersWantedObservable, eagerComplete = true))
       .map { case (managerWantsOffers, reconciliationWantsOffers) => managerWantsOffers || reconciliationWantsOffers }
+  }
 
   lazy val launchQueueModule = new LaunchQueueModule(
     scallopConf,

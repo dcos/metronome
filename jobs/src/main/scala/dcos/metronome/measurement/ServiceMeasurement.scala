@@ -1,6 +1,8 @@
 package dcos.metronome
 package measurement
 
+import mesosphere.marathon.metrics.Metrics
+
 import scala.reflect.ClassTag
 
 /**
@@ -24,4 +26,6 @@ trait ServiceMeasurement {
     * Note: This is needed to enable gathering metrics.
     */
   def config: MeasurementConfig
+
+  def metrics: Metrics
 }

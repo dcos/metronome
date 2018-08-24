@@ -9,6 +9,7 @@ import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.queue.LaunchQueueService
+import mesosphere.marathon.MetricsModule
 import mesosphere.marathon.core.auth.AuthModule
 import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.plugin.PluginManager
@@ -28,6 +29,7 @@ class ApiModule(
   assets:             Assets,
   launchQueueService: LaunchQueueService,
   actorsModule:       ActorsModule,
+  metricsModule:      MetricsModule,
   playParsers:        BodyParser[AnyContent]) {
 
   lazy val mat = actorsModule.materializer
