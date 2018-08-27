@@ -6,12 +6,12 @@ import mesosphere.marathon.AllConf
 import mesosphere.marathon.core.task.termination.KillConfig
 import play.api.Configuration
 
-import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.concurrent.duration._
 import scala.sys.SystemProperties
 import scala.util.Try
 
 class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiConfig {
+
   import ConfigurationImplicits._
 
   lazy val frameworkName: String = configuration.getOptional[String]("metronome.framework.name").getOrElse("metronome")
@@ -37,6 +37,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   lazy val keyStorePath: Option[String] = configuration.getOptional[String]("play.server.https.keyStore.path")
   lazy val keyStorePassword: Option[String] = configuration.getOptional[String]("play.server.https.keyStore.password")
   def effectivePort = httpPort.getOrElse(httpsPort)
+
   override lazy val hostnameWithPort: String = s"$hostname:$effectivePort"
 
   override lazy val askTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.akka.ask.timeout").getOrElse(10.seconds)
@@ -57,7 +58,11 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
     val flags = Seq[Option[String]](
       if (httpPort.isEmpty) Some("--disable_http") else None,
       if (zkCompressionEnabled) Some("--zk_compression") else None,
-      if (mesosAuthentication) Some("--mesos_authentication") else None)
+      if (mesosAuthentication) Some("--mesos_authentication") else None,
+      if (metricsPrometheusReporter) Some("--metrics_prometheus") else None,
+      if (metricsStatsDReporter) Some("--metrics_statsd") else None,
+      if (metricsDataDogReporter) Some("--metrics_datadog") else None,
+      if (metricsHistogramReservoirResetPeriodically) Some("--metrics_histogram_reservoir_reset_periodically") else None)
     val options = Map[String, Option[String]](
       "--framework_name" -> Some(frameworkName),
       "--master" -> Some(mesosMaster),
@@ -90,7 +95,20 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       "--task_lost_expunge_interval" -> Some(taskLostExpungeInterval.toMillis.toString),
       "--kill_chunk_size" -> Some(killChunkSize.toString),
       "--kill_retry_timeout" -> Some(killRetryTimeout.toString),
-      "--metrics_name_prefix" -> Some(metricsNamePrefix))
+
+      "--metrics_name_prefix" -> Some(metricsNamePrefix),
+
+      "--metrics_histogram_reservoir_significant_digits" -> Some(metricsHistogramReservoirSignificantDigits.toString),
+      "--metrics_histogram_reservoir_resetting_interval_ms" -> Some(metricsHistogramReservoirResettingIntervalMs.toString),
+      "--metrics_histogram_reservoir_resetting_chunks" -> Some(metricsHistogramReservoirResettingChunks.toString),
+      "--metrics_statsd_host" -> Some(metricsStatsDHost),
+      "--metrics_statsd_port" -> Some(metricsStatsDPort.toString),
+      "--metrics_statsd_transmission_interval_ms" -> Some(metricsStatsDTransmissionIntervalMs.toString),
+      "--metrics_datadog_protocol" -> Some(metricsDataDogProtocol),
+      "--metrics_datadog_host" -> Some(metricsDataDogHost),
+      "--metrics_datadog_port" -> Some(metricsDataDogPort.toString),
+      "--metrics_datadog_api_key" -> Some(metricsDataDogApiKey),
+      "--metrics_datadog_transmission_interval_ms" -> Some(metricsDataDogTransmissionIntervalMs.toString))
       .collect { case (name, Some(value)) => (name, value) }
       .flatMap { case (name, value) => Seq(name, value) }
     new AllConf(options.to[Seq] ++ flags.flatten)
@@ -111,7 +129,26 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
 
   override lazy val maxActorStartupTime: FiniteDuration = configuration.getFiniteDuration("metronome.akka.actor.startup.max").getOrElse(10.seconds)
 
-  lazy val metricsNamePrefix: String = configuration.getString("metronome.metric.prefix").getOrElse("metronome")
+  lazy val metricsNamePrefix: String = configuration.getString("metronome.metrics.prefix").getOrElse("metronome")
+
+  lazy val metricsPrometheusReporter: Boolean = configuration.getBoolean("metronome.metrics.reporter.prometheus").getOrElse(false)
+  lazy val metricsStatsDReporter: Boolean = configuration.getBoolean("metronome.metrics.reporter.statsd").getOrElse(false)
+  lazy val metricsDataDogReporter: Boolean = configuration.getBoolean("metronome.metrics.reporter.datadog").getOrElse(false)
+
+  lazy val metricsHistogramReservoirSignificantDigits: Int = configuration.getInt("metronome.metrics.histogram.reservoir.significant.digits").getOrElse(3)
+  lazy val metricsHistogramReservoirResetPeriodically: Boolean = configuration.getBoolean("metronome.metrics.histogram.reservoir.reset.periodically").getOrElse(true)
+  lazy val metricsHistogramReservoirResettingIntervalMs: Long = configuration.getLong("metronome.metrics.histogram.reservoir.internal.ms").getOrElse(5000)
+  lazy val metricsHistogramReservoirResettingChunks: Int = configuration.getInt("metronome.metrics.histogram.reservoir.reset.chucks").getOrElse(0)
+
+  lazy val metricsStatsDHost: String = configuration.getString("metronome.metrics.statsd.host").getOrElse("localhost")
+  lazy val metricsStatsDPort: Int = configuration.getInt("metronome.metrics.statsd.port").getOrElse(1)
+  lazy val metricsStatsDTransmissionIntervalMs: Long = configuration.getLong("metronome.metrics.statsd.transmission.interval.ms").getOrElse(10000)
+
+  lazy val metricsDataDogProtocol: String = configuration.getString("metronome.metrics.datadog.protocol").getOrElse("udp")
+  lazy val metricsDataDogHost: String = configuration.getString("metronome.metrics.datadog.host").getOrElse("localhost")
+  lazy val metricsDataDogPort: Int = configuration.getInt("metronome.metrics.datadog.port").getOrElse(1)
+  lazy val metricsDataDogApiKey: String = configuration.getString("metronome.metrics.datadog.api.key").getOrElse("")
+  lazy val metricsDataDogTransmissionIntervalMs: Long = configuration.getLong("metronome.metrics.datadog.transmission.interval.ms").getOrElse(10000L)
 
   override def taskKillConfig: KillConfig = scallopConf
 }
