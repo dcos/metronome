@@ -41,6 +41,7 @@ lazy val baseSettings = Seq(
     "-Xlint:deprecation"
   ),
   resolvers ++= Seq(
+    Resolver.JCenterRepository,
     "Mesosphere Public Repo" at "http://downloads.mesosphere.io/maven",
     "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/",
     "Spray Maven Repository" at "http://repo.spray.io/",
@@ -110,6 +111,9 @@ lazy val metronome = (project in file("."))
     )
   )
 
+val silencerVersion = "1.1"
+addCompilerPlugin("com.github.ghik" %% "silencer-plugin" % silencerVersion)
+
 lazy val api = (project in file("api"))
   .enablePlugins(PlayScala)
   .disablePlugins(PlayLayoutPlugin)
@@ -132,7 +136,8 @@ lazy val api = (project in file("api"))
       Dependencies.playAhcWS,
       Dependencies.Test.scalatest,
       Dependencies.Test.scalaCheck,
-      Dependencies.Test.scalatestPlay
+      Dependencies.Test.scalatestPlay,
+      "com.github.ghik" %% "silencer-lib" % silencerVersion % Provided
     ).map(
       _.excludeAll(excludeSlf4jLog4j12)
         .excludeAll(excludeLog4j)

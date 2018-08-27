@@ -11,6 +11,7 @@ import dcos.metronome.migration.impl.MigrationImpl
 import dcos.metronome.scheduler.SchedulerConfig
 import dcos.metronome.utils.state.PersistentStore
 import mesosphere.marathon.core.base.{ ActorsModule, LifecycleState }
+import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.storage.repository.{ FrameworkIdRepository, GroupRepository, InstanceRepository }
 import mesosphere.marathon.storage.{ StorageConfig, StorageModule }
 import org.apache.zookeeper.KeeperException
@@ -19,7 +20,7 @@ import org.slf4j.{ Logger, LoggerFactory }
 import scala.collection.JavaConverters._
 import scala.concurrent.{ Await, ExecutionContext, Future }
 
-class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: RepositoryModule, lifecycleState: LifecycleState, actorsModule: ActorsModule, actorSystem: ActorSystem) {
+class SchedulerRepositoriesModule(metrics: Metrics, config: SchedulerConfig, repositoryModule: RepositoryModule, lifecycleState: LifecycleState, actorsModule: ActorsModule, actorSystem: ActorSystem) {
   import SchedulerRepositoriesModule._
 
   lazy val zk: ZooKeeperClient = {
@@ -51,7 +52,7 @@ class SchedulerRepositoriesModule(config: SchedulerConfig, repositoryModule: Rep
   private[this] lazy val persistentStore: PersistentStore = repositoryModule.zkStore
 
   lazy val storageConfig = StorageConfig(config.scallopConf, lifecycleState)
-  lazy val storageModule: StorageModule = StorageModule(config.scallopConf, lifecycleState)(actorsModule.materializer, ExecutionContext.global, actorSystem.scheduler, actorSystem)
+  lazy val storageModule: StorageModule = StorageModule(metrics, config.scallopConf, lifecycleState)(actorsModule.materializer, ExecutionContext.global, actorSystem.scheduler, actorSystem)
 
   lazy val instanceRepository: InstanceRepository = storageModule.instanceRepository
   lazy val groupRepository: GroupRepository = storageModule.groupRepository

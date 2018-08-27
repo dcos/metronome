@@ -3,18 +3,21 @@ package measurement.impl
 
 import java.lang.reflect.Method
 
-import akka.dispatch.ExecutionContexts
+import mesosphere.marathon.metrics.{ Counter, Timer }
+
 import com.softwaremill.macwire.aop.{ Interceptor, ProxyingInterceptor }
 import dcos.metronome.measurement.{ MeasurementConfig, ServiceMeasurement }
-import mesosphere.marathon.metrics.{ Metrics, MinMaxCounter, ServiceMetric, Timer }
+import mesosphere.marathon.metrics.Metrics
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
-class KamonServiceMeasurement(val config: MeasurementConfig) extends ServiceMeasurement {
+class DropwizardServiceMeasurement(val config: MeasurementConfig, val metrics: Metrics) extends ServiceMeasurement {
 
+  // TODO(ken): do we need this?   This seems like a tracing tool.. I don't think we want to have refactor cause
+  // a back compat of metric api.
   private[this] val log = LoggerFactory.getLogger(getClass)
 
   override def apply[T <: AnyRef](t: T)(implicit classTag: ClassTag[T]): T = {
@@ -27,17 +30,17 @@ class KamonServiceMeasurement(val config: MeasurementConfig) extends ServiceMeas
       val name = s"time.${removeScalaParts(method.getName)}"
       methodTimer.getOrElse(name, {
         log.debug(s"Create new timer for method: ${method.getName} in class ${classTag.runtimeClass.getName}")
-        val timer = Metrics.timer(ServiceMetric, classTag.runtimeClass, s"$name")
+        val timer = metrics.timer(s"${classTag.runtimeClass}.$name")
         methodTimer += name -> timer
         timer
       })
     }
-    var methodExceptionCount = Map.empty[String, MinMaxCounter]
-    def methodException(method: Method, ex: Throwable): MinMaxCounter = {
+    var methodExceptionCount = Map.empty[String, Counter]
+    def methodException(method: Method, ex: Throwable): Counter = {
       val name = s"exception.${method.getName}.${ex.getClass.getName}"
       methodExceptionCount.getOrElse(name, {
         log.debug(s"Create new count for method: ${method.getName} exception: ${ex.getClass.getName} in class ${classTag.runtimeClass.getName}")
-        val counter = Metrics.minMaxCounter(ServiceMetric, classTag.runtimeClass, name)
+        val counter = metrics.counter(s"${classTag.runtimeClass}.$name")
         methodExceptionCount += name -> counter
         counter
       })

@@ -1,3 +1,4 @@
+import sbt.Keys.libraryDependencies
 import sbt._
 
 object Dependencies {
@@ -7,8 +8,8 @@ object Dependencies {
     val ScalaTest = "3.0.5"
     val ScalaCheck = "1.13.4"
     val MacWire = "2.2.5"
-    val Marathon = "1.6.535"
-    val MarathonPluginInterface = "1.6.535"
+    val Marathon = "1.7.50"
+    val MarathonPluginInterface = "1.7.50"
     val Play = "2.6.7"
     val CronUtils = "6.0.4"
     val Threeten = "1.3.3"
@@ -29,7 +30,7 @@ object Dependencies {
   val macWireMacros = "com.softwaremill.macwire" %% "macros" % V.MacWire % "provided"
   val macWireUtil = "com.softwaremill.macwire" %% "util" % V.MacWire
   val macWireProxy = "com.softwaremill.macwire" %% "proxy" % V.MacWire
-  val marathon = "mesosphere.marathon" %% "marathon" % V.Marathon exclude("com.typesafe.play", "*") exclude("mesosphere.marathon", "ui") exclude("mesosphere", "chaos") exclude("org.apache.hadoop", "hadoop-hdfs") exclude("org.apache.hadoop", "hadoop-common") exclude("org.eclipse.jetty", "*") exclude("mesosphere.marathon", "plugin-interface_2.12")
+  val marathon = "mesosphere.marathon" %% "marathon" % V.Marathon exclude("com.typesafe.play", "*") exclude("mesosphere.marathon", "ui") exclude("mesosphere", "chaos") exclude("org.apache.hadoop", "hadoop-hdfs") exclude("org.apache.hadoop", "hadoop-common") exclude("mesosphere.marathon", "plugin-interface_2.12")
   val marathonPlugin = "mesosphere.marathon" %% "plugin-interface" % V.MarathonPluginInterface
   val cronUtils = "com.cronutils" % "cron-utils" % V.CronUtils exclude("org.threeten", "threetenbp")
   val threeten = "org.threeten" % "threetenbp" % V.Threeten
