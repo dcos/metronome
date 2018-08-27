@@ -89,7 +89,8 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       "--task_lost_expunge_initial_delay" -> Some(taskLostExpungeInitialDelay.toMillis.toString),
       "--task_lost_expunge_interval" -> Some(taskLostExpungeInterval.toMillis.toString),
       "--kill_chunk_size" -> Some(killChunkSize.toString),
-      "--kill_retry_timeout" -> Some(killRetryTimeout.toString))
+      "--kill_retry_timeout" -> Some(killRetryTimeout.toString),
+      "--metrics_name_prefix" -> Some(metricsNamePrefix))
       .collect { case (name, Some(value)) => (name, value) }
       .flatMap { case (name, value) => Seq(name, value) }
     new AllConf(options.to[Seq] ++ flags.flatten)
@@ -109,6 +110,8 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   override lazy val leaderProxyTimeout: Duration = configuration.getFiniteDuration("metronome.leader.proxy.timeout").getOrElse(30.seconds)
 
   override lazy val maxActorStartupTime: FiniteDuration = configuration.getFiniteDuration("metronome.akka.actor.startup.max").getOrElse(10.seconds)
+
+  lazy val metricsNamePrefix: String = configuration.getString("metronome.metric.prefix").getOrElse("metronome")
 
   override def taskKillConfig: KillConfig = scallopConf
 }
