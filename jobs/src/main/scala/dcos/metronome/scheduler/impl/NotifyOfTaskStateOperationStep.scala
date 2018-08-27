@@ -12,6 +12,7 @@ import scala.concurrent.Future
 
 class NotifyOfTaskStateOperationStep(eventBus: EventStream, clock: Clock) extends InstanceChangeHandler {
   override def name: String = "NotifyOfTaskStateOperationStep"
+  override def metricName: String = "NotifyOfTaskStateOperationStep"
 
   override def process(instanceChange: InstanceChange): Future[Done] = {
     taskState(instanceChange).foreach { state =>

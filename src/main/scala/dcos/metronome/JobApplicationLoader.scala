@@ -7,6 +7,7 @@ import com.softwaremill.macwire._
 import dcos.metronome.api.v1.LeaderProxyFilter
 import dcos.metronome.api.{ ApiModule, ErrorHandler }
 import kamon.Kamon
+import mesosphere.marathon.MetricsModule
 import mesosphere.marathon.metrics.Metrics
 import play.shaded.ahc.org.asynchttpclient.{ AsyncHttpClientConfig, DefaultAsyncHttpClient }
 import play.api.ApplicationLoader.Context
@@ -26,8 +27,7 @@ class JobApplicationLoader extends ApplicationLoader {
   def load(context: Context): Application = {
     val jobComponents = new JobComponents(context)
 
-    Kamon.start(jobComponents.configuration.underlying)
-    Metrics.start(jobComponents.actorSystem, jobComponents.config.scallopConf)
+    jobComponents.metricsModule.start(jobComponents.actorSystem)
 
     Future {
       jobComponents.schedulerService.run()
@@ -46,6 +46,8 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
   override lazy val httpErrorHandler = new ErrorHandler
 
+  lazy val metricsModule = MetricsModule(config.scallopConf, configuration.underlying)
+
   private[this] lazy val jobsModule: JobsModule = wire[JobsModule]
 
   private[this] lazy val apiModule: ApiModule = new ApiModule(
@@ -58,6 +60,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     assets,
     jobsModule.queueModule.launchQueueService,
     jobsModule.actorsModule,
+    metricsModule,
     defaultBodyParser)
 
   def schedulerService = jobsModule.schedulerModule.schedulerService

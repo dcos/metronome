@@ -2,23 +2,12 @@ package dcos.metronome
 package measurement
 
 import akka.actor.{ Actor, ActorLogging }
-import mesosphere.marathon.metrics.{ Metrics, ServiceMetric }
 
 import scala.util.control.NonFatal
 
 trait ActorMeasurement { actor: Actor with ActorLogging =>
 
   def measurement: ServiceMeasurement
-
-  /**
-    * This timer measures the time for message receipt.
-    */
-  private[this] lazy val receiveTimer = Metrics.timer(ServiceMetric, actor.getClass, "receiveTimer")
-
-  /**
-    * This meter counts the thrown exceptions in the receiver.
-    */
-  private[this] lazy val exceptionMeter = Metrics.minMaxCounter(ServiceMetric, actor.getClass, "receiveExceptionMeter")
 
   /**
     * The metrics logic is wrapped inside this method.
@@ -29,7 +18,7 @@ trait ActorMeasurement { actor: Actor with ActorLogging =>
       timePartialFunction(receive)
     } catch {
       case NonFatal(ex) =>
-        exceptionMeter.increment()
+        measurement.metrics.counter(s"${actor.getClass}.receiveExceptionMeter").increment()
         throw ex
     }
   }
@@ -41,7 +30,7 @@ trait ActorMeasurement { actor: Actor with ActorLogging =>
     */
   private def timePartialFunction[A, B](pf: PartialFunction[A, B]): PartialFunction[A, B] = new PartialFunction[A, B] {
     def apply(a: A): B = {
-      receiveTimer.blocking(pf.apply(a))
+      measurement.metrics.timer(s"${actor.getClass}.receiveExceptionMeter").blocking(pf.apply(a))
     }
 
     def isDefinedAt(a: A): Boolean = pf.isDefinedAt(a)

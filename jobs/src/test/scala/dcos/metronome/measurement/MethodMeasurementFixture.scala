@@ -1,4 +1,7 @@
 package dcos.metronome.measurement
+import mesosphere.marathon.metrics.Metrics
+import mesosphere.marathon.metrics.dummy.DummyMetrics
+
 import scala.reflect.ClassTag
 
 object MethodMeasurementFixture {
@@ -24,5 +27,7 @@ object MethodMeasurementFixture {
     override def config: MeasurementConfig = new MeasurementConfig {
       override def withMetrics: Boolean = false
     }
+
+    override def metrics: Metrics = DummyMetrics
   }
 }
