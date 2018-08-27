@@ -22,7 +22,7 @@ object Binders {
       try {
         Right(validateOrThrow(JobId(value)))
       } catch {
-        case NonFatal(ex) => Left(s"Not a valid id: $value")
+        case NonFatal(_) => Left(s"Not a valid id: $value")
       }
     }
     override def unbind(key: String, value: JobId): String = value.toString
@@ -37,7 +37,7 @@ object Binders {
       try {
         jobId.map(value => Right(validateOrThrow(JobId(value))))
       } catch {
-        case NonFatal(ex) => Some(Left(s"Not a valid id: $jobId"))
+        case NonFatal(_) => Some(Left(s"Not a valid id: $jobId"))
       }
     }
     override def unbind(key: String, value: JobId): String = value.toString

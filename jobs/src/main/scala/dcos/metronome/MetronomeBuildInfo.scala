@@ -5,7 +5,7 @@ import java.util.jar.{ Attributes, Manifest }
 import mesosphere.marathon.BuildInfo
 import mesosphere.marathon.io.IO
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success, Try }
@@ -22,7 +22,7 @@ case object MetronomeBuildInfo {
       1
     }) match {
       case Success(v) => v.replace("\"", "").trim
-      case Failure(e) => "0.0.0"
+      case Failure(_) => "0.0.0"
     }
     version
   }
@@ -33,7 +33,7 @@ case object MetronomeBuildInfo {
     * manifests, and find the one that applies to the Metronome application jar.
     */
   lazy val manifestPath: List[java.net.URL] =
-    getClass().getClassLoader().getResources("META-INF/MANIFEST.MF").filter { manifest =>
+    getClass.getClassLoader.getResources("META-INF/MANIFEST.MF").asScala.filter { manifest =>
       metronomeJar.findFirstMatchIn(manifest.getPath).nonEmpty
     }.toList
 

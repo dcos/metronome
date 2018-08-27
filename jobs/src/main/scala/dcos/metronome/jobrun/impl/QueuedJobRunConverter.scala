@@ -53,7 +53,7 @@ object QueuedJobRunConverter {
       try {
         PlacementSpec(run.constraints.toModel)
       } catch {
-        case e: Exception => PlacementSpec()
+        case _: Exception => PlacementSpec()
       }
     }
   }

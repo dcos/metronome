@@ -32,7 +32,7 @@ class JobRunPathResolverTest extends FunSuite with Matchers {
     val runId = "run"
     val id = JobRunId(jobId, runId)
     val parentPath = "foo.bar.baz"
-    val path = s"""$parentPath/${runId}"""
+    val path = s"""$parentPath/$runId"""
     val resolver = JobRunPathResolver
   }
 }

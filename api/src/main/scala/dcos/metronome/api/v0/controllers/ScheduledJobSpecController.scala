@@ -13,15 +13,16 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.api.mvc.{ AnyContent, BodyParser }
 
+import scala.concurrent.ExecutionContext
+
 class ScheduledJobSpecController(
   jobSpecService:        JobSpecService,
   val authenticator:     Authenticator,
   val authorizer:        Authorizer,
   val config:            ApiConfig,
   val mat:               Materializer,
-  val defaultBodyParser: BodyParser[AnyContent]) extends Authorization {
+  val defaultBodyParser: BodyParser[AnyContent])(implicit ec: ExecutionContext) extends Authorization {
 
-  import play.api.libs.concurrent.Execution.Implicits.defaultContext
   import ScheduledJobSpecController._
 
   def createJob = AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
@@ -29,7 +30,7 @@ class ScheduledJobSpecController(
       jobSpecService.createJobSpec(jobSpec)
         .map(Created(_))
         .recover {
-          case JobSpecAlreadyExists(id) => Conflict(ErrorDetail("Job with this id already exists"))
+          case JobSpecAlreadyExists(_) => Conflict(ErrorDetail("Job with this id already exists"))
         }
     }
   }
@@ -37,7 +38,7 @@ class ScheduledJobSpecController(
   def updateJob(id: JobId) = AuthorizedAction.async(validate.jsonWith[JobSpec](_.copy(id = id))) { implicit request =>
     request.authorizedAsync(UpdateRunSpec) { jobSpec =>
       jobSpecService.updateJobSpec(id, _ => jobSpec).map(Ok(_)).recover {
-        case ex: JobSpecDoesNotExist => NotFound(UnknownJob(id))
+        case _: JobSpecDoesNotExist => NotFound(UnknownJob(id))
       }
     }
   }

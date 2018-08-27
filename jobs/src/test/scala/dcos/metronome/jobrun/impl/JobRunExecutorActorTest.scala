@@ -30,7 +30,7 @@ import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest._
 
-import scala.concurrent.{ Future, Promise, duration }
+import scala.concurrent.{ Future, Promise }
 import scala.collection.immutable.Seq
 import scala.concurrent.duration._
 
@@ -45,7 +45,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     with ImplicitSender
     with Mockito {
 
-  private implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
+  private implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
   test("ForwardStatusUpdate STAGING with subsequent RUNNING") {
     Given("An executor with a JobRun in state Starting")
@@ -533,7 +533,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     Given("a jobRunSpec with forcePullImage")
     val jobSpec = JobSpec(
       id = JobId("/test"),
-      run = JobRunSpec(docker = Some(DockerSpec("image", parameters = Seq(new Parameter("key", "value")).to[Seq]))))
+      run = JobRunSpec(docker = Some(DockerSpec("image", parameters = Seq(new Parameter("key", "value"))))))
     val (_, jobRun) = f.setupInitialExecutorActor(Some(jobSpec))
 
     And("a new task is launched")
@@ -574,7 +574,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val f = new Fixture
 
     Given("a jobRunSpec with startingDeadline")
-    val (actor, jobRun) = f.setupActiveExecutorActor()
+    val (actor, _) = f.setupActiveExecutorActor()
 
     When("starting deadline does not exist for active job")
     eventually {
@@ -621,7 +621,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
   test("does not fail when job run already exists in ZK") {
     val f = new Fixture
     Given("a jobRun initial where node already exists")
-    val (actor, jobRun) = f.setupInitialExecutorActor()
+    val (_, jobRun) = f.setupInitialExecutorActor()
     val msg = f.persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
     f.persistenceActor.reply(JobRunPersistenceActor.PersistFailed(f.persistenceActor.ref, jobRun.id, new StoreCommandFailedException("", new NodeExistsException()), ()))
 
@@ -713,7 +713,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       taskId = taskId, taskState = state, timestamp = Clock.systemUTC().instant()))
 
     val persistenceActor = TestProbe()
-    val persistenceActorFactory: (JobRunId, ActorContext) => ActorRef = (_, context) => persistenceActor.ref
+    val persistenceActorFactory: (JobRunId, ActorContext) => ActorRef = (_, _) => persistenceActor.ref
     val promise: Promise[JobResult] = Promise[JobResult]
     val parent = TestProbe()
     implicit val scheduler = new SimulatedScheduler(clock)

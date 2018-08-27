@@ -74,7 +74,7 @@ object IO {
   def gzipCompress(bytes: Array[Byte]): Array[Byte] = {
     val out = new ByteArrayOutputStream(bytes.length)
     using(new GZIPOutputStream(out)) { gzip =>
-      gzip.write(bytes.toArray)
+      gzip.write(bytes)
       gzip.flush()
     }
     out.toByteArray
@@ -114,13 +114,13 @@ object IO {
   def withResource[T](path: String)(fn: InputStream => T): Option[T] = {
     Option(getClass.getResourceAsStream(path)).flatMap { stream =>
       Try(stream.available()) match {
-        case Success(length) => Some(fn(stream))
-        case Failure(ex)     => None
+        case Success(_) => Some(fn(stream))
+        case Failure(_) => None
       }
     }
   }
 
-  def using[A <: Closeable, B](closeable: A)(fn: (A) => B): B = {
+  def using[A <: Closeable, B](closeable: A)(fn: A => B): B = {
     try {
       fn(closeable)
     } finally {

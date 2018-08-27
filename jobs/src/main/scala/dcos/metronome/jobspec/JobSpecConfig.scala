@@ -1,7 +1,7 @@
 package dcos.metronome
 package jobspec
 
-import scala.concurrent.duration.{ FiniteDuration }
+import scala.concurrent.duration.FiniteDuration
 
 trait JobSpecConfig {
 

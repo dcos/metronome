@@ -29,7 +29,7 @@ object JobRunServiceFixture {
     override def activeRuns(jobSpecId: JobId): Future[Iterable[StartedJobRun]] = {
       Future.successful(specs.values.filter(_.jobRun.jobSpec.id == jobSpecId))
     }
-    override def listRuns(filter: (JobRun) => Boolean): Future[Iterable[StartedJobRun]] = {
+    override def listRuns(filter: JobRun => Boolean): Future[Iterable[StartedJobRun]] = {
       Future.successful(specs.values.filter(r => filter(r.jobRun)))
     }
     override def startJobRun(jobSpec: JobSpec, schedule: Option[ScheduleSpec] = None): Future[StartedJobRun] = {

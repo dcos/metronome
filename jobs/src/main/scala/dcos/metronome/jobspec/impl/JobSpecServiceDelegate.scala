@@ -24,11 +24,11 @@ class JobSpecServiceDelegate(
     actorRef.ask(GetJobSpec(id)).mapTo[Option[JobSpec]]
   }
 
-  override def updateJobSpec(id: JobId, update: (JobSpec) => JobSpec): Future[JobSpec] = {
+  override def updateJobSpec(id: JobId, update: JobSpec => JobSpec): Future[JobSpec] = {
     actorRef.ask(UpdateJobSpec(id, update)).mapTo[JobSpec]
   }
 
-  override def listJobSpecs(filter: (JobSpec) => Boolean): Future[Iterable[JobSpec]] = {
+  override def listJobSpecs(filter: JobSpec => Boolean): Future[Iterable[JobSpec]] = {
     actorRef.ask(ListJobSpecs(filter)).mapTo[Iterable[JobSpec]]
   }
 

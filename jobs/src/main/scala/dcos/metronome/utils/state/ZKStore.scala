@@ -21,7 +21,6 @@ case class CompressionConf(enabled: Boolean, sizeLimit: Long)
 class ZKStore(val client: ZkClient, root: ZNode, compressionConf: CompressionConf) extends PersistentStore
     with PersistentStoreManagement with PersistentStoreWithNestedPathsSupport {
 
-  private[this] val log = LoggerFactory.getLogger(getClass)
   private[this] implicit val ec = ExecutionContext.Implicits.global
 
   /**
@@ -32,7 +31,7 @@ class ZKStore(val client: ZkClient, root: ZNode, compressionConf: CompressionCon
     val node = root(key)
     node.getData().asScala
       .map { data => Some(ZKEntity(node, ZKData(data.bytes), Some(data.stat.getVersion))) }
-      .recover { case ex: NoNodeException => None }
+      .recover { case _: NoNodeException => None }
       .recover(exceptionTransform(s"Could not load key $key"))
   }
 
@@ -66,7 +65,7 @@ class ZKStore(val client: ZkClient, root: ZNode, compressionConf: CompressionCon
     val node = root(key)
     node.exists().asScala
       .flatMap { d => node.delete(d.stat.getVersion).asScala.map(_ => true) }
-      .recover { case ex: NoNodeException => false }
+      .recover { case _: NoNodeException => false }
       .recover(exceptionTransform(s"Can not delete entity $key"))
   }
 
@@ -98,11 +97,11 @@ class ZKStore(val client: ZkClient, root: ZNode, compressionConf: CompressionCon
   private[this] def createPath(path: ZNode): Future[ZNode] = {
     def nodeExists(node: ZNode): Future[Boolean] = node.exists().asScala
       .map(_ => true)
-      .recover { case ex: NoNodeException => false }
+      .recover { case _: NoNodeException => false }
       .recover(exceptionTransform("Can not query for exists"))
 
     def createNode(node: ZNode): Future[ZNode] = node.create().asScala
-      .recover { case ex: NodeExistsException => node }
+      .recover { case _: NodeExistsException => node }
       .recover(exceptionTransform("Can not create"))
 
     def createPath(node: ZNode): Future[ZNode] = {
@@ -156,8 +155,8 @@ object ZKStore {
   implicit class Twitter2Scala[T](val twitterF: TWFuture[T]) extends AnyVal {
     def asScala: Future[T] = {
       val promise = Promise[T]()
-      twitterF.onSuccess(promise.success(_))
-      twitterF.onFailure(promise.failure(_))
+      twitterF.onSuccess(promise.success)
+      twitterF.onFailure(promise.failure)
       promise.future
     }
   }

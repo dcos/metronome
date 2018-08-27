@@ -18,7 +18,6 @@ import play.api.libs.ws.{ WSClient, WSConfigParser }
 import play.api.mvc.EssentialFilter
 import play.api.routing.Router
 
-import scala.collection.Seq
 import scala.concurrent.Future
 
 /**

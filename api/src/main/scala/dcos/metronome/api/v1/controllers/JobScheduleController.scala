@@ -12,7 +12,7 @@ import akka.stream.Materializer
 import play.api.mvc.{ AnyContent, BodyParser, Result }
 
 import scala.async.Async.{ async, await }
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 
 class JobScheduleController(
   jobSpecService:        JobSpecService,
@@ -20,9 +20,7 @@ class JobScheduleController(
   val authorizer:        Authorizer,
   val config:            ApiConfig,
   val mat:               Materializer,
-  val defaultBodyParser: BodyParser[AnyContent]) extends Authorization {
-
-  import play.api.libs.concurrent.Execution.Implicits.defaultContext
+  val defaultBodyParser: BodyParser[AnyContent])(implicit ec: ExecutionContext) extends Authorization {
 
   def getSchedules(id: JobId) = AuthorizedAction.async { implicit request =>
     jobSpecService.getJobSpec(id).map {
@@ -34,7 +32,7 @@ class JobScheduleController(
   def getSchedule(id: JobId, scheduleId: String) = AuthorizedAction.async { implicit request =>
     jobSpecService.getJobSpec(id).map {
       case Some(job) if job.schedule(scheduleId).isDefined => request.authorized(ViewRunSpec, job, Ok(job.schedule(scheduleId)))
-      case Some(job) => NotFound(UnknownSchedule(scheduleId))
+      case Some(_) => NotFound(UnknownSchedule(scheduleId))
       case None => NotFound(UnknownJob(id))
     }
   }
@@ -65,8 +63,8 @@ class JobScheduleController(
       jobSpecService.updateJobSpec(id, changeSchedule)
         .map(job => Ok(job.schedule(scheduleId)))
         .recover {
-          case JobSpecDoesNotExist(_)       => NotFound(UnknownJob(id))
-          case ex: IllegalArgumentException => NotFound(UnknownSchedule(scheduleId))
+          case JobSpecDoesNotExist(_)      => NotFound(UnknownJob(id))
+          case _: IllegalArgumentException => NotFound(UnknownSchedule(scheduleId))
         }
     }
   }

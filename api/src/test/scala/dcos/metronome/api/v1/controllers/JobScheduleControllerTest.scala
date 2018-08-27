@@ -266,7 +266,6 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       route(app, FakeRequest(POST, s"/v1/jobs/$specId/schedules").withJsonBody(schedule1Json)).get.futureValue
 
       When("The schedule is updated")
-      val expectedJson = Json.toJson(schedule1.copy(cron = cron2))
       val sendJson = Json.toJson(schedule1.copy(id = "ignore.me", cron = cron2))
       val response = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/${schedule1.id}").withJsonBody(sendJson)).get
 

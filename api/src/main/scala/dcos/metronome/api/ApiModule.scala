@@ -19,6 +19,8 @@ import play.api.mvc.{ AnyContent, BodyParser }
 import play.api.routing.Router
 import router.Routes
 
+import scala.concurrent.ExecutionContext
+
 class ApiModule(
   config:             ApiConfig,
   jobSpecService:     JobSpecService,
@@ -30,7 +32,7 @@ class ApiModule(
   launchQueueService: LaunchQueueService,
   actorsModule:       ActorsModule,
   metricsModule:      MetricsModule,
-  playParsers:        BodyParser[AnyContent]) {
+  playParsers:        BodyParser[AnyContent])(implicit ec: ExecutionContext) {
 
   lazy val mat = actorsModule.materializer
 

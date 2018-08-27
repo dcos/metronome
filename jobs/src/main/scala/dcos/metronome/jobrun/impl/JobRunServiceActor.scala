@@ -99,7 +99,7 @@ class JobRunServiceActor(
 
   def killJobRun(id: JobRunId): Unit = {
     log.info(s"Request kill of job run $id")
-    withJobExecutor(id) { (executor, run) =>
+    withJobExecutor(id) { (executor, _) =>
       executor ! KillCurrentJobRun
       actorsWaitingForKill += id -> (actorsWaitingForKill(id) + sender())
     }

@@ -213,7 +213,7 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     val clock = new SettableClock(Clock.fixed(LocalDateTime.parse("2016-06-01T08:50:12.000").toInstant(ZoneOffset.UTC), ZoneOffset.UTC))
 
     def run() = {
-      val jobRun = new JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Active, clock.instant(), None, None, Map.empty[Task.Id, JobRunTask])
+      val jobRun = JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Active, clock.instant(), None, None, Map.empty[Task.Id, JobRunTask])
       StartedJobRun(jobRun, Future.successful(JobResult(jobRun)))
     }
     val run1 = run()
@@ -224,7 +224,7 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     val repo = new InMemoryRepository[JobRunId, JobRun]
     val measurement = MethodMeasurementFixture.empty
 
-    var createExecutor: (JobRun, Promise[JobResult]) => Props = (_, _) => dummyProp
+    val createExecutor: (JobRun, Promise[JobResult]) => Props = (_, _) => dummyProp
     def serviceActor = TestActorRef[JobRunServiceActor](JobRunServiceActor.props(clock, createExecutor, repo, measurement))
   }
 }

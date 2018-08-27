@@ -23,12 +23,11 @@ class ZkJobRunRepositoryTest extends FunSuite with Mockito with Matchers {
     f.store.allIds("job-runs/second.job").returns(
       Future.successful(Seq("third.run", "fourth.run")))
 
-    f.repository.ids().futureValue should contain theSameElementsAs (
-      Seq(
-        JobRunId(JobId("first.job"), "first.run"),
-        JobRunId(JobId("first.job"), "second.run"),
-        JobRunId(JobId("second.job"), "third.run"),
-        JobRunId(JobId("second.job"), "fourth.run")))
+    f.repository.ids().futureValue should contain theSameElementsAs Seq(
+      JobRunId(JobId("first.job"), "first.run"),
+      JobRunId(JobId("first.job"), "second.run"),
+      JobRunId(JobId("second.job"), "third.run"),
+      JobRunId(JobId("second.job"), "fourth.run"))
   }
 
   class Fixture {
