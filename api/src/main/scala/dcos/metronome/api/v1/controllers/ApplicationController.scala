@@ -21,8 +21,8 @@ class ApplicationController(metricsModule: MetricsModule) extends RestController
   def showMetrics = Action {
 
     val metricsJsonString = metricsModule.snapshot() match {
-      case Left(kamon)   => Json.stringify(Json.toJson(Raml.toRaml(kamon)))
-      case Right(wizard) => Json.stringify(Json.toJson(Raml.toRaml(wizard)))
+      case Left(kamonSnapshot)       => Json.stringify(Json.toJson(Raml.toRaml(kamonSnapshot)))
+      case Right(dropwizardRegistry) => Json.stringify(Json.toJson(Raml.toRaml(dropwizardRegistry)))
     }
     Ok(metricsJsonString).as(ContentTypes.JSON)
   }

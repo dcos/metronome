@@ -1,4 +1,5 @@
-package dcos.metronome.measurement.impl
+package dcos.metronome
+package measurement.impl
 
 import java.lang.reflect.Method
 
@@ -70,4 +71,3 @@ class DropwizardServiceMeasurement(val config: MeasurementConfig, val metrics: M
       .split('.') // filter out empty segments
       .filter(_.nonEmpty).mkString(".")
 }
-

@@ -46,12 +46,8 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
   lazy val clock: Clock = Clock.systemUTC()
 
   override lazy val httpErrorHandler = new ErrorHandler
-
-  /*
-    Using Metrics module from marathon.   We do NOT use Kamon, so we do NOT need the 2nd param config which is used
-    specifically to config Kamon.
-   */
-  lazy val metricsModule = MetricsModule(config.scallopConf, null)
+  
+  lazy val metricsModule = MetricsModule(config.scallopConf, configuration.underlying)
 
   private[this] lazy val jobsModule: JobsModule = wire[JobsModule]
 

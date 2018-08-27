@@ -1,4 +1,3 @@
-
 package dcos.metronome
 package measurement
 
@@ -19,7 +18,7 @@ trait ActorMeasurement { actor: Actor with ActorLogging =>
       timePartialFunction(receive)
     } catch {
       case NonFatal(ex) =>
-        measurement.metrics.counter(s" ${actor.getClass}.receiveExceptionMeter").increment()
+        measurement.metrics.counter(s"${actor.getClass}.receiveExceptionMeter").increment()
         throw ex
     }
   }
@@ -31,7 +30,7 @@ trait ActorMeasurement { actor: Actor with ActorLogging =>
     */
   private def timePartialFunction[A, B](pf: PartialFunction[A, B]): PartialFunction[A, B] = new PartialFunction[A, B] {
     def apply(a: A): B = {
-      measurement.metrics.timer(s" ${actor.getClass}.receiveExceptionMeter").blocking(pf.apply(a))
+      measurement.metrics.timer(s"${actor.getClass}.receiveExceptionMeter").blocking(pf.apply(a))
     }
 
     def isDefinedAt(a: A): Boolean = pf.isDefinedAt(a)
@@ -39,6 +38,6 @@ trait ActorMeasurement { actor: Actor with ActorLogging =>
 
   protected def measure(receive: Receive): Receive = {
     log.debug(s"Create actor metrics for actor: ${actor.getClass.getName}")
-    wrapped(receive)
+    if (measurement.config.withMetrics) wrapped(receive) else receive
   }
 }

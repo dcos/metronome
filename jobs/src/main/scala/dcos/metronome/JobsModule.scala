@@ -7,7 +7,7 @@ import dcos.metronome.history.JobHistoryModule
 import dcos.metronome.jobinfo.JobInfoModule
 import dcos.metronome.jobrun.JobRunModule
 import dcos.metronome.jobspec.JobSpecModule
-import dcos.metronome.measurement.impl.{ DropwizardServiceMeasurement }
+import dcos.metronome.measurement.impl.DropwizardServiceMeasurement
 import dcos.metronome.queue.LaunchQueueModule
 import dcos.metronome.repository.{ RepositoryModule, SchedulerRepositoriesModule }
 import dcos.metronome.scheduler.SchedulerModule

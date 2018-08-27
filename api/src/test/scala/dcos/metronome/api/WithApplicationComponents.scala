@@ -9,7 +9,6 @@ import dcos.metronome.jobrun.{ JobRunService, JobRunServiceFixture }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import dcos.metronome.queue.{ LaunchQueueService, QueueServiceFixture }
-import mesosphere.marathon.MetricsModule
 import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.plugin.PluginManager
 import mesosphere.marathon.metrics.dummy.DummyMetricsModule
