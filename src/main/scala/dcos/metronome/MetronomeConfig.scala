@@ -129,26 +129,26 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
 
   override lazy val maxActorStartupTime: FiniteDuration = configuration.getFiniteDuration("metronome.akka.actor.startup.max").getOrElse(10.seconds)
 
-  lazy val metricsNamePrefix: String = configuration.getString("metronome.metrics.prefix").getOrElse("metronome")
+  lazy val metricsNamePrefix: String = configuration.getOptional[String]("metronome.metrics.prefix").getOrElse("metronome")
 
-  lazy val metricsPrometheusReporter: Boolean = configuration.getBoolean("metronome.metrics.reporter.prometheus").getOrElse(false)
-  lazy val metricsStatsDReporter: Boolean = configuration.getBoolean("metronome.metrics.reporter.statsd").getOrElse(false)
-  lazy val metricsDataDogReporter: Boolean = configuration.getBoolean("metronome.metrics.reporter.datadog").getOrElse(false)
+  lazy val metricsPrometheusReporter: Boolean = configuration.getOptional[Boolean]("metronome.metrics.reporter.prometheus").getOrElse(false)
+  lazy val metricsStatsDReporter: Boolean = configuration.getOptional[Boolean]("metronome.metrics.reporter.statsd").getOrElse(false)
+  lazy val metricsDataDogReporter: Boolean = configuration.getOptional[Boolean]("metronome.metrics.reporter.datadog").getOrElse(false)
 
-  lazy val metricsHistogramReservoirSignificantDigits: Int = configuration.getInt("metronome.metrics.histogram.reservoir.significant.digits").getOrElse(3)
-  lazy val metricsHistogramReservoirResetPeriodically: Boolean = configuration.getBoolean("metronome.metrics.histogram.reservoir.reset.periodically").getOrElse(true)
-  lazy val metricsHistogramReservoirResettingIntervalMs: Long = configuration.getLong("metronome.metrics.histogram.reservoir.internal.ms").getOrElse(5000)
-  lazy val metricsHistogramReservoirResettingChunks: Int = configuration.getInt("metronome.metrics.histogram.reservoir.reset.chucks").getOrElse(0)
+  lazy val metricsHistogramReservoirSignificantDigits: Int = configuration.getOptional[Int]("metronome.metrics.histogram.reservoir.significant.digits").getOrElse(3)
+  lazy val metricsHistogramReservoirResetPeriodically: Boolean = configuration.getOptional[Boolean]("metronome.metrics.histogram.reservoir.reset.periodically").getOrElse(true)
+  lazy val metricsHistogramReservoirResettingIntervalMs: Long = configuration.getOptional[Long]("metronome.metrics.histogram.reservoir.internal.ms").getOrElse(5000)
+  lazy val metricsHistogramReservoirResettingChunks: Int = configuration.getOptional[Int]("metronome.metrics.histogram.reservoir.reset.chucks").getOrElse(0)
 
-  lazy val metricsStatsDHost: String = configuration.getString("metronome.metrics.statsd.host").getOrElse("localhost")
-  lazy val metricsStatsDPort: Int = configuration.getInt("metronome.metrics.statsd.port").getOrElse(1)
-  lazy val metricsStatsDTransmissionIntervalMs: Long = configuration.getLong("metronome.metrics.statsd.transmission.interval.ms").getOrElse(10000)
+  lazy val metricsStatsDHost: String = configuration.getOptional[String]("metronome.metrics.statsd.host").getOrElse("localhost")
+  lazy val metricsStatsDPort: Int = configuration.getOptional[Int]("metronome.metrics.statsd.port").getOrElse(1)
+  lazy val metricsStatsDTransmissionIntervalMs: Long = configuration.getOptional[Long]("metronome.metrics.statsd.transmission.interval.ms").getOrElse(10000)
 
-  lazy val metricsDataDogProtocol: String = configuration.getString("metronome.metrics.datadog.protocol").getOrElse("udp")
-  lazy val metricsDataDogHost: String = configuration.getString("metronome.metrics.datadog.host").getOrElse("localhost")
-  lazy val metricsDataDogPort: Int = configuration.getInt("metronome.metrics.datadog.port").getOrElse(1)
-  lazy val metricsDataDogApiKey: String = configuration.getString("metronome.metrics.datadog.api.key").getOrElse("")
-  lazy val metricsDataDogTransmissionIntervalMs: Long = configuration.getLong("metronome.metrics.datadog.transmission.interval.ms").getOrElse(10000L)
+  lazy val metricsDataDogProtocol: String = configuration.getOptional[String]("metronome.metrics.datadog.protocol").getOrElse("udp")
+  lazy val metricsDataDogHost: String = configuration.getOptional[String]("metronome.metrics.datadog.host").getOrElse("localhost")
+  lazy val metricsDataDogPort: Int = configuration.getOptional[Int]("metronome.metrics.datadog.port").getOrElse(1)
+  lazy val metricsDataDogApiKey: String = configuration.getOptional[String]("metronome.metrics.datadog.api.key").getOrElse("")
+  lazy val metricsDataDogTransmissionIntervalMs: Long = configuration.getOptional[Long]("metronome.metrics.datadog.transmission.interval.ms").getOrElse(10000L)
 
   override def taskKillConfig: KillConfig = scallopConf
 }
