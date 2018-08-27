@@ -6,9 +6,7 @@ import controllers.AssetsComponents
 import com.softwaremill.macwire._
 import dcos.metronome.api.v1.LeaderProxyFilter
 import dcos.metronome.api.{ ApiModule, ErrorHandler }
-import kamon.Kamon
 import mesosphere.marathon.MetricsModule
-import mesosphere.marathon.metrics.Metrics
 import play.shaded.ahc.org.asynchttpclient.{ AsyncHttpClientConfig, DefaultAsyncHttpClient }
 import play.api.ApplicationLoader.Context
 import play.api._
