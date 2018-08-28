@@ -1,4 +1,6 @@
-package dcos.metronome.measurement
+package dcos.metronome
+package measurement
+
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.metrics.dummy.DummyMetrics
 
