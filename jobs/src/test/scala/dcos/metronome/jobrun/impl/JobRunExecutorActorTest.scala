@@ -8,7 +8,6 @@ import akka.actor.{ ActorContext, ActorRef, ActorSystem }
 import akka.testkit.{ ImplicitSender, TestActorRef, TestKit, TestProbe }
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.impl.JobRunExecutorActor.ForwardStatusUpdate
-import dcos.metronome.measurement.MethodMeasurementFixture
 import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
 import dcos.metronome.utils.glue.MarathonImplicits._
@@ -717,11 +716,10 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val promise: Promise[JobResult] = Promise[JobResult]
     val parent = TestProbe()
     implicit val scheduler = new SimulatedScheduler(clock)
-    val behaviour = MethodMeasurementFixture.empty
     def executorActor(jobRun: JobRun, startingDeadline: Option[Duration] = None): TestActorRef[JobRunExecutorActor] = {
       import JobRunExecutorActorTest._
       val actorRef = TestActorRef[JobRunExecutorActor](JobRunExecutorActor.props(jobRun, promise, persistenceActorFactory,
-        launchQueue, instanceTracker, driverHolder, clock, behaviour)(scheduler), parent.ref, "JobRunExecutor")
+        launchQueue, instanceTracker, driverHolder, clock)(scheduler), parent.ref, "JobRunExecutor")
       actor = Some(actorRef)
       actorRef
     }

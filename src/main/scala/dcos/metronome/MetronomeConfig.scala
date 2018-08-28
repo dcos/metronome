@@ -29,7 +29,6 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   lazy val pluginDir: Option[String] = configuration.getOptional[String]("metronome.plugin.dir")
   lazy val pluginConf: Option[String] = configuration.getOptional[String]("metronome.plugin.conf")
   override lazy val runHistoryCount: Int = configuration.getOptional[Int]("metronome.history.count").getOrElse(1000)
-  override lazy val withMetrics: Boolean = configuration.getOptional[Boolean]("metronome.behavior.metrics").getOrElse(true)
 
   lazy val hostname: String = configuration.getOptional[String]("metronome.leader.election.hostname").getOrElse(java.net.InetAddress.getLocalHost.getHostName)
   lazy val httpPort: Option[Int] = configuration.getOptional[Int]("play.server.http.port")

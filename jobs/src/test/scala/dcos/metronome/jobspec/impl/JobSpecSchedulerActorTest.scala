@@ -6,7 +6,6 @@ import java.time.{ Clock, LocalDateTime, ZoneId, ZoneOffset }
 import akka.actor.ActorSystem
 import akka.testkit.{ ImplicitSender, TestActorRef, TestKit }
 import dcos.metronome.jobrun.JobRunService
-import dcos.metronome.measurement.MethodMeasurementFixture
 import dcos.metronome.model._
 import dcos.metronome.utils.test.Mockito
 import org.scalatest._
@@ -108,9 +107,8 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
       ScheduleSpec("every_minute", cron = everyMinute),
       ScheduleSpec("minutely", cron = everyMinute, concurrencyPolicy = ConcurrencyPolicy.Forbid)))
     val clock = new SettableClock(Clock.fixed(LocalDateTime.parse("2016-06-01T08:50:12.000").toInstant(ZoneOffset.UTC), ZoneOffset.UTC))
-    val measurement = MethodMeasurementFixture.empty
     val jobRunService = mock[JobRunService]
-    def scheduleActor = TestActorRef[JobSpecSchedulerActor](JobSpecSchedulerActor.props(jobSpec, clock, jobRunService, measurement))
+    def scheduleActor = TestActorRef[JobSpecSchedulerActor](JobSpecSchedulerActor.props(jobSpec, clock, jobRunService))
   }
 
   class DaylightSavingFixture {
@@ -119,8 +117,7 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
     val jobSpec = JobSpec(id).copy(schedules = Seq(ScheduleSpec("every_minute", cron = everyMinute, timeZone = ZoneId.of("Pacific/Fiji"))))
     // 01:59am CDT 2017-11-05 was end of daylight saving time
     val clock = new SettableClock(Clock.fixed(LocalDateTime.parse("2018-01-13T13:59").toInstant(ZoneOffset.UTC), ZoneOffset.UTC))
-    val measurement = MethodMeasurementFixture.empty
     val jobRunService = mock[JobRunService]
-    def scheduleActor = TestActorRef[JobSpecSchedulerActor](JobSpecSchedulerActor.props(jobSpec, clock, jobRunService, measurement))
+    def scheduleActor = TestActorRef[JobSpecSchedulerActor](JobSpecSchedulerActor.props(jobSpec, clock, jobRunService))
   }
 }
