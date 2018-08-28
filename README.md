@@ -1,4 +1,4 @@
-# Metronome [![Issues](https://img.shields.io/badge/Issues-JIRA-ff69b4.svg?style=flat)](https://jira.mesosphere.com/projects/METRONOME/)
+# Metronome [![Issues](https://img.shields.io/badge/Issues-JIRA-ff69b4.svg?style=flat)](https://jira.mesosphere.com/issues/?jql=project%20%3D%20DCOS_OSS%20AND%20component%20%3D%20metronome)
 
 Metronome is an [Apache Mesos](http://mesos.apache.org) framework for scheduled jobs.
 
@@ -9,7 +9,7 @@ Metronome documentation is available on the [Metronome Project Site](https://dco
 
 
 ## Issue Tracking
-Metronome issues are tracked as JIRA tickets in Mesosphere's [on-premise JIRA instance](https://jira.mesosphere.com/projects/METRONOME/) that anyone is able to view and add to using GitHub SSO.
+Metronome issues are tracked as JIRA tickets in Mesosphere's [on-premise JIRA instance](https://jira.mesosphere.com/issues/?jql=project%20%3D%20DCOS_OSS%20AND%20component%20%3D%20metronome) that anyone is able to view and add to using GitHub SSO. If you create a ticket, please set component `metronome`.
 
 ## Getting Started
 
@@ -91,5 +91,5 @@ element.
 
 ## Help
 
-Have you found an issue? Feel free to report it using our [Issues](https://jira.mesosphere.com/browse/DCOS_OSS-1490?jql=text%20~%20%22metronome%22) page.
+Have you found an issue? Feel free to report it using our [JIRA](https://jira.mesosphere.com/issues/?jql=project%20%3D%20DCOS_OSS%20AND%20component%20%3D%20metronome). Please set component `metronome` for issues related to Metronome.
 In order to speed up response times, please provide as much information on how to reproduce the problem as possible.
