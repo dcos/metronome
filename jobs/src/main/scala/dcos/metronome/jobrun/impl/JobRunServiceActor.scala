@@ -26,7 +26,7 @@ class JobRunServiceActor(
   import JobRunExecutorActor._
   import JobRunServiceActor._
 
-  private val jobsRunningMetric = metrics.gauge("jobs.running")
+  private val jobsRunningMetric = metrics.gauge("jobs.active")
   private val jobsFailedMetric = metrics.counter("jobs.failed")
   private val jobsStartedMetric = metrics.counter("jobs.started")
 
