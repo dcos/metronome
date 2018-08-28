@@ -91,5 +91,5 @@ element.
 
 ## Help
 
-Have you found an issue? Feel free to report it using our [Issues](https://jira.mesosphere.com/browse/DCOS_OSS-1490?jql=text%20~%20%22metronome%22) page.
+Have you found an issue? Feel free to report it using our [JIRA](https://jira.mesosphere.com/issues/?jql=project%20%3D%20DCOS_OSS%20AND%20component%20%3D%20metronome). Please set component `metronome` for issues related to Metronome.
 In order to speed up response times, please provide as much information on how to reproduce the problem as possible.
