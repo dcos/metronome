@@ -26,7 +26,7 @@ class JobRunServiceActor(
   import JobRunExecutorActor._
   import JobRunServiceActor._
 
-  private val jobsRunningMetric = metrics.gauge("jobs.active")
+  private val jobsActiveMetric = metrics.gauge("jobs.active")
   private val jobsFailedMetric = metrics.counter("jobs.failed")
   private val jobsStartedMetric = metrics.counter("jobs.started")
 
@@ -81,7 +81,7 @@ class JobRunServiceActor(
   }
 
   def startJobRun(jobRun: JobRun): StartedJobRun = {
-    jobsRunningMetric.increment()
+    jobsActiveMetric.increment()
     jobsStartedMetric.increment()
 
     log.info(s"Start new JobRun: ${jobRun.id}")
@@ -113,7 +113,7 @@ class JobRunServiceActor(
   }
 
   def jobRunFinished(result: JobResult): Unit = {
-    jobsRunningMetric.decrement()
+    jobsActiveMetric.decrement()
 
     log.info("JobRun finished")
     context.system.eventStream.publish(Event.JobRunFinished(result.jobRun))
@@ -121,7 +121,7 @@ class JobRunServiceActor(
   }
 
   def jobRunFailed(result: JobResult): Unit = {
-    jobsRunningMetric.decrement()
+    jobsActiveMetric.decrement()
     jobsFailedMetric.increment()
 
     log.info("JobRun failed or aborted")
