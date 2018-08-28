@@ -21,7 +21,7 @@ class ScheduledJobSpecController(
   val authorizer:        Authorizer,
   val config:            ApiConfig,
   val mat:               Materializer,
-  val defaultBodyParser: BodyParser[AnyContent])(implicit ec: ExecutionContext) extends Authorization {
+  val defaultBodyParser: BodyParser[AnyContent])(implicit ec: ExecutionContext) extends AuthorizedController {
 
   import ScheduledJobSpecController._
 
