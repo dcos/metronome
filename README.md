@@ -45,7 +45,12 @@ use. Note that you still need to run ZooKeeper for storing state. The following
 command launches Metronome on Mesos in *local mode*.
 
     sbt run
-    
+
+*Note:* The JVM needs more memory than is available by default with `sbt`.  Solutions on [StackOverflow](https://stackoverflow.com/questions/15280839/how-to-set-heap-size-for-sbt) provide a couple of common solutions:
+
+* on Mac with Brew modify `/usr/local/etc/sbtopts` to include `-mem 2048`
+* add `export SBT_OPTS="-Xmx2G"` to your env
+
 If you want to run Metronome against real mesos cluster, you can use the following command.
 
     ./run.sh
