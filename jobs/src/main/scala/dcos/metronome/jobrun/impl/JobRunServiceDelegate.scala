@@ -18,11 +18,11 @@ private[jobrun] class JobRunServiceDelegate(
   implicit val timeout: Timeout = config.askTimeout
   import JobRunServiceActor._
 
-  private val listRunsTimeMetric = metrics.timer("debug.jobrun.operations.list.duration")
-  private val getRunTimeMetric = metrics.timer("debug.jobrun.operations.get.duration")
-  private val killRunTimeMetric = metrics.timer("debug.jobrun.operations.kill.duration")
-  private val listActiveRunsTimeMetric = metrics.timer("debug.jobrun.operations.list-active.duration")
-  private val startRunTimeMetric = metrics.timer("debug.jobrun.operations.start.duration")
+  private val listRunsTimeMetric = metrics.timer("debug.job-run.operations.list.duration")
+  private val getRunTimeMetric = metrics.timer("debug.job-run.operations.get.duration")
+  private val killRunTimeMetric = metrics.timer("debug.job-run.operations.kill.duration")
+  private val listActiveRunsTimeMetric = metrics.timer("debug.job-run.operations.list-active.duration")
+  private val startRunTimeMetric = metrics.timer("debug.job-run.operations.start.duration")
 
   override def listRuns(filter: JobRun => Boolean): Future[Iterable[StartedJobRun]] = listRunsTimeMetric {
     actorRef.ask(ListRuns(filter)).mapTo[Iterable[StartedJobRun]]

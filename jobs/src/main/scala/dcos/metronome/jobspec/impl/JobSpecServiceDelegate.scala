@@ -16,11 +16,11 @@ class JobSpecServiceDelegate(
   actorRef: ActorRef,
   metrics:  Metrics) extends JobSpecService {
 
-  private val createJobSpecTimeMetric = metrics.timer("debug.jobspec.operations.create.duration")
-  private val getJobSpecTimeMetric = metrics.timer("debug.jobspec.operations.get.duration")
-  private val updateJobSpecTimeMetric = metrics.timer("debug.jobspec.operations.update.duration")
-  private val listJobSpecTimeMetric = metrics.timer("debug.jobspec.operations.list.duration")
-  private val deleteJobSpecTimeMetric = metrics.timer("debug.jobspec.operations.delete.duration")
+  private val createJobSpecTimeMetric = metrics.timer("debug.job-spec.operations.create.duration")
+  private val getJobSpecTimeMetric = metrics.timer("debug.job-spec.operations.get.duration")
+  private val updateJobSpecTimeMetric = metrics.timer("debug.job-spec.operations.update.duration")
+  private val listJobSpecTimeMetric = metrics.timer("debug.job-spec.operations.list.duration")
+  private val deleteJobSpecTimeMetric = metrics.timer("debug.job-spec.operations.delete.duration")
 
   implicit val timeout: Timeout = config.askTimeout
 

@@ -14,9 +14,9 @@ class JobSpecPersistenceActor(
   import JobSpecPersistenceActor._
   import context.dispatcher
 
-  private val createJobSpecTimeMetric = metrics.timer("debug.persistence.jobspec.create.duration")
-  private val updateJobSpecTimeMetric = metrics.timer("debug.persistence.jobspec.update.duration")
-  private val deleteJobSpecTimeMetric = metrics.timer("debug.persistence.jobspec.delete.duration")
+  private val createJobSpecTimeMetric = metrics.timer("debug.persistence.job-spec.create.duration")
+  private val updateJobSpecTimeMetric = metrics.timer("debug.persistence.job-spec.update.duration")
+  private val deleteJobSpecTimeMetric = metrics.timer("debug.persistence.job-spec.delete.duration")
 
   override def receive: Receive = {
     case Create(jobSpec, delegate) => create(jobSpec, delegate)

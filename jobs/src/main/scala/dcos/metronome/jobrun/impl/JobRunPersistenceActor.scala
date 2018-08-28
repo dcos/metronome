@@ -16,9 +16,9 @@ class JobRunPersistenceActor(
   import JobRunPersistenceActor._
   import context.dispatcher
 
-  private val createJobRunTimeMetric = metrics.timer("debug.persistence.jobrun.create.duration")
-  private val updateJobRunTimeMetric = metrics.timer("debug.persistence.jobrun.update.duration")
-  private val deleteJobRunTimeMetric = metrics.timer("debug.persistence.jobrun.delete.duration")
+  private val createJobRunTimeMetric = metrics.timer("debug.persistence.job-run.create.duration")
+  private val updateJobRunTimeMetric = metrics.timer("debug.persistence.job-run.update.duration")
+  private val deleteJobRunTimeMetric = metrics.timer("debug.persistence.job-run.delete.duration")
 
   override def receive: Receive = {
     case Create(jobRun) => create(jobRun)
