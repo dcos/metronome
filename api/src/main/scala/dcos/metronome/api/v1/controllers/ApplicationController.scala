@@ -21,7 +21,9 @@ class ApplicationController(metricsModule: MetricsModule) extends RestController
   def showMetrics = Action {
 
     val metricsJsonString = metricsModule.snapshot() match {
-      case Left(kamonSnapshot)       => Json.stringify(Json.toJson(Raml.toRaml(kamonSnapshot)))
+      case Left(_) =>
+        // Kamon snapshot
+        throw new IllegalArgumentException("Only Dropwizard format is supported, cannot render metrics from Kamon snapshot. Make sure your metrics are configured correctly.")
       case Right(dropwizardRegistry) => Json.stringify(Json.toJson(Raml.toRaml(dropwizardRegistry)))
     }
     Ok(metricsJsonString).as(ContentTypes.JSON)
