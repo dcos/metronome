@@ -52,12 +52,6 @@ lazy val baseSettings = Seq(
 
 val excludeSlf4jLog4j12 =
   ExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12")
-val excludeKamonAkka =
-  ExclusionRule(organization = "io.kamon", name = "kamon-akka-2.4")
-val excludeKamonAutoweave =
-  ExclusionRule(organization = "io.kamon", name = "kamon-autoweave_2.12")
-val excludeKamonScala =
-  ExclusionRule(organization = "io.kamon", name = "kamon-scala_2.12")
 val excludeLog4j = ExclusionRule(organization = "log4j", name = "log4j")
 val excludeJCL =
   ExclusionRule(organization = "commons-logging", name = "commons-logging")
@@ -143,9 +137,6 @@ lazy val api = (project in file("api"))
         .excludeAll(excludeLog4j)
         .excludeAll(excludeJCL)
         .excludeAll(excludeAkkaHttpExperimental)
-        .excludeAll(excludeKamonAkka)
-        .excludeAll(excludeKamonAutoweave)
-        .excludeAll(excludeKamonScala)
     )
   )
 
@@ -176,8 +167,5 @@ lazy val jobs = (project in file("jobs"))
         .excludeAll(excludeLog4j)
         .excludeAll(excludeJCL)
         .excludeAll(excludeAkkaHttpExperimental)
-        .excludeAll(excludeKamonAkka)
-        .excludeAll(excludeKamonAutoweave)
-        .excludeAll(excludeKamonScala)
     )
   )

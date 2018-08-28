@@ -6,12 +6,12 @@ import mesosphere.marathon.AllConf
 import mesosphere.marathon.core.task.termination.KillConfig
 import play.api.Configuration
 
-import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.concurrent.duration._
 import scala.sys.SystemProperties
 import scala.util.Try
 
 class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiConfig {
+
   import ConfigurationImplicits._
 
   lazy val frameworkName: String = configuration.getOptional[String]("metronome.framework.name").getOrElse("metronome")
@@ -36,6 +36,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   lazy val keyStorePath: Option[String] = configuration.getOptional[String]("play.server.https.keyStore.path")
   lazy val keyStorePassword: Option[String] = configuration.getOptional[String]("play.server.https.keyStore.password")
   def effectivePort = httpPort.getOrElse(httpsPort)
+
   override lazy val hostnameWithPort: String = s"$hostname:$effectivePort"
 
   override lazy val askTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.akka.ask.timeout").getOrElse(10.seconds)
@@ -56,7 +57,8 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
     val flags = Seq[Option[String]](
       if (httpPort.isEmpty) Some("--disable_http") else None,
       if (zkCompressionEnabled) Some("--zk_compression") else None,
-      if (mesosAuthentication) Some("--mesos_authentication") else None)
+      if (mesosAuthentication) Some("--mesos_authentication") else None,
+      if (metricsHistogramReservoirResetPeriodically.isDefined) Some("--metrics_histogram_reservoir_reset_periodically") else None)
     val options = Map[String, Option[String]](
       "--framework_name" -> Some(frameworkName),
       "--master" -> Some(mesosMaster),
@@ -88,7 +90,12 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       "--task_lost_expunge_initial_delay" -> Some(taskLostExpungeInitialDelay.toMillis.toString),
       "--task_lost_expunge_interval" -> Some(taskLostExpungeInterval.toMillis.toString),
       "--kill_chunk_size" -> Some(killChunkSize.toString),
-      "--kill_retry_timeout" -> Some(killRetryTimeout.toString))
+      "--kill_retry_timeout" -> Some(killRetryTimeout.toString),
+
+      "--metrics_name_prefix" -> Some(metricsNamePrefix),
+      "--metrics_histogram_reservoir_significant_digits" -> metricsHistogramReservoirSignificantDigits.map(_.toString),
+      "--metrics_histogram_reservoir_resetting_interval_ms" -> metricsHistogramReservoirResettingIntervalMs.map(_.toString),
+      "--metrics_histogram_reservoir_resetting_chunks" -> metricsHistogramReservoirResettingChunks.map(_.toString))
       .collect { case (name, Some(value)) => (name, value) }
       .flatMap { case (name, value) => Seq(name, value) }
     new AllConf(options.to[Seq] ++ flags.flatten)
@@ -108,6 +115,13 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   override lazy val leaderProxyTimeout: Duration = configuration.getFiniteDuration("metronome.leader.proxy.timeout").getOrElse(30.seconds)
 
   override lazy val maxActorStartupTime: FiniteDuration = configuration.getFiniteDuration("metronome.akka.actor.startup.max").getOrElse(10.seconds)
+
+  lazy val metricsNamePrefix: String = configuration.getOptional[String]("metronome.metrics.prefix").getOrElse("metronome")
+
+  lazy val metricsHistogramReservoirSignificantDigits: Option[Int] = configuration.getOptional[Int]("metronome.metrics.histogram.reservoir.significant.digits")
+  lazy val metricsHistogramReservoirResetPeriodically: Option[Boolean] = configuration.getOptional[Boolean]("metronome.metrics.histogram.reservoir.reset.periodically")
+  lazy val metricsHistogramReservoirResettingIntervalMs: Option[Long] = configuration.getOptional[Long]("metronome.metrics.histogram.reservoir.internal.ms")
+  lazy val metricsHistogramReservoirResettingChunks: Option[Int] = configuration.getOptional[Int]("metronome.metrics.histogram.reservoir.reset.chucks")
 
   override def taskKillConfig: KillConfig = scallopConf
 }
