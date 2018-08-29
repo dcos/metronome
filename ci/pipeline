@@ -70,7 +70,8 @@ def uploadTarballToS3(version: String, buildLocation: String): Option[awsClient.
  */
 @main
 def createPackages(): String = utils.stage("Package") {
-  val result = %%('sbt, "universal:packageZipTarball", "version")
+  %%('sbt, "universal:packageZipTarball", "writeVersion")
+  val result = read.lines! pwd/'target/"version.txt"
   // Regex is for version:
   // starting with random chars, match $number$dot$number$dot$number followed by optional alpha numberic chars plus `-`
   // ending with random characters
@@ -81,7 +82,7 @@ def createPackages(): String = utils.stage("Package") {
   // from sbt's console output until we run our Ammonite scripts in sbt.
 
 
-  val version = result.out.lines(result.out.lines.size-2) match {
+  val version = result.last match {
     case versionLineRegex(v) => v
     case _ =>
         val commit = %%('git, "log", "--pretty=format:%h", "-n1").out.lines.last

@@ -13,6 +13,15 @@ import scalariform.formatter.preferences._
 
 lazy val projectSettings = baseSettings ++ formatSettings ++ publishSettings
 
+lazy val writeVersion = taskKey[Unit]("Output version to target folder")
+
+writeVersion := {
+  val s = streams.value
+  val file = (target in Compile).value / "version.txt"
+  IO.write(file, version.value)
+  s.log.info(s"Wrote version ${version.value} to ${file}")
+}
+
 lazy val baseSettings = Seq(
   organization := "dcos",
   scalaVersion := "2.12.4",
