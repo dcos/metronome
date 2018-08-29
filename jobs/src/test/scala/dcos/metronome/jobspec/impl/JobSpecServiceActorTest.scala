@@ -7,7 +7,6 @@ import akka.actor.{ ActorSystem, Props, Status }
 import akka.testkit._
 import akka.pattern.ask
 import akka.util.Timeout
-import dcos.metronome.measurement.MethodMeasurementFixture
 import dcos.metronome.model.{ CronSpec, JobId, JobSpec, ScheduleSpec }
 import dcos.metronome.repository.impl.InMemoryRepository
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
@@ -260,6 +259,6 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     val dummyQueue = new LinkedBlockingDeque[TestActor.Message]()
     val dummyProp = Props(new TestActor(dummyQueue))
     val jobSpec = JobSpec(JobId("test"))
-    val jobSpecService = TestActorRef[JobSpecServiceActor](JobSpecServiceActor.props(repository, (_: JobId) => dummyProp, _ => dummyProp, MethodMeasurementFixture.empty))
+    val jobSpecService = TestActorRef[JobSpecServiceActor](JobSpecServiceActor.props(repository, (_: JobId) => dummyProp, _ => dummyProp))
   }
 }

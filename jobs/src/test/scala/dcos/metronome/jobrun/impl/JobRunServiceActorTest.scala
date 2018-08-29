@@ -9,11 +9,12 @@ import akka.testkit._
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.jobrun.impl.JobRunExecutorActor.{ Aborted, Finished }
 import dcos.metronome.jobrun.impl.JobRunServiceActor._
-import dcos.metronome.measurement.MethodMeasurementFixture
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.InMemoryRepository
 import dcos.metronome.utils.test.Mockito
 import mesosphere.marathon.core.task.Task
+import mesosphere.marathon.metrics.Metrics
+import mesosphere.marathon.metrics.dummy.DummyMetrics
 import org.scalatest._
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 
@@ -222,9 +223,9 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     val dummyQueue = new LinkedBlockingDeque[TestActor.Message]()
     val dummyProp = Props(new TestActor(dummyQueue))
     val repo = new InMemoryRepository[JobRunId, JobRun]
-    val measurement = MethodMeasurementFixture.empty
+    val metrics = DummyMetrics
 
     val createExecutor: (JobRun, Promise[JobResult]) => Props = (_, _) => dummyProp
-    def serviceActor = TestActorRef[JobRunServiceActor](JobRunServiceActor.props(clock, createExecutor, repo, measurement))
+    def serviceActor = TestActorRef[JobRunServiceActor](JobRunServiceActor.props(clock, createExecutor, repo, metrics))
   }
 }

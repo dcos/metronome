@@ -45,8 +45,8 @@ use. Note that you still need to run ZooKeeper for storing state. The following
 command launches Metronome on Mesos in *local mode*.
 
     sbt run
-    
-If you want to run Metronome against real mesos cluster, you can use the following command.
+
+If you want to run Metronome against a real Mesos cluster, you can use the following command.
 
     ./run.sh
 

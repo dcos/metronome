@@ -6,9 +6,9 @@ import java.time.Clock
 import akka.actor._
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.measurement.{ ActorMeasurement, ServiceMeasurement }
 import dcos.metronome.model._
 import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
+import mesosphere.marathon.metrics.Metrics
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.Promise
@@ -21,10 +21,14 @@ class JobRunServiceActor(
   clock:           Clock,
   executorFactory: (JobRun, Promise[JobResult]) => Props,
   val repo:        Repository[JobRunId, JobRun],
-  val measurement: ServiceMeasurement) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash with ActorMeasurement {
+  metrics:         Metrics) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash {
 
   import JobRunExecutorActor._
   import JobRunServiceActor._
+
+  private val jobsActiveMetric = metrics.gauge("jobs.active")
+  private val jobsFailedMetric = metrics.counter("jobs.failed")
+  private val jobsStartedMetric = metrics.counter("jobs.started")
 
   override def preStart(): Unit = {
     super.preStart()
@@ -40,7 +44,7 @@ class JobRunServiceActor(
   private[impl] val allRunExecutors = TrieMap.empty[JobRunId, ActorRef]
   private[impl] val actorsWaitingForKill = TrieMap.empty[JobRunId, Set[ActorRef]].withDefaultValue(Set.empty)
 
-  override def receive: Receive = measure {
+  override def receive: Receive = {
     // api messages
     case ListRuns(filter)              => sender() ! allJobRuns.values.filter(startedJobRun => filter(startedJobRun.jobRun))
     case GetJobRun(id)                 => sender() ! allJobRuns.get(id)
@@ -77,6 +81,9 @@ class JobRunServiceActor(
   }
 
   def startJobRun(jobRun: JobRun): StartedJobRun = {
+    jobsActiveMetric.increment()
+    jobsStartedMetric.increment()
+
     log.info(s"Start new JobRun: ${jobRun.id}")
     val resultPromise = Promise[JobResult]()
 
@@ -106,12 +113,17 @@ class JobRunServiceActor(
   }
 
   def jobRunFinished(result: JobResult): Unit = {
+    jobsActiveMetric.decrement()
+
     log.info("JobRun finished")
     context.system.eventStream.publish(Event.JobRunFinished(result.jobRun))
     wipeJobRun(result.jobRun.id)
   }
 
   def jobRunFailed(result: JobResult): Unit = {
+    jobsActiveMetric.decrement()
+    jobsFailedMetric.increment()
+
     log.info("JobRun failed or aborted")
     context.system.eventStream.publish(Event.JobRunFailed(result.jobRun))
     wipeJobRun(result.jobRun.id)
@@ -169,6 +181,6 @@ object JobRunServiceActor {
     clock:           Clock,
     executorFactory: (JobRun, Promise[JobResult]) => Props,
     repo:            Repository[JobRunId, JobRun],
-    measurement:     ServiceMeasurement): Props = Props(new JobRunServiceActor(clock, executorFactory, repo, measurement))
+    metrics:         Metrics): Props = Props(new JobRunServiceActor(clock, executorFactory, repo, metrics))
 
 }
