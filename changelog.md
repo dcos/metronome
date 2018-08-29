@@ -1,3 +1,30 @@
+# Version 0.5.0
+
+Metronome uses Marathon as a library for scheduling. We have bumped the dependency to the current Marathon, which is 1.7.50. 
+This brings a lot of bug fixes and new features from the last 3 versions of Marathon. At the same time, it allows
+us to add UCR and secrets support.
+
+Metronome 0.5.0 also contains new Metrics endpoint with new metrics exposed that should allow you to monitor Metronome more easily. 
+For detailed information please refer to the Metrics page in our docs.
+
+# Version 0.4.4
+
+## Bugs and Tracking
+
+* [#244](https://github.com/dcos/metronome/pull/244) Wait for all parts of migration to be finished.
+
+Diff [0.4.2-0.4.3](https://github.com/dcos/metronome/compare/v0.4.3...0.4.4)
+
+# Version 0.4.3
+
+## Bugs and Tracking
+
+* [#234](https://github.com/dcos/metronome/pull/234) Exit when cannot load state from ZK.
+* [#230](https://github.com/dcos/metronome/pull/230) Gracefully handle errors during task launching.
+* [DCOS_OSS-2564](https://jira.mesosphere.com/browse/DCOS_OSS-2564) Docker params support.
+
+Diff [0.4.2-0.4.3](https://github.com/dcos/metronome/compare/v0.4.2...0.4.3)
+
 # Version 0.4.2
 
 ## Features
@@ -7,21 +34,6 @@
 * [METRONOME-218](https://jira.mesosphere.com/browse/METRONOME-218) Improved behavior for situations when the underlying zookeeper node content is corrupt - we now fail loud and early
 
 Diff [0.4.1-0.4.2](https://github.com/dcos/metronome/compare/v0.4.1...v0.4.2)
-
-# Version 0.5.0
-
-Metronome uses Marathon as a library for scheduling. We have bumped the dependency to the current Marathon, which is 1.6.322. 
-This brings a lot of bug fixes and new features from the last 3 versions of Marathon. At the same time, it allows
-us to add UCR and secrets support.
-
-## Features 
-
-* [METRONOME-246](https://jira.mesosphere.com/browse/METRONOME-246) Support secrets in Metronome
-
-## Bugs and Tracking
-
-* [METRONOME-238](https://jira.mesosphere.com/browse/METRONOME-238) Migrate from joda time to java time
-* [METRONOME-218](https://jira.mesosphere.com/browse/METRONOME-218) HTTP 500 Errors Based on ZK Storage
 
 
 ## Breaking changes
