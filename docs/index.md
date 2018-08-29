@@ -18,5 +18,8 @@ Learn how to [contribute to the Metronome project]({{ site.baseurl }}/docs/contr
 ## Controlling Docker Runtime Capabilities
 Learn how to [change docker runtime capabilities]({{ site.baseurl }}/docs/docker.html).
 
+## Metrics
+See what [metrics]({{ site.baseurl }}/docs/metrics.html) Metronome exposes.
+
 ## API Reference
 Use the [Metronome REST API]({{ site.baseurl }}/docs/generated/api.html)
