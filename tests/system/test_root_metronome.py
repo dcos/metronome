@@ -259,7 +259,7 @@ def test_secret_env_var(secret_fixture):
             stdout, stderr, return_code = shakedown.run_dcos_command("task log {} secret-env".format(run_id))
             logged_secret = stdout.rstrip()
             assert secret_value == logged_secret, ("secret value in stdout log incorrect or missing. "
-                                            f"'{logged_secret}' should be '{secret_value}'")
+                                                   "'{}' should be '{}'").format(logged_secret, secret_value)
 
         job_run_has_secret()
 
