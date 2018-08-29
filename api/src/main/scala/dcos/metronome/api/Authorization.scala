@@ -6,12 +6,14 @@ import akka.util.ByteString
 import dcos.metronome.jobinfo.JobSpecSelector
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model.{ JobRun, JobSpec, QueuedJobRunInfo }
+import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.plugin.auth._
 import mesosphere.marathon.plugin.http.{ HttpRequest, HttpResponse }
 import play.api.http.{ HeaderNames, HttpEntity, Status }
 import play.api.mvc._
 
 import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.{ Failure, Success }
 
 /**
   * A request that adds the User for the current call
@@ -55,6 +57,7 @@ trait Authorization extends RestController {
   def authorizer: Authorizer
   def config: ApiConfig
   def defaultBodyParser: BodyParser[AnyContent]
+  def metrics: Metrics
 
   implicit val mat: Materializer
 
@@ -83,6 +86,30 @@ trait Authorization extends RestController {
     override def parser: BodyParser[AnyContent] = defaultBodyParser
 
     override protected def executionContext: ExecutionContext = ExecutionContext.global
+  }
+
+  private[this] val http1XX = metrics.counter("http.responses.1xx.rate")
+  private[this] val http2XX = metrics.counter("http.responses.2xx.rate")
+  private[this] val http3XX = metrics.counter("http.responses.3xx.rate")
+  private[this] val http4XX = metrics.counter("http.responses.4xx.rate")
+  private[this] val http5XX = metrics.counter("http.responses.5xx.rate")
+  private[this] val apiErrors = metrics.counter("http.responses.errors.rate")
+
+  def measured[A](action: Action[A]) = Action.async(action.parser) { request =>
+    val result = action(request)
+    result.onComplete {
+      case Success(response) =>
+        response.header.status match {
+          case status if status < 200  => http1XX.increment()
+          case status if status < 300  => http2XX.increment()
+          case status if status < 400  => http3XX.increment()
+          case status if status < 500  => http4XX.increment()
+          case status if status >= 500 => http5XX.increment()
+        }
+      case Failure(_) => apiErrors.increment()
+    }
+
+    result
   }
 }
 
