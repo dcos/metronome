@@ -8,6 +8,7 @@ import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobId, JobRunSpec, JobSpec, ScheduleSpec }
 import mesosphere.marathon.api.v2.json.Formats.FormatWithDefault
+import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer, CreateRunSpec, UpdateRunSpec }
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -17,6 +18,7 @@ import scala.concurrent.ExecutionContext
 
 class ScheduledJobSpecController(
   jobSpecService:        JobSpecService,
+  val metrics:           Metrics,
   val authenticator:     Authenticator,
   val authorizer:        Authorizer,
   val config:            ApiConfig,

@@ -13,6 +13,7 @@ import mesosphere.marathon.MetricsModule
 import mesosphere.marathon.core.auth.AuthModule
 import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.plugin.PluginManager
+import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
 import play.api.http.HttpErrorHandler
 import play.api.mvc.{ AnyContent, BodyParser }
@@ -51,6 +52,8 @@ class ApiModule(
   lazy val authorizer: Authorizer = authModule.authorizer
 
   lazy val authenticator: Authenticator = authModule.authenticator
+
+  lazy val metrics: Metrics = metricsModule.metrics
 
   lazy val launchQueueController = wire[LaunchQueueController]
 
