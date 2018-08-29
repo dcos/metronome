@@ -1,3 +1,30 @@
+# Version 0.5.1
+
+Metronome uses Marathon as a library for scheduling. We have bumped the dependency to the current Marathon, which is 1.7.50.
+This brings a lot of bug fixes and new features from the last 3 versions of Marathon. At the same time, it allows
+us to add UCR and secrets support.
+
+Metronome 0.5.1 also contains new Metrics endpoint with new metrics exposed that should allow you to monitor Metronome more easily.
+For detailed information please refer to the Metrics page in our docs.
+
+# Version 0.4.4
+
+## Bugs and Tracking
+
+* [#244](https://github.com/dcos/metronome/pull/244) Wait for all parts of migration to be finished.
+
+Diff [0.4.2-0.4.3](https://github.com/dcos/metronome/compare/v0.4.3...0.4.4)
+
+# Version 0.4.3
+
+## Bugs and Tracking
+
+* [#234](https://github.com/dcos/metronome/pull/234) Exit when cannot load state from ZK.
+* [#230](https://github.com/dcos/metronome/pull/230) Gracefully handle errors during task launching.
+* [DCOS_OSS-2564](https://jira.mesosphere.com/browse/DCOS_OSS-2564) Docker params support.
+
+Diff [0.4.2-0.4.3](https://github.com/dcos/metronome/compare/v0.4.2...0.4.3)
+
 # Version 0.4.2
 
 ## Features
@@ -8,26 +35,11 @@
 
 Diff [0.4.1-0.4.2](https://github.com/dcos/metronome/compare/v0.4.1...v0.4.2)
 
-# Version 0.5.0
-
-Metronome uses Marathon as a library for scheduling. We have bumped the dependency to the current Marathon, which is 1.6.322. 
-This brings a lot of bug fixes and new features from the last 3 versions of Marathon. At the same time, it allows
-us to add UCR and secrets support.
-
-## Features 
-
-* [METRONOME-246](https://jira.mesosphere.com/browse/METRONOME-246) Support secrets in Metronome
-
-## Bugs and Tracking
-
-* [METRONOME-238](https://jira.mesosphere.com/browse/METRONOME-238) Migrate from joda time to java time
-* [METRONOME-218](https://jira.mesosphere.com/browse/METRONOME-218) HTTP 500 Errors Based on ZK Storage
-
 
 ## Breaking changes
 
 ### Command line parameters
-Command line parameter `task.lost.expunge.gc` was removed because the underlying algorithm change and this 
+Command line parameter `task.lost.expunge.gc` was removed because the underlying algorithm change and this
 one no longer has any effect.
 
 ### Metrics
@@ -36,11 +48,11 @@ however, the metrics are also now more accurate, use less memory, and are expect
 Where it was possible, we maintained the original metric names/groupings/etc, but some are in new locations or have
 slightly different semantics. Any monitoring dashboards should be updated.
 
-For Metronome specific metrics, you can find your old metrics under in the same path, only prefixed with "service" 
+For Metronome specific metrics, you can find your old metrics under in the same path, only prefixed with "service"
 so e.g. 'dcos.metronome.jobspec.impl.JobSpecServiceActor.receiveTimer' is now
 'service.dcos.metronome.jobspec.impl.JobSpecServiceActor.receiveTimer'.
 
-The format of the v1/metrics endpoint also changed in a backward incompatible manner - please see the documentation 
+The format of the v1/metrics endpoint also changed in a backward incompatible manner - please see the documentation
 for the current way the metrics are served.
 
 # Version 0.4.1
