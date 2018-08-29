@@ -15,10 +15,10 @@ stability guarantees for metric names between major and minor releases.
 Metronome has the following metric types:
 
 * a `counter` is a monotonically increasing integer, for instance, the
-  number of Mesos `revive` calls performed since Marathon became
+  number of Mesos `revive` calls performed since Metronome became
   a leader.
 * a `gauge` is a current measurement, for instance, the number of apps
-  currently known to Marathon.
+  currently known to Metronome.
 * a `histogram` is a distribution of values in a stream of measurements,
   for instance, the number of apps in group deployments.
 * a `meter` measures the rate at which a set of events occur.
@@ -57,12 +57,12 @@ a metric name. An example:
 ### Mesos-specific metrics
 
 * `metronome.mesos.calls.revive.counter` — the count of Mesos `revive`
-  calls made since the current Marathon instance became a leader.
+  calls made since the current Metronome instance became a leader.
 * `metronome.mesos.calls.suppress.counter` — the count of Mesos
-  `suppress` calls made since the current Marathon instance became
+  `suppress` calls made since the current Metronome instance became
   a leader.
 * `metronome.mesos.offer-operations.launch-group.counter` — the count of
-  `LaunchGroup` offer operations made since the current Marathon
+  `LaunchGroup` offer operations made since the current Metronome
   instance became a leader.
 * `metronome.mesos.offer-operations.launch.counter` — the count of
   `Launch` offer operations made since the current Metronome instance
@@ -71,11 +71,11 @@ a metric name. An example:
   `Reserve` offer operations made since the current Metronome instance
   became a leader.
 * `metronome.mesos.offers.declined.counter` — the count of offers
-  declined since the current Marathon instance became a leader.
+  declined since the current Metronome instance became a leader.
 * `metronome.mesos.offers.incoming.counter` — the count of offers
-  received since the current Marathon instance became a leader.
+  received since the current Metronome instance became a leader.
 * `metronome.mesos.offers.used.counter` — the count of offers used since
-  the current Marathon instance became a leader.
+  the current Metronome instance became a leader.
 
 ### HTTP-specific metrics
 
