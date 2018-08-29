@@ -8,7 +8,7 @@ import play.api.http.{ ContentTypes, ContentTypeOf, Writeable }
 import play.api.libs.json._
 import play.api.mvc._
 
-class RestController extends Controller {
+class RestController extends BaseController {
 
   import dcos.metronome.api.v1.models.JsErrorWrites
 
