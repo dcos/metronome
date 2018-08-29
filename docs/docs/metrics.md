@@ -46,11 +46,11 @@ in them.
 A metric type and a unit of measurement (if any) are appended to
 a metric name. An example:
 
-* `metronome.jobs.running.gauge`
+* `metronome.jobs.active.gauge`
 
 ## Important metrics
 
-* `metronome.jobs.running.gauge` — the number of running jobs.
+* `metronome.jobs.active.gauge` — the number of active jobs.
 * `metronome.jobs.failed.counter` — the number of failed jobs.
 * `metronome.jobs.started.counter` — the number of started jobs.
 
@@ -101,8 +101,8 @@ a metric name. An example:
 * `metronome.jvm.buffers.direct.memory.used.gauge.bytes` an estimate of
   the memory that the JVM is using for direct buffers in bytes, or `-1L`
   if an estimate of the memory usage is not available.
-  
-  
+
+
 #### JVM garbage collection
 
 * `metronome.jvm.gc.<gc>.collections.gauge` — the total number
