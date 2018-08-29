@@ -1,10 +1,10 @@
-# Version 0.5.0
+# Version 0.5.1
 
-Metronome uses Marathon as a library for scheduling. We have bumped the dependency to the current Marathon, which is 1.7.50. 
+Metronome uses Marathon as a library for scheduling. We have bumped the dependency to the current Marathon, which is 1.7.50.
 This brings a lot of bug fixes and new features from the last 3 versions of Marathon. At the same time, it allows
 us to add UCR and secrets support.
 
-Metronome 0.5.0 also contains new Metrics endpoint with new metrics exposed that should allow you to monitor Metronome more easily. 
+Metronome 0.5.1 also contains new Metrics endpoint with new metrics exposed that should allow you to monitor Metronome more easily.
 For detailed information please refer to the Metrics page in our docs.
 
 # Version 0.4.4
@@ -39,7 +39,7 @@ Diff [0.4.1-0.4.2](https://github.com/dcos/metronome/compare/v0.4.1...v0.4.2)
 ## Breaking changes
 
 ### Command line parameters
-Command line parameter `task.lost.expunge.gc` was removed because the underlying algorithm change and this 
+Command line parameter `task.lost.expunge.gc` was removed because the underlying algorithm change and this
 one no longer has any effect.
 
 ### Metrics
@@ -48,11 +48,11 @@ however, the metrics are also now more accurate, use less memory, and are expect
 Where it was possible, we maintained the original metric names/groupings/etc, but some are in new locations or have
 slightly different semantics. Any monitoring dashboards should be updated.
 
-For Metronome specific metrics, you can find your old metrics under in the same path, only prefixed with "service" 
+For Metronome specific metrics, you can find your old metrics under in the same path, only prefixed with "service"
 so e.g. 'dcos.metronome.jobspec.impl.JobSpecServiceActor.receiveTimer' is now
 'service.dcos.metronome.jobspec.impl.JobSpecServiceActor.receiveTimer'.
 
-The format of the v1/metrics endpoint also changed in a backward incompatible manner - please see the documentation 
+The format of the v1/metrics endpoint also changed in a backward incompatible manner - please see the documentation
 for the current way the metrics are served.
 
 # Version 0.4.1
