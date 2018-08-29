@@ -81,7 +81,7 @@ def createPackages(): String = utils.stage("Package") {
   // from sbt's console output until we run our Ammonite scripts in sbt.
 
 
-  val version = result.out.lines.last match {
+  val version = result.out.lines(result.out.lines.size-2) match {
     case versionLineRegex(v) => v
     case _ =>
         val commit = %%('git, "log", "--pretty=format:%h", "-n1").out.lines.last
@@ -159,7 +159,7 @@ def jenkins(): Unit = {
 /**
  * Executes the Community Release which includes:
  *
- *  1. tarball with version details 
+ *  1. tarball with version details
  *  Unlike the marathon build, the version details are currently expected to be
  * in the metronome project.   When a rev sha is provided for the build, the version
  * of that build will be checked against the requestedVersion number.  It will fail
