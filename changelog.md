@@ -1,11 +1,19 @@
 # Version 0.5.2
 
+* [DCOS_OSS-4024][https://jira.mesosphere.com/browse/DCOS_OSS-4024] Use newer Caffeine dependency
+
+Diff [0.5.1-0.5.2](https://github.com/dcos/metronome/compare/v0.5.1...0.5.2)
+
+# Version 0.5.1
+
 Metronome uses Marathon as a library for scheduling. We have bumped the dependency to the current Marathon, which is 1.7.50.
 This brings a lot of bug fixes and new features from the last 3 versions of Marathon. At the same time, it allows
 us to add UCR and secrets support.
 
 Metronome 0.5.1 also contains new Metrics endpoint with new metrics exposed that should allow you to monitor Metronome more easily.
 For detailed information please refer to the Metrics page in our docs.
+
+Diff [0.4.4-0.5.1](https://github.com/dcos/metronome/compare/v0.4.4...0.5.1)
 
 # Version 0.4.4
 
