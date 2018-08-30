@@ -19,6 +19,7 @@ object Dependencies {
     val JsonValidate = "0.9.4"
     val TwitterCommons = "0.0.76"
     val TwitterZk = "6.40.0"
+    val Caffeine = "2.6.2"
   }
 
   val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
@@ -38,7 +39,8 @@ object Dependencies {
   val akka = "com.typesafe.akka" %%  "akka-actor" % V.Akka
   val jsonValidate = "com.eclipsesource" %% "play-json-schema-validator" % V.JsonValidate
   val twitterCommons = "com.twitter.common.zookeeper" % "candidate" % V.TwitterCommons
-  val twitterZk = "com.twitter" %% "util-zk" % V.TwitterZk
+  val twitterZk = "com.twitter" %% "util-zk" % V.TwitterZk exclude("com.github.ben-manes.caffeine", "caffeine")
+  val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % V.Caffeine // we need to override caffeine version because of dependency in dcos plugins
 
   object Test {
     val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"

@@ -166,11 +166,12 @@ lazy val jobs = (project in file("jobs"))
       Dependencies.akka,
       Dependencies.twitterCommons,
       Dependencies.twitterZk,
+      Dependencies.caffeine,
       Dependencies.Test.scalatest,
       Dependencies.Test.akkaTestKit,
       Dependencies.Test.mockito,
       Dependencies.Test.scalatest,
-      Dependencies.Test.scalaCheck
+      Dependencies.Test.scalaCheck,
     ).map(
       _.excludeAll(excludeSlf4jLog4j12)
         .excludeAll(excludeLog4j)
