@@ -1,4 +1,4 @@
-# Version 0.5.1
+# Version 0.5.2
 
 Metronome uses Marathon as a library for scheduling. We have bumped the dependency to the current Marathon, which is 1.7.50.
 This brings a lot of bug fixes and new features from the last 3 versions of Marathon. At the same time, it allows
