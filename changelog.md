@@ -1,3 +1,11 @@
+# Version 0.5.3
+
+## Bugs
+
+Fixed bug introduced in cleaning up compiler warnings.   The bug prevented configuring an HTTP Port to be disabled which is useful for HTTPS only environments.
+
+Diff [0.5.2-0.5.3](https://github.com/dcos/metronome/compare/v0.5.2...0.5.3)
+
 # Version 0.5.2
 
 * [DCOS_OSS-4024][https://jira.mesosphere.com/browse/DCOS_OSS-4024] Use newer Caffeine dependency
