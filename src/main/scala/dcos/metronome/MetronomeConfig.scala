@@ -31,7 +31,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   override lazy val runHistoryCount: Int = configuration.getOptional[Int]("metronome.history.count").getOrElse(1000)
 
   lazy val hostname: String = configuration.getOptional[String]("metronome.leader.election.hostname").getOrElse(java.net.InetAddress.getLocalHost.getHostName)
-  lazy val httpPort: Option[Int] = configuration.getOptional[Int]("play.server.http.port")
+  lazy val httpPort: Option[Int] = configuration.getOptional[String]("play.server.http.port").flatMap(intString => Try(intString.toInt).toOption)
   lazy val httpsPort: Int = configuration.getOptional[Int]("play.server.https.port").getOrElse(9443)
   lazy val keyStorePath: Option[String] = configuration.getOptional[String]("play.server.https.keyStore.path")
   lazy val keyStorePassword: Option[String] = configuration.getOptional[String]("play.server.https.keyStore.password")
