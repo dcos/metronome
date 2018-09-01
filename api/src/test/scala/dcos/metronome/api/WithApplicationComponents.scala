@@ -13,7 +13,7 @@ import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.plugin.PluginManager
 import mesosphere.marathon.metrics.dummy.DummyMetricsModule
 import org.scalatest.{ TestData, TestSuite }
-import org.scalatestplus.play.{ OneAppPerTest, OneServerPerSuite, OneServerPerTest }
+import org.scalatestplus.play.guice.{ GuiceOneAppPerTest, GuiceOneServerPerSuite, GuiceOneServerPerTest }
 import play.api.ApplicationLoader.Context
 import play.api.i18n.I18nComponents
 import play.api.routing.Router
@@ -70,7 +70,7 @@ trait WithApplicationComponents[C <: BuiltInComponents] {
 }
 
 trait OneAppPerTestWithComponents[T <: BuiltInComponents]
-    extends OneAppPerTest
+    extends GuiceOneAppPerTest
     with WithApplicationComponents[T] {
   this: TestSuite =>
 
@@ -78,7 +78,7 @@ trait OneAppPerTestWithComponents[T <: BuiltInComponents]
 }
 
 trait OneServerPerTestWithComponents[T <: BuiltInComponents]
-    extends OneServerPerTest
+    extends GuiceOneServerPerTest
     with WithApplicationComponents[T] {
   this: TestSuite =>
 
@@ -86,7 +86,7 @@ trait OneServerPerTestWithComponents[T <: BuiltInComponents]
 }
 
 trait OneServerPerSuiteWithComponents[T <: BuiltInComponents]
-    extends OneServerPerSuite
+    extends GuiceOneServerPerSuite
     with WithApplicationComponents[T] {
   this: TestSuite =>
 
