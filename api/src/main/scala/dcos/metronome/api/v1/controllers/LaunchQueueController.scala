@@ -7,16 +7,17 @@ import dcos.metronome.api.{ ApiConfig, Authorization }
 import dcos.metronome.queue.LaunchQueueService
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
-import play.api.mvc.{ AnyContent, BodyParser }
+import play.api.mvc.ControllerComponents
 
-class LaunchQueueController(
-  queueService:          LaunchQueueService,
-  val metrics:           Metrics,
-  val authenticator:     Authenticator,
-  val authorizer:        Authorizer,
-  val config:            ApiConfig,
-  val mat:               Materializer,
-  val defaultBodyParser: BodyParser[AnyContent]) extends Authorization {
+import scala.concurrent.ExecutionContext
+
+class LaunchQueueController(cc: ControllerComponents)(
+  implicit
+  ec: ExecutionContext, queueService: LaunchQueueService, metrics: Metrics,
+  authenticator: Authenticator,
+  authorizer:    Authorizer,
+  config:        ApiConfig,
+  mat:           Materializer) extends Authorization(cc) {
 
   def queue() = measured {
     AuthorizedAction.apply { implicit request =>

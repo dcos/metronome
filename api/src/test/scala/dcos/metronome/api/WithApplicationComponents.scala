@@ -102,30 +102,23 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
 
   override lazy val httpErrorHandler = new ErrorHandler
 
-  lazy val actorsModule = new ActorsModule(actorSystem)
+  implicit lazy val actorsModule: ActorsModule = new ActorsModule(actorSystem)
+  implicit lazy val pluginManager: PluginManager = PluginManager.None
+  implicit lazy val jobSpecService: JobSpecService = JobSpecServiceFixture.simpleJobSpecService()
+  implicit lazy val jobRunService: JobRunService = JobRunServiceFixture.simpleJobRunService()
+  implicit lazy val jobHistoryService: JobHistoryService = JobHistoryServiceFixture.simpleHistoryService(Seq.empty)
+  implicit lazy val jobInfoService: JobInfoService = wire[JobInfoServiceImpl]
+  implicit lazy val queueService: LaunchQueueService = QueueServiceFixture.simpleQueueService()
+  implicit lazy val metricsModule: DummyMetricsModule = new DummyMetricsModule()
 
-  lazy val pluginManager: PluginManager = PluginManager.None
-
-  lazy val jobSpecService: JobSpecService = JobSpecServiceFixture.simpleJobSpecService()
-
-  lazy val jobRunService: JobRunService = JobRunServiceFixture.simpleJobRunService()
-
-  lazy val jobHistoryService: JobHistoryService = JobHistoryServiceFixture.simpleHistoryService(Seq.empty)
-
-  lazy val jobInfoService: JobInfoService = wire[JobInfoServiceImpl]
-
-  lazy val queueService: LaunchQueueService = QueueServiceFixture.simpleQueueService()
-
-  lazy val metricsModule = new DummyMetricsModule()
-
-  lazy val apiModule: ApiModule = wire[ApiModule]
-
-  lazy val config: ApiConfig = new ApiConfig {
+  implicit lazy val config: ApiConfig = new ApiConfig {
     override def leaderProxyTimeout: Duration = 30.seconds
     override def hostnameWithPort: String = s"$hostname:$effectivePort"
     override def hostname: String = "localhost"
     override def effectivePort: Int = 9000
   }
+
+  lazy val apiModule: ApiModule = new ApiModule(controllerComponents, assets, httpErrorHandler)
 
   override def router: Router = apiModule.router
 }

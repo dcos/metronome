@@ -7,22 +7,20 @@ import dcos.metronome.api.v1.models.schema._
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobId, JobSpec, ScheduleSpec }
 import mesosphere.marathon.plugin.auth._
-import JobId._
 import akka.stream.Materializer
 import mesosphere.marathon.metrics.Metrics
-import play.api.mvc.{ AnyContent, BodyParser, Result }
+import play.api.mvc._
 
 import scala.async.Async.{ async, await }
 import scala.concurrent.{ ExecutionContext, Future }
 
-class JobScheduleController(
-  jobSpecService:        JobSpecService,
-  val metrics:           Metrics,
-  val authenticator:     Authenticator,
-  val authorizer:        Authorizer,
-  val config:            ApiConfig,
-  val mat:               Materializer,
-  val defaultBodyParser: BodyParser[AnyContent])(implicit ec: ExecutionContext) extends Authorization {
+class JobScheduleController(cc: ControllerComponents)(
+  implicit
+  ec: ExecutionContext, jobSpecService: JobSpecService, metrics: Metrics,
+  authenticator: Authenticator,
+  authorizer:    Authorizer,
+  config:        ApiConfig,
+  mat:           Materializer) extends Authorization(cc) {
 
   def getSchedules(id: JobId) = measured {
     AuthorizedAction.async { implicit request =>

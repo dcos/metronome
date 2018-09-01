@@ -1,6 +1,7 @@
 package dcos.metronome
 package api
 
+import akka.stream.ActorMaterializer
 import com.softwaremill.macwire._
 import controllers.Assets
 import dcos.metronome.api.v0.controllers.ScheduledJobSpecController
@@ -16,46 +17,37 @@ import mesosphere.marathon.core.plugin.PluginManager
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
 import play.api.http.HttpErrorHandler
-import play.api.mvc.{ AnyContent, BodyParser }
+import play.api.mvc.ControllerComponents
 import play.api.routing.Router
 import router.Routes
 
 import scala.concurrent.ExecutionContext
 
-class ApiModule(
+class ApiModule(controllerComponents: ControllerComponents, assets: Assets, httpErrorHandler: HttpErrorHandler)(
+  implicit
+  ec:                 ExecutionContext,
   config:             ApiConfig,
   jobSpecService:     JobSpecService,
   jobRunService:      JobRunService,
   jobInfoService:     JobInfoService,
   pluginManager:      PluginManager,
-  httpErrorHandler:   HttpErrorHandler,
-  assets:             Assets,
   launchQueueService: LaunchQueueService,
   actorsModule:       ActorsModule,
-  metricsModule:      MetricsModule,
-  playParsers:        BodyParser[AnyContent])(implicit ec: ExecutionContext) {
+  metricsModule:      MetricsModule) {
 
-  lazy val mat = actorsModule.materializer
+  lazy val authModule: AuthModule = new AuthModule(pluginManager)
 
-  lazy val applicationController = wire[ApplicationController]
+  implicit lazy val authorizer: Authorizer = authModule.authorizer
+  implicit lazy val authenticator: Authenticator = authModule.authenticator
+  implicit lazy val metrics: Metrics = metricsModule.metrics
+  implicit lazy val mat: ActorMaterializer = actorsModule.materializer
 
-  lazy val jobsSpecController = wire[JobSpecController]
-
-  lazy val jobRunsController = wire[JobRunController]
-
-  lazy val jobSchedulerController = wire[JobScheduleController]
-
-  lazy val scheduledJobSchedulerController = wire[ScheduledJobSpecController]
-
-  lazy val authModule: AuthModule = wire[AuthModule]
-
-  lazy val authorizer: Authorizer = authModule.authorizer
-
-  lazy val authenticator: Authenticator = authModule.authenticator
-
-  lazy val metrics: Metrics = metricsModule.metrics
-
-  lazy val launchQueueController = wire[LaunchQueueController]
+  lazy val applicationController = new ApplicationController(controllerComponents)
+  lazy val jobsSpecController = new JobSpecController(controllerComponents)
+  lazy val jobRunsController = new JobRunController(controllerComponents)
+  lazy val jobSchedulerController = new JobScheduleController(controllerComponents)
+  lazy val scheduledJobSchedulerController = new ScheduledJobSpecController(controllerComponents)
+  lazy val launchQueueController = new LaunchQueueController(controllerComponents)
 
   lazy val router: Router = {
     // add the prefix string in local scope for the Routes constructor

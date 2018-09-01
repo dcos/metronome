@@ -48,18 +48,16 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
   private[this] lazy val jobsModule: JobsModule = wire[JobsModule]
 
-  private[this] lazy val apiModule: ApiModule = new ApiModule(
+  private[this] lazy val apiModule: ApiModule = new ApiModule(controllerComponents, assets, httpErrorHandler)(
+    executionContext,
     config,
     jobsModule.jobSpecModule.jobSpecService,
     jobsModule.jobRunModule.jobRunService,
     jobsModule.jobInfoModule.jobInfoService,
     jobsModule.pluginManger,
-    httpErrorHandler,
-    assets,
     jobsModule.queueModule.launchQueueService,
     jobsModule.actorsModule,
-    metricsModule,
-    defaultBodyParser)
+    metricsModule)
 
   def schedulerService = jobsModule.schedulerModule.schedulerService
 
