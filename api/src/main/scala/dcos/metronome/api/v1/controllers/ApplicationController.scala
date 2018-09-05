@@ -10,9 +10,8 @@ import play.api.http.ContentTypes
 import play.api.libs.json.Json
 import play.api.mvc.ControllerComponents
 
-class ApplicationController(cc: ControllerComponents)(
-  implicit
-  metricsModule: MetricsModule) extends RestController(cc) {
+class ApplicationController(cc: ControllerComponents, metricsModule: MetricsModule)
+    extends RestController(cc) {
 
   def ping = Action { Ok("pong") }
 

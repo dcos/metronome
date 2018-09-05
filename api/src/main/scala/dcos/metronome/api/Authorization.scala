@@ -51,7 +51,12 @@ case class AuthorizedRequest[Body](identity: Identity, request: Request[Body], a
   def notAuthorized(): Result = PluginFacade.withResponse(authorizer.handleNotAuthorized(identity, _))
 }
 
-abstract class Authorization(cc: ControllerComponents)(implicit ec: ExecutionContext, metrics: Metrics, authenticator: Authenticator, authorizer: Authorizer, config: ApiConfig, mat: Materializer) extends RestController(cc) {
+abstract class Authorization(
+  cc:            ControllerComponents,
+  metrics:       Metrics,
+  authenticator: Authenticator,
+  authorizer:    Authorizer,
+  config:        ApiConfig)(implicit ec: ExecutionContext) extends RestController(cc) {
   /**
     * Use this object to create an authorized action.
     */

@@ -15,13 +15,13 @@ import play.api.mvc.ControllerComponents
 
 import scala.concurrent.ExecutionContext
 
-class ScheduledJobSpecController(cc: ControllerComponents)(
-  implicit
-  val ec: ExecutionContext, jobSpecService: JobSpecService, metrics: Metrics,
-  authenticator: Authenticator,
-  authorizer:    Authorizer,
-  config:        ApiConfig,
-  mat:           Materializer) extends Authorization(cc) {
+class ScheduledJobSpecController(
+  cc:             ControllerComponents,
+  jobSpecService: JobSpecService,
+  metrics:        Metrics,
+  authenticator:  Authenticator,
+  authorizer:     Authorizer,
+  config:         ApiConfig)(implicit ec: ExecutionContext) extends Authorization(cc, metrics, authenticator, authorizer, config) {
 
   import ScheduledJobSpecController._
 

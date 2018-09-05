@@ -1,7 +1,6 @@
 package dcos.metronome
 package api.v1.controllers
 
-import akka.stream.Materializer
 import dcos.metronome.api.v1.models.QueuedJobRunMapWrites
 import dcos.metronome.api.{ ApiConfig, Authorization }
 import dcos.metronome.queue.LaunchQueueService
@@ -11,13 +10,13 @@ import play.api.mvc.ControllerComponents
 
 import scala.concurrent.ExecutionContext
 
-class LaunchQueueController(cc: ControllerComponents)(
-  implicit
-  ec: ExecutionContext, queueService: LaunchQueueService, metrics: Metrics,
+class LaunchQueueController(
+  cc:            ControllerComponents,
+  queueService:  LaunchQueueService,
+  metrics:       Metrics,
   authenticator: Authenticator,
   authorizer:    Authorizer,
-  config:        ApiConfig,
-  mat:           Materializer) extends Authorization(cc) {
+  config:        ApiConfig)(implicit ec: ExecutionContext) extends Authorization(cc, metrics, authenticator, authorizer, config) {
 
   def queue() = measured {
     AuthorizedAction.apply { implicit request =>

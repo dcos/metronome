@@ -10,24 +10,21 @@ import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobId, JobSpec }
 import mesosphere.marathon.plugin.auth._
-import akka.stream.Materializer
 import mesosphere.marathon.metrics.Metrics
-import play.api.mvc._
+import play.api.mvc.{ ControllerComponents, Result }
 
 import scala.async.Async.{ async, await }
 import scala.concurrent.{ ExecutionContext, Future }
 
-class JobSpecController(cc: ControllerComponents)(
-  implicit
-  ec:             ExecutionContext,
+class JobSpecController(
+  cc:             ControllerComponents,
   jobSpecService: JobSpecService,
   jobRunService:  JobRunService,
   jobInfoService: JobInfoService,
   authenticator:  Authenticator,
   authorizer:     Authorizer,
   config:         ApiConfig,
-  mat:            Materializer,
-  metrics:        Metrics) extends Authorization(cc) {
+  metrics:        Metrics)(implicit ec: ExecutionContext) extends Authorization(cc, metrics, authenticator, authorizer, config) {
 
   def createJob = measured {
     AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
@@ -76,8 +73,8 @@ class JobSpecController(cc: ControllerComponents)(
           case runs =>
             val f = for {
               _ <- Future.sequence(runs.map(run => jobRunService.killJobRun(run.jobRun.id)))
-              deleteRes <- jobSpecService.deleteJobSpec(id)
-            } yield Ok(deleteRes)
+              deletedJobSpec <- jobSpecService.deleteJobSpec(id)
+            } yield Ok(deletedJobSpec)
 
             f.recover {
               case JobSpecDoesNotExist(_) => NotFound(UnknownJob(id))

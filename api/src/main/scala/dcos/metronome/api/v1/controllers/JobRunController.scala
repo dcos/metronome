@@ -1,7 +1,6 @@
 package dcos.metronome
 package api.v1.controllers
 
-import akka.stream.Materializer
 import dcos.metronome.api.v1.models._
 import dcos.metronome.api.{ ApiConfig, Authorization, UnknownJob, UnknownJobRun }
 import dcos.metronome.jobrun.JobRunService
@@ -14,14 +13,14 @@ import play.api.mvc.ControllerComponents
 import scala.async.Async.{ async, await }
 import scala.concurrent.ExecutionContext
 
-class JobRunController(cc: ControllerComponents)(
-  implicit
-  ec: ExecutionContext, jobSpecService: JobSpecService,
-  jobRunService: JobRunService, metrics: Metrics,
-  authenticator: Authenticator,
-  authorizer:    Authorizer,
-  config:        ApiConfig,
-  mat:           Materializer) extends Authorization(cc) {
+class JobRunController(
+  cc:             ControllerComponents,
+  jobSpecService: JobSpecService,
+  jobRunService:  JobRunService,
+  metrics:        Metrics,
+  authenticator:  Authenticator,
+  authorizer:     Authorizer,
+  config:         ApiConfig)(implicit ec: ExecutionContext) extends Authorization(cc, metrics, authenticator, authorizer, config) {
 
   def getAllJobRuns = measured {
     AuthorizedAction.async { implicit request =>
