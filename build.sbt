@@ -110,7 +110,8 @@ lazy val metronome = (project in file("."))
     libraryDependencies ++= Seq(
       Dependencies.macWireMacros,
       Dependencies.macWireUtil,
-      Dependencies.macWireProxy
+      Dependencies.macWireProxy,
+      Dependencies.Test.scalatest
     )
   )
 
