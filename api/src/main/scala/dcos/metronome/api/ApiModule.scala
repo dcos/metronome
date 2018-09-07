@@ -16,46 +16,37 @@ import mesosphere.marathon.core.plugin.PluginManager
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
 import play.api.http.HttpErrorHandler
-import play.api.mvc.{ AnyContent, BodyParser }
+import play.api.mvc.ControllerComponents
 import play.api.routing.Router
 import router.Routes
 
 import scala.concurrent.ExecutionContext
 
 class ApiModule(
-  config:             ApiConfig,
-  jobSpecService:     JobSpecService,
-  jobRunService:      JobRunService,
-  jobInfoService:     JobInfoService,
-  pluginManager:      PluginManager,
-  httpErrorHandler:   HttpErrorHandler,
-  assets:             Assets,
-  launchQueueService: LaunchQueueService,
-  actorsModule:       ActorsModule,
-  metricsModule:      MetricsModule,
-  playParsers:        BodyParser[AnyContent])(implicit ec: ExecutionContext) {
+  controllerComponents: ControllerComponents,
+  assets:               Assets,
+  httpErrorHandler:     HttpErrorHandler,
+  config:               ApiConfig,
+  jobSpecService:       JobSpecService,
+  jobRunService:        JobRunService,
+  jobInfoService:       JobInfoService,
+  pluginManager:        PluginManager,
+  launchQueueService:   LaunchQueueService,
+  actorsModule:         ActorsModule,
+  metricsModule:        MetricsModule)(implicit ec: ExecutionContext) {
 
-  lazy val mat = actorsModule.materializer
-
-  lazy val applicationController = wire[ApplicationController]
-
-  lazy val jobsSpecController = wire[JobSpecController]
-
-  lazy val jobRunsController = wire[JobRunController]
-
-  lazy val jobSchedulerController = wire[JobScheduleController]
-
-  lazy val scheduledJobSchedulerController = wire[ScheduledJobSpecController]
-
-  lazy val authModule: AuthModule = wire[AuthModule]
+  lazy val authModule: AuthModule = new AuthModule(pluginManager)
 
   lazy val authorizer: Authorizer = authModule.authorizer
-
   lazy val authenticator: Authenticator = authModule.authenticator
-
   lazy val metrics: Metrics = metricsModule.metrics
 
-  lazy val launchQueueController = wire[LaunchQueueController]
+  lazy val applicationController: ApplicationController = wire[ApplicationController]
+  lazy val jobsSpecController: JobSpecController = wire[JobSpecController]
+  lazy val jobRunsController: JobRunController = wire[JobRunController]
+  lazy val jobSchedulerController: JobScheduleController = wire[JobScheduleController]
+  lazy val scheduledJobSchedulerController: ScheduledJobSpecController = wire[ScheduledJobSpecController]
+  lazy val launchQueueController: LaunchQueueController = wire[LaunchQueueController]
 
   lazy val router: Router = {
     // add the prefix string in local scope for the Routes constructor

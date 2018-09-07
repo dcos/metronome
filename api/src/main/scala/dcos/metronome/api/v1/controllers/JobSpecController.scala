@@ -10,24 +10,21 @@ import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobId, JobSpec }
 import mesosphere.marathon.plugin.auth._
-import JobId._
-import akka.stream.Materializer
 import mesosphere.marathon.metrics.Metrics
-import play.api.mvc.{ AnyContent, BodyParser, Result }
+import play.api.mvc.{ ControllerComponents, Result }
 
 import scala.async.Async.{ async, await }
 import scala.concurrent.{ ExecutionContext, Future }
 
 class JobSpecController(
-  jobSpecService:        JobSpecService,
-  jobRunService:         JobRunService,
-  jobInfoService:        JobInfoService,
-  val metrics:           Metrics,
-  val authenticator:     Authenticator,
-  val authorizer:        Authorizer,
-  val config:            ApiConfig,
-  val mat:               Materializer,
-  val defaultBodyParser: BodyParser[AnyContent])(implicit ec: ExecutionContext) extends Authorization {
+  cc:             ControllerComponents,
+  jobSpecService: JobSpecService,
+  jobRunService:  JobRunService,
+  jobInfoService: JobInfoService,
+  authenticator:  Authenticator,
+  authorizer:     Authorizer,
+  config:         ApiConfig,
+  metrics:        Metrics)(implicit ec: ExecutionContext) extends Authorization(cc, metrics, authenticator, authorizer, config) {
 
   def createJob = measured {
     AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
@@ -69,23 +66,22 @@ class JobSpecController(
 
   def deleteJob(id: JobId, stopCurrentJobRuns: Boolean) = measured {
     AuthorizedAction.async { implicit request =>
-      def deleteJobSpec(jobSpec: JobSpec): Future[Result] = async {
-        val runs = await(jobRunService.activeRuns(id))
-        if (runs.nonEmpty && !stopCurrentJobRuns) {
-          Conflict(ErrorDetail("There are active job runs. Override with stopCurrentJobRuns=true"))
-        } else {
-          await {
-            Future.sequence(runs.map(run => jobRunService.killJobRun(run.jobRun.id))).recover {
-              case _: JobSpecDoesNotExist => NotFound(UnknownJob(id))
+      def deleteJobSpec(jobSpec: JobSpec): Future[Result] = {
+        jobRunService.activeRuns(id).flatMap {
+          case _ :: _ if !stopCurrentJobRuns =>
+            Future.successful(Conflict(ErrorDetail("There are active job runs. Override with stopCurrentJobRuns=true")))
+          case runs =>
+            val f = for {
+              _ <- Future.sequence(runs.map(run => jobRunService.killJobRun(run.jobRun.id)))
+              deletedJobSpec <- jobSpecService.deleteJobSpec(id)
+            } yield Ok(deletedJobSpec)
+
+            f.recover {
+              case JobSpecDoesNotExist(_) => NotFound(UnknownJob(id))
             }
-          }
-          await {
-            jobSpecService.deleteJobSpec(id).map(Ok(_)).recover {
-              case _: JobSpecDoesNotExist => NotFound(UnknownJob(id))
-            }
-          }
         }
       }
+
       async {
         await(jobSpecService.getJobSpec(id)) match {
           case Some(jobSpec) =>

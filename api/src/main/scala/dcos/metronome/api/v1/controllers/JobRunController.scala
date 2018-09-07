@@ -1,7 +1,6 @@
 package dcos.metronome
 package api.v1.controllers
 
-import akka.stream.Materializer
 import dcos.metronome.api.v1.models._
 import dcos.metronome.api.{ ApiConfig, Authorization, UnknownJob, UnknownJobRun }
 import dcos.metronome.jobrun.JobRunService
@@ -9,20 +8,19 @@ import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobId, JobRunId }
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer, UpdateRunSpec, ViewRunSpec }
-import play.api.mvc.{ AnyContent, BodyParser }
+import play.api.mvc.ControllerComponents
 
 import scala.async.Async.{ async, await }
 import scala.concurrent.ExecutionContext
 
 class JobRunController(
-  jobSpecService:        JobSpecService,
-  jobRunService:         JobRunService,
-  val metrics:           Metrics,
-  val authenticator:     Authenticator,
-  val authorizer:        Authorizer,
-  val config:            ApiConfig,
-  val mat:               Materializer,
-  val defaultBodyParser: BodyParser[AnyContent])(implicit ec: ExecutionContext) extends Authorization {
+  cc:             ControllerComponents,
+  jobSpecService: JobSpecService,
+  jobRunService:  JobRunService,
+  metrics:        Metrics,
+  authenticator:  Authenticator,
+  authorizer:     Authorizer,
+  config:         ApiConfig)(implicit ec: ExecutionContext) extends Authorization(cc, metrics, authenticator, authorizer, config) {
 
   def getAllJobRuns = measured {
     AuthorizedAction.async { implicit request =>

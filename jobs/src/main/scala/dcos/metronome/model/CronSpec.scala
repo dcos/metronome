@@ -20,12 +20,12 @@ class CronSpec(val cron: Cron) {
 
   def nextExecution(from: ZonedDateTime): ZonedDateTime = {
     val fromDateTime: ThreeTenZonedDateTime = javaTimeToThreetenTime(from)
-    threetenToJavaTime(executionTime.nextExecution(fromDateTime).get())
+    executionTime.nextExecution(threetenToJavaTime(fromDateTime)).get()
   }
 
   def lastExecution(from: ZonedDateTime): ZonedDateTime = {
     val fromDateTime: ThreeTenZonedDateTime = javaTimeToThreetenTime(from)
-    threetenToJavaTime(executionTime.lastExecution(fromDateTime).get())
+    executionTime.lastExecution(threetenToJavaTime(fromDateTime)).get()
   }
 
   private def threetenToJavaTime(from: ThreeTenZonedDateTime): ZonedDateTime = {

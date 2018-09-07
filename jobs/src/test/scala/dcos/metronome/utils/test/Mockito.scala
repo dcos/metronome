@@ -4,19 +4,19 @@ package utils.test
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.{ Answer, OngoingStubbing }
 import org.mockito.verification.VerificationMode
-import org.mockito.{ Mockito => M }
-import org.scalatest.mock.MockitoSugar
+import org.mockito.{ ArgumentMatchers, Mockito => M }
+import org.scalatest.mockito.MockitoSugar
 
 /**
   * ScalaTest mockito support is quite limited and ugly.
   */
 trait Mockito extends MockitoSugar {
 
-  def eq[T](t: T) = org.mockito.Matchers.eq(t)
-  def any[T] = org.mockito.Matchers.any[T]
-  def anyBoolean = org.mockito.Matchers.anyBoolean
-  def anyString = org.mockito.Matchers.anyString
-  def same[T](value: T) = org.mockito.Matchers.same(value)
+  def eq[T](t: T) = ArgumentMatchers.eq(t)
+  def any[T] = ArgumentMatchers.any[T]
+  def anyBoolean = ArgumentMatchers.anyBoolean
+  def anyString = ArgumentMatchers.anyString
+  def same[T](value: T) = ArgumentMatchers.same(value)
   def verify[T](t: T, mode: VerificationMode = times(1)) = M.verify(t, mode)
   def times(num: Int) = M.times(num)
   def timeout(millis: Int) = M.timeout(millis.toLong)

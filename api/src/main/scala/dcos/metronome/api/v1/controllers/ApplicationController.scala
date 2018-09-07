@@ -8,9 +8,10 @@ import mesosphere.marathon.raml.MetricsConversion._
 import mesosphere.marathon.raml.Raml
 import play.api.http.ContentTypes
 import play.api.libs.json.Json
-import play.api.mvc.Action
+import play.api.mvc.ControllerComponents
 
-class ApplicationController(metricsModule: MetricsModule) extends RestController {
+class ApplicationController(cc: ControllerComponents, metricsModule: MetricsModule)
+    extends RestController(cc) {
 
   def ping = Action { Ok("pong") }
 
@@ -19,7 +20,6 @@ class ApplicationController(metricsModule: MetricsModule) extends RestController
   }
 
   def showMetrics = Action {
-
     val metricsJsonString = metricsModule.snapshot() match {
       case Left(_) =>
         // Kamon snapshot

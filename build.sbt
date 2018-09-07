@@ -1,9 +1,5 @@
-import com.amazonaws.auth.{
-  AWSCredentialsProviderChain,
-  EnvironmentVariableCredentialsProvider,
-  InstanceProfileCredentialsProvider
-}
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+import com.amazonaws.services.s3.model.Region
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import com.typesafe.sbt.SbtScalariform.autoImport._
 import com.typesafe.sbt.packager
@@ -24,7 +20,7 @@ writeVersion := {
 
 lazy val baseSettings = Seq(
   organization := "dcos",
-  scalaVersion := "2.12.4",
+  scalaVersion := "2.12.6",
   crossScalaVersions := Seq(scalaVersion.value),
   scalacOptions in (Compile, doc) ++= Seq(
     "-encoding",
@@ -86,7 +82,7 @@ lazy val publishSettings = Seq(
       .value("Mesosphere Public Repo (S3)", s3("downloads.mesosphere.io/maven"))
   ),
   s3credentials := DefaultAWSCredentialsProviderChain.getInstance(),
-  s3region :=  com.amazonaws.services.s3.model.Region.US_Standard
+  s3region :=  Region.US_Standard
 )
 
 lazy val nativePackageSettings = Seq(

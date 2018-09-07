@@ -1,33 +1,35 @@
-import sbt.Keys.libraryDependencies
 import sbt._
 
 object Dependencies {
   object V {
-    // Test deps versions
     val AsyncAwait = "0.9.7"
     val ScalaTest = "3.0.5"
-    val ScalaCheck = "1.13.4"
-    val MacWire = "2.2.5"
+    val ScalaCheck = "1.14.0"
+    val MacWire = "2.3.1"
     val Marathon = "1.7.50"
     val MarathonPluginInterface = "1.7.50"
-    val Play = "2.6.7"
-    val CronUtils = "6.0.4"
+    val Play = "2.6.18"
+    val PlayJson = "2.6.10"
+    val ScalaTestPlusPlay = "3.1.2"
+    val PlayIteratees = "2.6.1"
+    val CronUtils = "7.0.5"
     val Threeten = "1.3.3"
     val WixAccord = "0.7.1"
-    val Akka = "2.4.20"
-    val Mockito = "2.0.54-beta"
+    val Akka = "2.5.15"
+    val Mockito = "2.21.0"
     val JsonValidate = "0.9.4"
     val TwitterCommons = "0.0.76"
-    val TwitterZk = "6.40.0"
+    val TwitterZk = "18.8.0"
+    val MoultingYaml = "0.4.0"
     val Caffeine = "2.6.2"
   }
 
   val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
-  val iteratees = "com.typesafe.play" %% "play-iteratees" % "2.6.1"
-  val playAhcWS   = "com.typesafe.play" %% "play-ahc-ws" % V.Play
-  val playJson = "com.typesafe.play" %% "play-json" % V.Play
+  val iteratees = "com.typesafe.play" %% "play-iteratees" % V.PlayIteratees
   val playWS = "com.typesafe.play" %% "play-ws" % V.Play
-  val yaml = "net.jcazevedo" %% "moultingyaml" % "0.4.0"
+  val playAhcWS   = "com.typesafe.play" %% "play-ahc-ws" % V.Play
+  val playJson = "com.typesafe.play" %% "play-json" % V.PlayJson
+  val yaml = "net.jcazevedo" %% "moultingyaml" % V.MoultingYaml
   val macWireMacros = "com.softwaremill.macwire" %% "macros" % V.MacWire % "provided"
   val macWireUtil = "com.softwaremill.macwire" %% "util" % V.MacWire
   val macWireProxy = "com.softwaremill.macwire" %% "proxy" % V.MacWire
@@ -45,7 +47,7 @@ object Dependencies {
   object Test {
     val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"
     val scalaCheck = "org.scalacheck" %% "scalacheck" % V.ScalaCheck % "test"
-    val scalatestPlay = "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % "test"
+    val scalatestPlay = "org.scalatestplus.play" %% "scalatestplus-play" % V.ScalaTestPlusPlay % "test"
     val akkaTestKit = "com.typesafe.akka" %%  "akka-testkit" % V.Akka % "test"
     val mockito = "org.mockito" % "mockito-core" % V.Mockito % "test"
   }

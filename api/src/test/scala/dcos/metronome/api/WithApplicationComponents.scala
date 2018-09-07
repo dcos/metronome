@@ -13,7 +13,7 @@ import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.plugin.PluginManager
 import mesosphere.marathon.metrics.dummy.DummyMetricsModule
 import org.scalatest.{ TestData, TestSuite }
-import org.scalatestplus.play.{ OneAppPerTest, OneServerPerSuite, OneServerPerTest }
+import org.scalatestplus.play.guice.{ GuiceOneAppPerTest, GuiceOneServerPerSuite, GuiceOneServerPerTest }
 import play.api.ApplicationLoader.Context
 import play.api.i18n.I18nComponents
 import play.api.routing.Router
@@ -70,7 +70,7 @@ trait WithApplicationComponents[C <: BuiltInComponents] {
 }
 
 trait OneAppPerTestWithComponents[T <: BuiltInComponents]
-    extends OneAppPerTest
+    extends GuiceOneAppPerTest
     with WithApplicationComponents[T] {
   this: TestSuite =>
 
@@ -78,7 +78,7 @@ trait OneAppPerTestWithComponents[T <: BuiltInComponents]
 }
 
 trait OneServerPerTestWithComponents[T <: BuiltInComponents]
-    extends OneServerPerTest
+    extends GuiceOneServerPerTest
     with WithApplicationComponents[T] {
   this: TestSuite =>
 
@@ -86,7 +86,7 @@ trait OneServerPerTestWithComponents[T <: BuiltInComponents]
 }
 
 trait OneServerPerSuiteWithComponents[T <: BuiltInComponents]
-    extends OneServerPerSuite
+    extends GuiceOneServerPerSuite
     with WithApplicationComponents[T] {
   this: TestSuite =>
 
@@ -102,23 +102,14 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
 
   override lazy val httpErrorHandler = new ErrorHandler
 
-  lazy val actorsModule = new ActorsModule(actorSystem)
-
+  lazy val actorsModule: ActorsModule = new ActorsModule(actorSystem)
   lazy val pluginManager: PluginManager = PluginManager.None
-
   lazy val jobSpecService: JobSpecService = JobSpecServiceFixture.simpleJobSpecService()
-
   lazy val jobRunService: JobRunService = JobRunServiceFixture.simpleJobRunService()
-
   lazy val jobHistoryService: JobHistoryService = JobHistoryServiceFixture.simpleHistoryService(Seq.empty)
-
   lazy val jobInfoService: JobInfoService = wire[JobInfoServiceImpl]
-
   lazy val queueService: LaunchQueueService = QueueServiceFixture.simpleQueueService()
-
-  lazy val metricsModule = new DummyMetricsModule()
-
-  lazy val apiModule: ApiModule = wire[ApiModule]
+  lazy val metricsModule: DummyMetricsModule = new DummyMetricsModule()
 
   lazy val config: ApiConfig = new ApiConfig {
     override def leaderProxyTimeout: Duration = 30.seconds
@@ -126,6 +117,8 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
     override def hostname: String = "localhost"
     override def effectivePort: Int = 9000
   }
+
+  lazy val apiModule: ApiModule = wire[ApiModule]
 
   override def router: Router = apiModule.router
 }

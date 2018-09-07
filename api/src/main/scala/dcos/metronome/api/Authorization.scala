@@ -51,41 +51,31 @@ case class AuthorizedRequest[Body](identity: Identity, request: Request[Body], a
   def notAuthorized(): Result = PluginFacade.withResponse(authorizer.handleNotAuthorized(identity, _))
 }
 
-trait Authorization extends RestController {
-
-  def authenticator: Authenticator
-  def authorizer: Authorizer
-  def config: ApiConfig
-  def defaultBodyParser: BodyParser[AnyContent]
-  def metrics: Metrics
-
-  implicit val mat: Materializer
-
-  //play default execution context
-  import play.api.libs.concurrent.Execution.Implicits._
-
+abstract class Authorization(
+  cc:            ControllerComponents,
+  metrics:       Metrics,
+  authenticator: Authenticator,
+  authorizer:    Authorizer,
+  config:        ApiConfig)(implicit ec: ExecutionContext) extends RestController(cc) {
   /**
     * Use this object to create an authorized action.
     */
-  object AuthorizedAction extends AuthorizedActionBuilder {
-    def apply() = new AuthorizedActionBuilder(None)
-    def apply(identity: Identity) = new AuthorizedActionBuilder(Some(identity))
-  }
+  def AuthorizedAction: ActionBuilder[AuthorizedRequest, AnyContent] =
+    Action andThen new AuthorizedActionBuilder()
+  def AuthorizedAction(identity: Identity): ActionBuilder[AuthorizedRequest, AnyContent] =
+    Action andThen new AuthorizedActionBuilder(Some(identity))
 
-  class AuthorizedActionBuilder(authorize: Option[Identity] = None) extends ActionBuilder[AuthorizedRequest, AnyContent] {
+  class AuthorizedActionBuilder(authorize: Option[Identity] = None) extends ActionRefiner[Request, AuthorizedRequest] {
+    override protected def executionContext: ExecutionContext = ec
 
-    def invokeBlock[A](request: Request[A], block: AuthorizedRequest[A] => Future[Result]) = {
+    override protected def refine[A](request: Request[A]): Future[Either[Result, AuthorizedRequest[A]]] = {
       val facade = PluginFacade.withRequest(request, config)
       def notAuthenticated = PluginFacade.withResponse(authenticator.handleNotAuthenticated(facade, _))
-      authenticator.authenticate(facade).flatMap {
-        case Some(identity) => block(AuthorizedRequest(identity, request, authorizer))
-        case None           => Future.successful(notAuthenticated)
+      authenticator.authenticate(facade).map {
+        case Some(identity) => Right(AuthorizedRequest(identity, request, authorizer))
+        case None           => Left(notAuthenticated)
       }
     }
-
-    override def parser: BodyParser[AnyContent] = defaultBodyParser
-
-    override protected def executionContext: ExecutionContext = ExecutionContext.global
   }
 
   private[this] val http1XX = metrics.counter("http.responses.1xx.rate")
