@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory
 import play.api.http.HttpErrorHandler
 import play.api.http.Status._
 import play.api.libs.json.Json
-import play.api.mvc.{RequestHeader, Result, Results}
+import play.api.mvc.{ RequestHeader, Result, Results }
 import play.twirl.api.HtmlFormat
 
 import scala.concurrent.Future
