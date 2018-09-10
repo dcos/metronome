@@ -125,8 +125,9 @@ def test_disable_schedule_recovery_from_master_bounce():
         job_schedule['enabled'] = False
         client.update_schedule(job_id, 'nightly', job_schedule)
 
-        # # bounce master
-        shakedown.restart_master_node()
+        # bounce master
+        metronome_leader = shakedown.master_leader_ip()
+        shakedown.run_command_on_agent(metronome_leader, 'sudo /sbin/shutdown -r now')
         common.wait_for_metronome()
 
         # wait for the next run
