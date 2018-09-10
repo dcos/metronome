@@ -147,7 +147,10 @@ lazy val api = (project in file("api"))
   )
 
 lazy val jobs = (project in file("jobs"))
-  .settings(projectSettings)
+  .settings(version := {
+    import sys.process._
+    ("./version" !!).trim
+  }, projectSettings)
   .settings(pbSettings)
   .settings(
     libraryDependencies ++= Seq(
