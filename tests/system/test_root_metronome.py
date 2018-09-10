@@ -15,6 +15,7 @@ from shakedown import dcos_version_less_than, marthon_version_less_than, require
 from dcos import metronome
 from retrying import retry
 
+# DC/OS 1.8 is when Metronome was added.  Skip prior clusters
 pytestmark = [pytest.mark.skipif("shakedown.dcos_version_less_than('1.8')")]
 
 
@@ -265,7 +266,7 @@ def test_secret_env_var(secret_fixture):
 
 
 @common.masters_exact(1)
-@pytest.mark.skip(reason="we need to wait until METRONOME-100 gets to testing/master")
+@shakedown.dcos_1_11
 def test_metronome_shutdown_with_no_extra_tasks():
     """ Test for METRONOME-100 regression
         When Metronome is restarted it incorrectly started another task for already running job run task.
