@@ -134,13 +134,13 @@ def jenkins(): Unit = {
     asPullRequest {
       val version = build()
       // Uploads
-      println("Built package with version $version")
-      val artifact = uploadTarballToS3("builds/$version")
+      println(s"Built package with version $version")
+      val artifact = uploadTarballToS3(s"builds/$version")
       (version, artifact)
     }
   } else {
     val version = build()
-    uploadTarballToS3("builds/$version")
+    uploadTarballToS3(s"builds/$version")
   }
 }
 
