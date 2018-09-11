@@ -16,8 +16,9 @@ ansiColor('gnome-terminal') {
         try {
             checkout scm
             withCredentials(
-            [ [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'mesosphere-ci-marathon', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
-              [$class: 'FileBinding', credentialsId: '11fcc957-5156-4470-ae34-d433da88248a', variable: 'DOT_SHAKEDOWN']
+                usernamePassword(credentialsId: 'a7ac7f84-64ea-4483-8e66-bb204484e58f', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USER'),
+                string(credentialsId: '3f0dbb48-de33-431f-b91c-2366d2f0e1cf',variable: 'AWS_ACCESS_KEY_ID'),
+                string(credentialsId: 'f585ec9a-3c38-4f67-8bdb-79e5d4761937',variable: 'AWS_SECRET_ACCESS_KEY')
             ]) {
                 sh "bin/install-protobuf.sh"
                 sh "sudo PATH=\$PATH:\$HOME/protobuf/bin ci/pipeline jenkins"
