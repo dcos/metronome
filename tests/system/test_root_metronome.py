@@ -279,8 +279,6 @@ def test_metronome_shutdown_with_no_extra_tasks():
         common.assert_job_run(client, job_id)
 
         # restart metronome process
-        # this won't work in multi-master setup if the mesos leader is not the same as metronome leader
-        # we can improve this one there is a good way how to get metronome leader from the system (e.g. info endpoint)
         common.run_command_on_metronome_leader('sudo systemctl restart dcos-metronome')
         common.wait_for_metronome()
 
