@@ -32,7 +32,7 @@ node('py36') {
             slackSend(
                 message: "(;¬_¬) SI tests for Metronome (Permissive) failed in build `${env.BUILD_NUMBER}`. (<${env.BUILD_URL}|Open>)",
                 color: "danger",
-                channel: "#metronome",
+                channel: "#metronome-internal",
                 tokenCredentialId: "4a6636e5-452e-41d2-aea3-9f28448196f3")
         } finally {
             junit allowEmptyResults: true, testResults: 'shakedown.xml'
