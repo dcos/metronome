@@ -10,6 +10,7 @@ import time
 import pytest
 
 from dcos import metronome, packagemanager, cosmos
+from dcos.errors import DCOSException
 from json.decoder import JSONDecodeError
 from retrying import retry
 
