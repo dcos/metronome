@@ -15,8 +15,13 @@ ansiColor('gnome-terminal') {
       stage('Run Pipeline') {
         try {
             checkout scm
-            sh "bin/install-protobuf.sh"
-            sh "sudo PATH=\$PATH:\$HOME/protobuf/bin ci/pipeline jenkins"
+            withCredentials(
+            [ [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'mesosphere-ci-marathon', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
+              [$class: 'FileBinding', credentialsId: '11fcc957-5156-4470-ae34-d433da88248a', variable: 'DOT_SHAKEDOWN']
+            ]) {
+                sh "bin/install-protobuf.sh"
+                sh "sudo PATH=\$PATH:\$HOME/protobuf/bin ci/pipeline jenkins"
+            }
         } finally {
             junit(allowEmptyResults: true, testResults: 'target/test-reports/*.xml')
             junit(allowEmptyResults: true, testResults: 'tests/integration/target/test-reports/*.xml')
