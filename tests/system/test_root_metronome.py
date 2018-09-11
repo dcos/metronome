@@ -265,7 +265,6 @@ def test_secret_env_var(secret_fixture):
         job_run_has_secret()
 
 
-@common.masters_exact(1)
 @shakedown.dcos_1_11
 def test_metronome_shutdown_with_no_extra_tasks():
     """ Test for METRONOME-100 regression
@@ -282,8 +281,7 @@ def test_metronome_shutdown_with_no_extra_tasks():
         # restart metronome process
         # this won't work in multi-master setup if the mesos leader is not the same as metronome leader
         # we can improve this one there is a good way how to get metronome leader from the system (e.g. info endpoint)
-        metronome_leader = shakedown.master_leader_ip()
-        shakedown.run_command_on_agent(metronome_leader, 'sudo systemctl restart dcos-metronome')
+        common.run_command_on_metronome_leader('sudo systemctl restart dcos-metronome')
         common.wait_for_metronome()
 
         # verify that no extra job runs were started when Metronome was restarted
