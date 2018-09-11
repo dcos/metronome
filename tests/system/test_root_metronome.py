@@ -125,8 +125,8 @@ def test_disable_schedule_recovery_from_master_bounce():
         job_schedule['enabled'] = False
         client.update_schedule(job_id, 'nightly', job_schedule)
 
-        # # bounce master
-        shakedown.restart_master_node()
+        # bounce metronome master
+        common.run_command_on_metronome_leader('sudo /sbin/shutdown -r now')
         common.wait_for_metronome()
 
         # wait for the next run
@@ -279,8 +279,6 @@ def test_metronome_shutdown_with_no_extra_tasks():
         common.assert_job_run(client, job_id)
 
         # restart metronome process
-        # this won't work in multi-master setup if the mesos leader is not the same as metronome leader
-        # we can improve this one there is a good way how to get metronome leader from the system (e.g. info endpoint)
         common.run_command_on_metronome_leader('sudo systemctl restart dcos-metronome')
         common.wait_for_metronome()
 
