@@ -34,6 +34,10 @@ lazy val packagingSettings = Seq(
   })
 
 lazy val baseSettings = Seq(
+  version := {
+    import sys.process._
+    ("./version" !!).trim
+  },
   organization := "dcos",
   scalaVersion := "2.12.6",
   crossScalaVersions := Seq(scalaVersion.value),
@@ -118,6 +122,7 @@ lazy val metronome = (project in file("."))
   .enablePlugins(UniversalDeployPlugin)
   .settings(projectSettings)
   .settings(nativePackageSettings)
+  .settings(packagingSettings)
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.macWireMacros,
