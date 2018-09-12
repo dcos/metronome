@@ -48,6 +48,7 @@ lazy val baseSettings = Seq(
     "-deprecation",
     "-feature",
     "-unchecked",
+    "-Xfatal-warnings",
     "-Xlog-reflective-calls",
     "-Xlint",
     "-Yno-adapted-args",
