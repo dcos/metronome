@@ -86,6 +86,22 @@ def get_private_ip():
             return agent
 
 
+def run_command_on_metronome_leader(
+    command,
+    username=None,
+    key_path=None,
+    noisy=True
+    ):
+    """ Run a command on the Metronome leader
+    """
+
+    return shakedown.run_command(metronome_leader_ip(), command, username, key_path, noisy)
+
+
+def metronome_leader_ip():
+    return shakedown.dcos_dns_lookup('metronome.mesos')[0]['ip']
+
+
 def constraints(name, operator, value=None):
     constraints = [name, operator]
     if value is not None:

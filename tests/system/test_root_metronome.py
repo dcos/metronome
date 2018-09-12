@@ -15,6 +15,7 @@ from shakedown import dcos_version_less_than, marthon_version_less_than, require
 from dcos import metronome
 from retrying import retry
 
+# DC/OS 1.8 is when Metronome was added.  Skip prior clusters
 pytestmark = [pytest.mark.skipif("shakedown.dcos_version_less_than('1.8')")]
 
 
@@ -124,8 +125,8 @@ def test_disable_schedule_recovery_from_master_bounce():
         job_schedule['enabled'] = False
         client.update_schedule(job_id, 'nightly', job_schedule)
 
-        # # bounce master
-        shakedown.restart_master_node()
+        # bounce metronome master
+        common.run_command_on_metronome_leader('sudo /sbin/shutdown -r now')
         common.wait_for_metronome()
 
         # wait for the next run
@@ -264,8 +265,7 @@ def test_secret_env_var(secret_fixture):
         job_run_has_secret()
 
 
-@common.masters_exact(1)
-@pytest.mark.skip(reason="we need to wait until METRONOME-100 gets to testing/master")
+@shakedown.dcos_1_11
 def test_metronome_shutdown_with_no_extra_tasks():
     """ Test for METRONOME-100 regression
         When Metronome is restarted it incorrectly started another task for already running job run task.
@@ -279,10 +279,7 @@ def test_metronome_shutdown_with_no_extra_tasks():
         common.assert_job_run(client, job_id)
 
         # restart metronome process
-        # this won't work in multi-master setup if the mesos leader is not the same as metronome leader
-        # we can improve this one there is a good way how to get metronome leader from the system (e.g. info endpoint)
-        metronome_leader = shakedown.master_leader_ip()
-        shakedown.run_command_on_agent(metronome_leader, 'sudo systemctl restart dcos-metronome')
+        common.run_command_on_metronome_leader('sudo systemctl restart dcos-metronome')
         common.wait_for_metronome()
 
         # verify that no extra job runs were started when Metronome was restarted
