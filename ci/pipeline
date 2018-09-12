@@ -136,11 +136,15 @@ def jenkins(): Unit = {
       // Uploads
       println(s"Built package with version $version")
       val artifact = uploadTarballToS3(s"builds/$version")
+      run("ci/upgrade.sc", "updateMetronome", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+      run("ci/upgrade.sc", "updateMetronomeEE", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
       (version, artifact)
     }
   } else {
     val version = build()
-    uploadTarballToS3(s"builds/$version")
+    val maybeArtifact = uploadTarballToS3(s"builds/$version")
+    run("ci/upgrade.sc", "updateMetronome", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+    run("ci/upgrade.sc", "updateMetronomeEE", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
   }
 }
 
