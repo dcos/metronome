@@ -9,6 +9,9 @@ PLATFORM=`uname`
 echo $PLATFORM
 if [ "$PLATFORM" == 'Darwin' ]; then
    DOWNLOAD_URL="https://github.com/google/protobuf/releases/download/v$VERSION/protoc-$VERSION-osx-x86_64.zip"
+else
+    # mac OS has this already pre-installed
+    sudo apt-get install unzip
 fi
 if [ ! -d "$HOME/protobuf" ]; then
   curl -L -o protoc.zip ${DOWNLOAD_URL}

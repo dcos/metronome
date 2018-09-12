@@ -18,7 +18,26 @@ writeVersion := {
   s.log.info(s"Wrote version ${version.value} to ${file}")
 }
 
+/**
+  * The documentation for sbt-native-package can be foound here:	   * The documentation for sbt-native-package can be foound here:
+  * - General, non-vendor specific settings (such as launch script):	   * - General, non-vendor specific settings (such as launch script):
+  *     http://sbt-native-packager.readthedocs.io/en/latest/archetypes/java_app/index.html#usage	   *     http://sbt-native-packager.readthedocs.io/en/latest/archetypes/java_app/index.html#usage
+  *	   *
+  * - Linux packaging settings	   * - Linux packaging settings
+  *     http://sbt-native-packager.readthedocs.io/en/latest/archetypes/java_app/index.html#usage	   *     http://sbt-native-packager.readthedocs.io/en/latest/archetypes/java_app/index.html#usage
+  */
+lazy val packagingSettings = Seq(
+  (packageName in Universal) := {
+    import sys.process._
+    val shortCommit = ("./version commit" !!).trim
+    s"${packageName.value}-${version.value}-$shortCommit"
+  })
+
 lazy val baseSettings = Seq(
+  version := {
+    import sys.process._
+    ("./version" !!).trim
+  },
   organization := "dcos",
   scalaVersion := "2.12.6",
   crossScalaVersions := Seq(scalaVersion.value),
@@ -29,7 +48,6 @@ lazy val baseSettings = Seq(
     "-deprecation",
     "-feature",
     "-unchecked",
-    "-Xfatal-warnings",
     "-Xlog-reflective-calls",
     "-Xlint",
     "-Yno-adapted-args",
@@ -103,6 +121,7 @@ lazy val metronome = (project in file("."))
   .enablePlugins(UniversalDeployPlugin)
   .settings(projectSettings)
   .settings(nativePackageSettings)
+  .settings(packagingSettings)
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.macWireMacros,
@@ -148,7 +167,10 @@ lazy val api = (project in file("api"))
   )
 
 lazy val jobs = (project in file("jobs"))
-  .settings(projectSettings)
+  .settings(version := {
+    import sys.process._
+    ("./version" !!).trim
+  }, projectSettings)
   .settings(pbSettings)
   .settings(
     libraryDependencies ++= Seq(

@@ -55,7 +55,7 @@ def zipSandboxLogs(logFileName: String = "ci.log"): Unit = {
  * @param buildLocation subfolder location to upload tarball to. Example: "builds", "release"
  * @return Artifact description if it was uploaded.
  */
-def uploadTarballToS3(version: String, buildLocation: String): Option[awsClient.Artifact] = utils.stage("Upload Packages") {
+def uploadTarballToS3(buildLocation: String): Option[awsClient.Artifact] = utils.stage("Upload Packages") {
   import scala.collection.breakOut
 
   PACKAGE_DIR.toIO.listFiles.filter(f => f.getName.endsWith(".tgz"))
@@ -69,27 +69,14 @@ def uploadTarballToS3(version: String, buildLocation: String): Option[awsClient.
  * @return version of build.
  */
 @main
-def createPackages(): String = utils.stage("Package") {
-  %%('sbt, "universal:packageZipTarball", "writeVersion")
-  val result = read.lines! pwd/'target/"version.txt"
-  // Regex is for version:
-  // starting with random chars, match $number$dot$number$dot$number followed by optional alpha numberic chars plus `-`
-  // ending with random characters
-  // we need to regex this string because we do have colored output in the `sbt version` command
-  val versionLineRegex = "^.*(\\d+\\.\\d+\\.\\d+).*$".r
+def createPackages(): utils.SemVer = utils.stage("Package") {
+  val result = %%('sbt, "universal:packageZipTarball")
 
-  // Nothing is what it seems. This is a poor man's way to extract the version
-  // from sbt's console output until we run our Ammonite scripts in sbt.
+  val version = %%("./version").out.string.trim
+  val gitSha = %%("./version", "commit").out.string.trim
 
-
-  val version = result.last match {
-    case versionLineRegex(v) => v
-    case _ =>
-        val commit = %%('git, "log", "--pretty=format:%h", "-n1").out.lines.last
-        s"unknown version in commit $commit"
-  }
   println(s"Built tarballs for Metronome $version.")
-  version
+  utils.SemVer(version, gitSha)
 }
 
 /**
@@ -102,7 +89,7 @@ def createPackages(): String = utils.stage("Package") {
  * The pipeline target for GitHub pull request builds. It wraps other targets
  * and does some additional reporting to GitHub.
  */
-def asPullRequest(run: => (String, Option[awsClient.Artifact])): Unit = {
+def asPullRequest(run: => (utils.SemVer, Option[awsClient.Artifact])): Unit = {
   val pullNumber: String = sys.env.getOrElse("CHANGE_ID", throw new IllegalArgumentException("No CHANGE_ID was defined."))
   val buildUrl: String = sys.env.getOrElse("BUILD_URL", throw new IllegalArgumentException("No BUILD_URL was defined."))
   val buildTag: String = sys.env.getOrElse("BUILD_TAG", "here")
@@ -124,7 +111,7 @@ def asPullRequest(run: => (String, Option[awsClient.Artifact])): Unit = {
  * @return Version and artifact description of Metronome build.
  */
 @main
-def build(): String = {
+def build(): utils.SemVer = {
 
   val logFileName = s"ci-${sys.env.getOrElse("BUILD_TAG", "run")}.log"
   try {
@@ -147,12 +134,13 @@ def jenkins(): Unit = {
     asPullRequest {
       val version = build()
       // Uploads
-      val artifact = uploadTarballToS3(version, "builds")
+      println(s"Built package with version $version")
+      val artifact = uploadTarballToS3(s"builds/$version")
       (version, artifact)
     }
   } else {
     val version = build()
-    uploadTarballToS3(version, "builds")
+    uploadTarballToS3(s"builds/$version")
   }
 }
 
@@ -175,15 +163,13 @@ def jenkins(): Unit = {
 @main
 def release(requestVersion: String, gitSha: String): Unit = {
 
-  val tagVersion = s"v$requestVersion"
-
   println(s"Releasing version: $requestVersion")
   %('git, "checkout", gitSha)
 
   val version = build()
-  if(version != requestVersion) {
+  if(version.toString() != requestVersion) {
     throw new IllegalStateException(s"Build version: $version does NOT match requested version: $requestVersion")
   }
 
-  uploadTarballToS3(version, s"releases/$version")
+  uploadTarballToS3(s"releases/$version")
 }
