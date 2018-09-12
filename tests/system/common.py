@@ -86,11 +86,7 @@ def get_private_ip():
             return agent
 
 
-def run_command_on_metronome_leader(
-    command,
-    username=None,
-    key_path=None,
-    noisy=True):
+def run_command_on_metronome_leader(command, username=None, key_path=None, noisy=True):
     """ Run a command on the Metronome leader
     """
 
