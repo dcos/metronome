@@ -1,7 +1,6 @@
 package dcos.metronome
 package api
 
-import akka.stream.Materializer
 import akka.util.ByteString
 import dcos.metronome.jobinfo.JobSpecSelector
 import dcos.metronome.jobrun.StartedJobRun
