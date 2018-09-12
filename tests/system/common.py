@@ -90,7 +90,7 @@ def run_command_on_metronome_leader(
     command,
     username=None,
     key_path=None,
-        noisy=True):
+    noisy=True):
     """ Run a command on the Metronome leader
     """
 
