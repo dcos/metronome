@@ -6,8 +6,7 @@ import java.util.concurrent.Executors
 
 import akka.actor.{ ActorRefFactory, ActorSystem, Cancellable }
 import akka.event.EventStream
-import akka.stream.OverflowStrategy
-import akka.stream.scaladsl.{ Sink, Source }
+import akka.stream.scaladsl.Source
 import dcos.metronome.repository.SchedulerRepositoriesModule
 import dcos.metronome.scheduler.impl.{ NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor, SchedulerServiceImpl }
 import mesosphere.marathon._
@@ -33,7 +32,6 @@ import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.storage.repository.InstanceRepository
 import mesosphere.marathon.stream.EnrichedFlow
 import mesosphere.util.state._
-import org.apache.mesos.Protos.Offer
 
 import scala.concurrent.ExecutionContext
 import scala.util.Random

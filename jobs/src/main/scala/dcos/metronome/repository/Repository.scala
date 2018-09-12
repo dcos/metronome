@@ -1,9 +1,6 @@
 package dcos.metronome
 package repository
 
-import dcos.metronome.PersistenceFailed
-import mesosphere.marathon.StoreCommandFailedException
-
 import scala.concurrent.Future
 
 /**
