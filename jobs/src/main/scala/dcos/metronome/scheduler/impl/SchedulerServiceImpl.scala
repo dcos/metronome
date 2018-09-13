@@ -3,7 +3,6 @@ package scheduler.impl
 
 import java.util.concurrent.CountDownLatch
 
-import akka.util.Timeout
 import dcos.metronome.migration.Migration
 import dcos.metronome.scheduler.{ PeriodicOperations, PrePostDriverCallback, SchedulerConfig, SchedulerService }
 import mesosphere.marathon.core.election.{ ElectionCandidate, ElectionService }
@@ -13,7 +12,6 @@ import mesosphere.marathon.core.storage.store.PersistenceStore
 import org.apache.mesos.SchedulerDriver
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
 import scala.util.Failure
 
@@ -35,8 +33,7 @@ private[scheduler] class SchedulerServiceImpl(
 
   private[this] val log = LoggerFactory.getLogger(getClass.getName)
 
-  implicit private[this] val zkTimeout = config.zkTimeout
-  implicit private[this] val timeout: Timeout = 5.seconds
+  private[this] val zkTimeout = config.zkTimeout
 
   private[this] val isRunningLatch = new CountDownLatch(1)
 
@@ -126,7 +123,7 @@ private[scheduler] class SchedulerServiceImpl(
         electionService.abdicateLeadership()
 
         log.info(s"Call postDriverRuns callbacks on ${prePostDriverCallbacks.mkString(", ")}")
-        Await.result(Future.sequence(prePostDriverCallbacks.map(_.postDriverTerminates)), config.zkTimeout)
+        Await.result(Future.sequence(prePostDriverCallbacks.map(_.postDriverTerminates)), zkTimeout)
         log.info(s"Finished postDriverRuns callbacks")
       }
     }

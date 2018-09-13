@@ -11,7 +11,6 @@ import mesosphere.marathon.{ Protos, StoreCommandFailedException }
 
 import org.apache.zookeeper.KeeperException
 import org.apache.zookeeper.KeeperException.{ NoNodeException, NodeExistsException }
-import org.slf4j.LoggerFactory
 import ZKStore._
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
@@ -21,7 +20,7 @@ case class CompressionConf(enabled: Boolean, sizeLimit: Long)
 class ZKStore(val client: ZkClient, root: ZNode, compressionConf: CompressionConf) extends PersistentStore
     with PersistentStoreManagement with PersistentStoreWithNestedPathsSupport {
 
-  private[this] implicit val ec = ExecutionContext.Implicits.global
+  private[this] implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
 
   /**
     * Fetch data and return entity.

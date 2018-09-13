@@ -2,7 +2,6 @@ package dcos.metronome
 package repository
 
 import akka.actor.{ Actor, ActorLogging, Stash }
-import com.google.protobuf.InvalidProtocolBufferException
 import mesosphere.marathon.StoreCommandFailedException
 import org.apache.zookeeper.KeeperException.NoNodeException
 

@@ -66,7 +66,7 @@ class EntityStoreCache[T <: MarathonState[_, T]](store: EntityStore[T])
         cache.remove(key)
         onSuccess()
       }
-      store.expunge(key, onExpunged)
+      store.expunge(key, () => onExpunged())
     }
 
   /**

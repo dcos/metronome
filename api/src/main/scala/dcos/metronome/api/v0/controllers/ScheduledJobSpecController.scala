@@ -1,7 +1,6 @@
 package dcos.metronome
 package api.v0.controllers
 
-import akka.stream.Materializer
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
 import dcos.metronome.jobspec.JobSpecService

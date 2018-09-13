@@ -8,10 +8,9 @@ import mesosphere.marathon
 import mesosphere.marathon.core.health.HealthCheck
 import mesosphere.marathon.core.readiness.ReadinessCheck
 import mesosphere.marathon.raml.Resources
-import mesosphere.marathon.state.{ AppDefinition, BackoffStrategy, Container, FetchUri, HostVolume, PathId, PortDefinition, RunSpec, Secret, UpgradeStrategy, VersionInfo, VolumeMount }
+import mesosphere.marathon.state.{ AppDefinition, BackoffStrategy, Container, FetchUri, HostVolume, PathId, PortDefinition, RunSpec, UpgradeStrategy, VersionInfo, VolumeMount }
 
 import scala.concurrent.duration._
-import scala.language.implicitConversions
 
 /**
   * Temporary object containing implicit conversions to and from Marathon code. Should be removed eventually.
