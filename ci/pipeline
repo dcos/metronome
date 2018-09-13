@@ -127,6 +127,9 @@ def build(logFileName: String): utils.SemVer = {
  */
 @main
 def jenkins(): Unit = {
+
+  def run(cmd: String *) = utils.runWithTimeout(30.minutes, logFileName)(cmd)
+
   if(utils.isPullRequest) {
     asPullRequest {
       val version = build(logFileName)
