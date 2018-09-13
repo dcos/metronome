@@ -250,13 +250,13 @@ def test_secret_env_var(secret_fixture):
     client = metronome.create_client()
     job_id = uuid.uuid4().hex
     job_def = common.job_with_secrets(job_id, secret_name=secret_name)
+
     with job(job_def):
-        client.run_job(job_id)
+        run_id = client.run_job(job_id)['id']
+        common.wait_for_job_started(job_id, run_id, timeout=timedelta(minutes=5).total_seconds())
 
         @retry(wait_fixed=1000, stop_max_delay=5000)
         def job_run_has_secret():
-            assert len(client.get_runs(job_id)) == 1, "triggered job should be running"
-            run_id = client.get_runs(job_id)[0]['id']
             stdout, stderr, return_code = shakedown.run_dcos_command("task log {} secret-env".format(run_id))
             logged_secret = stdout.rstrip()
             assert secret_value == logged_secret, ("secret value in stdout log incorrect or missing. "
