@@ -17,14 +17,14 @@ import $file.utils
 
 val PACKAGE_DIR: Path = pwd / 'target / 'universal
 
+val logFileName = s"ci-${sys.env.getOrElse("BUILD_TAG", "run")}.log"
+def run(cmd: String *) = utils.runWithTimeout(1.hour, logFileName)(cmd)
+
 /**
  * Compile Metronome and run unit.
  */
 @main
 def compileAndTest(logFileName: String): Unit = utils.stage("Compile and Test") {
-
-  def run(cmd: String *) = utils.runWithTimeout(1.hour, logFileName)(cmd)
-
   run("sbt", "clean", "test")
 
   checkSystemIntegrationTests(logFileName)
@@ -32,7 +32,6 @@ def compileAndTest(logFileName: String): Unit = utils.stage("Compile and Test") 
 
 @main
 def checkSystemIntegrationTests(logFileName: String): Unit = {
-  def run(cmd: String *) = utils.runWithTimeout(30.minutes, logFileName)(cmd)
   run("flake8", "--count", "--max-line-length=120", "tests/system")
 }
 
@@ -111,9 +110,7 @@ def asPullRequest(run: => (utils.SemVer, Option[awsClient.Artifact])): Unit = {
  * @return Version and artifact description of Metronome build.
  */
 @main
-def build(): utils.SemVer = {
-
-  val logFileName = s"ci-${sys.env.getOrElse("BUILD_TAG", "run")}.log"
+def build(logFileName: String): utils.SemVer = {
   try {
     compileAndTest(logFileName)
   } finally {
@@ -132,19 +129,23 @@ def build(): utils.SemVer = {
 def jenkins(): Unit = {
   if(utils.isPullRequest) {
     asPullRequest {
-      val version = build()
+      val version = build(logFileName)
       // Uploads
       println(s"Built package with version $version")
-      val artifact = uploadTarballToS3(s"builds/$version")
-      run("ci/upgrade.sc", "updateMetronome", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
-      run("ci/upgrade.sc", "updateMetronomeEE", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
-      (version, artifact)
+      val maybeArtifact = uploadTarballToS3(s"builds/$version")
+      maybeArtifact.foreach { artifact =>
+          run("ci/upgrade.sc", "updateMetronome", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+          run("ci/upgrade.sc", "updateMetronomeEE", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+      }
+      (version, maybeArtifact)
     }
   } else {
-    val version = build()
+    val version = build(logFileName)
     val maybeArtifact = uploadTarballToS3(s"builds/$version")
-    run("ci/upgrade.sc", "updateMetronome", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
-    run("ci/upgrade.sc", "updateMetronomeEE", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+    maybeArtifact.foreach { artifact =>
+        run("ci/upgrade.sc", "updateMetronome", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+        run("ci/upgrade.sc", "updateMetronomeEE", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+    }
   }
 }
 
@@ -170,7 +171,7 @@ def release(requestVersion: String, gitSha: String): Unit = {
   println(s"Releasing version: $requestVersion")
   %('git, "checkout", gitSha)
 
-  val version = build()
+  val version = build(logFileName)
   if(version.toString() != requestVersion) {
     throw new IllegalStateException(s"Build version: $version does NOT match requested version: $requestVersion")
   }
