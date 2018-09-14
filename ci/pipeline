@@ -14,6 +14,7 @@ import $file.awsClient
 import $file.fileUtil
 import $file.githubClient
 import $file.utils
+import $file.upgrade
 
 val PACKAGE_DIR: Path = pwd / 'target / 'universal
 
@@ -136,9 +137,11 @@ def jenkins(): Unit = {
       // Uploads
       println(s"Built package with version $version")
       val maybeArtifact = uploadTarballToS3(s"builds/$version")
-      maybeArtifact.foreach { artifact =>
-          run("ci/upgrade.sc", "updateMetronome", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
-          run("ci/upgrade.sc", "updateMetronomeEE", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+      utils.stage("Update DCOS PR") {
+          maybeArtifact.foreach { artifact =>
+              upgrade.updateMetronome(artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+              upgrade.updateMetronomeEE(artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+          }
       }
       (version, maybeArtifact)
     }
