@@ -121,6 +121,11 @@ def build(logFileName: String): utils.SemVer = {
   version
 }
 
+def updateDcos(artifact: awsClient.Artifact, version: utils.SemVer) = utils.stage("Package") {
+  upgrade.updateMetronome(artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+  upgrade.updateMetronomeEE(artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+}
+
 /**
  * The main pipeline target for builds on Jenkins.
  *
@@ -137,22 +142,16 @@ def jenkins(): Unit = {
       // Uploads
       println(s"Built package with version $version")
       val maybeArtifact = uploadTarballToS3(s"builds/$version")
-      utils.stage("Update DCOS PR") {
-          maybeArtifact.foreach { artifact =>
-              upgrade.updateMetronome(artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
-              upgrade.updateMetronomeEE(artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
-          }
+      maybeArtifact.foreach { artifact =>
+          updateDcos(artifact, version)
       }
       (version, maybeArtifact)
     }
   } else {
     val version = build(logFileName)
     val maybeArtifact = uploadTarballToS3(s"builds/$version")
-    utils.stage("Update DCOS PR") {
-          maybeArtifact.foreach { artifact =>
-              upgrade.updateMetronome(artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
-              upgrade.updateMetronomeEE(artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
-          }
+    maybeArtifact.foreach { artifact =>
+          updateDcos(artifact, version)
       }
   }
 }
