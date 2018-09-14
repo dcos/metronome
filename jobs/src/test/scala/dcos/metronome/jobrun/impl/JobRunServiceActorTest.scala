@@ -1,20 +1,20 @@
 package dcos.metronome
 package jobrun.impl
 
+import java.time.{ Clock, LocalDateTime, ZoneOffset }
 import java.util.concurrent.LinkedBlockingDeque
 
 import akka.actor.{ ActorSystem, Props }
 import akka.testkit._
-import dcos.metronome.behavior.BehaviorFixture
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.jobrun.impl.JobRunExecutorActor.{ Aborted, Finished }
 import dcos.metronome.jobrun.impl.JobRunServiceActor._
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.InMemoryRepository
 import dcos.metronome.utils.test.Mockito
-import dcos.metronome.utils.time.FixedClock
 import mesosphere.marathon.core.task.Task
-import org.joda.time.DateTime
+import mesosphere.marathon.metrics.Metrics
+import mesosphere.marathon.metrics.dummy.DummyMetrics
 import org.scalatest._
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 
@@ -211,10 +211,10 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     val jobSpec = JobSpec(id)
     val forbidSchedule = ScheduleSpec("schedule", CronSpec("* * * * *"), ScheduleSpec.DefaultTimeZone, ScheduleSpec.DefaultStartingDeadline, ConcurrencyPolicy.Forbid)
 
-    val clock = new FixedClock(DateTime.parse("2016-06-01T08:50:12.000Z"))
+    val clock = new SettableClock(Clock.fixed(LocalDateTime.parse("2016-06-01T08:50:12.000").toInstant(ZoneOffset.UTC), ZoneOffset.UTC))
 
     def run() = {
-      val jobRun = new JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Active, clock.now(), None, None, Map.empty[Task.Id, JobRunTask])
+      val jobRun = JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Active, clock.instant(), None, None, Map.empty[Task.Id, JobRunTask])
       StartedJobRun(jobRun, Future.successful(JobResult(jobRun)))
     }
     val run1 = run()
@@ -223,9 +223,9 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     val dummyQueue = new LinkedBlockingDeque[TestActor.Message]()
     val dummyProp = Props(new TestActor(dummyQueue))
     val repo = new InMemoryRepository[JobRunId, JobRun]
-    val behavior = BehaviorFixture.empty
+    val metrics = DummyMetrics
 
-    var createExecutor: (JobRun, Promise[JobResult]) => Props = (_, _) => dummyProp
-    def serviceActor = TestActorRef[JobRunServiceActor](JobRunServiceActor.props(clock, createExecutor, repo, behavior))
+    val createExecutor: (JobRun, Promise[JobResult]) => Props = (_, _) => dummyProp
+    def serviceActor = TestActorRef[JobRunServiceActor](JobRunServiceActor.props(clock, createExecutor, repo, metrics))
   }
 }

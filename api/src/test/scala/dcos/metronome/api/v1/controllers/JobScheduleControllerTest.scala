@@ -5,6 +5,8 @@ import java.time.{ Clock, Instant, ZoneOffset }
 
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
+import dcos.metronome.jobspec.JobSpecService
+import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import dcos.metronome.model._
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
@@ -32,6 +34,26 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       status(response) mustBe CREATED
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe schedule1Json
+    }
+
+    "create a job schedule with timezone" in {
+      Given("A job")
+      route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
+
+      When("A Schedule is created")
+      val scheduleJson = Json.parse("""{
+                                      |    "id": "everyminute",
+                                      |    "cron": "* * * * *",
+                                      |    "concurrencyPolicy": "ALLOW",
+                                      |    "enabled": true,
+                                      |    "startingDeadlineSeconds": 60,
+                                      |    "timezone": "America/Chicago"
+                                      |  }""".stripMargin)
+      val response = route(app, FakeRequest(POST, s"/v1/jobs/$specId/schedules")
+        .withJsonBody(scheduleJson)).get
+
+      Then("The schedule is created")
+      (contentAsJson(response) \ "timezone").as[String] mustBe "America/Chicago"
     }
 
     "create a job schedule using the forbid concurrencyPolicy" in {
@@ -118,6 +140,21 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
 
       Then("a forbidden response is send")
       status(unauthorized) mustBe FORBIDDEN
+    }
+
+    // regression of METRONOME-236
+    "end with validation error for invalid cron" in {
+      Given("A job")
+      route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
+
+      When("Invalid schedule is sent")
+      val invalid = schedule2Json.as[JsObject] ++ Json.obj("cron" -> "0 0 31 2 *")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs/$specId/schedules").withJsonBody(invalid)).get
+
+      Then("A validation problem is indicated")
+      status(response) mustBe UNPROCESSABLE_ENTITY
+      contentType(response) mustBe Some("application/json")
+      (contentAsJson(response) \ "message").as[String] mustBe "Object is not valid"
     }
   }
 
@@ -229,7 +266,6 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       route(app, FakeRequest(POST, s"/v1/jobs/$specId/schedules").withJsonBody(schedule1Json)).get.futureValue
 
       When("The schedule is updated")
-      val expectedJson = Json.toJson(schedule1.copy(cron = cron2))
       val sendJson = Json.toJson(schedule1.copy(id = "ignore.me", cron = cron2))
       val response = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/${schedule1.id}").withJsonBody(sendJson)).get
 
@@ -344,12 +380,14 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
   val schedule2 = new ScheduleSpec("id2", cron2) {
     override def clock = mockedClock
   }
-  val scheduleForbid = new ScheduleSpec("id3", cron1, ScheduleSpec.DefaultTimeZone, ScheduleSpec.DefaultStartingDeadline, ConcurrencyPolicy.Forbid)
+  val scheduleForbid = new ScheduleSpec("id3", cron1, ScheduleSpec.DefaultTimeZone, ScheduleSpec.DefaultStartingDeadline, ConcurrencyPolicy.Forbid) {
+    override def clock = mockedClock
+  }
   val schedule1Json = Json.toJson(schedule1)
   val schedule2Json = Json.toJson(schedule2)
   val schedule3Json = Json.toJson(scheduleForbid)
   val specId = JobId("spec")
-  val jobSpec = JobSpec(specId)
+  val jobSpec = JobSpec(specId, run = JobRunSpec(cmd = Some("cmd")))
   val jobSpecJson = Json.toJson(jobSpec)
   val auth = new TestAuthFixture
 
@@ -360,5 +398,6 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
 
   override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context) {
     override lazy val pluginManager: PluginManager = auth.pluginManager
+    override lazy val jobSpecService: JobSpecService = JobSpecServiceFixture.simpleJobSpecService(mockedClock)
   }
 }

@@ -1,23 +1,17 @@
 package dcos.metronome
 package api.v1.controllers
 
-import java.io.StringWriter
-import java.util.concurrent.TimeUnit
-
-import dcos.metronome.api.v1.models.MetronomeInfoWrites
-import com.codahale.metrics.json.MetricsModule
-import com.fasterxml.jackson.databind.ObjectMapper
-import dcos.metronome.MetronomeInfoBuilder
 import dcos.metronome.api.RestController
-import dcos.metronome.behavior.Metrics
-import mesosphere.marathon.io.IO
+import dcos.metronome.api.v1.models.MetronomeInfoWrites
+import mesosphere.marathon.MetricsModule
+import mesosphere.marathon.raml.MetricsConversion._
+import mesosphere.marathon.raml.Raml
 import play.api.http.ContentTypes
-import play.api.mvc.Action
+import play.api.libs.json.Json
+import play.api.mvc.ControllerComponents
 
-class ApplicationController(metrics: Metrics) extends RestController {
-
-  private[this] val metricsMapper = new ObjectMapper().registerModule(
-    new MetricsModule(TimeUnit.SECONDS, TimeUnit.SECONDS, false))
+class ApplicationController(cc: ControllerComponents, metricsModule: MetricsModule)
+    extends RestController(cc) {
 
   def ping = Action { Ok("pong") }
 
@@ -26,9 +20,11 @@ class ApplicationController(metrics: Metrics) extends RestController {
   }
 
   def showMetrics = Action {
-    val metricsJsonString = IO.using(new StringWriter()) { writer =>
-      metricsMapper.writer().writeValue(writer, metrics.metricRegistry)
-      writer.getBuffer.toString
+    val metricsJsonString = metricsModule.snapshot() match {
+      case Left(_) =>
+        // Kamon snapshot
+        throw new IllegalArgumentException("Only Dropwizard format is supported, cannot render metrics from Kamon snapshot. Make sure your metrics are configured correctly.")
+      case Right(dropwizardRegistry) => Json.stringify(Json.toJson(Raml.toRaml(dropwizardRegistry)))
     }
     Ok(metricsJsonString).as(ContentTypes.JSON)
   }

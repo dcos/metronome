@@ -2,20 +2,19 @@ package dcos.metronome
 package scheduler.impl
 
 import akka.actor.{ FSM, Props }
-import dcos.metronome.model.Event
 import dcos.metronome.model.Event.ReconciliationFinished
 import dcos.metronome.scheduler.SchedulerConfig
 import dcos.metronome.scheduler.impl.ReconciliationActor._
 import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.core.task.tracker.TaskTracker
+import mesosphere.marathon.core.task.tracker.InstanceTracker
 
 import scala.util.control.NonFatal
 
 class ReconciliationActor(
-  driverHolder: MarathonSchedulerDriverHolder,
-  taskTracker:  TaskTracker,
-  config:       SchedulerConfig) extends FSM[State, Data] {
+  driverHolder:    MarathonSchedulerDriverHolder,
+  instanceTracker: InstanceTracker,
+  config:          SchedulerConfig) extends FSM[State, Data] {
 
   startWith(init(), NoData)
 
@@ -26,7 +25,7 @@ class ReconciliationActor(
 
   when(Loading) {
     case Event(TasksLoaded(tasks), _) =>
-      log.debug("received tasks from taskTracker")
+      log.debug("received tasks from instanceTracker")
       goto(Reconciling) using ReconciliationData(tasks)
 
     case Event(TaskLoadingFailed(error), _) =>
@@ -87,8 +86,9 @@ class ReconciliationActor(
 
   private[this] def loadTasks(): Unit = {
     import context.dispatcher
-    taskTracker.tasksByApp.map { tasksByApp =>
-      self ! TasksLoaded(tasksByApp.allTasks)
+    instanceTracker.instancesBySpec().map { instancesBySpec =>
+      // we know that metronome job always has only one task
+      self ! TasksLoaded(instancesBySpec.allInstances.map(i => i.appTask))
     } recover {
       case NonFatal(error) => self ! TaskLoadingFailed(error)
     }
@@ -98,7 +98,7 @@ class ReconciliationActor(
     driverHolder.driver.foreach { driver =>
       log.info("Performing explicit reconciliation for {} tasks", tasks.size)
       import scala.collection.JavaConverters._
-      val statuses = tasks.flatMap(_.mesosStatus).asJavaCollection
+      val statuses = tasks.flatMap(_.status.mesosStatus).asJavaCollection
       driver.reconcileTasks(statuses)
     }
   }
@@ -125,8 +125,8 @@ object ReconciliationActor {
   case class ReconciliationData(tasks: Iterable[Task]) extends Data
 
   def props(
-    driverHolder: MarathonSchedulerDriverHolder,
-    taskTracker:  TaskTracker,
-    config:       SchedulerConfig): Props =
-    Props(new ReconciliationActor(driverHolder, taskTracker, config))
+    driverHolder:    MarathonSchedulerDriverHolder,
+    instanceTracker: InstanceTracker,
+    config:          SchedulerConfig): Props =
+    Props(new ReconciliationActor(driverHolder, instanceTracker, config))
 }

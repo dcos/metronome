@@ -3,8 +3,6 @@ package dcos.metronome
 import akka.actor.{ Cancellable, Scheduler }
 import java.util.concurrent.atomic.AtomicLong
 
-import dcos.metronome.utils.time.FixedClock
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 
@@ -20,7 +18,7 @@ import scala.concurrent.duration.FiniteDuration
   * be scheduled for 10 seconds later. This mirrors the behavior of the Akka scheduler when it cannot fire tasks off as
   * quickly as it is asked to.
   */
-class SimulatedScheduler(clock: FixedClock) extends Scheduler {
+class SimulatedScheduler(clock: SettableClock) extends Scheduler {
   override def maxFrequency = 0.0
   private[this] val nextId = new AtomicLong
   private[this] val scheduledTasks = scala.collection.mutable.Map.empty[Long, ScheduledTask]
@@ -37,7 +35,7 @@ class SimulatedScheduler(clock: FixedClock) extends Scheduler {
 
   private[this] def doCancel(id: Long) = synchronized { scheduledTasks -= id }
   private[this] def poll(): Unit = synchronized {
-    val now = clock.now().getMillis
+    val now = clock.instant().toEpochMilli
     scheduledTasks.values.foreach { task =>
       if (task.time <= now) task.action()
     }
@@ -49,7 +47,7 @@ class SimulatedScheduler(clock: FixedClock) extends Scheduler {
     val id = nextId.getAndIncrement
     val cancellable = new ScheduledTaskCancellable(id)
     scheduledTasks(id) = ScheduledTask(
-      time = clock.now().getMillis + delay.toMillis,
+      time = clock.instant().plusMillis(delay.toMillis).toEpochMilli,
       action = () => {
         cancellable.cancel()
         executor.execute(runnable)
@@ -65,9 +63,9 @@ class SimulatedScheduler(clock: FixedClock) extends Scheduler {
     val id = nextId.getAndIncrement
     val cancellable = new ScheduledTaskCancellable(id)
     scheduledTasks(id) = ScheduledTask(
-      time = clock.now().getMillis + initialDelay.toMillis,
+      time = clock.instant().toEpochMilli + initialDelay.toMillis,
       action = () => {
-        scheduledTasks(id).time = clock.now().getMillis + interval.toMillis
+        scheduledTasks(id).time = clock.instant().toEpochMilli + interval.toMillis
         executor.execute(runnable)
       })
     poll()

@@ -1,14 +1,13 @@
 package dcos.metronome
 package jobspec.impl
 
-import akka.actor._
-import dcos.metronome.behavior.{ ActorBehavior, Behavior }
-import dcos.metronome.jobrun.JobRunService
-import dcos.metronome.model.{ ConcurrencyPolicy, JobSpec, ScheduleSpec }
-import dcos.metronome.utils.time.Clock
-import org.joda.time.{ DateTime, Seconds }
+import java.time.{ Clock, Instant }
+import java.util.concurrent.TimeUnit
 
-import scala.concurrent.Await
+import akka.actor._
+import dcos.metronome.jobrun.JobRunService
+import dcos.metronome.model.{ JobSpec, ScheduleSpec }
+
 import scala.concurrent.duration._
 
 /**
@@ -16,17 +15,16 @@ import scala.concurrent.duration._
   * If the JobSpec has a schedule, the schedule is triggered in this actor.
   */
 class JobSpecSchedulerActor(
-  initSpec:     JobSpec,
-  clock:        Clock,
-  runService:   JobRunService,
-  val behavior: Behavior) extends Actor with Stash with ActorLogging with ActorBehavior {
+  initSpec:   JobSpec,
+  clock:      Clock,
+  runService: JobRunService) extends Actor with Stash with ActorLogging {
 
   import JobSpecSchedulerActor._
   import context.dispatcher
 
   private[impl] var spec = initSpec
   private[impl] var nextSchedule: Option[Cancellable] = None
-  private[impl] var scheduledAt: Option[DateTime] = None
+  private[impl] var scheduledAt: Option[Instant] = None
 
   override def preStart(): Unit = {
     scheduleNextRun()
@@ -36,7 +34,7 @@ class JobSpecSchedulerActor(
     cancelSchedule()
   }
 
-  override def receive: Receive = around {
+  override def receive: Receive = {
     case StartJob(schedule)     => runJob(schedule)
     case UpdateJobSpec(newSpec) => updateSpec(newSpec)
   }
@@ -59,14 +57,14 @@ class JobSpecSchedulerActor(
     cancelSchedule()
     // TODO: only reschedule for one specific schedule!
     spec.schedules.foreach { schedule =>
-      val now = clock.now()
+      val now = clock.instant()
       val from = lastScheduledAt.getOrElse(now)
       val nextTime = schedule.nextExecution(from)
       scheduledAt = Some(nextTime)
       // 60 secs is the smallest unit of reschedule time for cron
-      val in = Seconds.secondsBetween(now, nextTime).getSeconds.seconds.max(60.seconds)
-      nextSchedule = Some(context.system.scheduler.scheduleOnce(in, self, StartJob(schedule)))
-      log.info(s"Spec ${spec.id}: next run is scheduled for: $nextTime (in $in)")
+      val inSeconds = Math.max(java.time.Duration.between(now, nextTime).getSeconds, 60)
+      nextSchedule = Some(context.system.scheduler.scheduleOnce(Duration(inSeconds, TimeUnit.SECONDS), self, StartJob(schedule)))
+      log.info(s"Spec ${spec.id}: next run is scheduled for: $nextTime (in $inSeconds seconds)")
     }
   }
 
@@ -82,7 +80,7 @@ object JobSpecSchedulerActor {
   case class StartJob(schedule: ScheduleSpec)
   case class UpdateJobSpec(newSpec: JobSpec)
 
-  def props(spec: JobSpec, clock: Clock, runService: JobRunService, behavior: Behavior): Props = {
-    Props(new JobSpecSchedulerActor(spec, clock, runService, behavior))
+  def props(spec: JobSpec, clock: Clock, runService: JobRunService): Props = {
+    Props(new JobSpecSchedulerActor(spec, clock, runService))
   }
 }

@@ -1,9 +1,8 @@
 package dcos.metronome
 package repository.impl.kv
 
-import dcos.metronome.PersistenceFailed
 import dcos.metronome.repository.Repository
-import mesosphere.util.state.{ PersistentEntity, PersistentStore, PersistentStoreWithNestedPathsSupport }
+import dcos.metronome.utils.state.{ PersistentEntity, PersistentStoreWithNestedPathsSupport }
 
 import scala.concurrent.{ ExecutionContext, Future }
 

@@ -1,9 +1,10 @@
 package dcos.metronome
 package model
 
+import java.time.{ Clock, ZoneId }
+import java.time.format.DateTimeFormatter
+
 import mesosphere.marathon.state.PathId
-import org.joda.time.format.DateTimeFormat
-import org.joda.time.{ DateTime, DateTimeZone }
 
 case class JobRunId(jobId: JobId, value: String) {
   override def toString: String = s"${jobId.path.mkString(".")}.$value"
@@ -11,10 +12,11 @@ case class JobRunId(jobId: JobId, value: String) {
 }
 
 object JobRunId {
-  val idFormat = DateTimeFormat.forPattern("yyyyMMddHHmmss")
+  val idFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+    .withZone(ZoneId.systemDefault())
 
   def apply(job: JobSpec): JobRunId = {
-    val date = DateTime.now(DateTimeZone.UTC).toString(idFormat)
+    val date = idFormat.format(Clock.systemUTC().instant())
     val random = scala.util.Random.alphanumeric.take(5).mkString
     JobRunId(job.id, s"$date$random")
   }

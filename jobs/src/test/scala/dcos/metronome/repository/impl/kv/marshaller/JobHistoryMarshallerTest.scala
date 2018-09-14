@@ -1,8 +1,9 @@
 package dcos.metronome
 package repository.impl.kv.marshaller
 
+import java.time.{ Clock, LocalDateTime, ZoneOffset }
+
 import dcos.metronome.model._
-import org.joda.time.{ DateTime, DateTimeZone }
 import org.scalatest.{ FunSuite, Matchers }
 
 class JobHistoryMarshallerTest extends FunSuite with Matchers {
@@ -13,26 +14,26 @@ class JobHistoryMarshallerTest extends FunSuite with Matchers {
 
   test("unmarshal with invalid proto data should return None") {
     val invalidBytes = "foobar".getBytes
-    JobHistoryMarshaller.fromBytes(invalidBytes) should be (None)
+    JobHistoryMarshaller.fromBytes(invalidBytes.to[IndexedSeq]) should be (None)
   }
 
   class Fixture {
     val successfulJobRunInfo = JobRunInfo(
       JobRunId(JobId("/test"), "successful"),
-      DateTime.parse("2004-09-06T08:50:12.000Z"),
-      DateTime.parse("2014-09-06T08:50:12.000Z"))
+      LocalDateTime.parse("2004-09-06T08:50:12.000").toInstant(ZoneOffset.UTC),
+      LocalDateTime.parse("2014-09-06T08:50:12.000").toInstant(ZoneOffset.UTC))
 
     val finishedJobRunInfo = JobRunInfo(
       JobRunId(JobId("/test"), "finished"),
-      DateTime.parse("1984-09-06T08:50:12.000Z"),
-      DateTime.parse("1994-09-06T08:50:12.000Z"))
+      LocalDateTime.parse("1984-09-06T08:50:12.000").toInstant(ZoneOffset.UTC),
+      LocalDateTime.parse("1994-09-06T08:50:12.000").toInstant(ZoneOffset.UTC))
 
     val jobHistory = JobHistory(
       JobId("/my/wonderful/job"),
       successCount = 1337,
       failureCount = 31337,
-      lastSuccessAt = Some(DateTime.parse("2014-09-06T08:50:12.000Z")),
-      lastFailureAt = Some(DateTime.now(DateTimeZone.UTC)),
+      lastSuccessAt = Some(LocalDateTime.parse("2014-09-06T08:50:12.000").toInstant(ZoneOffset.UTC)),
+      lastFailureAt = Some(Clock.systemUTC().instant()),
       successfulRuns = Seq(successfulJobRunInfo),
       failedRuns = Seq(finishedJobRunInfo))
   }

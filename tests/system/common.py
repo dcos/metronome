@@ -1,10 +1,18 @@
 """ Commons for Metronome """
 
 from datetime import timedelta
+from dcos import http
 
+import json
 import shakedown
+import shlex
+import time
+import pytest
 
-from dcos import metronome
+from dcos import metronome, packagemanager, cosmos
+from dcos.errors import DCOSException
+from json.decoder import JSONDecodeError
+from retrying import retry
 
 
 def job_no_schedule(id='pikachu', cmd='sleep 10000'):
@@ -16,6 +24,31 @@ def job_no_schedule(id='pikachu', cmd='sleep 10000'):
             'cpus': 0.01,
             'mem': 32,
             'disk': 0
+        }
+    }
+
+
+def job_with_secrets(id='pikachu',
+                     cmd='echo $SECRET_ENV >> $MESOS_SANDBOX/secret-env; sleep 5',
+                     secret_name='secret_name'):
+    return {
+        'id': id,
+        'description': 'electrifying rodent',
+        'run': {
+            'cmd': cmd,
+            'cpus': 0.01,
+            'mem': 32,
+            'disk': 0,
+            "env": {
+                "SECRET_ENV": {
+                    "secret": "secret1"
+                }
+            },
+            "secrets": {
+                "secret1": {
+                    "source": secret_name
+                }
+            }
         }
     }
 
@@ -53,6 +86,17 @@ def get_private_ip():
             return agent
 
 
+def run_command_on_metronome_leader(command, username=None, key_path=None, noisy=True):
+    """ Run a command on the Metronome leader
+    """
+
+    return shakedown.run_command(metronome_leader_ip(), command, username, key_path, noisy)
+
+
+def metronome_leader_ip():
+    return shakedown.dcos_dns_lookup('metronome.mesos')[0]['ip']
+
+
 def constraints(name, operator, value=None):
     constraints = [name, operator]
     if value is not None:
@@ -83,3 +127,163 @@ def wait_for_mesos_endpoint(timeout_sec=timedelta(minutes=5).total_seconds()):
     it returns false"""
 
     return shakedown.time_wait(lambda: shakedown.mesos_available_predicate(), timeout_seconds=timeout_sec)
+
+
+def ignore_exception(exc):
+    """Used with @retrying.retry to ignore exceptions in a retry loop.
+       ex.  @retrying.retry( retry_on_exception=ignore_exception)
+       It does verify that the object passed is an exception
+    """
+    return isinstance(exc, Exception)
+
+
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=5*60*1000, retry_on_exception=ignore_exception)  # 5 mins
+def wait_for_metronome():
+    """ Waits for the Metronome API url to be available for a given timeout. """
+    url = metronome_api_url()
+    try:
+        response = http.get(url)
+        assert response.status_code == 200, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last response: {response.content}"  # noqa
+    except Exception as e:
+        assert False, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last exception: {e}"  # noqa
+
+
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=5*60*1000, retry_on_exception=ignore_exception)  # 5 mins
+def wait_for_cosmos():
+    """ Waits for the Cosmos API to become responsive. """
+    cosmos_pm = packagemanager.PackageManager(cosmos.get_cosmos_url())
+    try:
+        cosmos_pm.has_capability('METRONOME')
+    except Exception as e:
+        assert False, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last exception: {e}"  # noqa
+
+
+def metronome_api_url():
+    return shakedown.dcos_url_path("/service/metronome/v1/jobs")
+
+
+def assert_job_run(client, job_id, runs_number=1, active_tasks_number=1):
+    """
+    Verify that the job has expected number of runs (active and finished) as well as tasks
+    :param runs_number: number of runs, both active and finished are considered
+    :param active_tasks_number: number of tasks for ACTIVE runs only
+    """
+    active_job_runs_count = len(client.get_runs(job_id))
+    finished_job_runs_count = client.get_job(job_id, ['history'])['history']['successCount']
+    # we are verifying both finished as well as active job runs
+    assert active_job_runs_count + finished_job_runs_count == runs_number, \
+        f"Expecting {runs_number} job run but found {active_job_runs_count} active " \
+        f"and {finished_job_runs_count} finished for job {job_id}."
+    if active_tasks_number > 0:
+        # if this job has only finished runs, the tasks overview is no longer available
+        job_run_tasks = client.get_runs(job_id)[0]["tasks"]
+        assert len(job_run_tasks) == active_tasks_number, \
+            f"Expecting {runs_number} job run task but found {len(job_run_tasks)} for job {job_id}: {job_run_tasks}."
+
+
+def job_run_predicate(job_id, run_id):
+    run = metronome.create_client().get_run(job_id, run_id)
+    return run["status"] == "ACTIVE" or run["status"] == "SUCCESS"
+
+
+def wait_for_job_started(job_id, run_id, timeout=120):
+    "Verifies that a job with given run_id is in state running or finished. "
+    shakedown.time_wait(lambda: job_run_predicate(job_id, run_id), timeout)
+
+
+def assert_wait_for_no_additional_tasks(client, job_id, timeout=20, tasks_count=1):
+    """ Starting Metronome and all its actors takes some time and there is no way how to query API
+        to figure out it finished. Here we wait for given time and then assert that expected tasks count matches.
+        This covers a bug regression of METRONOME-100
+    """
+    time.sleep(timeout)
+    assert_job_run(client, job_id, active_tasks_number=tasks_count)
+
+
+def not_required_masters_exact_count(count):
+    """ Returns True if the number of masters is equal to
+    the count.  This is useful in using pytest skipif such as:
+    `pytest.mark.skipif('required_masters(3)')` which will skip the test if
+    the number of masters is only 1.
+    :param count: the number of required masters.
+    """
+    master_count = len(shakedown.get_all_masters())
+    # reverse logic (skip if less than count)
+    # returns True if less than count
+    return master_count != count
+
+
+def masters_exact(count):
+    return pytest.mark.skipif('not_required_masters_exact_count({})'.format(count))
+
+
+def install_enterprise_cli_package():
+    """Install `dcos-enterprise-cli` package. It is required by the `dcos security`
+       command to create secrets, manage service accounts etc.
+    """
+    print('Installing dcos-enterprise-cli package')
+    cmd = 'package install dcos-enterprise-cli --cli --yes'
+    stdout, stderr, return_code = shakedown.run_dcos_command(cmd, raise_on_error=True)
+
+
+def is_enterprise_cli_package_installed():
+    """Returns `True` if `dcos-enterprise-cli` package is installed."""
+    stdout, stderr, return_code = shakedown.run_dcos_command('package list --json')
+    print('package list command returned code:{}, stderr:{}, stdout: {}'.format(return_code, stderr, stdout))
+    try:
+        result_json = json.loads(stdout)
+    except JSONDecodeError as error:
+        raise DCOSException('Could not parse: "{}"'.format(stdout))(error)
+    return any(cmd['name'] == 'dcos-enterprise-cli' for cmd in result_json)
+
+
+def has_secret(secret_name):
+    """Returns `True` if the secret with given name exists in the vault.
+       This method uses `dcos security secrets` command and assumes that `dcos-enterprise-cli`
+       package is installed.
+
+       :param secret_name: secret name
+       :type secret_name: str
+    """
+    stdout, stderr, return_code = shakedown.run_dcos_command('security secrets list / --json')
+    if stdout:
+        result_json = json.loads(stdout)
+        return secret_name in result_json
+    return False
+
+
+def delete_secret(secret_name):
+    """Delete a secret with a given name from the vault.
+       This method uses `dcos security org` command and assumes that `dcos-enterprise-cli`
+       package is installed.
+
+       :param secret_name: secret name
+       :type secret_name: str
+    """
+    print('Removing existing secret {}'.format(secret_name))
+    stdout, stderr, return_code = shakedown.run_dcos_command('security secrets delete {}'.format(secret_name))
+    assert return_code == 0, "Failed to remove existing secret"
+
+
+def create_secret(name, value=None, description=None):
+    """Create a secret with a passed `{name}` and optional `{value}`.
+       This method uses `dcos security secrets` command and assumes that `dcos-enterprise-cli`
+       package is installed.
+
+       :param name: secret name
+       :type name: str
+       :param value: optional secret value
+       :type value: str
+       :param description: option secret description
+       :type description: str
+    """
+    print('Creating new secret {}:{}'.format(name, value))
+
+    value_opt = '-v {}'.format(shlex.quote(value)) if value else ''
+    description_opt = '-d "{}"'.format(description) if description else ''
+
+    stdout, stderr, return_code = shakedown.run_dcos_command('security secrets create {} {} "{}"'.format(
+        value_opt,
+        description_opt,
+        name), print_output=True)
+    assert return_code == 0, "Failed to create a secret"

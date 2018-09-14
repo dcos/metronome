@@ -30,8 +30,15 @@ node('py36') {
             sh """./ci/si_provision.sh"""
             sh """./ci/si_pipeline.sh $params.channel open"""
           }
+        } catch (Exception e) {
+            currentBuild.result = 'FAILURE'
+            slackSend(
+                message: "(;¬_¬) SI tests for Metronome (Open) failed in build `${env.BUILD_NUMBER}`. (<${env.BUILD_URL}|Open>)",
+                color: "danger",
+                channel: "#metronome-internal",
+                tokenCredentialId: "4a6636e5-452e-41d2-aea3-9f28448196f3")
         } finally {
-            junit allowEmptyResults: true, testResults: 'shakedown.xml'
+            junit allowEmptyResults: true, testResults: "**/shakedown.xml"
             archive includes: "diagnostics.zip"
         }
     }

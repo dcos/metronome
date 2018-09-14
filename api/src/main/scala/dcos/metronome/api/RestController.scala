@@ -2,22 +2,24 @@ package dcos.metronome
 package api
 
 import com.eclipsesource.schema.SchemaValidator
-import com.wix.accord.{ Validator, Success, Failure }
+import com.wix.accord.{ Failure, Success, Validator }
 import mesosphere.marathon.api.v2.Validation
-import play.api.http.{ ContentTypes, ContentTypeOf, Writeable }
+import play.api.http.{ ContentTypeOf, ContentTypes, Writeable }
 import play.api.libs.json._
 import play.api.mvc._
 
-class RestController extends Controller {
+class RestController(cc: ControllerComponents) extends AbstractController(cc) {
 
   import dcos.metronome.api.v1.models.JsErrorWrites
 
   implicit def jsonWritable[T <: Any](implicit w: Writes[T], codec: Codec, request: RequestHeader): Writeable[T] = {
-    implicit val contentType = ContentTypeOf[T](Some(ContentTypes.JSON))
+    implicit val contentType: ContentTypeOf[T] = ContentTypeOf[T](Some(ContentTypes.JSON))
     Writeable(t => codec.encode(Json.stringify(w.writes(t))))
   }
 
-  object validate extends BodyParsers {
+  object validate {
+
+    val schemaValidator = SchemaValidator()
 
     def json[A](implicit reader: Reads[A], schema: JsonSchema[A], validator: Validator[A]): BodyParser[A] = {
       jsonWith[A](identity)
@@ -40,7 +42,7 @@ class RestController extends Controller {
         }
 
         def schemaValidate(jsValue: JsValue): Either[Result, A] = {
-          SchemaValidator.validate(schema.schemaType)(jsValue) match {
+          schemaValidator.validate(schema.schemaType, jsValue) match {
             case JsSuccess(value, _) => readObject(value)
             case error: JsError      => Left(UnprocessableEntity(Json.toJson(error)))
           }

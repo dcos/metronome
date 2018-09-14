@@ -1,25 +1,28 @@
 package dcos.metronome
 package api.v0.controllers
 
-import dcos.metronome.{ JobSpecAlreadyExists, JobSpecDoesNotExist }
+import akka.stream.Materializer
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.model.{ JobId, JobSpec, JobRunSpec, ScheduleSpec }
+import dcos.metronome.model.{ JobId, JobRunSpec, JobSpec, ScheduleSpec }
 import mesosphere.marathon.api.v2.json.Formats.FormatWithDefault
-import mesosphere.marathon.plugin.auth.{ UpdateRunSpec, CreateRunSpec, Authenticator, Authorizer }
+import mesosphere.marathon.metrics.Metrics
+import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer, CreateRunSpec, UpdateRunSpec }
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import play.api.mvc.ControllerComponents
 
-import scala.collection.immutable._
+import scala.concurrent.ExecutionContext
 
 class ScheduledJobSpecController(
-  jobSpecService:    JobSpecService,
-  val authenticator: Authenticator,
-  val authorizer:    Authorizer,
-  val config:        ApiConfig) extends Authorization {
+  cc:             ControllerComponents,
+  jobSpecService: JobSpecService,
+  metrics:        Metrics,
+  authenticator:  Authenticator,
+  authorizer:     Authorizer,
+  config:         ApiConfig)(implicit ec: ExecutionContext) extends Authorization(cc, metrics, authenticator, authorizer, config) {
 
-  import play.api.libs.concurrent.Execution.Implicits.defaultContext
   import ScheduledJobSpecController._
 
   def createJob = AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
@@ -27,7 +30,7 @@ class ScheduledJobSpecController(
       jobSpecService.createJobSpec(jobSpec)
         .map(Created(_))
         .recover {
-          case JobSpecAlreadyExists(id) => Conflict(ErrorDetail("Job with this id already exists"))
+          case JobSpecAlreadyExists(_) => Conflict(ErrorDetail("Job with this id already exists"))
         }
     }
   }
@@ -35,7 +38,7 @@ class ScheduledJobSpecController(
   def updateJob(id: JobId) = AuthorizedAction.async(validate.jsonWith[JobSpec](_.copy(id = id))) { implicit request =>
     request.authorizedAsync(UpdateRunSpec) { jobSpec =>
       jobSpecService.updateJobSpec(id, _ => jobSpec).map(Ok(_)).recover {
-        case ex: JobSpecDoesNotExist => NotFound(UnknownJob(id))
+        case JobSpecDoesNotExist(_) => NotFound(UnknownJob(id))
       }
     }
   }

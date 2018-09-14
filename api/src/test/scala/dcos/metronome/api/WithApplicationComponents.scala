@@ -1,8 +1,7 @@
 package dcos.metronome
 package api
 
-import controllers.Assets
-import dcos.metronome.behavior.{ Behavior, BehaviorFixture, Metrics }
+import controllers.AssetsComponents
 import dcos.metronome.history.{ JobHistoryService, JobHistoryServiceFixture }
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobinfo.impl.JobInfoServiceImpl
@@ -10,9 +9,11 @@ import dcos.metronome.jobrun.{ JobRunService, JobRunServiceFixture }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import dcos.metronome.queue.{ LaunchQueueService, QueueServiceFixture }
+import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.plugin.PluginManager
-import org.scalatest.{ Suite, TestData }
-import org.scalatestplus.play.{ OneAppPerSuite, OneAppPerTest, OneServerPerSuite, OneServerPerTest }
+import mesosphere.marathon.metrics.dummy.DummyMetricsModule
+import org.scalatest.{ TestData, TestSuite }
+import org.scalatestplus.play.guice.{ GuiceOneAppPerTest, GuiceOneServerPerSuite, GuiceOneServerPerTest }
 import play.api.ApplicationLoader.Context
 import play.api.i18n.I18nComponents
 import play.api.routing.Router
@@ -20,6 +21,7 @@ import play.api.routing.Router
 import scala.concurrent.duration._
 import scala.concurrent.duration.Duration
 import play.api._
+import play.filters.HttpFiltersComponents
 
 /**
   * A trait that provides a components in scope and creates new components when newApplication is called
@@ -68,37 +70,30 @@ trait WithApplicationComponents[C <: BuiltInComponents] {
 }
 
 trait OneAppPerTestWithComponents[T <: BuiltInComponents]
-    extends OneAppPerTest
+    extends GuiceOneAppPerTest
     with WithApplicationComponents[T] {
-  this: Suite =>
+  this: TestSuite =>
 
   override def newAppForTest(testData: TestData): Application = newApplication
 }
 
-trait OneAppPerSuiteWithComponents[T <: BuiltInComponents]
-    extends OneAppPerSuite
-    with WithApplicationComponents[T] {
-  this: Suite =>
-  override implicit lazy val app: Application = newApplication
-}
-
 trait OneServerPerTestWithComponents[T <: BuiltInComponents]
-    extends OneServerPerTest
+    extends GuiceOneServerPerTest
     with WithApplicationComponents[T] {
-  this: Suite =>
+  this: TestSuite =>
 
   override def newAppForTest(testData: TestData): Application = newApplication
 }
 
 trait OneServerPerSuiteWithComponents[T <: BuiltInComponents]
-    extends OneServerPerSuite
+    extends GuiceOneServerPerSuite
     with WithApplicationComponents[T] {
-  this: Suite =>
+  this: TestSuite =>
 
   override implicit lazy val app: Application = newApplication
 }
 
-class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(context) with I18nComponents {
+class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(context) with I18nComponents with AssetsComponents with HttpFiltersComponents {
   import com.softwaremill.macwire._
   // set up logger
   LoggerConfigurator(context.environment.classLoader).foreach {
@@ -107,25 +102,14 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
 
   override lazy val httpErrorHandler = new ErrorHandler
 
-  lazy val behavior: Behavior = BehaviorFixture.empty
-
-  lazy val metrics: Metrics = behavior.metrics
-
+  lazy val actorsModule: ActorsModule = new ActorsModule(actorSystem)
   lazy val pluginManager: PluginManager = PluginManager.None
-
   lazy val jobSpecService: JobSpecService = JobSpecServiceFixture.simpleJobSpecService()
-
   lazy val jobRunService: JobRunService = JobRunServiceFixture.simpleJobRunService()
-
   lazy val jobHistoryService: JobHistoryService = JobHistoryServiceFixture.simpleHistoryService(Seq.empty)
-
   lazy val jobInfoService: JobInfoService = wire[JobInfoServiceImpl]
-
-  lazy val assets: Assets = wire[Assets]
-
   lazy val queueService: LaunchQueueService = QueueServiceFixture.simpleQueueService()
-
-  lazy val apiModule: ApiModule = wire[ApiModule]
+  lazy val metricsModule: DummyMetricsModule = new DummyMetricsModule()
 
   lazy val config: ApiConfig = new ApiConfig {
     override def leaderProxyTimeout: Duration = 30.seconds
@@ -133,6 +117,8 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
     override def hostname: String = "localhost"
     override def effectivePort: Int = 9000
   }
+
+  lazy val apiModule: ApiModule = wire[ApiModule]
 
   override def router: Router = apiModule.router
 }

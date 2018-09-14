@@ -5,7 +5,7 @@ import java.util.jar.{ Attributes, Manifest }
 import mesosphere.marathon.BuildInfo
 import mesosphere.marathon.io.IO
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success, Try }
@@ -14,7 +14,7 @@ import scala.util.{ Failure, Success, Try }
   * Provides build information details regarding Metronome and Marathon at runtime.
   */
 case object MetronomeBuildInfo {
-  private val metronomeJar = "\\bmesosphere\\.metronome\\.metronome-[0-9.]+".r
+  private val metronomeJar = "\\bdcos\\.jobs-[0-9.]+".r
 
   private lazy val devBuildVersion = {
     // parsing version in ThisBuild := "0.3.0"
@@ -22,7 +22,7 @@ case object MetronomeBuildInfo {
       1
     }) match {
       case Success(v) => v.replace("\"", "").trim
-      case Failure(e) => "0.0.0"
+      case Failure(_) => "0.0.0"
     }
     version
   }
@@ -33,7 +33,7 @@ case object MetronomeBuildInfo {
     * manifests, and find the one that applies to the Metronome application jar.
     */
   lazy val manifestPath: List[java.net.URL] =
-    getClass().getClassLoader().getResources("META-INF/MANIFEST.MF").filter { manifest =>
+    getClass.getClassLoader.getResources("META-INF/MANIFEST.MF").asScala.filter { manifest =>
       metronomeJar.findFirstMatchIn(manifest.getPath).nonEmpty
     }.toList
 
@@ -65,6 +65,6 @@ case object MetronomeBuildInfo {
 
   lazy val scalaVersion: String = getAttribute("Scala-Version").getOrElse("2.x.x")
 
-  lazy val marathonVersion: String = BuildInfo.version
+  lazy val marathonVersion: mesosphere.marathon.SemVer = BuildInfo.version
 
 }

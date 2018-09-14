@@ -1,10 +1,10 @@
 package dcos.metronome
 package model
 
+import java.time.Instant
+
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.core.task.Task.LaunchedEphemeral
-import org.joda.time.DateTime
 
 import scala.concurrent.duration.Duration
 
@@ -12,24 +12,24 @@ case class JobRun(
   id:               JobRunId,
   jobSpec:          JobSpec,
   status:           JobRunStatus,
-  createdAt:        DateTime,
-  completedAt:      Option[DateTime],
+  createdAt:        Instant,
+  completedAt:      Option[Instant],
   startingDeadline: Option[Duration],
   tasks:            Map[Task.Id, JobRunTask])
 
 case class JobRunTask(
   id:          Task.Id,
-  startedAt:   DateTime,
-  completedAt: Option[DateTime],
+  startedAt:   Instant,
+  completedAt: Option[Instant],
   status:      TaskState)
 
 object JobRunTask {
-  def apply(task: LaunchedEphemeral): JobRunTask = {
+  def apply(task: Task): JobRunTask = {
     // Note: Terminal LaunchedEphemeral tasks are expunged from the repo
     // so it is somewhat safe to derive that completedAt for these tasks is always None!
     JobRunTask(
       id = task.taskId,
-      startedAt = task.status.stagedAt.toDateTime,
+      startedAt = Instant.ofEpochMilli(task.status.stagedAt.millis),
       completedAt = None,
       status = TaskState(task))
   }

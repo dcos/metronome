@@ -1,19 +1,18 @@
 package dcos.metronome
 package jobinfo.impl
 
+import java.time.Clock
+
 import dcos.metronome.history.JobHistoryServiceFixture
 import dcos.metronome.jobinfo.JobInfo.Embed
 import dcos.metronome.jobinfo.JobSpecSelector
 import dcos.metronome.jobrun.JobRunServiceFixture
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import dcos.metronome.model._
-import dcos.metronome.utils.time.FixedClock
-import org.joda.time.DateTime
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ Matchers, GivenWhenThen, FunSuite }
-import scala.concurrent.ExecutionContext.Implicits.global
+import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }
 
-import scala.collection.immutable._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutures with Matchers {
 
@@ -122,7 +121,7 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
   }
 
   class Fixture {
-    val clock = new FixedClock(DateTime.now)
+    val clock = new SettableClock(Clock.systemUTC())
     val CronSpec(cron) = "* * * * *"
     val schedule1 = ScheduleSpec("id1", cron)
     val schedule2 = ScheduleSpec("id2", cron)
@@ -130,8 +129,8 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
     val spec1 = JobSpec(JobId("spec1"), schedules = Seq(schedule1, schedule2))
     val spec2 = JobSpec(JobId("spec2"), schedules = Seq(schedule1, schedule2))
 
-    val history1 = JobHistory(spec1.id, 23, 23, Some(clock.now()), Some(clock.now()), Seq.empty, Seq.empty)
-    val history2 = JobHistory(spec2.id, 23, 23, Some(clock.now()), Some(clock.now()), Seq.empty, Seq.empty)
+    val history1 = JobHistory(spec1.id, 23, 23, Some(clock.instant()), Some(clock.instant()), Seq.empty, Seq.empty)
+    val history2 = JobHistory(spec2.id, 23, 23, Some(clock.instant()), Some(clock.instant()), Seq.empty, Seq.empty)
     val historySummary1 = JobHistorySummary(history1)
     val historySummary2 = JobHistorySummary(history2)
 

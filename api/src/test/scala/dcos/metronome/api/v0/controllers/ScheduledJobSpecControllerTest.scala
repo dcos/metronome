@@ -3,7 +3,7 @@ package api.v0.controllers
 
 import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
 import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents, TestAuthFixture, UnknownJob }
-import dcos.metronome.model.{ CronSpec, JobId, JobSpec, ScheduleSpec }
+import dcos.metronome.model._
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
@@ -13,8 +13,6 @@ import play.api.ApplicationLoader.Context
 import play.api.libs.json._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-
-import scala.collection.immutable._
 
 class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with GivenWhenThen with ScalaFutures with BeforeAndAfter {
 
@@ -49,6 +47,18 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
 
     "indicate a problem when sending invalid json" in {
       Given("No job")
+      val invalid = jobSpec1Json.as[JsObject] ++ Json.obj("id" -> "/not/valid")
+
+      When("A job with invalid json is created")
+      val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(invalid)).get
+
+      Then("A validation problem is sent")
+      status(response) mustBe UNPROCESSABLE_ENTITY
+      contentType(response) mustBe Some("application/json")
+      contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))
+    }
+
+    "fail for invalid startingDeadline" in {
       val invalid = jobSpec1Json.as[JsObject] ++ Json.obj("id" -> "/not/valid")
 
       When("A job with invalid json is created")
@@ -192,9 +202,9 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
   val CronSpec(cron) = "* * * * *"
   val schedule1 = ScheduleSpec("id1", cron)
   val schedule2 = ScheduleSpec("id2", cron)
-  val jobSpec1 = JobSpec(JobId("spec1"), schedules = Seq(schedule1))
+  val jobSpec1 = JobSpec(JobId("spec1"), schedules = Seq(schedule1), run = JobRunSpec(cmd = Some("cmd")))
   val jobSpec1Json = Json.toJson(jobSpec1)
-  val jobSpec2 = JobSpec(JobId("spec2"), schedules = Seq(schedule1))
+  val jobSpec2 = JobSpec(JobId("spec2"), schedules = Seq(schedule1), run = JobRunSpec(cmd = Some("cmd")))
   val jobSpec2Json = Json.toJson(jobSpec2)
   val auth = new TestAuthFixture
 

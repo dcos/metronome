@@ -1,8 +1,6 @@
 package dcos.metronome
 package model
 
-import scala.collection.immutable.Seq
-
 case class PlacementSpec(
   constraints: Seq[ConstraintSpec] = PlacementSpec.DefaultConstraints)
 object PlacementSpec {

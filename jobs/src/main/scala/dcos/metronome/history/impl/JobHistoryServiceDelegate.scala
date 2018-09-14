@@ -17,7 +17,7 @@ class JobHistoryServiceDelegate(actorRef: ActorRef, config: JobHistoryConfig) ex
     actorRef.ask(GetJobHistory(jobSpecId)).mapTo[Option[JobHistory]]
   }
 
-  override def list(filter: (JobHistory) => Boolean): Future[Iterable[JobHistory]] = {
+  override def list(filter: JobHistory => Boolean): Future[Iterable[JobHistory]] = {
     actorRef.ask(ListJobHistories(filter)).mapTo[Iterable[JobHistory]]
   }
 }

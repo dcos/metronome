@@ -2,7 +2,7 @@ package dcos.metronome
 package api.v1.controllers
 
 import dcos.metronome.api.v1.models._
-import dcos.metronome.api.{ ErrorHandler, MockApiComponents, OneAppPerTestWithComponents, TestAuthFixture, UnknownJob }
+import dcos.metronome.api._
 import dcos.metronome.model._
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
@@ -13,8 +13,6 @@ import play.api.ApplicationLoader.Context
 import play.api.libs.json._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-
-import scala.collection.immutable._
 
 class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with GivenWhenThen with ScalaFutures with BeforeAndAfter {
 
@@ -80,7 +78,6 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(Json.parse(specJson))).get
 
       Then("The job is created")
-      println(contentAsString(response))
       status(response) mustBe CREATED
       contentType(response) mustBe Some("application/json")
     }
@@ -140,6 +137,42 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
 
       Then("a forbidden response is send")
       status(unauthorized) mustBe FORBIDDEN
+    }
+
+    "create a job with secrets" in {
+      Given("No job")
+
+      When("A job is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpecWithSecretsJson)).get
+
+      Then("The job is created")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+      contentAsJson(response) mustBe jobSpecWithSecretsJson
+    }
+
+    "indicate a problem when creating a job without a secret definition" in {
+      Given("No job")
+
+      When("A job is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpecWithSecretVarsOnlyJson)).get
+
+      Then("A validation error is returned")
+      status(response) mustBe UNPROCESSABLE_ENTITY
+      contentType(response) mustBe Some("application/json")
+      //      contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))
+    }
+
+    "indicate a problem when creating a job without a secret name" in {
+      Given("No job")
+
+      When("A job is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpecWithSecretDefsOnlyJson)).get
+
+      Then("A validation error is returned")
+      status(response) mustBe UNPROCESSABLE_ENTITY
+      contentType(response) mustBe Some("application/json")
+      //      contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))
     }
   }
 
@@ -359,6 +392,16 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       Then("a forbidden response is send")
       status(unauthorized) mustBe FORBIDDEN
     }
+
+    "fail for invalid jobspec" in {
+      Given("An invalid job spec")
+      val jobSpecJson = Json.toJson(JobSpec(JobId("spec1"), run = JobRunSpec()))
+      val failed = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpecJson)).get
+
+      Then("an error HTTP code is returned")
+      status(failed) mustBe UNPROCESSABLE_ENTITY
+      contentAsString(failed) must include(JobRunSpecMessages.cmdOrDockerValidation)
+    }
   }
 
   import scala.concurrent.duration._
@@ -370,6 +413,21 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
   val jobSpec1Json = Json.toJson(jobSpec1)
   val jobSpec2 = spec("spec2")
   val jobSpec2Json = Json.toJson(jobSpec2)
+  val jobSpecWithSecrets = {
+    val jobSpec = spec("spec-with-secrets")
+    jobSpec.copy(run = jobSpec.run.copy(env = Map("secretVar" -> EnvVarSecret("secretId")), secrets = Map("secretId" -> SecretDef("source"))))
+  }
+  val jobSpecWithSecretVarsOnly = {
+    val jobSpec = spec("spec-with-secret-vars-only")
+    jobSpec.copy(run = jobSpec.run.copy(env = Map("secretVar" -> EnvVarSecret("secretId"))))
+  }
+  val jobSpecWithSecretDefsOnly = {
+    val jobSpec = spec("spec-with-secret-defs-only")
+    jobSpec.copy(run = jobSpec.run.copy(secrets = Map("secretId" -> SecretDef("source"))))
+  }
+  val jobSpecWithSecretsJson = Json.toJson(jobSpecWithSecrets)
+  val jobSpecWithSecretVarsOnlyJson = Json.toJson(jobSpecWithSecretVarsOnly)
+  val jobSpecWithSecretDefsOnlyJson = Json.toJson(jobSpecWithSecretDefsOnly)
   val auth = new TestAuthFixture
 
   before {

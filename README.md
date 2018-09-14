@@ -1,4 +1,4 @@
-# Metronome [![Issues](https://img.shields.io/badge/Issues-JIRA-ff69b4.svg?style=flat)](https://jira.mesosphere.com/projects/METRONOME/)
+# Metronome [![Issues](https://img.shields.io/badge/Issues-JIRA-ff69b4.svg?style=flat)](https://jira.mesosphere.com/issues/?jql=project%20%3D%20DCOS_OSS%20AND%20component%20%3D%20metronome)
 
 Metronome is an [Apache Mesos](http://mesos.apache.org) framework for scheduled jobs.
 
@@ -9,7 +9,7 @@ Metronome documentation is available on the [Metronome Project Site](https://dco
 
 
 ## Issue Tracking
-Metronome issues are tracked as JIRA tickets in Mesosphere's [on-premise JIRA instance](https://jira.mesosphere.com/projects/METRONOME/) that anyone is able to view and add to using GitHub SSO.
+Metronome issues are tracked as JIRA tickets in Mesosphere's [on-premise JIRA instance](https://jira.mesosphere.com/issues/?jql=project%20%3D%20DCOS_OSS%20AND%20component%20%3D%20metronome) that anyone is able to view and add to using GitHub SSO. If you create a ticket, please set component `metronome`.
 
 ## Getting Started
 
@@ -45,6 +45,14 @@ use. Note that you still need to run ZooKeeper for storing state. The following
 command launches Metronome on Mesos in *local mode*.
 
     sbt run
+
+If you want to run Metronome against a real Mesos cluster, you can use the following command.
+
+    ./run.sh
+
+The script is already pre-filled with a default values for zookeeper and mesos running locally. You can specify your own like this:
+
+    ./run.sh "zk://127.0.0.1:2181/metronome" "127.0.0.1:5050" "8989"
 
 
  ## Example Job with Placement Constraint
@@ -83,5 +91,5 @@ element.
 
 ## Help
 
-Have you found an issue? Feel free to report it using our [Issues](https://jira.mesosphere.com/browse/DCOS_OSS-1490?jql=text%20~%20%22metronome%22) page.
+Have you found an issue? Feel free to report it using our [JIRA](https://jira.mesosphere.com/issues/?jql=project%20%3D%20DCOS_OSS%20AND%20component%20%3D%20metronome). Please set component `metronome` for issues related to Metronome.
 In order to speed up response times, please provide as much information on how to reproduce the problem as possible.

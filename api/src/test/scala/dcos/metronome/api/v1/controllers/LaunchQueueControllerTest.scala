@@ -10,7 +10,7 @@ import mesosphere.marathon.state.Timestamp
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context
 import play.api.test.FakeRequest
@@ -22,7 +22,7 @@ class LaunchQueueControllerTest extends PlaySpec with OneAppPerTestWithComponent
 
   "GET /queue" should {
     "return list of jobs in the queue" in {
-      val queuedJobRun = QueuedJobRunInfo(JobId("job"), 1, Timestamp.zero, JobRunSpec())
+      val queuedJobRun = QueuedJobRunInfo(JobId("job"), Timestamp.zero, JobRunSpec())
       val queuedJobList = List(queuedJobRun)
       when(queueServiceMock.list()).thenReturn(queuedJobList)
       val response = route(app, FakeRequest(GET, "/v1/queue")).get
@@ -34,7 +34,7 @@ class LaunchQueueControllerTest extends PlaySpec with OneAppPerTestWithComponent
 
     "return nothing when not authorized to see the job" in {
       auth.authorized = false
-      val queuedJobList = List(QueuedJobRunInfo(JobId("job"), 1, Timestamp.zero, JobRunSpec()))
+      val queuedJobList = List(QueuedJobRunInfo(JobId("job"), Timestamp.zero, JobRunSpec()))
       when(queueServiceMock.list()).thenReturn(queuedJobList)
       val response = route(app, FakeRequest(GET, "/v1/queue")).get
 

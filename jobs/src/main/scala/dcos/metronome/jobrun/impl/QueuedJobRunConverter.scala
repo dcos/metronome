@@ -3,12 +3,9 @@ package jobrun.impl
 
 import dcos.metronome.model._
 import mesosphere.marathon.Protos.Constraint
-import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedTaskInfo
-import mesosphere.marathon.state.{ Container, RunSpec }
+import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedInstanceInfo
+import mesosphere.marathon.state.{ AppDefinition, Container }
 import org.slf4j.LoggerFactory
-
-import scala.collection.immutable.Seq
-import scala.util.Try
 
 object QueuedJobRunConverter {
 
@@ -31,27 +28,22 @@ object QueuedJobRunConverter {
 
   implicit class MarathonContainerToDockerSpec(val container: Option[Container]) extends AnyVal {
 
-    def toModel: Option[DockerSpec] = {
-      if (container.isEmpty || container.get.docker().isEmpty)
-        return None
-      val docker = container.get.docker().get
-      Some(DockerSpec(docker.image, docker.forcePullImage))
-    }
+    def toModel: Option[DockerSpec] = container.flatMap(c => c.docker).map(d => DockerSpec(d.image, d.forcePullImage))
   }
 
-  implicit class RunSpecToJobRunSpec(val run: RunSpec) extends AnyVal {
+  implicit class RunSpecToJobRunSpec(val run: AppDefinition) extends AnyVal {
 
     def toModel: JobRunSpec = {
       val placement: PlacementSpec = convertPlacement
       JobRunSpec(
-        run.cpus,
-        run.mem,
-        run.disk,
+        run.resources.cpus,
+        run.resources.mem,
+        run.resources.disk,
         run.cmd,
-        run.args,
+        Some(run.args),
         run.user,
         placement = placement,
-        maxLaunchDelay = run.maxLaunchDelay,
+        maxLaunchDelay = run.backoffStrategy.maxLaunchDelay,
         taskKillGracePeriodSeconds = run.taskKillGracePeriod,
         docker = run.container.toModel)
     }
@@ -61,20 +53,24 @@ object QueuedJobRunConverter {
       try {
         PlacementSpec(run.constraints.toModel)
       } catch {
-        case e: Exception => PlacementSpec()
+        case _: Exception => PlacementSpec()
       }
     }
   }
 
-  implicit class QueuedTaskInfoToQueuedJobRunInfo(val taskInfo: QueuedTaskInfo) extends AnyVal {
+  implicit class QueuedTaskInfoToQueuedJobRunInfo(val instanceInfo: QueuedInstanceInfo) extends AnyVal {
 
     def toModel: QueuedJobRunInfo = {
+      val jobRunSpec = instanceInfo.runSpec match {
+        case app: AppDefinition => app.toModel
+        case runSpec =>
+          throw new IllegalArgumentException(s"Unexpected runSpec type - jobs are translated to Apps on Marathon level, got $runSpec")
+      }
       QueuedJobRunInfo(
-        id = taskInfo.runSpec.id,
-        tasksLost = taskInfo.tasksLost,
-        backOffUntil = taskInfo.backOffUntil,
-        run = taskInfo.runSpec.toModel,
-        acceptedResourceRoles = Some(taskInfo.runSpec.acceptedResourceRoles.getOrElse(Set("*"))))
+        id = instanceInfo.runSpec.id,
+        backOffUntil = instanceInfo.backOffUntil,
+        run = jobRunSpec,
+        acceptedResourceRoles = instanceInfo.runSpec.acceptedResourceRoles)
     }
   }
 }

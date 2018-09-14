@@ -1,14 +1,13 @@
 package dcos.metronome
 package repository
 
-import akka.actor.{ Stash, ActorLogging, Actor, ActorRef }
-import dcos.metronome.behavior.ActorBehavior
+import akka.actor.{ Actor, ActorLogging, ActorRef, Stash }
 
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success }
 
-trait NoConcurrentRepoChange[Id, Model, Data] extends Actor with ActorLogging with Stash with ActorBehavior {
+trait NoConcurrentRepoChange[Id, Model, Data] extends Actor with ActorLogging with Stash {
   import NoConcurrentRepoChange._
 
   final def repoChange(
@@ -31,7 +30,7 @@ trait NoConcurrentRepoChange[Id, Model, Data] extends Actor with ActorLogging wi
     }
   }
 
-  private[this] def waitForPersisted: Receive = around {
+  private[this] def waitForPersisted: Receive = {
     case event: Failed =>
       log.error(event.ex, "Repository change failed")
       notifySender(event.sender, event)

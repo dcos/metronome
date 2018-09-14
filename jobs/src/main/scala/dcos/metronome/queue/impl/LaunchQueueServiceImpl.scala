@@ -6,11 +6,13 @@ import dcos.metronome.model.QueuedJobRunInfo
 import dcos.metronome.queue.LaunchQueueService
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 
-import scala.collection.immutable.Seq
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 class LaunchQueueServiceImpl(launchQueue: LaunchQueue) extends LaunchQueueService {
 
   override def list(): Seq[QueuedJobRunInfo] = {
-    launchQueue.list.filter(_.inProgress).map(_.toModel)
+    // timeout is enforced in LaunchQueue
+    Await.result(launchQueue.list, Duration.Inf).filter(_.inProgress).map(_.toModel)
   }
 }

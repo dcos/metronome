@@ -3,10 +3,10 @@ package jobspec.impl
 
 import akka.actor.ActorSystem
 import akka.testkit._
-import dcos.metronome.behavior.BehaviorFixture
 import dcos.metronome.model.{ JobId, JobSpec }
 import dcos.metronome.repository.Repository
 import dcos.metronome.utils.test.Mockito
+import mesosphere.marathon.metrics.dummy.DummyMetrics
 import org.scalatest._
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 
@@ -135,7 +135,6 @@ class JobSpecPersistenceActorTest extends TestKit(ActorSystem("test")) with FunS
     val repository = mock[Repository[JobId, JobSpec]]
     val id = JobId("/test")
     val jobSpec = JobSpec(id)
-    val behavior = BehaviorFixture.empty
-    def persistenceActor = system.actorOf(JobSpecPersistenceActor.props(id, repository, behavior))
+    def persistenceActor = system.actorOf(JobSpecPersistenceActor.props(id, repository, DummyMetrics))
   }
 }

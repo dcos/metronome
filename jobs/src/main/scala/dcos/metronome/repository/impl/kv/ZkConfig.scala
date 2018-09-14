@@ -42,10 +42,10 @@ trait ZkConfig {
   def zkStatePath: String = s"$zkPath/state"
   def zkLeaderPath: String = s"$zkPath/leader"
 
-  lazy val zkHosts = zkURL match { case ZKUrlPattern(_, _, server, _) => server }
-  lazy val zkPath = zkURL match { case ZKUrlPattern(_, _, _, path) => path }
-  lazy val zkUsername = zkURL match { case ZKUrlPattern(u, _, _, _) => Option(u) }
-  lazy val zkPassword = zkURL match { case ZKUrlPattern(_, p, _, _) => Option(p) }
+  lazy val zkHosts = zkURL match { case ZkUrlPattern(_, _, server, _) => server }
+  lazy val zkPath = zkURL match { case ZkUrlPattern(_, _, _, path) => path }
+  lazy val zkUsername = zkURL match { case ZkUrlPattern(u, _, _, _) => Option(u) }
+  lazy val zkPassword = zkURL match { case ZkUrlPattern(_, p, _, _) => Option(p) }
 
   lazy val zkAuthInfo = (zkUsername, zkPassword) match {
     case (Some(user), Some(pass)) => Some(AuthInfo.digest(user, pass))
@@ -54,16 +54,16 @@ trait ZkConfig {
 
   import scala.collection.JavaConverters._
   lazy val zkDefaultCreationACL: Seq[ACL] = (zkUsername, zkPassword) match {
-    case (Some(_), Some(_)) => ZooDefs.Ids.CREATOR_ALL_ACL.asScala
-    case _                  => ZooDefs.Ids.OPEN_ACL_UNSAFE.asScala
+    case (Some(_), Some(_)) => ZooDefs.Ids.CREATOR_ALL_ACL.asScala.to[Seq]
+    case _                  => ZooDefs.Ids.OPEN_ACL_UNSAFE.asScala.to[Seq]
   }
 
   def zkHostAddresses: Seq[InetSocketAddress] =
-    for (s <- zkHosts.split(",")) yield {
+    (for (s <- zkHosts.split(",")) yield {
       val splits = s.split(":")
       require(splits.length == 2, "expected host:port for zk servers")
       new InetSocketAddress(splits(0), splits(1).toInt)
-    }
+    }).to[Seq]
 
 }
 

@@ -1,7 +1,6 @@
 package dcos.metronome
 package repository.impl
 
-import dcos.metronome.PersistenceFailed
 import dcos.metronome.repository.Repository
 import mesosphere.marathon.StoreCommandFailedException
 
@@ -18,7 +17,7 @@ class InMemoryRepository[Id, Model] extends Repository[Id, Model] {
 
   override def ids(): Future[Iterable[Id]] = Future.successful(models.keys)
 
-  override def update(id: Id, change: (Model) => Model): Future[Model] = {
+  override def update(id: Id, change: Model => Model): Future[Model] = {
     models.get(id) match {
       case Some(model) =>
         try {
@@ -29,7 +28,7 @@ class InMemoryRepository[Id, Model] extends Repository[Id, Model] {
           case NonFatal(ex) => Future.failed(ex)
         }
       case None =>
-        Future.failed(new PersistenceFailed(id.toString, "No model with this id"))
+        Future.failed(PersistenceFailed(id.toString, "No model with this id"))
     }
   }
 
@@ -39,7 +38,7 @@ class InMemoryRepository[Id, Model] extends Repository[Id, Model] {
 
   override def create(id: Id, create: Model): Future[Model] = {
     models.get(id) match {
-      case Some(model) =>
+      case Some(_) =>
         Future.failed(new StoreCommandFailedException("Model with id already exists."))
       case None =>
         models += id -> create

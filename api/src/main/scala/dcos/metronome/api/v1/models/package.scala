@@ -1,23 +1,22 @@
 package dcos.metronome
 package api.v1
 
-import dcos.metronome.MetronomeInfo
+import java.time.{ Instant, ZoneId }
+import java.time.format.DateTimeFormatter
+
 import dcos.metronome.api._
 import dcos.metronome.jobinfo.JobInfo
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
-import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedTaskInfo
+import mesosphere.marathon.SemVer
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.plugin.PathId
-import mesosphere.marathon.state.{ RunSpec, Timestamp }
-import org.joda.time.{ DateTime, DateTimeZone }
+import mesosphere.marathon.state.{ Parameter, Timestamp }
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.{ Json, _ }
 
 import scala.collection.JavaConverters._
-import scala.collection.immutable.Seq
 import scala.concurrent.duration._
 
 package object models {
@@ -33,9 +32,11 @@ package object models {
     Reads.of[String](Reads.minLength[String](1)).map(s => JobId(s)),
     Writes[JobId] { id => JsString(id.toString) })
 
-  implicit val DateTimeFormat: Format[DateTime] = Format (
-    Reads.jodaDateReads("yyyy-MM-dd'T'HH:mm:ss.SSSZ"),
-    Writes.jodaDateWrites("yyyy-MM-dd'T'HH:mm:ss.SSSZ"))
+  private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+    .withZone(ZoneId.systemDefault())
+  implicit val DateTimeFormat: Format[Instant] = Format(
+    Reads.instantReads(dateTimeFormatter),
+    Writes[Instant] { instant => JsString(dateTimeFormatter.format(instant)) })
 
   implicit lazy val ArtifactFormat: Format[Artifact] = (
     (__ \ "uri").format[String] ~
@@ -51,11 +52,11 @@ package object models {
     }
   }
 
-  implicit lazy val DateTimeZoneFormat: Format[DateTimeZone] = new Format[DateTimeZone] {
-    override def writes(o: DateTimeZone): JsValue = JsString(o.getID)
-    override def reads(json: JsValue): JsResult[DateTimeZone] = json match {
-      case JsString(value) if DateTimeZone.getAvailableIDs.asScala.contains(value) =>
-        JsSuccess(DateTimeZone.forID(value))
+  implicit lazy val DateTimeZoneFormat: Format[ZoneId] = new Format[ZoneId] {
+    override def writes(o: ZoneId): JsValue = JsString(o.toString)
+    override def reads(json: JsValue): JsResult[ZoneId] = json match {
+      case JsString(value) if ZoneId.getAvailableZoneIds.asScala.contains(value) =>
+        JsSuccess(ZoneId.of(value))
       case invalid => JsError(s"No time zone found with this id: $invalid")
     }
   }
@@ -90,7 +91,7 @@ package object models {
     lazy val ScheduleSpecFormatBasic: Format[ScheduleSpec] = (
       (__ \ "id").format[String] ~
       (__ \ "cron").format[CronSpec] ~
-      (__ \ "timezone").formatNullable[DateTimeZone].withDefault(ScheduleSpec.DefaultTimeZone) ~
+      (__ \ "timezone").formatNullable[ZoneId].withDefault(ScheduleSpec.DefaultTimeZone) ~
       (__ \ "startingDeadlineSeconds").formatNullable[Duration].withDefault(ScheduleSpec.DefaultStartingDeadline) ~
       (__ \ "concurrencyPolicy").formatNullable[ConcurrencyPolicy].withDefault(ScheduleSpec.DefaultConcurrencyPolicy) ~
       (__ \ "enabled").formatNullable[Boolean].withDefault(ScheduleSpec.DefaultEnabled))(ScheduleSpec.apply, unlift(ScheduleSpec.unapply))
@@ -132,11 +133,24 @@ package object models {
 
   implicit lazy val DockerSpecFormat: Format[DockerSpec] = (
     (__ \ "image").format[String] ~
-    (__ \ "forcePullImage").formatNullable[Boolean].withDefault(false)) (DockerSpec.apply, unlift(DockerSpec.unapply))
+    (__ \ "privileged").formatNullable[Boolean].withDefault(false) ~
+    (__ \ "parameters").formatNullable[Seq[Parameter]].withDefault(DockerSpec.DefaultParameters) ~
+    (__ \ "forcePullImage").formatNullable[Boolean].withDefault(false))(DockerSpec.apply, unlift(DockerSpec.unapply))
+
+  implicit lazy val ParameterWrites: Writes[mesosphere.marathon.state.Parameter] = new Writes[mesosphere.marathon.state.Parameter] {
+    override def writes(param: mesosphere.marathon.state.Parameter): JsValue = Json.obj(
+      "key" -> param.key,
+      "value" -> param.value)
+  }
+
+  val ParameterReads: Reads[Parameter] = ((JsPath \ "key").read[String] and
+    (JsPath \ "value").read[String])((k, v) => mesosphere.marathon.state.Parameter(k, v))
+
+  implicit lazy val ParameterFormat: Format[mesosphere.marathon.state.Parameter] = Format(ParameterReads, ParameterWrites)
 
   implicit lazy val RestartSpecFormat: Format[RestartSpec] = (
     (__ \ "policy").formatNullable[RestartPolicy].withDefault(RestartSpec.DefaultRestartPolicy) ~
-    (__ \ "activeDeadlineSeconds").formatNullable[Duration]) (RestartSpec.apply, unlift(RestartSpec.unapply))
+    (__ \ "activeDeadlineSeconds").formatNullable[Duration])(RestartSpec.apply, unlift(RestartSpec.unapply))
 
   implicit lazy val FiniteDurationFormat: Format[FiniteDuration] = new Format[FiniteDuration] {
     override def writes(o: FiniteDuration): JsValue = JsNumber(o.toSeconds)
@@ -153,14 +167,15 @@ package object models {
     (__ \ "cmd").formatNullable[String] ~
     (__ \ "args").formatNullable[Seq[String]] ~
     (__ \ "user").formatNullable[String] ~
-    (__ \ "env").formatNullable[Map[String, String]].withDefault(JobRunSpec.DefaultEnv) ~
+    (__ \ "env").formatNullable[Map[String, EnvVarValueOrSecret]].withDefault(JobRunSpec.DefaultEnv) ~
     (__ \ "placement").formatNullable[PlacementSpec].withDefault(JobRunSpec.DefaultPlacement) ~
     (__ \ "artifacts").formatNullable[Seq[Artifact]].withDefault(JobRunSpec.DefaultArtifacts) ~
     (__ \ "maxLaunchDelay").formatNullable[Duration].withDefault(JobRunSpec.DefaultMaxLaunchDelay) ~
     (__ \ "docker").formatNullable[DockerSpec] ~
     (__ \ "volumes").formatNullable[Seq[Volume]].withDefault(JobRunSpec.DefaultVolumes) ~
     (__ \ "restart").formatNullable[RestartSpec].withDefault(JobRunSpec.DefaultRestartSpec) ~
-    (__ \ "taskKillGracePeriodSeconds").formatNullable[FiniteDuration])(JobRunSpec.apply, unlift(JobRunSpec.unapply))
+    (__ \ "taskKillGracePeriodSeconds").formatNullable[FiniteDuration] ~
+    (__ \ "secrets").formatNullable[Map[String, SecretDef]].withDefault(JobRunSpec.DefaultSecrets))(JobRunSpec.apply, unlift(JobRunSpec.unapply))
 
   implicit lazy val JobSpecFormat: Format[JobSpec] = (
     (__ \ "id").format[JobId] ~
@@ -238,6 +253,9 @@ package object models {
       })
   }
 
+  implicit lazy val SemVerWrites: Writes[SemVer] = new Writes[SemVer] {
+    override def writes(o: SemVer): JsValue = JsString(o.toString())
+  }
   implicit lazy val MetronomeInfoWrites: Writes[MetronomeInfo] = Json.writes[MetronomeInfo]
 
   implicit lazy val TimestampWrites: Writes[Timestamp] = new Writes[Timestamp] {

@@ -276,7 +276,7 @@ post:
     #
     get:
       description:
-        Get the list of all runs for this jobId.
+        Get the list of currently active runs for this jobId. Once the run is finished, it will not be available through this endpoint.
       is: [ secured ]
       responses:
         200:

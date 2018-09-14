@@ -13,6 +13,14 @@ message Label {
   optional string value = 2;
 }
 
+/**
+ * A generic (key, value) pair used in various places for parameters.
+ */
+message Parameter {
+  required string key = 1;
+  required string value = 2;
+}
+
 message JobHistory {
   optional string job_spec_id = 1;
   optional int64 success_count = 2;
@@ -149,6 +157,9 @@ message JobSpec {
       // is already downloaded on the agent.
       optional bool force_pull_image = 2;
 
+      optional bool privileged = 3 [default = false];
+
+      repeated Parameter parameters = 4;
     }
     optional DockerSpec docker = 11;
 
@@ -190,6 +201,21 @@ message JobSpec {
     // https://github.com/mesosphere/marathon/blob/releases/1.3/docs/docs/rest-api/public/api/v2/schema/AppDefinition.json
     // int64 in mesos and int32 in marathon... going with int64
     optional int64 task_kill_grace_period_seconds = 14;
+
+    // key value pair used to store secrets path
+    message EnvironmentVariableSecret {
+      optional string name = 1;
+      optional string secretId = 2;
+    }
+    repeated EnvironmentVariableSecret environmentSecrets = 15;
+
+    // key value pair used to store secrets path
+    message Secret {
+      optional string id = 1;
+      optional string source = 2;
+    }
+    repeated Secret secrets = 16;
+
   }
   optional RunSpec run = 6;
 }

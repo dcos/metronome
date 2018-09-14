@@ -1,9 +1,11 @@
 package dcos.metronome
 package repository.impl.kv.marshaller
 
+import java.time.{ LocalDateTime, ZoneOffset }
+
 import dcos.metronome.model._
-import org.joda.time.DateTime
 import org.scalatest.{ FunSuite, Matchers }
+
 import scala.concurrent.duration._
 
 class JobRunMarshallerTest extends FunSuite with Matchers {
@@ -14,7 +16,7 @@ class JobRunMarshallerTest extends FunSuite with Matchers {
 
   test("unmarshal with invalid proto data should return None") {
     val invalidBytes = "foobar".getBytes
-    JobRunMarshaller.fromBytes(invalidBytes) should be(None)
+    JobRunMarshaller.fromBytes(invalidBytes.to[IndexedSeq]) should be(None)
   }
 
   class Fixture {
@@ -25,8 +27,8 @@ class JobRunMarshallerTest extends FunSuite with Matchers {
       JobRunId(jobSpec.id, "run.id"),
       jobSpec,
       JobRunStatus.Active,
-      DateTime.parse("2004-09-06T08:50:12.000Z"),
-      Some(DateTime.parse("2004-09-06T08:50:12.000Z")),
+      LocalDateTime.parse("2004-09-06T08:50:12.000").toInstant(ZoneOffset.UTC),
+      Some(LocalDateTime.parse("2004-09-06T08:50:12.000").toInstant(ZoneOffset.UTC)),
       Some(1 minute),
       Map.empty)
   }

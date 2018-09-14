@@ -10,10 +10,12 @@ import common
 import shakedown
 import pytest
 
-from common import job_no_schedule, schedule
+from common import job_no_schedule, schedule, not_required_masters_exact_count  # NOQA F401
+from shakedown import dcos_version_less_than, marthon_version_less_than, required_masters, required_public_agents  # NOQA F401
 from dcos import metronome
 from retrying import retry
 
+# DC/OS 1.8 is when Metronome was added.  Skip prior clusters
 pytestmark = [pytest.mark.skipif("shakedown.dcos_version_less_than('1.8')")]
 
 
@@ -123,9 +125,9 @@ def test_disable_schedule_recovery_from_master_bounce():
         job_schedule['enabled'] = False
         client.update_schedule(job_id, 'nightly', job_schedule)
 
-        # # bounce master
-        shakedown.restart_master_node()
-        common.wait_for_mesos_endpoint(timedelta(minutes=10).total_seconds())
+        # bounce metronome master
+        common.run_command_on_metronome_leader('sudo /sbin/shutdown -r now')
+        common.wait_for_metronome()
 
         # wait for the next run
         time.sleep(timedelta(minutes=1.5).total_seconds())
@@ -239,7 +241,54 @@ def test_docker_job():
         assert len(client.get_runs(job_id)) == 1
 
 
+@shakedown.dcos_1_10
+@pytest.mark.skipif("shakedown.ee_version() is None")
+def test_secret_env_var(secret_fixture):
+
+    secret_name, secret_value = secret_fixture
+
+    client = metronome.create_client()
+    job_id = uuid.uuid4().hex
+    job_def = common.job_with_secrets(job_id, secret_name=secret_name)
+    with job(job_def):
+        client.run_job(job_id)
+
+        @retry(wait_fixed=1000, stop_max_delay=5000)
+        def job_run_has_secret():
+            assert len(client.get_runs(job_id)) == 1, "triggered job should be running"
+            run_id = client.get_runs(job_id)[0]['id']
+            stdout, stderr, return_code = shakedown.run_dcos_command("task log {} secret-env".format(run_id))
+            logged_secret = stdout.rstrip()
+            assert secret_value == logged_secret, ("secret value in stdout log incorrect or missing. "
+                                                   "'{}' should be '{}'").format(logged_secret, secret_value)
+
+        job_run_has_secret()
+
+
+@shakedown.dcos_1_11
+def test_metronome_shutdown_with_no_extra_tasks():
+    """ Test for METRONOME-100 regression
+        When Metronome is restarted it incorrectly started another task for already running job run task.
+    """
+    client = metronome.create_client()
+    job_id = "metronome-shutdown-{}".format(uuid.uuid4().hex)
+    with job(job_no_schedule(job_id)):
+        # run a job before we shutdown Metronome
+        run_id = client.run_job(job_id)["id"]
+        common.wait_for_job_started(job_id, run_id)
+        common.assert_job_run(client, job_id)
+
+        # restart metronome process
+        common.run_command_on_metronome_leader('sudo systemctl restart dcos-metronome')
+        common.wait_for_metronome()
+
+        # verify that no extra job runs were started when Metronome was restarted
+        common.assert_wait_for_no_additional_tasks(tasks_count=1, client=client, job_id=job_id)
+
+
 def setup_module(module):
+    common.wait_for_metronome()
+    common.wait_for_cosmos()
     agents = shakedown.get_private_agents()
     if len(agents) < 2:
         assert False, "Incorrect Agent count"
@@ -254,4 +303,19 @@ def job(job_json):
     try:
         yield
     finally:
-        client.remove_job(job_id, True)
+        try:
+            client.remove_job(job_id, True)
+        except Exception as e:
+            print(e)
+
+
+@pytest.fixture(scope="function")
+def secret_fixture():
+    if not common.is_enterprise_cli_package_installed():
+        common.install_enterprise_cli_package()
+
+    secret_name = '/mysecret'
+    secret_value = 'super_secret_password'
+    common.create_secret(secret_name, secret_value)
+    yield secret_name, secret_value
+    common.delete_secret(secret_name)

@@ -90,6 +90,27 @@
             "forcePullImage": {
               "type": "boolean",
               "documentation": "The containerizer will pull the image from the registry, even if the image is already downloaded on the agent node."
+            },
+            "privileged": {
+              "type": "boolean",
+              "documentation": "Run this docker image in privileged mode"
+            },
+            "parameters": {
+              "type": "array",
+              "description": "",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": ["key", "value"]
+              }
             }
           },
           "required": ["image"]
@@ -99,7 +120,17 @@
           "patternProperties": {
             ".*": {
               "oneOf": [
-                { "type": "string" }
+                { "type": "string" },
+                {
+                  "type": "object",
+                  "description": "An environment variable set to a secret",
+                  "properties": {
+                    "secret": {
+                      "type": "string",
+                      "documentation": "The name of the secret to refer to. At runtime, the value of the secret will be injected into the value of the variable."
+                    }
+                  }
+                }
               ]
             }
           }
@@ -190,6 +221,21 @@
               }
             },
             "required": ["containerPath", "hostPath", "mode"]
+          }
+        },
+        "secrets": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "type": "object",
+              "description": "An environment variable set to a secret",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "documentation": "The name of the secret to refer to. At runtime, the value of the secret will be injected into the value of the variable."
+                }
+              }
+            }
           }
         }
       },

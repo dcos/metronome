@@ -1,14 +1,14 @@
 package dcos.metronome
 package repository.impl.kv.marshaller
 
-import dcos.metronome.Protos
+import java.time.ZoneId
+
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.kv.EntityMarshaller
-import org.joda.time.DateTimeZone
+import mesosphere.marathon.state.Parameter
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 
@@ -18,7 +18,7 @@ object JobSpecMarshaller extends EntityMarshaller[JobSpec] {
   override def toBytes(jobSpec: JobSpec): IndexedSeq[Byte] = {
     import JobSpecConversions.JobSpecToProto
 
-    jobSpec.toProto.toByteArray
+    jobSpec.toProto.toByteArray.to[IndexedSeq]
   }
 
   override def fromBytes(bytes: IndexedSeq[Byte]): Option[JobSpec] =
@@ -104,7 +104,7 @@ object JobSpecConversions {
         ScheduleSpec(
           id = schedule.getId,
           cron = CronSpec(schedule.getSchedule),
-          timeZone = DateTimeZone.forID(schedule.getTz),
+          timeZone = ZoneId.of(schedule.getTz),
           startingDeadline = schedule.getStartingDeadline.seconds,
           concurrencyPolicy = ConcurrencyPolicy.names(schedule.getConcurrencyPolicy.toString),
           enabled = schedule.getEnabled)
@@ -125,9 +125,11 @@ object RunSpecConversions {
         .setMaxLaunchDelay(runSpec.maxLaunchDelay.toSeconds)
         .setPlacement(runSpec.placement.toProto)
         .setRestart(runSpec.restart.toProto)
-        .addAllEnvironment(runSpec.env.toProto.asJava)
+        .addAllEnvironment(runSpec.env.toEnvProto.asJava)
+        .addAllEnvironmentSecrets(runSpec.env.toEnvSecretProto.asJava)
         .addAllArtifacts(runSpec.artifacts.toProto.asJava)
         .addAllVolumes(runSpec.volumes.toProto.asJava)
+        .addAllSecrets(runSpec.secrets.toProto.asJava)
 
       runSpec.cmd.foreach(builder.setCmd)
       runSpec.args.foreach { args => builder.addAllArguments(args.asJava) }
@@ -156,14 +158,15 @@ object RunSpecConversions {
         maxLaunchDelay = runSpec.getMaxLaunchDelay.seconds,
         placement = runSpec.getPlacement.toModel,
         restart = runSpec.getRestart.toModel,
-        env = runSpec.getEnvironmentList.asScala.toModel,
+        env = runSpec.getEnvironmentList.asScala.toModel ++ runSpec.getEnvironmentSecretsList.asScala.toModel,
         artifacts = runSpec.getArtifactsList.asScala.toModel,
         volumes = runSpec.getVolumesList.asScala.toModel,
         cmd = cmd,
         args = args,
         user = user,
         docker = docker,
-        taskKillGracePeriodSeconds = taskKillGracePeriodSeconds)
+        taskKillGracePeriodSeconds = taskKillGracePeriodSeconds,
+        secrets = runSpec.getSecretsList.asScala.toModel)
     }
   }
 
@@ -267,29 +270,82 @@ object RunSpecConversions {
     }.toList
   }
 
-  implicit class DockerSpecToProto(val dockerSpec: DockerSpec) extends AnyVal {
-    def toProto: Protos.JobSpec.RunSpec.DockerSpec = {
-      Protos.JobSpec.RunSpec.DockerSpec.newBuilder().setImage(dockerSpec.image).setForcePullImage(dockerSpec.forcePullImage).build()
+  implicit class ParametersToProto(val parameters: Seq[Parameter]) extends AnyVal {
+    def toProto: Iterable[Protos.Parameter] = parameters.map { parameter =>
+      val builder = Protos.Parameter.newBuilder
+      builder.setKey(parameter.key).setValue(parameter.value).build()
     }
   }
 
-  implicit class ProtoToDockerSpec(val dockerSpec: Protos.JobSpec.RunSpec.DockerSpec) extends AnyVal {
-    def toModel: DockerSpec = DockerSpec(image = dockerSpec.getImage, forcePullImage = dockerSpec.getForcePullImage)
+  implicit class DockerSpecToProto(val dockerSpec: DockerSpec) extends AnyVal {
+    def toProto: Protos.JobSpec.RunSpec.DockerSpec = {
+      Protos.JobSpec.RunSpec.DockerSpec.newBuilder()
+        .setImage(dockerSpec.image)
+        .setForcePullImage(dockerSpec.forcePullImage)
+        .setPrivileged(dockerSpec.privileged)
+        .addAllParameters(dockerSpec.parameters.toProto.asJava)
+        .build()
+    }
   }
 
-  implicit class EnvironmentToProto(val environment: Map[String, String]) extends AnyVal {
-    def toProto: Iterable[Protos.JobSpec.RunSpec.EnvironmentVariable] = environment.map {
-      case (key, value) =>
+  implicit class ProtoToParameters(val parameters: mutable.Buffer[Protos.Parameter]) extends AnyVal {
+    def toModel: Seq[Parameter] = parameters.map { parameter =>
+      Parameter(
+        key = parameter.getKey,
+        value = parameter.getValue)
+    }.toList
+  }
+
+  implicit class ProtoToDockerSpec(val dockerSpec: Protos.JobSpec.RunSpec.DockerSpec) extends AnyVal {
+    def toModel: DockerSpec = DockerSpec(
+      image = dockerSpec.getImage,
+      forcePullImage = dockerSpec.getForcePullImage,
+      privileged = dockerSpec.getPrivileged,
+      parameters = dockerSpec.getParametersList.asScala.toModel)
+  }
+
+  implicit class EnvironmentToProto(val environment: Map[String, EnvVarValueOrSecret]) extends AnyVal {
+    def toEnvProto: Iterable[Protos.JobSpec.RunSpec.EnvironmentVariable] = environment.collect {
+      case (key, EnvVarValue(value)) =>
         Protos.JobSpec.RunSpec.EnvironmentVariable.newBuilder()
           .setKey(key)
           .setValue(value)
           .build
     }
+    def toEnvSecretProto: Iterable[Protos.JobSpec.RunSpec.EnvironmentVariableSecret] = environment.collect {
+      case (name, EnvVarSecret(secretId)) =>
+        Protos.JobSpec.RunSpec.EnvironmentVariableSecret.newBuilder()
+          .setName(name)
+          .setSecretId(secretId)
+          .build
+    }
+  }
+
+  implicit class SecretsToProto(val secrets: Map[String, SecretDef]) extends AnyVal {
+    def toProto: Iterable[Protos.JobSpec.RunSpec.Secret] = secrets.map {
+      case (secretId, SecretDef(source)) =>
+        Protos.JobSpec.RunSpec.Secret.newBuilder()
+          .setId(secretId)
+          .setSource(source)
+          .build()
+    }
   }
 
   implicit class ProtosToEnvironment(val environmentVariables: mutable.Buffer[Protos.JobSpec.RunSpec.EnvironmentVariable]) extends AnyVal {
-    def toModel: Map[String, String] = environmentVariables.map { environmentVariable =>
-      environmentVariable.getKey -> environmentVariable.getValue
+    def toModel: Map[String, EnvVarValueOrSecret] = environmentVariables.map { environmentVariable =>
+      environmentVariable.getKey -> EnvVarValue(environmentVariable.getValue)
+    }.toMap
+  }
+
+  implicit class ProtosToEnvironmentSecrets(val environmentSecrets: mutable.Buffer[Protos.JobSpec.RunSpec.EnvironmentVariableSecret]) extends AnyVal {
+    def toModel: Map[String, EnvVarValueOrSecret] = environmentSecrets.map { environmentSecret =>
+      environmentSecret.getName -> EnvVarSecret(environmentSecret.getSecretId)
+    }.toMap
+  }
+
+  implicit class ProtosToSecrets(val secrets: mutable.Buffer[Protos.JobSpec.RunSpec.Secret]) extends AnyVal {
+    def toModel: Map[String, SecretDef] = secrets.map { secret =>
+      secret.getId -> SecretDef(secret.getSource)
     }.toMap
   }
 

@@ -2,7 +2,7 @@ package dcos.metronome
 package api
 
 import com.eclipsesource.schema.SchemaType
-import mesosphere.marathon.io.IO
+import dcos.metronome.utils.state.IO
 import play.api.libs.json.Json
 
 import scala.reflect.ClassTag

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Version script for Metronome.
+#
+# Change MINOR to x+1 and BRANCH_POINT to commit hash of common ancestor of master and releases/0.x
+# after a releases/0.x was cut
+MAJOR=0
+MINOR=5
+BRANCH_POINT=cf053c5cb8b949690c5f9798fb27cbd34343c959
+
+# Infer version
+# Number of commits since branch point
+COMMIT_NUMBER="$(git rev-list --count --first-parent $BRANCH_POINT..HEAD)"
+COMMIT_HASH=$(git rev-parse --short HEAD)
+
+# Echo commit hash
+if [ "$#" -eq 1 ] && [ "$1" == "commit" ]; then
+    echo "$COMMIT_HASH"
+    exit 0
+fi
+
+# Echo verion
+# E.g. 0.5.42
+echo "$MAJOR.$MINOR.$COMMIT_NUMBER"
