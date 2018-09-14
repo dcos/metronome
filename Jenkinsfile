@@ -21,6 +21,7 @@ ansiColor('gnome-terminal') {
                 string(credentialsId: 'f585ec9a-3c38-4f67-8bdb-79e5d4761937',variable: 'AWS_SECRET_ACCESS_KEY')
             ]) {
                 sh "bin/install-protobuf.sh"
+                sh "ci/ci_provision.sh"
                 sh "sudo -E PATH=\$PATH:\$HOME/protobuf/bin ci/pipeline jenkins"
             }
         } finally {
