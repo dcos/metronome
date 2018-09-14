@@ -124,6 +124,7 @@ def build(logFileName: String): utils.SemVer = {
 def updateDcos(artifact: awsClient.Artifact, version: utils.SemVer) = utils.stage("Package") {
   upgrade.updateMetronome(artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
   upgrade.updateMetronomeEE(artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+  
 }
 
 /**
