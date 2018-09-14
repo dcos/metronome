@@ -148,10 +148,12 @@ def jenkins(): Unit = {
   } else {
     val version = build(logFileName)
     val maybeArtifact = uploadTarballToS3(s"builds/$version")
-    maybeArtifact.foreach { artifact =>
-        run("ci/upgrade.sc", "updateMetronome", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
-        run("ci/upgrade.sc", "updateMetronomeEE", artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
-    }
+    utils.stage("Update DCOS PR") {
+          maybeArtifact.foreach { artifact =>
+              upgrade.updateMetronome(artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+              upgrade.updateMetronomeEE(artifact.downloadUrl, artifact.sha1, s"Update Metronome to $version")
+          }
+      }
   }
 }
 
