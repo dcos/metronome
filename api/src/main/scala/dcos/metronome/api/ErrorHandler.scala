@@ -22,7 +22,22 @@ class ErrorHandler extends HttpErrorHandler {
   }
 
   override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {
-    log.error(s"Error serving ${request.path}", exception)
+
+    /*
+      When a non-leading metronome is connected to by a client via the TLS port (9443 by default) and the leading master
+      registers with the plain http port, the proxy tries to redirect a TLS connection to the plain http port.
+      This results in the error which is expected and can be verbose in the logs.
+
+      The recommendation is to disable the plain HTTP port and always use TLS in this situation.   The condition is also
+      detected below and the verbose stacktrace is not logged.
+     */
+    if (exception.getMessage.contains("not an SSL/TLS record")) {
+      log.info(s"Client trying to connect via TLS port, but the proxying only happen through plain HTTP port. " +
+        s"Please use plain HTTP or query the leader directly. Error serving ${request.path}.  Exception Msg: ${exception.getMessage}")
+    } else {
+      log.error(s"Error serving ${request.path}", exception)
+    }
+
     val json = Json.obj("requestPath" -> escape(request.path))
     Future.successful(Results.Status(INTERNAL_SERVER_ERROR)(json))
   }
