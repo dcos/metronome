@@ -32,7 +32,8 @@ class ErrorHandler extends HttpErrorHandler {
       detected below and the verbose stacktrace is not logged.
      */
     if (exception.getMessage.contains("not an SSL/TLS record")) {
-      log.error(s"Error serving ${request.path} ${exception.getMessage}")
+      log.info(s"Client trying to connect via TLS port, but the proxying only happen through plain HTTP port. " +
+        s"Please use plain HTTP or query the leader directly. Error serving ${request.path}.  Exception Msg: ${exception.getMessage}")
     } else {
       log.error(s"Error serving ${request.path}", exception)
     }
