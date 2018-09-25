@@ -25,10 +25,6 @@ sandboxes.tar.gz
 protobuf-*/
 *.tar.gz
 
-# si_provision.sh files
-ci/launch_cluster.sh
-ci/si_pipeline.sh
-
 # libsigar native libs
 jobs/native/
 native/

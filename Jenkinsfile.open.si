@@ -27,7 +27,6 @@ node('py36') {
           [ [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'mesosphere-ci-marathon', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
             [$class: 'FileBinding', credentialsId: '11fcc957-5156-4470-ae34-d433da88248a', variable: 'DOT_SHAKEDOWN']
           ]) {
-            sh """./ci/si_provision.sh"""
             sh """./ci/si_pipeline.sh $params.channel open"""
           }
         } catch (Exception e) {
