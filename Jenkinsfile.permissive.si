@@ -28,7 +28,6 @@ node('py36') {
             [$class: 'StringBinding', credentialsId: 'ca159ad3-7323-4564-818c-46a8f03e1389', variable: 'DCOS_LICENSE'],
             [$class: 'FileBinding', credentialsId: '11fcc957-5156-4470-ae34-d433da88248a', variable: 'DOT_SHAKEDOWN']
           ]) {
-            sh """./ci/si_provision.sh"""
             sh """./ci/si_pipeline.sh $params.channel permissive"""
           }
         } catch (Exception e) {
