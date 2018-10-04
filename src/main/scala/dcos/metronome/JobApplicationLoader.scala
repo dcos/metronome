@@ -4,24 +4,31 @@ import java.time.Clock
 
 import controllers.AssetsComponents
 import com.softwaremill.macwire._
+import com.typesafe.scalalogging.StrictLogging
 import dcos.metronome.api.v1.LeaderProxyFilter
-import dcos.metronome.api.{ ApiModule, ErrorHandler }
+import dcos.metronome.api.{ApiModule, ErrorHandler}
 import mesosphere.marathon.MetricsModule
-import play.shaded.ahc.org.asynchttpclient.{ AsyncHttpClientConfig, DefaultAsyncHttpClient }
+import mesosphere.marathon.core.async.ExecutionContexts
+import mesosphere.marathon.core.base.JvmExitsCrashStrategy
+import org.slf4j.LoggerFactory
+import play.shaded.ahc.org.asynchttpclient.{AsyncHttpClientConfig, DefaultAsyncHttpClient}
 import play.api.ApplicationLoader.Context
 import play.api._
 import play.api.i18n._
-import play.api.libs.ws.ahc.{ AhcConfigBuilder, AhcWSClient, AhcWSClientConfig, StandaloneAhcWSClient }
-import play.api.libs.ws.{ WSClient, WSConfigParser }
+import play.api.libs.ws.ahc.{AhcConfigBuilder, AhcWSClient, AhcWSClientConfig, StandaloneAhcWSClient}
+import play.api.libs.ws.{WSClient, WSConfigParser}
 import play.api.mvc.EssentialFilter
 import play.api.routing.Router
 
 import scala.concurrent.Future
+import scala.util.Failure
 
 /**
   * Application loader that wires up the application dependencies using Macwire
   */
-class JobApplicationLoader extends ApplicationLoader {
+class JobApplicationLoader extends ApplicationLoader with StrictLogging {
+  private[this] val log = LoggerFactory.getLogger(getClass)
+
   def load(context: Context): Application = {
     val jobComponents = new JobComponents(context)
 
@@ -29,7 +36,11 @@ class JobApplicationLoader extends ApplicationLoader {
 
     Future {
       jobComponents.schedulerService.run()
-    }(scala.concurrent.ExecutionContext.global)
+    }(scala.concurrent.ExecutionContext.global).onComplete {
+      case Failure(e) =>
+        log.error("Error during application initialization. Shutting down.", e)
+        JvmExitsCrashStrategy.crash()
+    }(ExecutionContexts.callerThread)
 
     jobComponents.application
   }
