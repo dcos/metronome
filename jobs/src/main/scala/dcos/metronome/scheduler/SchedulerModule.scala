@@ -59,7 +59,7 @@ class SchedulerModule(
 
   private[this] val electionExecutor = Executors.newSingleThreadExecutor()
 
-  private[this] lazy val electionModule: ElectionModule = new ElectionModule(
+  lazy val electionModule: ElectionModule = new ElectionModule(
     metrics,
     scallopConf,
     actorSystem,
@@ -67,7 +67,7 @@ class SchedulerModule(
     hostPort,
     crashStrategy,
     ExecutionContext.fromExecutor(electionExecutor))
-  lazy val leadershipModule: LeadershipModule = {
+  val leadershipModule: LeadershipModule = {
     val actorRefFactory: ActorRefFactory = actorsModule.actorRefFactory
 
     LeadershipModule(actorRefFactory)
@@ -134,36 +134,32 @@ class SchedulerModule(
       scallopConf)
   }
 
-  private[this] val schedulerDriverFactory: SchedulerDriverFactory = new MesosSchedulerDriverFactory(
+  val schedulerDriverFactory: SchedulerDriverFactory = new MesosSchedulerDriverFactory(
     holder = schedulerDriverHolder,
     config = scallopConf,
     httpConfig = scallopConf,
     frameworkIdRepository = persistenceModule.frameworkIdRepository,
     scheduler = scheduler)
 
-  private[this] lazy val prePostDriverCallbacks: Seq[PrePostDriverCallback] = Seq(
+  val prePostDriverCallbacks: Seq[PrePostDriverCallback] = Seq(
     persistenceModule.instanceRepository,
     persistenceModule.frameworkIdRepository,
     persistenceModule.groupRepository).collect {
       case l: PrePostDriverCallback => l
     }
 
-  private[this] lazy val periodicOperations: PeriodicOperations = new PeriodicOperationsImpl()
+  val periodicOperations: PeriodicOperations = new PeriodicOperationsImpl()
 
-  lazy val schedulerService: SchedulerService = new SchedulerServiceImpl(
-    persistenceModule.storageModule.persistenceStore,
-    leadershipModule.coordinator(),
-    config,
-    electionModule.service,
-    prePostDriverCallbacks,
-    schedulerDriverFactory,
-    persistenceModule.migration,
-    periodicOperations)
-
-  lazy val flowModule = new FlowModule(leadershipModule)
+  val flowModule = new FlowModule(leadershipModule)
   // make sure launch tokens get initialized
   flowModule.refillOfferMatcherManagerLaunchTokens(
     scallopConf, offerMatcherManagerModule.subOfferMatcherManager)
+
+  leadershipModule.startWhenLeader(
+    props = ReconciliationActor.props(schedulerDriverHolder, instanceTrackerModule.instanceTracker, config),
+    name = "reconciliationActor")
+
+  val taskJobsModule = new TaskJobsModule(config.scallopConf, leadershipModule, clock)
 
   lazy val electionService: ElectionService = electionModule.service
 
@@ -174,7 +170,7 @@ class SchedulerModule(
       .map { case (managerWantsOffers, reconciliationWantsOffers) => managerWantsOffers || reconciliationWantsOffers }
   }
 
-  lazy val launchQueueModule = new LaunchQueueModule(
+  val launchQueueModule = new LaunchQueueModule(
     scallopConf,
     leadershipModule,
     clock,
@@ -183,12 +179,6 @@ class SchedulerModule(
     taskTracker = instanceTrackerModule.instanceTracker,
     taskOpFactory = launcherModule.taskOpFactory,
     () => scheduler.getLocalRegion)
-
-  leadershipModule.startWhenLeader(
-    props = ReconciliationActor.props(schedulerDriverHolder, instanceTrackerModule.instanceTracker, config),
-    name = "reconciliationActor")
-
-  val taskJobsModule = new TaskJobsModule(config.scallopConf, leadershipModule, clock)
 
   taskJobsModule.expungeOverdueLostTasks(instanceTrackerModule.instanceTracker)
 

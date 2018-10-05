@@ -18,7 +18,7 @@ class JobHistoryModule(
   metrics:          Metrics,
   leadershipModule: LeadershipModule) {
 
-  lazy val jobHistoryServiceActor: ActorRef = leadershipModule.startWhenLeader(
+  val jobHistoryServiceActor: ActorRef = leadershipModule.startWhenLeader(
     JobHistoryServiceActor.props(config, clock, repository, metrics), "JobHistoryServiceActor")
 
   lazy val jobHistoryService: JobHistoryService = new JobHistoryServiceDelegate(jobHistoryServiceActor, config)
