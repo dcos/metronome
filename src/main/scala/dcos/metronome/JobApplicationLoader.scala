@@ -40,6 +40,7 @@ class JobApplicationLoader extends ApplicationLoader with StrictLogging {
       case Failure(e) =>
         log.error("Error during application initialization. Shutting down.", e)
         JvmExitsCrashStrategy.crash()
+      case _ => // intentionally nothing, initialization went well
     }(ExecutionContexts.callerThread)
 
     jobComponents.application
