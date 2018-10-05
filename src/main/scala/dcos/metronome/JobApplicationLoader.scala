@@ -36,12 +36,10 @@ class JobApplicationLoader extends ApplicationLoader with StrictLogging {
 
     Future {
       jobComponents.schedulerService.run()
-    }(scala.concurrent.ExecutionContext.global).onComplete {
-      case Failure(e) =>
-        log.error("Error during application initialization. Shutting down.", e)
-        JvmExitsCrashStrategy.crash()
-      case _ => // intentionally nothing, initialization went well
-    }(ExecutionContexts.callerThread)
+    }(scala.concurrent.ExecutionContext.global).failed.foreach(e => {
+      log.error("Error during application initialization. Shutting down.", e)
+      JvmExitsCrashStrategy.crash()
+    })(ExecutionContexts.callerThread)
 
     jobComponents.application
   }
