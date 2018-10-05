@@ -1,5 +1,7 @@
 package dcos.metronome
 
+import dcos.metronome.scheduler.SchedulerService
+import dcos.metronome.scheduler.impl.SchedulerServiceImpl
 import java.time.Clock
 
 import controllers.AssetsComponents
@@ -54,9 +56,11 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
   override lazy val httpErrorHandler = new ErrorHandler
 
-  lazy val metricsModule = MetricsModule(config.scallopConf, configuration.underlying)
+  val config = new MetronomeConfig(configuration)
 
-  private[this] lazy val jobsModule: JobsModule = wire[JobsModule]
+  val metricsModule = MetricsModule(config.scallopConf, configuration.underlying)
+
+  private[this] val jobsModule: JobsModule = new JobsModule(config, actorSystem, clock, metricsModule)
 
   private[this] lazy val apiModule: ApiModule = new ApiModule(controllerComponents, assets, httpErrorHandler, config,
     jobsModule.jobSpecModule.jobSpecService,
@@ -66,8 +70,6 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     jobsModule.queueModule.launchQueueService,
     jobsModule.actorsModule,
     metricsModule)
-
-  def schedulerService = jobsModule.schedulerModule.schedulerService
 
   lazy val wsClient: WSClient = {
     val parser = new WSConfigParser(configuration.underlying, environment.classLoader)
@@ -90,5 +92,18 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
   override def router: Router = apiModule.router
 
-  lazy val config = new MetronomeConfig(configuration)
+  /**
+    * This needs to go last because calling `.coordinator` starts all the `startWhenLeader` hooks, and calling
+    * startWhenLeader after .coordinator causes issues.
+    */
+  val schedulerService: SchedulerService = new SchedulerServiceImpl(
+    jobsModule.schedulerRepositoriesModule.storageModule.persistenceStore,
+    jobsModule.schedulerModule.leadershipModule.coordinator(),
+    config,
+    jobsModule.schedulerModule.electionModule.service,
+    jobsModule.schedulerModule.prePostDriverCallbacks,
+    jobsModule.schedulerModule.schedulerDriverFactory,
+    jobsModule.schedulerRepositoriesModule.migration,
+    jobsModule.schedulerModule.periodicOperations)
+
 }

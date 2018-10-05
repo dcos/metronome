@@ -31,7 +31,7 @@ class JobsModule(
 
   lazy val schedulerRepositoriesModule = new SchedulerRepositoriesModule(metricsModule.metrics, config, repositoryModule, lifecycleState, actorsModule, actorSystem)
 
-  lazy val schedulerModule: SchedulerModule = new SchedulerModule(
+  val schedulerModule: SchedulerModule = new SchedulerModule(
     metricsModule.metrics,
     config,
     actorSystem,
@@ -42,14 +42,14 @@ class JobsModule(
     crashStrategy,
     actorsModule)
 
-  lazy val jobRunModule = {
+  val jobRunModule = {
     val launchQueue = schedulerModule.launchQueueModule.launchQueue
     val instanceTracker = schedulerModule.instanceTrackerModule.instanceTracker
     val driverHolder = schedulerModule.schedulerDriverHolder
     new JobRunModule(config, actorSystem, clock, repositoryModule.jobRunRepository, launchQueue, instanceTracker, driverHolder, metricsModule.metrics, schedulerModule.leadershipModule)
   }
 
-  lazy val jobSpecModule = new JobSpecModule(
+  val jobSpecModule = new JobSpecModule(
     config,
     actorSystem,
     clock,
@@ -58,7 +58,7 @@ class JobsModule(
     metricsModule.metrics,
     schedulerModule.leadershipModule)
 
-  lazy val jobHistoryModule = new JobHistoryModule(
+  val jobHistoryModule = new JobHistoryModule(
     config,
     actorSystem,
     clock,
@@ -66,11 +66,11 @@ class JobsModule(
     metricsModule.metrics,
     schedulerModule.leadershipModule)
 
-  lazy val jobInfoModule = new JobInfoModule(
+  val jobInfoModule = new JobInfoModule(
     jobSpecModule.jobSpecService,
     jobRunModule.jobRunService,
     jobHistoryModule.jobHistoryService)
 
-  lazy val queueModule = new LaunchQueueModule(schedulerModule.launchQueueModule.launchQueue)
+  val queueModule = new LaunchQueueModule(schedulerModule.launchQueueModule.launchQueue)
 }
 

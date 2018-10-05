@@ -18,7 +18,7 @@ import scala.util.Failure
 /**
   * Wrapper class for the scheduler
   */
-private[scheduler] class SchedulerServiceImpl(
+class SchedulerServiceImpl(
   persistenceStore:       PersistenceStore[_, _, _],
   leadershipCoordinator:  LeadershipCoordinator,
   config:                 SchedulerConfig,

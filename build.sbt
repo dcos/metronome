@@ -39,7 +39,7 @@ lazy val baseSettings = Seq(
     ("./version" !!).trim
   },
   organization := "dcos",
-  scalaVersion := "2.12.6",
+  scalaVersion := "2.12.7",
   crossScalaVersions := Seq(scalaVersion.value),
   scalacOptions in (Compile, doc) ++= Seq(
     "-encoding",
