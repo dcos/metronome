@@ -62,7 +62,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
   private[this] val jobsModule: JobsModule = new JobsModule(config, actorSystem, clock, metricsModule)
 
-  private[this] lazy val apiModule: ApiModule = new ApiModule(controllerComponents, assets, httpErrorHandler, config,
+  private[this] val apiModule: ApiModule = new ApiModule(controllerComponents, assets, httpErrorHandler, config,
     jobsModule.jobSpecModule.jobSpecService,
     jobsModule.jobRunModule.jobRunService,
     jobsModule.jobInfoModule.jobInfoService,
