@@ -25,11 +25,11 @@ class JobsModule(
   private[this] lazy val pluginModule = new PluginModule(config.scallopConf, crashStrategy)
   def pluginManger: PluginManager = pluginModule.pluginManager
 
-  lazy val repositoryModule = new RepositoryModule(config)
+  val repositoryModule = new RepositoryModule(config)
 
-  lazy val actorsModule = new ActorsModule(actorSystem)
+  val actorsModule = new ActorsModule(actorSystem)
 
-  lazy val schedulerRepositoriesModule = new SchedulerRepositoriesModule(metricsModule.metrics, config, repositoryModule, lifecycleState, actorsModule, actorSystem)
+  val schedulerRepositoriesModule = new SchedulerRepositoriesModule(metricsModule.metrics, config, repositoryModule, lifecycleState, actorsModule, actorSystem)
 
   val schedulerModule: SchedulerModule = new SchedulerModule(
     metricsModule.metrics,
