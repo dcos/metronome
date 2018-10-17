@@ -25,6 +25,8 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   lazy val mesosAuthenticationPrincipal: Option[String] = configuration.getOptional[String]("metronome.mesos.authentication.principal")
   lazy val mesosAuthenticationSecretsFile: Option[String] = configuration.getOptional[String]("metronome.mesos.authentication.secret.file")
 
+  lazy val suppressOffers: Boolean = configuration.getOptional[Boolean]("metronome.suppressOffers").getOrElse(false)
+
   lazy val enableFeatures: Option[String] = configuration.getOptional[String]("metronome.features.enable")
   lazy val pluginDir: Option[String] = configuration.getOptional[String]("metronome.plugin.dir")
   lazy val pluginConf: Option[String] = configuration.getOptional[String]("metronome.plugin.conf")
@@ -58,7 +60,9 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       if (httpPort.isEmpty) Some("--disable_http") else None,
       if (zkCompressionEnabled) Some("--zk_compression") else None,
       if (mesosAuthentication) Some("--mesos_authentication") else None,
-      if (metricsHistogramReservoirResetPeriodically.isDefined) Some("--metrics_histogram_reservoir_reset_periodically") else None)
+      if (metricsHistogramReservoirResetPeriodically.isDefined) Some("--metrics_histogram_reservoir_reset_periodically") else None,
+      if (suppressOffers) Some("--suppress_offers") else Some("disable_suppress_offers"))
+
     val options = Map[String, Option[String]](
       "--framework_name" -> Some(frameworkName),
       "--master" -> Some(mesosMaster),
