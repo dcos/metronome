@@ -11,7 +11,7 @@ import dcos.metronome.api.v1.LeaderProxyFilter
 import dcos.metronome.api.{ ApiModule, ErrorHandler }
 import mesosphere.marathon.MetricsModule
 import mesosphere.marathon.core.async.ExecutionContexts
-import mesosphere.marathon.core.base.JvmExitsCrashStrategy
+import mesosphere.marathon.core.base.{ CrashStrategy, JvmExitsCrashStrategy }
 import org.slf4j.LoggerFactory
 import play.shaded.ahc.org.asynchttpclient.{ AsyncHttpClientConfig, DefaultAsyncHttpClient }
 import play.api.ApplicationLoader.Context
@@ -40,7 +40,7 @@ class JobApplicationLoader extends ApplicationLoader with StrictLogging {
       jobComponents.schedulerService.run()
     }(scala.concurrent.ExecutionContext.global).failed.foreach(e => {
       log.error("Error during application initialization. Shutting down.", e)
-      JvmExitsCrashStrategy.crash()
+      JvmExitsCrashStrategy.crash(CrashStrategy.UncaughtException)
     })(ExecutionContexts.callerThread)
 
     jobComponents.application
@@ -48,7 +48,7 @@ class JobApplicationLoader extends ApplicationLoader with StrictLogging {
     case ex: Throwable =>
       // something awful
       logger.error(s"Exception occurred while trying to initialize Metronome. Shutting down", ex)
-      JvmExitsCrashStrategy.crash()
+      JvmExitsCrashStrategy.crash(CrashStrategy.UncaughtException)
       throw ex
   }
 }

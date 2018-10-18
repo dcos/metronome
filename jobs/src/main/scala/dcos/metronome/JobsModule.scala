@@ -29,7 +29,7 @@ class JobsModule(
 
   val actorsModule = new ActorsModule(actorSystem)
 
-  val schedulerRepositoriesModule = new SchedulerRepositoriesModule(metricsModule.metrics, config, repositoryModule, lifecycleState, actorsModule, actorSystem)
+  val schedulerRepositoriesModule = new SchedulerRepositoriesModule(metricsModule.metrics, config, repositoryModule, lifecycleState, actorsModule, actorSystem, crashStrategy)
 
   val schedulerModule: SchedulerModule = new SchedulerModule(
     metricsModule.metrics,
