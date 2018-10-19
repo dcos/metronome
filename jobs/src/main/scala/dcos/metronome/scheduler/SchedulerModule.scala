@@ -72,8 +72,10 @@ class SchedulerModule(
 
     LeadershipModule(actorRefFactory)
   }
+
+  val instanceRepository: InstanceRepository = persistenceModule.instanceRepository
+
   lazy val instanceTrackerModule: InstanceTrackerModule = {
-    val instanceRepository: InstanceRepository = persistenceModule.instanceRepository
     val updateSteps: Seq[InstanceChangeHandler] = Seq(
       ContinueOnErrorStep(new NotifyOfTaskStateOperationStep(eventBus, clock)))
 
@@ -112,6 +114,7 @@ class SchedulerModule(
     leadershipModule,
     schedulerDriverHolder,
     config.taskKillConfig,
+    metrics,
     clock)
   lazy val killService: KillService = taskTerminationModule.taskKillService
 
@@ -131,7 +134,8 @@ class SchedulerModule(
       taskStatusProcessor,
       persistenceModule.frameworkIdRepository,
       leaderInfo,
-      scallopConf)
+      scallopConf,
+      crashStrategy)
   }
 
   val schedulerDriverFactory: SchedulerDriverFactory = new MesosSchedulerDriverFactory(
@@ -139,7 +143,9 @@ class SchedulerModule(
     config = scallopConf,
     httpConfig = scallopConf,
     frameworkIdRepository = persistenceModule.frameworkIdRepository,
-    scheduler = scheduler)
+    instanceRepository = instanceRepository,
+    crashStrategy = crashStrategy,
+    scheduler = scheduler)(actorsModule.materializer)
 
   val prePostDriverCallbacks: Seq[PrePostDriverCallback] = Seq(
     persistenceModule.instanceRepository,
@@ -184,5 +190,6 @@ class SchedulerModule(
 
   taskJobsModule.handleOverdueTasks(
     instanceTrackerModule.instanceTracker,
-    killService)
+    killService,
+    metrics)
 }
