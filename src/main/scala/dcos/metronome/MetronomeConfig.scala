@@ -61,7 +61,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       if (zkCompressionEnabled) Some("--zk_compression") else None,
       if (mesosAuthentication) Some("--mesos_authentication") else None,
       if (metricsHistogramReservoirResetPeriodically.isDefined) Some("--metrics_histogram_reservoir_reset_periodically") else None,
-      if (suppressOffers) Some("--suppress_offers") else Some("disable_suppress_offers"))
+      if (suppressOffers) Some("--suppress_offers") else Some("--disable_suppress_offers"))
 
     val options = Map[String, Option[String]](
       "--framework_name" -> Some(frameworkName),
