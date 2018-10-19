@@ -25,7 +25,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   lazy val mesosAuthenticationPrincipal: Option[String] = configuration.getOptional[String]("metronome.mesos.authentication.principal")
   lazy val mesosAuthenticationSecretsFile: Option[String] = configuration.getOptional[String]("metronome.mesos.authentication.secret.file")
 
-  lazy val suppressOffers: Boolean = configuration.getOptional[Boolean]("metronome.suppressOffers").getOrElse(false)
+  lazy val suppressOffers: Boolean = configuration.getOptional[Boolean]("metronome.scheduler.suppressOffers").getOrElse(false)
 
   lazy val enableFeatures: Option[String] = configuration.getOptional[String]("metronome.features.enable")
   lazy val pluginDir: Option[String] = configuration.getOptional[String]("metronome.plugin.dir")
