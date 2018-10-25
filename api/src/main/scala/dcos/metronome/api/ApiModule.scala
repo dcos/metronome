@@ -1,7 +1,6 @@
 package dcos.metronome
 package api
 
-import com.softwaremill.macwire._
 import controllers.Assets
 import dcos.metronome.api.v0.controllers.ScheduledJobSpecController
 import dcos.metronome.api.v1.controllers._

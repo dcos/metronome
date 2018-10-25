@@ -4,9 +4,8 @@ package scheduler
 import akka.actor.{ ActorRefFactory, ActorSystem }
 import akka.event.EventStream
 import dcos.metronome.repository.SchedulerRepositoriesModule
-import dcos.metronome.scheduler.impl.{ NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor, SchedulerServiceImpl }
+import dcos.metronome.scheduler.impl.{ NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor }
 import dcos.metronome.utils.time.Clock
-import dcos.metronome.MetricsModule
 import mesosphere.marathon._
 import mesosphere.marathon.core.base.{ ActorsModule, ShutdownHooks }
 import mesosphere.marathon.core.election.{ ElectionModule, ElectionService }

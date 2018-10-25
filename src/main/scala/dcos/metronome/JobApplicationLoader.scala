@@ -91,7 +91,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
   lazy val config = new MetronomeConfig(configuration)
 
   /**
-    * This needs to go last because calling `.coordinator` starts all the `startWhenLeader` hooks, and calling
+    * This needs to go last because calling leadership `.coordinator` starts all the `startWhenLeader` hooks, and calling
     * startWhenLeader after .coordinator causes issues.
     */
   val schedulerService: SchedulerService = new SchedulerServiceImpl(
