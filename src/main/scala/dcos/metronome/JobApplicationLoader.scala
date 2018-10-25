@@ -22,7 +22,6 @@ import play.api.mvc.EssentialFilter
 import play.api.routing.Router
 
 import scala.concurrent.Future
-import scala.util.Failure
 
 /**
   * Application loader that wires up the application dependencies using Macwire
@@ -35,11 +34,10 @@ class JobApplicationLoader extends ApplicationLoader with StrictLogging {
 
     Future {
       jobComponents.schedulerService.run()
-    }(scala.concurrent.ExecutionContext.global).onComplete {
-      case Failure(e) =>
-        log.error("Error during application initialization. Shutting down.", e)
-        JvmExitsCrashStrategy.crash(UncaughtException)
-    }(ExecutionContexts.callerThread)
+    }(scala.concurrent.ExecutionContext.global).failed.foreach(e => {
+      log.error("Error during application initialization. Shutting down.", e)
+      JvmExitsCrashStrategy.crash(UncaughtException)
+    })(ExecutionContexts.callerThread)
     jobComponents.application
   }
 }
