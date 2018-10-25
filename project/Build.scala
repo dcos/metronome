@@ -87,7 +87,7 @@ object Build extends sbt.Build {
 
   lazy val baseSettings = Seq(
     organization := "dcos",
-    scalaVersion := "2.11.8",
+    scalaVersion := "2.11.11",
     crossScalaVersions := Seq(scalaVersion.value),
     scalacOptions in (Compile, doc) ++= Seq(
       "-encoding", "UTF-8",

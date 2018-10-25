@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory
 import controllers.Assets
 import dcos.metronome.api.v1.LeaderProxyFilter
 import dcos.metronome.api.{ ApiModule, ErrorHandler }
+import dcos.metronome.scheduler.SchedulerService
+import dcos.metronome.scheduler.impl.SchedulerServiceImpl
 import dcos.metronome.utils.CrashStrategy.UncaughtException
 import dcos.metronome.utils.{ ExecutionContexts, JvmExitsCrashStrategy }
 import dcos.metronome.utils.time.{ Clock, SystemClock }
@@ -53,7 +55,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
   override lazy val httpErrorHandler = new ErrorHandler
 
-  private[this] lazy val jobsModule: JobsModule = wire[JobsModule]
+  private[this] val jobsModule: JobsModule = new JobsModule(config, actorSystem, clock)
 
   private[this] lazy val apiModule: ApiModule = new ApiModule(
     config,
@@ -65,8 +67,6 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     jobsModule.behaviorModule.metrics,
     assets,
     jobsModule.queueModule.launchQueueService)
-
-  def schedulerService = jobsModule.schedulerModule.schedulerService
 
   lazy val wsClient: WSClient = {
     val parser = new WSConfigParser(configuration, environment)
@@ -89,4 +89,19 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
   override def router: Router = apiModule.router
 
   lazy val config = new MetronomeConfig(configuration)
+
+  /**
+    * This needs to go last because calling `.coordinator` starts all the `startWhenLeader` hooks, and calling
+    * startWhenLeader after .coordinator causes issues.
+    */
+  val schedulerService: SchedulerService = new SchedulerServiceImpl(
+    jobsModule.schedulerModule.leadershipModule.coordinator(),
+    config,
+    jobsModule.schedulerModule.electionModule.service,
+    jobsModule.schedulerModule.prePostDriverCallbacks,
+    jobsModule.schedulerModule.schedulerDriverFactory,
+    jobsModule.metricsModule.metrics,
+    jobsModule.schedulerRepositoriesModule.migration,
+    jobsModule.schedulerModule.periodicOperations)
+
 }
