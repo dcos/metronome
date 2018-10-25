@@ -1,9 +1,13 @@
 package dcos.metronome
 
 import com.softwaremill.macwire._
+import com.typesafe.scalalogging.StrictLogging
+import org.slf4j.LoggerFactory
 import controllers.Assets
 import dcos.metronome.api.v1.LeaderProxyFilter
 import dcos.metronome.api.{ ApiModule, ErrorHandler }
+import dcos.metronome.utils.CrashStrategy.UncaughtException
+import dcos.metronome.utils.{ ExecutionContexts, JvmExitsCrashStrategy }
 import dcos.metronome.utils.time.{ Clock, SystemClock }
 import org.asynchttpclient.AsyncHttpClientConfig
 import org.joda.time.DateTimeZone
@@ -16,18 +20,24 @@ import play.api.mvc.EssentialFilter
 import play.api.routing.Router
 
 import scala.concurrent.Future
+import scala.util.Failure
 
 /**
   * Application loader that wires up the application dependencies using Macwire
   */
-class JobApplicationLoader extends ApplicationLoader {
+class JobApplicationLoader extends ApplicationLoader with StrictLogging {
+  private[this] val log = LoggerFactory.getLogger(getClass)
+
   def load(context: Context): Application = {
     val jobComponents = new JobComponents(context)
 
     Future {
       jobComponents.schedulerService.run()
-    }(scala.concurrent.ExecutionContext.global)
-
+    }(scala.concurrent.ExecutionContext.global).onComplete {
+      case Failure(e) =>
+        log.error("Error during application initialization. Shutting down.", e)
+        JvmExitsCrashStrategy.crash(UncaughtException)
+    }(ExecutionContexts.callerThread)
     jobComponents.application
   }
 }
