@@ -29,7 +29,7 @@ import scala.concurrent.Future
 class JobApplicationLoader extends ApplicationLoader with StrictLogging {
   private[this] val log = LoggerFactory.getLogger(getClass)
 
-  def load(context: Context): Application = {
+  def load(context: Context): Application = try {
     val jobComponents = new JobComponents(context)
 
     Future {
@@ -39,6 +39,12 @@ class JobApplicationLoader extends ApplicationLoader with StrictLogging {
       JvmExitsCrashStrategy.crash(UncaughtException)
     })(ExecutionContexts.callerThread)
     jobComponents.application
+  } catch {
+    case ex: Throwable =>
+      // something awful
+      logger.error(s"Exception occurred while trying to initialize Metronome. Shutting down", ex)
+      JvmExitsCrashStrategy.crash(UncaughtException)
+      throw ex
   }
 }
 
@@ -49,9 +55,10 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
   }
   lazy val assets: Assets = wire[Assets]
 
-  lazy val clock: Clock = new SystemClock(DateTimeZone.UTC)
+  val clock: Clock = new SystemClock(DateTimeZone.UTC)
 
   override lazy val httpErrorHandler = new ErrorHandler
+  val config = new MetronomeConfig(configuration)
 
   private[this] val jobsModule: JobsModule = new JobsModule(config, actorSystem, clock)
 
@@ -66,7 +73,8 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     assets,
     jobsModule.queueModule.launchQueueService)
 
-  lazy val wsClient: WSClient = {
+  val wsClient: WSClient = {
+    configuration.underlying
     val parser = new WSConfigParser(configuration, environment)
     val config = new AhcWSClientConfig(wsClientConfig = parser.parse())
     val builder = new AhcConfigBuilder(config)
@@ -85,8 +93,6 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     new LeaderProxyFilter(wsClient, jobsModule.schedulerModule.electionService, config))
 
   override def router: Router = apiModule.router
-
-  lazy val config = new MetronomeConfig(configuration)
 
   /**
     * This needs to go last because calling leadership `.coordinator` starts all the `startWhenLeader` hooks, and calling
