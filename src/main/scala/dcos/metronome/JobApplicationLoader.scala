@@ -74,6 +74,8 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     jobsModule.queueModule.launchQueueService)
 
   val wsClient: WSClient = {
+    // magic is so wonderful.  by referencing the underlying configuration it is materialized thus not null when needed
+    // as we switch to a more eager initialization.   It is cleaner in later versions of play... not available in this version.
     configuration.underlying
     val parser = new WSConfigParser(configuration, environment)
     val config = new AhcWSClientConfig(wsClientConfig = parser.parse())
