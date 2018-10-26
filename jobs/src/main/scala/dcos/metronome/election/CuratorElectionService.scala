@@ -26,10 +26,11 @@ import scala.concurrent.Future
 import scala.util.control.NonFatal
 import scala.concurrent.ExecutionContext
 
+
 /**
   * Handles our election leader election concerns.
   *
-  *  Copied from marathon 1.4 https://github.com/mesosphere/marathon/commit/db9dda947629cb5a09841912aaab82b7579f6485#diff-1c333e9a1acc8a0693854d9fe692d89c
+  *  Copied from marathon 1.4 https://github.com/mesosphere/marathon/commit/db9dda947629cb5a09841912aaab82b7579f6485#diff-f895d5a352b3ced56a140042b3ed84e6
   *  In order to make the changes to leader election to prevent deadlock.  This is for Metronome 0.4.x.   Metronome 0.5.x is
   *  based on a version of Marathon that has these changes incorporated.
   */
