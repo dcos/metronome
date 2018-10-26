@@ -21,7 +21,7 @@ import scala.util.Failure
 /**
   * Wrapper class for the scheduler
   */
-private[scheduler] class SchedulerServiceImpl(
+class SchedulerServiceImpl(
   leadershipCoordinator:  LeadershipCoordinator,
   config:                 SchedulerConfig,
   electionService:        ElectionService,

@@ -20,15 +20,15 @@ class JobsModule(
   private[this] lazy val pluginModule = new PluginModule(config.scallopConf)
   def pluginManger: PluginManager = pluginModule.pluginManager
 
-  private[this] lazy val metricsModule = new MetricsModule()
+  val metricsModule = new MetricsModule()
 
-  lazy val behaviorModule = new BehaviorModule(config, metricsModule.metricsRegistry, metricsModule.healthCheckRegistry)
+  val behaviorModule = new BehaviorModule(config, metricsModule.metricsRegistry, metricsModule.healthCheckRegistry)
 
-  lazy val repositoryModule = new RepositoryModule(config)
+  val repositoryModule = new RepositoryModule(config)
 
-  lazy val schedulerRepositoriesModule = new SchedulerRepositoriesModule(config, repositoryModule, metricsModule)
+  val schedulerRepositoriesModule = new SchedulerRepositoriesModule(config, repositoryModule, metricsModule)
 
-  lazy val schedulerModule: SchedulerModule = new SchedulerModule(
+  val schedulerModule: SchedulerModule = new SchedulerModule(
     config,
     actorSystem,
     clock,
@@ -36,14 +36,14 @@ class JobsModule(
     pluginModule,
     metricsModule)
 
-  lazy val jobRunModule = {
+  val jobRunModule = {
     val launchQueue = schedulerModule.launchQueueModule.launchQueue
     val taskTracker = schedulerModule.taskTrackerModule.taskTracker
     val driverHolder = schedulerModule.schedulerDriverHolder
     new JobRunModule(config, actorSystem, clock, repositoryModule.jobRunRepository, launchQueue, taskTracker, driverHolder, behaviorModule.behavior, schedulerModule.leadershipModule)
   }
 
-  lazy val jobSpecModule = new JobSpecModule(
+  val jobSpecModule = new JobSpecModule(
     config,
     actorSystem,
     clock,
@@ -52,7 +52,7 @@ class JobsModule(
     behaviorModule.behavior,
     schedulerModule.leadershipModule)
 
-  lazy val jobHistoryModule = new JobHistoryModule(
+  val jobHistoryModule = new JobHistoryModule(
     config,
     actorSystem,
     clock,
@@ -60,12 +60,12 @@ class JobsModule(
     behaviorModule.behavior,
     schedulerModule.leadershipModule)
 
-  lazy val jobInfoModule = new JobInfoModule(
+  val jobInfoModule = new JobInfoModule(
     jobSpecModule.jobSpecService,
     jobRunModule.jobRunService,
     behaviorModule.behavior,
     jobHistoryModule.jobHistoryService)
 
-  lazy val queueModule = new LaunchQueueModule(schedulerModule.launchQueueModule.launchQueue)
+  val queueModule = new LaunchQueueModule(schedulerModule.launchQueueModule.launchQueue)
 }
 
