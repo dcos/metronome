@@ -80,6 +80,11 @@
           "description": "How much disk space is needed for this job. This number does not have to be an integer, but can be a fraction.",
           "minimum": 0
         },
+        "runtime": {
+          "type": "string",
+          "enum": ["docker", "mesos"],
+          "documentation": "Container Runtime to use.  Uses 'docker' object for configuration and ignores the docker parameters"
+        },
         "docker": {
           "type": "object",
           "additionalProperties": false,
