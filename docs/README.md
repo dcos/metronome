@@ -21,11 +21,16 @@ following the instructions.
 
         docker build . -t jekyll
 
-2. Run it (from this folder)
+2. Generate raml docs
+
+        mkdir -p docs/generated
+        docker run --rm -it -v $(pwd)/../api/src/main/resources/public/:/raml mattjtodd/raml2html@sha256:116e0aff241b972c36793b116d6dcc177102175377beef36b528b399694e427b -i /raml/api/api.raml > docs/generated/api.html
+
+3. Run it (from this folder)
 
         docker run --rm -it -v $(pwd):/site-docs -p 4000:4000 jekyll
 
-3. Visit the site at
+4. Visit the site at
    [http://localhost:4000/metronome/](http://localhost:4000/metronome/)
 
 #### Native OS

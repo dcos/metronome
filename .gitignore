@@ -29,3 +29,7 @@ protobuf-*/
 # libsigar native libs
 jobs/native/
 native/
+
+.dir-locals.el
+/scratch/
+/docs/docs/generated
