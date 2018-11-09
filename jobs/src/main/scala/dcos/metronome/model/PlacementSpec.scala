@@ -9,19 +9,18 @@ object PlacementSpec {
 
 case class ConstraintSpec(attribute: String, operator: Operator, value: Option[String])
 
-sealed trait Operator
+sealed trait Operator { val name: String }
 object Operator {
-  case object Eq extends Operator
-  case object Like extends Operator
-  case object Unlike extends Operator
+  case object Is extends Operator { val name = "IS" }
+  case object Like extends Operator { val name = "LIKE" }
+  case object Unlike extends Operator { val name = "UNLIKE" }
 
-  val names: Map[String, Operator] = Map(
-    "EQ" -> Eq,
-    "LIKE" -> Like,
-    "UNLIKE" -> Unlike)
-  val operatorNames: Map[Operator, String] = names.map{ case (a, b) => (b, a) }
-
-  def name(operator: Operator): String = operatorNames(operator)
+  val all = Seq(Is, Like, Unlike)
+  /**
+    * For backwards compatibility, we map EQ to Is
+    */
+  val names: Map[String, Operator] =
+    Map(all.map { op => op.name -> op }: _*) + ("EQ" -> Is)
   def unapply(name: String): Option[Operator] = names.get(name)
   def isDefined(name: String): Boolean = names.contains(name)
 }

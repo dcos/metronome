@@ -131,6 +131,8 @@ message JobSpec {
           LIKE = 3;
           // Field must not match the regex given by value.
           UNLIKE = 4;
+          // Field must be the specified value
+          IS = 6;
         }
         optional Operator operator = 2;
         optional string value = 3;

@@ -39,18 +39,29 @@ object MarathonImplicits {
   }
 
   implicit class ConstraintSpecToProto(val spec: ConstraintSpec) extends AnyVal {
-    def toProto: marathon.Protos.Constraint = {
-      val marathonOperator = spec.operator match {
-        case Operator.Eq     => marathon.Protos.Constraint.Operator.CLUSTER
-        case Operator.Like   => marathon.Protos.Constraint.Operator.LIKE
-        case Operator.Unlike => marathon.Protos.Constraint.Operator.UNLIKE
-      }
+    def toProto: Option[marathon.Protos.Constraint] = {
+      /**
+        * Unfortunately, Metronome has always allowed valueless constraint operators, but they never had any effect.
+        *
+        * For the sake of consistency with Marathon, the Eq operator was replaced with Is. Previously, Eq mapped to
+        * CLUSTER, and valueless CLUSTER constraint (which has a specific meaning in Marathon) has no meaning in the
+        * context of jobs.
+        *
+        * Ideally, we would make the value required, but this would be an API breaking change.
+        */
+      spec.value.map { value =>
+        val marathonOperator = spec.operator match {
+          case Operator.Is     => marathon.Protos.Constraint.Operator.IS
+          case Operator.Like   => marathon.Protos.Constraint.Operator.LIKE
+          case Operator.Unlike => marathon.Protos.Constraint.Operator.UNLIKE
+        }
 
-      val builder = marathon.Protos.Constraint.newBuilder()
-        .setOperator(marathonOperator)
-        .setField(spec.attribute)
-      spec.value.foreach(builder.setValue)
-      builder.build()
+        val builder = marathon.Protos.Constraint.newBuilder()
+          .setOperator(marathonOperator)
+          .setField(spec.attribute)
+        builder.setValue(value)
+        builder.build()
+      }
     }
   }
 
@@ -87,7 +98,7 @@ object MarathonImplicits {
         instances = 1,
         resources = Resources(cpus = jobSpec.run.cpus, mem = jobSpec.run.mem, disk = jobSpec.run.disk),
         executor = "//cmd",
-        constraints = jobSpec.run.placement.constraints.map(spec => spec.toProto).toSet,
+        constraints = jobSpec.run.placement.constraints.flatMap(spec => spec.toProto)(collection.breakOut),
         fetch = jobSpec.run.artifacts.map(_.toFetchUri),
         portDefinitions = Seq.empty[PortDefinition],
         requirePorts = false,

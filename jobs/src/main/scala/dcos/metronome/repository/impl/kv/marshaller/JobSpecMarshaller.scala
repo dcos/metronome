@@ -234,19 +234,19 @@ object RunSpecConversions {
       builder
         .setAttribute(constraint.attribute)
         .setOperator(
-          Protos.JobSpec.RunSpec.PlacementSpec.Constraint.Operator.valueOf(Operator.name(constraint.operator)))
+          Protos.JobSpec.RunSpec.PlacementSpec.Constraint.Operator.valueOf(constraint.operator.name))
         .build()
     }
   }
 
-  implicit class ProtosToConstraintSpec(val constraints: mutable.Buffer[Protos.JobSpec.RunSpec.PlacementSpec.Constraint]) extends AnyVal {
+  implicit class ProtosToConstraintSpec(val constraints: Iterable[Protos.JobSpec.RunSpec.PlacementSpec.Constraint]) extends AnyVal {
     def toModel: Seq[ConstraintSpec] = constraints.map { constraint =>
       val value = if (constraint.hasValue) Some(constraint.getValue) else None
       ConstraintSpec(
         attribute = constraint.getAttribute,
         operator = Operator.names(constraint.getOperator.toString),
         value = value)
-    }.toList
+    }(collection.breakOut)
   }
 
   implicit class ArtifactsToProto(val artifacts: Seq[Artifact]) extends AnyVal {

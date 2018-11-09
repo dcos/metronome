@@ -106,7 +106,7 @@ package object models {
   }
 
   implicit lazy val OperatorFormat: Format[Operator] = new Format[Operator] {
-    override def writes(o: Operator): JsValue = JsString(Operator.name(o))
+    override def writes(o: Operator): JsValue = JsString(o.name)
     override def reads(json: JsValue): JsResult[Operator] = json match {
       case JsString(Operator(value)) => JsSuccess(value)
       case invalid => JsError(s"'$invalid' is not a valid operator. " +

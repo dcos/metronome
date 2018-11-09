@@ -22,7 +22,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
 
   val constrantsSpecGen = for {
     attribute <- nonEmptyAlphaStrGen
-    operator <- Gen.oneOf(Operator.Eq, Operator.Like, Operator.Unlike)
+    operator <- Gen.oneOf(Operator.Is, Operator.Like, Operator.Unlike)
     value <- Gen.option(nonEmptyAlphaStrGen)
   } yield ConstraintSpec(
     attribute,
@@ -94,6 +94,14 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
     }
   }
 
+  test("reading EQ constraint comes through as IS") {
+    // This asserts that jobSpecs stored with the EQ Operator are properly mapped to IS
+    import Protos.JobSpec.RunSpec.PlacementSpec.Constraint
+    import RunSpecConversions.ProtosToConstraintSpec
+    val converted = Seq(Constraint.newBuilder().setAttribute("field").setOperator(Constraint.Operator.EQ).setValue("value").build).toModel
+    converted.head.operator.name shouldBe "IS"
+  }
+
   class Fixture {
     import concurrent.duration._
 
@@ -105,7 +113,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
       args = None,
       user = Some("root"),
       env = Map("key" -> EnvVarValue("value"), "secretName" -> EnvVarSecret("secretId")),
-      placement = PlacementSpec(constraints = Seq(ConstraintSpec("hostname", Operator.Eq, Some("localhost")))),
+      placement = PlacementSpec(constraints = Seq(ConstraintSpec("hostname", Operator.Is, Some("localhost")))),
       artifacts = Seq(Artifact("http://www.foo.bar/file.tar.gz", extract = false, executable = true, cache = true)),
       maxLaunchDelay = 24.hours,
       docker = Some(DockerSpec(image = "dcos/metronome", privileged = true)),

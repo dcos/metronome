@@ -1,3 +1,41 @@
+# Unreleased
+
+## In replaces Eq operator
+
+In order to bring better alignment between Marathon and Metronome, the Eq constraint operator has been replaced with In. The change is semantic; Job definitions using Eq will continue to function the same and are transparently mapped to the new operator with the same constraint behavior.
+
+If you post the following Job definition:
+
+```json
+{
+  "description": "constraint example",
+  "id": "constraint-example",
+  "run": {
+    ...
+    "placement": {
+      "constraints": [{"attribute": "@region", "operator": "EQ", "value": "us-east-1"}]
+    }
+  }
+}
+```
+
+When you ask for it back, the operator will be "IN":
+
+```json
+{
+  "description": "constraint example",
+  "id": "constraint-example",
+  "run": {
+    ...
+    "placement": {
+      "constraints": [{"attribute": "@region", "operator": "IN", "value": "us-east-1"}]
+    }
+  }
+}
+```
+
+Previous jobs are automatically migrated as well.
+
 # Version 0.5.3
 
 ## Bugs
