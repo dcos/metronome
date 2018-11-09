@@ -43,8 +43,9 @@ object MarathonImplicits {
       /**
         * Unfortunately, Metronome has always allowed valueless constraint operators, but they never had any effect.
         *
-        * The Eq operator was replaced with Is in of favor consistency. Eq mapped to CLUSTER, and valueless cluster in
-        * the context of jobs made no sense.
+        * For the sake of consistency with Marathon, the Eq operator was replaced with Is. Previously, Eq mapped to
+        * CLUSTER, and valueless CLUSTER constraint (which has a specific meaning in Marathon) has no meaning in the
+        * context of jobs.
         *
         * Ideally, we would make the value required, but this would be an API breaking change.
         */
