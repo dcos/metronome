@@ -216,7 +216,6 @@ message JobSpec {
     }
     repeated Secret secrets = 16;
 
-    optional string runtime = 17;
   }
   optional RunSpec run = 6;
 }

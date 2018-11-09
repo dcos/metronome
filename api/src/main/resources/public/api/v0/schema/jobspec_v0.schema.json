@@ -79,10 +79,37 @@
           "description": "How much disk space is needed for this job. This number does not have to be an integer, but can be a fraction.",
           "minimum": 0
         },
-        "runtime": {
-          "type": "string",
-          "enum": ["docker", "mesos"],
-          "documentation": "Container Runtime to use.  Uses 'docker' object for configuration and ignores the docker parameters"
+        "ucr": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "image": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "documentation": "The repository image name."
+                },
+                "kind": {
+                  "type": "string",
+                  "documentation": "The type of image",
+                  "enum": ["docker", "appc"],
+                  "default": "docker"
+                }
+              },
+              "required": ["id"]
+            },
+            "forcePullImage": {
+              "type": "boolean",
+              "documentation": "The containerizer will pull the image from the registry, even if the image is already downloaded on the agent."
+            },
+            "privileged": {
+              "type": "boolean",
+              "documentation": "Run this docker image in privileged mode"
+            }
+          },
+          "required": ["image"]
         },
         "docker": {
           "type": "object",
