@@ -96,13 +96,13 @@
                   "documentation": "The type of image",
                   "enum": ["docker", "appc"],
                   "default": "docker"
+                },
+                "forcePull": {
+                  "type": "boolean",
+                  "documentation": "The containerizer will pull the image from the registry, even if the image is already downloaded on the agent."
                 }
               },
               "required": ["id"]
-            },
-            "forcePull": {
-              "type": "boolean",
-              "documentation": "The containerizer will pull the image from the registry, even if the image is already downloaded on the agent."
             },
             "privileged": {
               "type": "boolean",
