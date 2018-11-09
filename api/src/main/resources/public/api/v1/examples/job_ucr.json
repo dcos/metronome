@@ -1,0 +1,13 @@
+{
+  "description": "example ucr runtime job",
+  "id": "ucr-example",
+  "run": {
+    "cmd": "sleep inf",
+    "cpus": 0.2,
+    "mem": 32,
+    "disk": 128,
+    "ucr": {
+      "image": { "id": "ubuntu"}
+    }
+  }
+}
