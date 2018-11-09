@@ -25,3 +25,5 @@ addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.2.2")
 addSbtPlugin("com.github.gseitz" % "sbt-protobuf" % "0.6.3")
 
 addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.3")
+
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.9")
