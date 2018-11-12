@@ -19,6 +19,7 @@ case class JobRunSpec(
   artifacts:                  Seq[Artifact]                    = JobRunSpec.DefaultArtifacts,
   maxLaunchDelay:             Duration                         = JobRunSpec.DefaultMaxLaunchDelay,
   docker:                     Option[DockerSpec]               = JobRunSpec.DefaultDocker,
+  ucr:                        Option[UcrSpec]                  = JobRunSpec.DefaultUcr,
   volumes:                    Seq[Volume]                      = JobRunSpec.DefaultVolumes,
   restart:                    RestartSpec                      = JobRunSpec.DefaultRestartSpec,
   taskKillGracePeriodSeconds: Option[FiniteDuration]           = JobRunSpec.DefaultTaskKillGracePeriodSeconds,
@@ -36,6 +37,7 @@ object JobRunSpec {
   val DefaultEnv = Map.empty[String, EnvVarValueOrSecret]
   val DefaultArtifacts = Seq.empty[Artifact]
   val DefaultDocker = None
+  val DefaultUcr = None
   val DefaultVolumes = Seq.empty[Volume]
   val DefaultRestartSpec = RestartSpec()
   val DefaultTaskKillGracePeriodSeconds = None

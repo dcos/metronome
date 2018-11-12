@@ -304,6 +304,19 @@ object RunSpecConversions {
       parameters = dockerSpec.getParametersList.asScala.toModel)
   }
 
+  implicit class ProtoToImageSpec(val imageSpec: Protos.JobSpec.RunSpec.UcrSpec.Image) extends AnyVal {
+    def toModel: ImageSpec = ImageSpec(
+      id = imageSpec.getId,
+      kind = imageSpec.getKind,
+      forcePull = imageSpec.getForcePull)
+  }
+
+  implicit class ProtoToUcrSpec(val ucrSpec: Protos.JobSpec.RunSpec.UcrSpec) extends AnyVal {
+    def toModel: UcrSpec = UcrSpec(
+      image = ucrSpec.getImage.toModel,
+      privileged = ucrSpec.getPrivileged)
+  }
+
   implicit class EnvironmentToProto(val environment: Map[String, EnvVarValueOrSecret]) extends AnyVal {
     def toEnvProto: Iterable[Protos.JobSpec.RunSpec.EnvironmentVariable] = environment.collect {
       case (key, EnvVarValue(value)) =>
