@@ -137,6 +137,10 @@ package object models {
     (__ \ "parameters").formatNullable[Seq[Parameter]].withDefault(DockerSpec.DefaultParameters) ~
     (__ \ "forcePullImage").formatNullable[Boolean].withDefault(false))(DockerSpec.apply, unlift(DockerSpec.unapply))
 
+  implicit lazy val UcrFormatSpec: Format[UcrSpec] = (
+    (__ \ "image").format[ImageSpec] ~
+    (__ \ "privileged").formatNullable[Boolean].withDefault(false))(UcrSpec.apply, unlift(UcrSpec.unapply))
+
   implicit lazy val ParameterWrites: Writes[mesosphere.marathon.state.Parameter] = new Writes[mesosphere.marathon.state.Parameter] {
     override def writes(param: mesosphere.marathon.state.Parameter): JsValue = Json.obj(
       "key" -> param.key,
@@ -177,6 +181,7 @@ package object models {
     (__ \ "artifacts").formatNullable[Seq[Artifact]].withDefault(JobRunSpec.DefaultArtifacts) ~
     (__ \ "maxLaunchDelay").formatNullable[Duration].withDefault(JobRunSpec.DefaultMaxLaunchDelay) ~
     (__ \ "docker").formatNullable[DockerSpec] ~
+    (__ \ "ucr").formatNullable[UcrSpec] ~
     (__ \ "volumes").formatNullable[Seq[Volume]].withDefault(JobRunSpec.DefaultVolumes) ~
     (__ \ "restart").formatNullable[RestartSpec].withDefault(JobRunSpec.DefaultRestartSpec) ~
     (__ \ "taskKillGracePeriodSeconds").formatNullable[FiniteDuration] ~

@@ -58,8 +58,9 @@ object JobRunSpec {
       val envVarDefinedSecretNames = jobRunSpec.env.values.collect { case EnvVarSecret(secretName) => secretName }.toSet
       val providedSecretNames = jobRunSpec.secrets.keySet
 
-      check(jobRunSpec.cmd.isDefined || jobRunSpec.docker.exists(d => d.image.nonEmpty), JobRunSpecMessages.cmdOrDockerValidation)
+      check(jobRunSpec.cmd.isDefined || jobRunSpec.docker.exists(d => d.image.nonEmpty) || jobRunSpec.ucr.nonEmpty, JobRunSpecMessages.cmdOrDockerValidation)
       check(envVarDefinedSecretNames == providedSecretNames, JobRunSpecMessages.secretsValidation(envVarDefinedSecretNames, providedSecretNames))
+      check(!(jobRunSpec.docker.nonEmpty & jobRunSpec.ucr.nonEmpty), JobRunSpecMessages.onlyDockerOrUcr)
 
       violations.headOption.getOrElse(Success)
     }
@@ -67,8 +68,9 @@ object JobRunSpec {
 }
 
 object JobRunSpecMessages {
-  val cmdOrDockerValidation = "Cmd or docker image must be specified"
+  val cmdOrDockerValidation = "Cmd, docker or ucr image must be specified"
   def secretsValidation(envVarSecretsName: Set[String], providedSecretsNames: Set[String]) = {
     s"Secret names are different from provided secrets. Defined: ${envVarSecretsName.mkString(", ")}, Provided: ${providedSecretsNames.mkString(", ")}"
   }
+  val onlyDockerOrUcr = "Either Docker or UCR should be provided, but not both"
 }

@@ -72,7 +72,8 @@ object MarathonImplicits {
 
   implicit class JobSpecToContainer(val jobSpec: JobSpec) extends AnyVal {
     def toContainer: Option[Container] = {
-      jobSpec.run.docker match {
+      require(!(jobSpec.run.docker.nonEmpty && jobSpec.run.ucr.nonEmpty), "docker and ucr can't be present both")
+      val maybeDocker = jobSpec.run.docker match {
         case Some(dockerSpec) => Some(Container.Docker(
           image = dockerSpec.image,
           volumes = jobSpec.run.volumes.map(_.toMarathon),
@@ -82,6 +83,13 @@ object MarathonImplicits {
         case _ => None
       }
 
+      val maybeUcr = jobSpec.run.ucr.map { ucrSpec =>
+        Container.MesosDocker(
+          image = ucrSpec.image.id,
+          forcePullImage = ucrSpec.image.forcePull) // TODO: pass privileged once marathon will support it
+      }
+
+      maybeDocker.orElse(maybeUcr)
     }
   }
 

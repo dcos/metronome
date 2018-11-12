@@ -27,5 +27,5 @@ object ImageSpec {
 
 case class UcrSpec(
   image:      ImageSpec,
-  privileged: Boolean   = false)
+  privileged: Boolean   = false) extends Container
 

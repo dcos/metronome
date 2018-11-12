@@ -1,9 +1,11 @@
 package dcos.metronome
 package jobrun.impl
 
+import dcos.metronome.Protos.JobSpec.RunSpec
 import dcos.metronome.model._
 import mesosphere.marathon.Protos.Constraint
 import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedInstanceInfo
+import mesosphere.marathon.state.Container.MesosDocker
 import mesosphere.marathon.state.{ AppDefinition, Container }
 import org.slf4j.LoggerFactory
 
@@ -28,7 +30,12 @@ object QueuedJobRunConverter {
 
   implicit class MarathonContainerToDockerSpec(val container: Option[Container]) extends AnyVal {
 
-    def toModel: Option[DockerSpec] = container.flatMap(c => c.docker).map(d => DockerSpec(d.image, d.forcePullImage))
+    def toDockerModel: Option[DockerSpec] = container.flatMap(c => c.docker).map(d => DockerSpec(d.image, d.forcePullImage))
+    def toUcrModel: Option[UcrSpec] = container.collect {
+      case ucr: MesosDocker =>
+        val image = ImageSpec(id = ucr.image, forcePull = ucr.forcePullImage)
+        UcrSpec(image, privileged = false) // TODO: Add privileged once marathon will support it
+    }
   }
 
   implicit class RunSpecToJobRunSpec(val run: AppDefinition) extends AnyVal {
@@ -45,7 +52,8 @@ object QueuedJobRunConverter {
         placement = placement,
         maxLaunchDelay = run.backoffStrategy.maxLaunchDelay,
         taskKillGracePeriodSeconds = run.taskKillGracePeriod,
-        docker = run.container.toModel)
+        docker = run.container.toDockerModel,
+        ucr = run.container.toUcrModel)
     }
 
     // TODO: remove once placement is fixed.

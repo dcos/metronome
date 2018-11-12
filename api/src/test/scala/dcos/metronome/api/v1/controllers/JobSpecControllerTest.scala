@@ -31,9 +31,33 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       contentAsJson(response) mustBe jobSpec1Json
     }
 
+    "creates a job when sending a valid job ucr spec" in {
+      Given("No job")
+
+      When("A job with UCR is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(ucrJobSpec1Json)).get
+
+      Then("The job is created")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+      contentAsJson(response) mustBe ucrJobSpec1Json
+    }
+
     "creates job when sending docker spec without forcePullImage property" in {
       Given("Job spec without forcePullImage")
       val specJson = """{"id":"spec1","run":{"cpus":1,"mem":128,"disk":0,"docker":{"image":"image"}}}"""
+
+      When("A job is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(Json.parse(specJson))).get
+
+      Then("The job is created")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+    }
+
+    "creates job when sending ucr spec without forcePullImage property" in {
+      Given("Job spec without forcePullImage")
+      val specJson = """{"id":"spec1","run":{"cpus":1,"mem":128,"disk":0,"ucr":{"image":{ "id":"image" }}}}"""
 
       When("A job is created")
       val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(Json.parse(specJson))).get
@@ -55,9 +79,33 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       contentType(response) mustBe Some("application/json")
     }
 
+    "creates job when sending ucr spec with forcePullImage property against v0" in {
+      Given("Job spec with forcePullImage")
+      val specJson = """{"id":"spec1","run":{"cpus":1,"mem":128,"disk":0,"ucr":{"image":{"id":"image", "forcePull": true}}}}"""
+
+      When("A job is created")
+      val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(Json.parse(specJson))).get
+
+      Then("The job is created")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+    }
+
     "creates job when sending docker spec without forcePullImage property against v0" in {
       Given("Job spec without forcePullImage")
       val specJson = """{"id":"spec1","run":{"cpus":1,"mem":128,"disk":0,"docker":{"image":"image"}}}"""
+
+      When("A job is created")
+      val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(Json.parse(specJson))).get
+
+      Then("The job is created")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+    }
+
+    "creates job when sending ucr spec without forcePullImage property against v0" in {
+      Given("Job spec without forcePullImage")
+      val specJson = """{"id":"spec1","run":{"cpus":1,"mem":128,"disk":0,"ucr":{"image":{"id":"image"}}}}"""
 
       When("A job is created")
       val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(Json.parse(specJson))).get
@@ -178,9 +226,10 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
 
   "GET /jobs" should {
     "get all available jobs" in {
-      Given("Two job specs")
+      Given("Three job specs")
       route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec1Json)).get.futureValue
       route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpec2Json)).get.futureValue
+      route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(ucrJobSpec1Json)).get.futureValue
 
       When("All jobspecs are queried")
       val response = route(app, FakeRequest(GET, s"/v1/jobs")).get
@@ -188,7 +237,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       Then("All job specs are returned")
       status(response) mustBe OK
       contentType(response) mustBe Some("application/json")
-      contentAsJson(response).as[JsArray].value.toSet mustBe Set(jobSpec1Json, jobSpec2Json)
+      contentAsJson(response).as[JsArray].value.toSet mustBe Set(jobSpec1Json, jobSpec2Json, ucrJobSpec1Json)
     }
 
     "without auth this endpoint is not accessible" in {
@@ -407,10 +456,13 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
   import scala.concurrent.duration._
 
   def spec(id: String) = JobSpec(JobId(id), run = JobRunSpec(taskKillGracePeriodSeconds = Some(10 seconds), docker = Some(DockerSpec("image", forcePullImage = true))))
+  def ucrSpec(id: String) = JobSpec(JobId(id), run = JobRunSpec(taskKillGracePeriodSeconds = Some(10 seconds), ucr = Some(UcrSpec(ImageSpec(id = "image", forcePull = true)))))
   val CronSpec(cron) = "* * * * *"
   val schedule1 = ScheduleSpec("id1", cron)
   val jobSpec1 = spec("spec1")
+  val ucrJobSpec1 = ucrSpec("ucr-spec1")
   val jobSpec1Json = Json.toJson(jobSpec1)
+  val ucrJobSpec1Json = Json.toJson(ucrJobSpec1)
   val jobSpec2 = spec("spec2")
   val jobSpec2Json = Json.toJson(jobSpec2)
   val jobSpecWithSecrets = {
