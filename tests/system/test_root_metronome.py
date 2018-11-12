@@ -241,6 +241,17 @@ def test_docker_job():
         assert len(client.get_runs(job_id)) == 1
 
 
+def test_ucr_job():
+    client = metronome.create_client()
+    job_id = uuid.uuid4().hex
+    job_def = job_no_schedule(job_id)
+    common.add_ucr_image(job_def)
+    with job(job_def):
+        client.run_job(job_id)
+        time.sleep(2)
+        assert len(client.get_runs(job_id)) == 1
+
+
 @shakedown.dcos_1_10
 @pytest.mark.skipif("shakedown.ee_version() is None")
 def test_secret_env_var(secret_fixture):
