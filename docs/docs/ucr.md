@@ -6,6 +6,10 @@ title: Universal Container Runtime (UCR) Run Configurations
 
 It is now possible to run jobs with Docker containers using [Universal Container Runtime](http://mesos.apache.org/documentation/latest/container-image/).
 
+**Important:** Note that UCR could support various image types, therefore the `ucr.image` property is 
+an _object_ instead of a _string_ as with `docker`. Specifying just `"image": { "id": "ubuntu" }` will 
+default to `docker` image type.
+
 To enable UCR, the run configuration needs to contain the `ucr` section:
 
 ```
@@ -26,4 +30,4 @@ To enable UCR, the run configuration needs to contain the `ucr` section:
 }
 ```
 
-Please note that UCR uses a differnt syntax when defining docker image section. Also, specifying both `docker` and `ucr` will lead to a validation error.
+Note that specifying both `ucr` and `docker` is invalid and will lead to a validation error.
