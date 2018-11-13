@@ -18,6 +18,9 @@ Learn how to [contribute to the Metronome project]({{ site.baseurl }}/docs/contr
 ## Controlling Docker Runtime Capabilities
 Learn how to [change docker runtime capabilities]({{ site.baseurl }}/docs/docker.html).
 
+## Using Universal Container Runtime with Jobs
+Learn how to [launch jobs with UCR]({{ site.baseurl }}/docs/ucr.html).
+
 ## Metrics
 See what [metrics]({{ site.baseurl }}/docs/metrics.html) Metronome exposes.
 
