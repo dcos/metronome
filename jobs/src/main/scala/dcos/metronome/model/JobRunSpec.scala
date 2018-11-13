@@ -68,7 +68,7 @@ object JobRunSpec {
 }
 
 object JobRunSpecMessages {
-  val cmdOrDockerValidation = "Cmd, docker or ucr image must be specified"
+  val cmdOrDockerValidation = "Cmd, Docker or UCR image must be specified"
   def secretsValidation(envVarSecretsName: Set[String], providedSecretsNames: Set[String]) = {
     s"Secret names are different from provided secrets. Defined: ${envVarSecretsName.mkString(", ")}, Provided: ${providedSecretsNames.mkString(", ")}"
   }
