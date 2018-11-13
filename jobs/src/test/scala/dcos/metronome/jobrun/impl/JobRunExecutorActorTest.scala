@@ -20,6 +20,7 @@ import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedInstanceInfo
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.tracker.InstanceTracker
+import mesosphere.marathon.state.Container.MesosDocker
 import mesosphere.marathon.state.{ AppDefinition, RunSpec, Timestamp, UnreachableDisabled }
 import mesosphere.marathon.state._
 import org.apache.mesos.SchedulerDriver
@@ -503,6 +504,36 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     verify(f.launchQueue, atLeast(1)).add(argument.capture(), any)
     argument.getValue.container.get.docker.get.forcePullImage shouldBe true
   }
+
+  test("image.forcePull for UCR is passed to Marathon when launching task") {
+
+    val f = new Fixture
+
+    Given("a jobRunSpec with forcePullImage")
+    val image = ImageSpec(
+      id = "image",
+      forcePull = true)
+    val jobSpec = JobSpec(
+      id = JobId("/test"),
+      run = JobRunSpec(ucr = Some(UcrSpec(image))))
+    val (_, jobRun) = f.setupInitialExecutorActor(Some(jobSpec))
+
+    And("a new task is launched")
+    val msg = f.persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
+    msg.jobRun.status shouldBe JobRunStatus.Starting
+    f.persistenceActor.reply(JobRunPersistenceActor.JobRunCreated(f.persistenceActor.ref, jobRun, Unit))
+    import org.mockito.ArgumentCaptor
+    val argument: ArgumentCaptor[RunSpec] = ArgumentCaptor.forClass(classOf[RunSpec])
+
+    And("RunSpec is submitted to LaunchQueue with a Docker forcePullImage")
+    verify(f.launchQueue, atLeast(1)).add(argument.capture(), any)
+    val ucrForcePullImage = argument.getValue.container.collect {
+      case ucr: MesosDocker =>
+        ucr.forcePullImage
+    }
+    ucrForcePullImage.get shouldBe true
+  }
+
   test("privileged is passed to Marathon when launching task") {
 
     val f = new Fixture

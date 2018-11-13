@@ -135,6 +135,7 @@ object RunSpecConversions {
       runSpec.args.foreach { args => builder.addAllArguments(args.asJava) }
       runSpec.user.foreach(builder.setUser)
       runSpec.docker.foreach { docker => builder.setDocker(docker.toProto) }
+      runSpec.ucr.foreach { ucr => builder.setUcr(ucr.toProto) }
       runSpec.taskKillGracePeriodSeconds.foreach { killGracePeriod => builder.setTaskKillGracePeriodSeconds(killGracePeriod.toSeconds) }
 
       builder.build()
@@ -149,6 +150,7 @@ object RunSpecConversions {
       val args = if (runSpec.getArgumentsCount == 0) None else Some(runSpec.getArgumentsList.asScala.toList)
       val user = if (runSpec.hasUser) Some(runSpec.getUser) else None
       val docker = if (runSpec.hasDocker) Some(runSpec.getDocker.toModel) else None
+      val ucr = if (runSpec.hasUcr) Some(runSpec.getUcr.toModel) else None
       val taskKillGracePeriodSeconds = if (runSpec.hasTaskKillGracePeriodSeconds) Some(Duration(runSpec.getTaskKillGracePeriodSeconds, SECONDS)) else None
 
       JobRunSpec(
@@ -165,6 +167,7 @@ object RunSpecConversions {
         args = args,
         user = user,
         docker = docker,
+        ucr = ucr,
         taskKillGracePeriodSeconds = taskKillGracePeriodSeconds,
         secrets = runSpec.getSecretsList.asScala.toModel)
     }
@@ -288,6 +291,25 @@ object RunSpecConversions {
     }
   }
 
+  implicit class ImageSpecToProto(val image: ImageSpec) extends AnyVal {
+    def toProto: Protos.JobSpec.RunSpec.UcrSpec.Image = {
+      Protos.JobSpec.RunSpec.UcrSpec.Image.newBuilder()
+        .setId(image.id)
+        .setKind(image.kind)
+        .setForcePull(image.forcePull)
+        .build()
+    }
+  }
+
+  implicit class UcrSpecToProto(val ucrSpec: UcrSpec) extends AnyVal {
+    def toProto: Protos.JobSpec.RunSpec.UcrSpec = {
+      Protos.JobSpec.RunSpec.UcrSpec.newBuilder()
+        .setImage(ucrSpec.image.toProto)
+        .setPrivileged(ucrSpec.privileged)
+        .build()
+    }
+  }
+
   implicit class ProtoToParameters(val parameters: mutable.Buffer[Protos.Parameter]) extends AnyVal {
     def toModel: Seq[Parameter] = parameters.map { parameter =>
       Parameter(
@@ -302,6 +324,19 @@ object RunSpecConversions {
       forcePullImage = dockerSpec.getForcePullImage,
       privileged = dockerSpec.getPrivileged,
       parameters = dockerSpec.getParametersList.asScala.toModel)
+  }
+
+  implicit class ProtoToImageSpec(val imageSpec: Protos.JobSpec.RunSpec.UcrSpec.Image) extends AnyVal {
+    def toModel: ImageSpec = ImageSpec(
+      id = imageSpec.getId,
+      kind = imageSpec.getKind,
+      forcePull = imageSpec.getForcePull)
+  }
+
+  implicit class ProtoToUcrSpec(val ucrSpec: Protos.JobSpec.RunSpec.UcrSpec) extends AnyVal {
+    def toModel: UcrSpec = UcrSpec(
+      image = ucrSpec.getImage.toModel,
+      privileged = ucrSpec.getPrivileged)
   }
 
   implicit class EnvironmentToProto(val environment: Map[String, EnvVarValueOrSecret]) extends AnyVal {

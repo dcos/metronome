@@ -15,3 +15,17 @@ case class DockerSpec(
 object DockerSpec {
   val DefaultParameters = Seq.empty[Parameter]
 }
+
+case class ImageSpec(
+  id:        String,
+  kind:      String  = ImageSpec.DefaultKind,
+  forcePull: Boolean = false)
+
+object ImageSpec {
+  val DefaultKind = "docker"
+}
+
+case class UcrSpec(
+  image:      ImageSpec,
+  privileged: Boolean   = false) extends Container
+

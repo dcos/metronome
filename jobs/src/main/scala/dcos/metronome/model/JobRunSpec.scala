@@ -19,6 +19,7 @@ case class JobRunSpec(
   artifacts:                  Seq[Artifact]                    = JobRunSpec.DefaultArtifacts,
   maxLaunchDelay:             Duration                         = JobRunSpec.DefaultMaxLaunchDelay,
   docker:                     Option[DockerSpec]               = JobRunSpec.DefaultDocker,
+  ucr:                        Option[UcrSpec]                  = JobRunSpec.DefaultUcr,
   volumes:                    Seq[Volume]                      = JobRunSpec.DefaultVolumes,
   restart:                    RestartSpec                      = JobRunSpec.DefaultRestartSpec,
   taskKillGracePeriodSeconds: Option[FiniteDuration]           = JobRunSpec.DefaultTaskKillGracePeriodSeconds,
@@ -36,6 +37,7 @@ object JobRunSpec {
   val DefaultEnv = Map.empty[String, EnvVarValueOrSecret]
   val DefaultArtifacts = Seq.empty[Artifact]
   val DefaultDocker = None
+  val DefaultUcr = None
   val DefaultVolumes = Seq.empty[Volume]
   val DefaultRestartSpec = RestartSpec()
   val DefaultTaskKillGracePeriodSeconds = None
@@ -56,8 +58,9 @@ object JobRunSpec {
       val envVarDefinedSecretNames = jobRunSpec.env.values.collect { case EnvVarSecret(secretName) => secretName }.toSet
       val providedSecretNames = jobRunSpec.secrets.keySet
 
-      check(jobRunSpec.cmd.isDefined || jobRunSpec.docker.exists(d => d.image.nonEmpty), JobRunSpecMessages.cmdOrDockerValidation)
+      check(jobRunSpec.cmd.isDefined || jobRunSpec.docker.exists(d => d.image.nonEmpty) || jobRunSpec.ucr.nonEmpty, JobRunSpecMessages.cmdOrDockerValidation)
       check(envVarDefinedSecretNames == providedSecretNames, JobRunSpecMessages.secretsValidation(envVarDefinedSecretNames, providedSecretNames))
+      check(!(jobRunSpec.docker.nonEmpty & jobRunSpec.ucr.nonEmpty), JobRunSpecMessages.onlyDockerOrUcr)
 
       violations.headOption.getOrElse(Success)
     }
@@ -65,8 +68,9 @@ object JobRunSpec {
 }
 
 object JobRunSpecMessages {
-  val cmdOrDockerValidation = "Cmd or docker image must be specified"
+  val cmdOrDockerValidation = "Cmd, Docker or UCR image must be specified"
   def secretsValidation(envVarSecretsName: Set[String], providedSecretsNames: Set[String]) = {
     s"Secret names are different from provided secrets. Defined: ${envVarSecretsName.mkString(", ")}, Provided: ${providedSecretsNames.mkString(", ")}"
   }
+  val onlyDockerOrUcr = "Either Docker or UCR should be provided, but not both"
 }

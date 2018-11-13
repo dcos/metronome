@@ -38,6 +38,12 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
 
   val durationGen = Gen.posNum[Long].map(l => FiniteDuration(l, "second"))
 
+  val dockerGen = Gen.option(Gen.zip(nonEmptyAlphaStrGen, booleanGen).map{ case (s, b) => DockerSpec(s, b) })
+
+  val ucrGen = Gen.option(Gen.zip(nonEmptyAlphaStrGen, booleanGen).map{ case (id, fp) => UcrSpec(ImageSpec(id = id, forcePull = fp)) })
+
+  val dockerOrUcrGen: Gen[Option[Container]] = Gen.oneOf(dockerGen, ucrGen)
+
   val jobRunSpecGen = for {
     cpus <- Gen.posNum[Double]
     mem <- Gen.posNum[Double]
@@ -49,27 +55,34 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
     placement <- placementGen
     artifacts <- Gen.listOf(Gen.zip(nonEmptyAlphaStrGen, booleanGen, booleanGen, booleanGen).map { case (s, b1, b2, b3) => Artifact(s, b1, b2, b3) })
     maxLaunchDelay <- durationGen
-    docker <- Gen.option(Gen.zip(nonEmptyAlphaStrGen, booleanGen).map{ case (s, b) => DockerSpec(s, b) })
+    container <- dockerOrUcrGen
     volumes <- Gen.listOf(Gen.zip(nonEmptyAlphaStrGen, nonEmptyAlphaStrGen, Gen.oneOf(Mode.RO, Mode.RW)).map{ case (s1, s2, m) => Volume(s1, s2, m) })
     restart <- Gen.zip(Gen.oneOf(RestartPolicy.Never, RestartPolicy.OnFailure), Gen.option(durationGen)).map{ case (rp, d) => RestartSpec(rp, d) }
     taskKillGracePeriodSeconds <- Gen.option(durationGen)
     secrets <- Gen.mapOf(Gen.zip(nonEmptyAlphaStrGen, nonEmptyAlphaStrGen.map(s => SecretDef(s))))
-  } yield JobRunSpec(
-    cpus,
-    mem,
-    disk,
-    cmd,
-    args,
-    user,
-    env,
-    placement,
-    artifacts,
-    maxLaunchDelay,
-    docker,
-    volumes,
-    restart,
-    taskKillGracePeriodSeconds,
-    secrets)
+  } yield {
+
+    val docker = container.collect { case c: DockerSpec => c }
+    val ucr = container.collect { case c: UcrSpec => c }
+
+    JobRunSpec(
+      cpus,
+      mem,
+      disk,
+      cmd,
+      args,
+      user,
+      env,
+      placement,
+      artifacts,
+      maxLaunchDelay,
+      docker,
+      ucr,
+      volumes,
+      restart,
+      taskKillGracePeriodSeconds,
+      secrets)
+  }
 
   val jobSpecGen = for {
     id <- Gen.listOf(nonEmptyAlphaStrGen).map(s => JobId(s))
