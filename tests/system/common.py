@@ -80,6 +80,12 @@ def add_docker_image(job_def, image='busybox'):
     }
 
 
+def add_ucr_image(job_def, image='busybox'):
+    job_def['run']['ucr']['image'] = {
+        "id": image
+    }
+
+
 def get_private_ip():
     agents = shakedown.get_private_agents()
     for agent in agents:
