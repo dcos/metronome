@@ -257,9 +257,14 @@
                 "type": "string",
                 "description": "Possible values are RO for ReadOnly and RW for Read/Write",
                 "enum": ["RO", "RW"]
+              },
+              "secret": {
+                "type": "string",
+                "description": "References the secret that is used by this volume",
+                "minLength": 1
               }
             },
-            "required": ["containerPath", "hostPath", "mode"]
+            "required": ["containerPath"]
           }
         },
         "secrets": {
