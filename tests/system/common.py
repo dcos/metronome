@@ -81,8 +81,10 @@ def add_docker_image(job_def, image='busybox'):
 
 
 def add_ucr_image(job_def, image='busybox'):
-    job_def['run']['ucr']['image'] = {
-        "id": image
+    job_def['run']['ucr'] = {
+        "image": {
+          "id": image
+        }
     }
 
 
