@@ -197,22 +197,35 @@ object RunSpecConversions {
   }
 
   implicit class VolumesToProto(val volumes: Seq[Volume]) extends AnyVal {
-    def toProto: Iterable[Protos.JobSpec.RunSpec.Volume] = volumes.map { volume =>
-      Protos.JobSpec.RunSpec.Volume.newBuilder()
-        .setContainerPath(volume.containerPath)
-        .setHostPath(volume.hostPath)
-        .setMode(
-          Protos.JobSpec.RunSpec.Volume.Mode.valueOf(Mode.name(volume.mode)))
-        .build
+    def toProto: Iterable[Protos.JobSpec.RunSpec.Volume] = volumes.map {
+      case volume: HostVolume =>
+        Protos.JobSpec.RunSpec.Volume.newBuilder()
+          .setContainerPath(volume.containerPath)
+          .setHostPath(volume.hostPath)
+          .setMode(
+            Protos.JobSpec.RunSpec.Volume.Mode.valueOf(Mode.name(volume.mode)))
+          .build
+
+      case volume: SecretVolume =>
+        Protos.JobSpec.RunSpec.Volume.newBuilder()
+          .setContainerPath(volume.containerPath)
+          .setSecret(volume.secret)
+          .build
     }
   }
 
   implicit class ProtoToVolumes(val volumes: mutable.Buffer[Protos.JobSpec.RunSpec.Volume]) extends AnyVal {
     def toModel: Seq[Volume] = volumes.map { volume =>
-      Volume(
-        containerPath = volume.getContainerPath,
-        hostPath = volume.getHostPath,
-        mode = Mode.names(volume.getMode.toString))
+      if (volume.hasSecret) {
+        SecretVolume(
+          containerPath = volume.getContainerPath,
+          secret = volume.getSecret)
+      } else {
+        HostVolume(
+          containerPath = volume.getContainerPath,
+          hostPath = volume.getHostPath,
+          mode = Mode.names(volume.getMode.toString))
+      }
     }.toList
   }
 

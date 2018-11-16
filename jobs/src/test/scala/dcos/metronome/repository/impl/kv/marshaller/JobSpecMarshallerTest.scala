@@ -44,6 +44,12 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
 
   val dockerOrUcrGen: Gen[Option[Container]] = Gen.oneOf(dockerGen, ucrGen)
 
+  val hostVolumeGen = Gen.listOf(Gen.zip(nonEmptyAlphaStrGen, nonEmptyAlphaStrGen, Gen.oneOf(Mode.RO, Mode.RW)).map{ case (s1, s2, m) => HostVolume(s1, s2, m) })
+
+  val secretVolumeGen = Gen.listOf(Gen.zip(nonEmptyAlphaStrGen, nonEmptyAlphaStrGen).map{ case (s1, s2) => SecretVolume(s1, s2) })
+
+  val volumeGen = Gen.oneOf(hostVolumeGen, secretVolumeGen)
+
   val jobRunSpecGen = for {
     cpus <- Gen.posNum[Double]
     mem <- Gen.posNum[Double]
@@ -56,7 +62,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
     artifacts <- Gen.listOf(Gen.zip(nonEmptyAlphaStrGen, booleanGen, booleanGen, booleanGen).map { case (s, b1, b2, b3) => Artifact(s, b1, b2, b3) })
     maxLaunchDelay <- durationGen
     container <- dockerOrUcrGen
-    volumes <- Gen.listOf(Gen.zip(nonEmptyAlphaStrGen, nonEmptyAlphaStrGen, Gen.oneOf(Mode.RO, Mode.RW)).map{ case (s1, s2, m) => Volume(s1, s2, m) })
+    volumes <- volumeGen
     restart <- Gen.zip(Gen.oneOf(RestartPolicy.Never, RestartPolicy.OnFailure), Gen.option(durationGen)).map{ case (rp, d) => RestartSpec(rp, d) }
     taskKillGracePeriodSeconds <- Gen.option(durationGen)
     secrets <- Gen.mapOf(Gen.zip(nonEmptyAlphaStrGen, nonEmptyAlphaStrGen.map(s => SecretDef(s))))
@@ -113,39 +119,5 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
     import RunSpecConversions.ProtosToConstraintSpec
     val converted = Seq(Constraint.newBuilder().setAttribute("field").setOperator(Constraint.Operator.EQ).setValue("value").build).toModel
     converted.head.operator.name shouldBe "IS"
-  }
-
-  class Fixture {
-    import concurrent.duration._
-
-    val runSpec = JobRunSpec(
-      cpus = 42.0,
-      mem = 133.7,
-      disk = 3133.7,
-      cmd = Some("sleep 500"),
-      args = None,
-      user = Some("root"),
-      env = Map("key" -> EnvVarValue("value"), "secretName" -> EnvVarSecret("secretId")),
-      placement = PlacementSpec(constraints = Seq(ConstraintSpec("hostname", Operator.Is, Some("localhost")))),
-      artifacts = Seq(Artifact("http://www.foo.bar/file.tar.gz", extract = false, executable = true, cache = true)),
-      maxLaunchDelay = 24.hours,
-      docker = Some(DockerSpec(image = "dcos/metronome", privileged = true)),
-      volumes = Seq(
-        Volume(containerPath = "/var/log", hostPath = "/sandbox/task1/var/log", mode = Mode.RW)),
-      restart = RestartSpec(policy = RestartPolicy.OnFailure, activeDeadline = Some(15.days)),
-      taskKillGracePeriodSeconds = Some(10 seconds),
-      secrets = Map("secretId" -> SecretDef("source")))
-
-    val jobSpec = JobSpec(
-      id = JobId("/foo/bar"),
-      description = Some("My description"),
-      labels = Map("stage" -> "production"),
-      schedules = Seq(ScheduleSpec(
-        id = "my-schedule",
-        cron = CronSpec("* * * * *"),
-        timeZone = ZoneId.of("UTC"),
-        concurrencyPolicy = ConcurrencyPolicy.Allow,
-        enabled = true)),
-      run = runSpec)
   }
 }

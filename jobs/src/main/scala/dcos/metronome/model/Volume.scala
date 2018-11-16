@@ -1,10 +1,16 @@
 package dcos.metronome
 package model
 
-case class Volume(
+sealed trait Volume
+
+case class HostVolume(
   containerPath: String,
   hostPath:      String,
-  mode:          Mode)
+  mode:          Mode) extends Volume
+
+case class SecretVolume(
+  containerPath: String,
+  secret:        String) extends Volume
 
 sealed trait Mode
 

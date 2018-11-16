@@ -22,7 +22,7 @@ import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.tracker.InstanceTracker
 import mesosphere.marathon.state.Container.MesosDocker
 import mesosphere.marathon.state.{ AppDefinition, RunSpec, Timestamp, UnreachableDisabled }
-import mesosphere.marathon.state._
+import mesosphere.marathon.state
 import org.apache.mesos.SchedulerDriver
 import org.apache.mesos
 import org.apache.zookeeper.KeeperException.NodeExistsException
@@ -525,13 +525,54 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     import org.mockito.ArgumentCaptor
     val argument: ArgumentCaptor[RunSpec] = ArgumentCaptor.forClass(classOf[RunSpec])
 
-    And("RunSpec is submitted to LaunchQueue with a Docker forcePullImage")
+    And("RunSpec is submitted to LaunchQueue with a UCR forcePullImage")
     verify(f.launchQueue, atLeast(1)).add(argument.capture(), any)
     val ucrForcePullImage = argument.getValue.container.collect {
       case ucr: MesosDocker =>
         ucr.forcePullImage
     }
     ucrForcePullImage.get shouldBe true
+  }
+
+  test("file based secrets are passed") {
+
+    val f = new Fixture
+
+    val mountPath = "/var/secret"
+    val secretName = "secretName"
+    Given("a jobRunSpec with a file base secret")
+    val image = ImageSpec(
+      id = "image",
+      forcePull = true)
+    val jobSpec = JobSpec(
+      id = JobId("/test"),
+      run = JobRunSpec(
+        ucr = Some(UcrSpec(image)),
+        secrets = Map(secretName -> SecretDef("secretSource")),
+        volumes = Seq(SecretVolume(mountPath, secretName))))
+    val (_, jobRun) = f.setupInitialExecutorActor(Some(jobSpec))
+
+    And("a new task is launched")
+    val msg = f.persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
+    msg.jobRun.status shouldBe JobRunStatus.Starting
+    f.persistenceActor.reply(JobRunPersistenceActor.JobRunCreated(f.persistenceActor.ref, jobRun, Unit))
+    import org.mockito.ArgumentCaptor
+    val argument: ArgumentCaptor[RunSpec] = ArgumentCaptor.forClass(classOf[RunSpec])
+
+    And("RunSpec is submitted to LaunchQueue with a Docker forcePullImage")
+    verify(f.launchQueue, atLeast(1)).add(argument.capture(), any)
+    val (marathonMountPath, marathonSecretName) = argument.getValue.container.collect {
+      case ucr: MesosDocker =>
+        val volumeWithMount = ucr.volumes.head
+        val volumeSecretName = volumeWithMount.volume match {
+          case state.SecretVolume(_, secret) => secret
+          case _                             => ""
+        }
+
+        volumeWithMount.mount.mountPath -> volumeSecretName
+    }.get
+    marathonMountPath shouldEqual mountPath
+    marathonSecretName shouldEqual secretName
   }
 
   test("privileged is passed to Marathon when launching task") {
@@ -563,7 +604,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     Given("a jobRunSpec with forcePullImage")
     val jobSpec = JobSpec(
       id = JobId("/test"),
-      run = JobRunSpec(docker = Some(DockerSpec("image", parameters = Seq(new Parameter("key", "value"))))))
+      run = JobRunSpec(docker = Some(DockerSpec("image", parameters = Seq(new state.Parameter("key", "value"))))))
     val (_, jobRun) = f.setupInitialExecutorActor(Some(jobSpec))
 
     And("a new task is launched")

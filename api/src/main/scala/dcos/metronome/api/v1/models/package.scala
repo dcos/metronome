@@ -129,7 +129,28 @@ package object models {
     }
   }
 
-  implicit lazy val VolumeFormat: Format[Volume] = Json.format[Volume]
+  implicit lazy val HostVolumeFormat: Format[HostVolume] = Json.format[HostVolume]
+
+  implicit lazy val SecretVolumeFormat: Format[SecretVolume] = Json.format[SecretVolume]
+
+  implicit lazy val VolumeFormat: Format[Volume] = new Format[Volume] {
+    override def writes(o: Volume): JsValue = o match {
+      case hv: HostVolume   => HostVolumeFormat.writes(hv)
+      case sv: SecretVolume => SecretVolumeFormat.writes(sv)
+    }
+
+    override def reads(json: JsValue): JsResult[Volume] = json match {
+      case obj: JsObject => obj match {
+        case hostVolume if hostVolume.keys == Set("containerPath", "hostPath", "mode") =>
+          HostVolumeFormat.reads(hostVolume)
+        case secretVolume if secretVolume.keys == Set("containerPath", "secret") =>
+          SecretVolumeFormat.reads(secretVolume)
+        case invalid =>
+          JsError(s"expected HostVolume or SecretVolume object but got $invalid")
+      }
+      case invalid => JsError(s"expected a Volume object but got $invalid")
+    }
+  }
 
   implicit lazy val DockerSpecFormat: Format[DockerSpec] = (
     (__ \ "image").format[String] ~
