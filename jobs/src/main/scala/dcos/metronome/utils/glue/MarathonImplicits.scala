@@ -8,8 +8,8 @@ import mesosphere.marathon
 import mesosphere.marathon.core.health.HealthCheck
 import mesosphere.marathon.core.readiness.ReadinessCheck
 import mesosphere.marathon.raml.Resources
-import mesosphere.marathon.state.{ AppDefinition, BackoffStrategy, Container, FetchUri, HostVolume, PathId, PortDefinition, RunSpec, UpgradeStrategy, VersionInfo, VolumeMount }
-
+import mesosphere.marathon.state.{ AppDefinition, BackoffStrategy, Container, FetchUri, PathId, PortDefinition, RunSpec, UpgradeStrategy, VersionInfo, VolumeMount }
+import mesosphere.marathon.state
 import scala.concurrent.duration._
 
 /**
@@ -25,9 +25,17 @@ object MarathonImplicits {
   }
 
   implicit class ModelToVolume(val volume: Volume) extends AnyVal {
-    def toMarathon: mesosphere.marathon.state.VolumeWithMount[HostVolume] = mesosphere.marathon.state.VolumeWithMount(
-      volume = HostVolume(None, volume.hostPath),
-      mount = VolumeMount(None, volume.containerPath, volume.mode == Mode.RO))
+    def toMarathon: mesosphere.marathon.state.VolumeWithMount[state.Volume] = volume match {
+      case HostVolume(containerPath, hostPath, mode) =>
+        mesosphere.marathon.state.VolumeWithMount(
+          volume = state.HostVolume(None, hostPath),
+          mount = VolumeMount(None, containerPath, mode == Mode.RO))
+
+      case SecretVolume(containerPath, secret) =>
+        mesosphere.marathon.state.VolumeWithMount(
+          volume = state.SecretVolume(None, secret),
+          mount = VolumeMount(None, containerPath))
+    }
   }
 
   implicit class ArtifactToFetchUri(val artifact: Artifact) extends AnyVal {
@@ -85,6 +93,7 @@ object MarathonImplicits {
       val maybeUcr = jobSpec.run.ucr.map { ucrSpec =>
         Container.MesosDocker(
           image = ucrSpec.image.id,
+          volumes = jobSpec.run.volumes.map(_.toMarathon),
           forcePullImage = ucrSpec.image.forcePull) // TODO: pass privileged once marathon will support it
       }
 

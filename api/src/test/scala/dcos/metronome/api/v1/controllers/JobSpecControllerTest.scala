@@ -199,6 +199,32 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       contentAsJson(response) mustBe jobSpecWithSecretsJson
     }
 
+    "creates a job when sending a valid job ucr spec with file based secrets defined" in {
+      Given("No job")
+
+      When("A job with UCR with file based secrets is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(ucrJobSpecWithFileBasedSecretsJson)).get
+
+      Then("The job is created")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+      contentAsJson(response) mustBe ucrJobSpecWithFileBasedSecretsJson
+    }
+
+    "indicates a problem when sending a valid job docker spec with file based secrets defined" in {
+      Given("No job")
+
+      When("A job with Docker with file based secrets is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(dockerJobSpecWithFileBasedSecretsJson)).get
+
+      val c = contentAsJson(response)
+
+      Then("The job is created")
+      status(response) mustBe UNPROCESSABLE_ENTITY
+      contentType(response) mustBe Some("application/json")
+      contentAsString(response).contains("File based secrets are only supported by UCR") mustBe true
+    }
+
     "indicate a problem when creating a job without a secret definition" in {
       Given("No job")
 
@@ -208,7 +234,17 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       Then("A validation error is returned")
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
-      //      contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))
+    }
+
+    "indicate a problem when creating a job only with volume secret but without secret definition" in {
+      Given("No job")
+
+      When("A job is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpecWithSecretVolumesOnlyJson)).get
+
+      Then("A validation error is returned")
+      status(response) mustBe UNPROCESSABLE_ENTITY
+      contentType(response) mustBe Some("application/json")
     }
 
     "indicate a problem when creating a job without a secret name" in {
@@ -221,6 +257,35 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
       //      contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))
+    }
+
+    "indicate a problem when creating a job which contains fields both for secret and normal volume" in {
+      Given("Job spec with wrong volume definition")
+      val specJson =
+        """{
+            |"id":"spec1",
+            |"run":{
+            |   "cpus":1,
+            |   "mem":128,
+            |   "disk":0,
+            |   "volumes": [
+            |     {
+            |       "containerPath": "/mnt/test",
+            |       "hostPath": "/var/foo",
+            |       "secret": "secretId"
+            |     }
+            |   ],
+            |   "ucr":{"image":{"id":"ubuntu"}}
+            |}
+            |}""".stripMargin
+
+      When("A job is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(Json.parse(specJson))).get
+
+      Then("A validation error is returned")
+      status(response) mustBe UNPROCESSABLE_ENTITY
+      contentType(response) mustBe Some("application/json")
+      contentAsString(response).contains("expected HostVolume or SecretVolume") mustBe true
     }
   }
 
@@ -469,9 +534,27 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
     val jobSpec = spec("spec-with-secrets")
     jobSpec.copy(run = jobSpec.run.copy(env = Map("secretVar" -> EnvVarSecret("secretId")), secrets = Map("secretId" -> SecretDef("source"))))
   }
+  val ucrJobSpecWithFileBasedSecrets = {
+    val spec = ucrSpec(id = "ucr-fbs-spec1")
+    spec.copy(run = spec.run.copy(
+      secrets = Map("secretName" -> SecretDef("secretSource")),
+      volumes = Seq(SecretVolume("/var/secrets", "secretName"))))
+  }
+  val ucrJobSpecWithFileBasedSecretsJson = Json.toJson(ucrJobSpecWithFileBasedSecrets)
+  val dockerJobSpecWithFileBasedSecrets = {
+    val jobSpec = spec(id = "ucr-fbs-spec1")
+    jobSpec.copy(run = jobSpec.run.copy(
+      secrets = Map("secretName" -> SecretDef("secretSource")),
+      volumes = Seq(SecretVolume("/var/secrets", "secretName"))))
+  }
+  val dockerJobSpecWithFileBasedSecretsJson = Json.toJson(dockerJobSpecWithFileBasedSecrets)
   val jobSpecWithSecretVarsOnly = {
     val jobSpec = spec("spec-with-secret-vars-only")
     jobSpec.copy(run = jobSpec.run.copy(env = Map("secretVar" -> EnvVarSecret("secretId"))))
+  }
+  val jobSpecWithSecretVolumesOnly = {
+    val jobSpec = ucrSpec("spec-with-secret-volumes-only")
+    jobSpec.copy(run = jobSpec.run.copy(volumes = Seq(SecretVolume("/var/secrets", "secretName"))))
   }
   val jobSpecWithSecretDefsOnly = {
     val jobSpec = spec("spec-with-secret-defs-only")
@@ -479,6 +562,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
   }
   val jobSpecWithSecretsJson = Json.toJson(jobSpecWithSecrets)
   val jobSpecWithSecretVarsOnlyJson = Json.toJson(jobSpecWithSecretVarsOnly)
+  val jobSpecWithSecretVolumesOnlyJson = Json.toJson(jobSpecWithSecretVolumesOnly)
   val jobSpecWithSecretDefsOnlyJson = Json.toJson(jobSpecWithSecretDefsOnly)
   val auth = new TestAuthFixture
 

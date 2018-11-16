@@ -55,12 +55,21 @@ object JobRunSpec {
           violations += RuleViolation(jobRunSpec, errorMessage)
         }
       }
-      val envVarDefinedSecretNames = jobRunSpec.env.values.collect { case EnvVarSecret(secretName) => secretName }.toSet
+      val definedSecretNames =
+        jobRunSpec.env.values.collect { case EnvVarSecret(secretName) => secretName }.toSet ++
+          jobRunSpec.volumes.collect { case SecretVolume(_, secret) => secret }.toSet
       val providedSecretNames = jobRunSpec.secrets.keySet
 
       check(jobRunSpec.cmd.isDefined || jobRunSpec.docker.exists(d => d.image.nonEmpty) || jobRunSpec.ucr.nonEmpty, JobRunSpecMessages.cmdOrDockerValidation)
-      check(envVarDefinedSecretNames == providedSecretNames, JobRunSpecMessages.secretsValidation(envVarDefinedSecretNames, providedSecretNames))
+      check(definedSecretNames == providedSecretNames, JobRunSpecMessages.secretsValidation(definedSecretNames, providedSecretNames))
       check(!(jobRunSpec.docker.nonEmpty & jobRunSpec.ucr.nonEmpty), JobRunSpecMessages.onlyDockerOrUcr)
+
+      def isSecretVolume(volume: Volume): Boolean = volume match {
+        case _: SecretVolume => true
+        case _               => false
+      }
+      def noSecretVolumesExists: Boolean = jobRunSpec.volumes.forall(v => !isSecretVolume(v))
+      check(noSecretVolumesExists || jobRunSpec.ucr.isDefined, JobRunSpecMessages.fileBasedSecretsAreUcrOnly)
 
       violations.headOption.getOrElse(Success)
     }
@@ -73,4 +82,5 @@ object JobRunSpecMessages {
     s"Secret names are different from provided secrets. Defined: ${envVarSecretsName.mkString(", ")}, Provided: ${providedSecretsNames.mkString(", ")}"
   }
   val onlyDockerOrUcr = "Either Docker or UCR should be provided, but not both"
+  val fileBasedSecretsAreUcrOnly = "File based secrets are only supported by UCR"
 }
