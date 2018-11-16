@@ -21,6 +21,9 @@ Learn how to [change docker runtime capabilities]({{ site.baseurl }}/docs/docker
 ## Using Universal Container Runtime with Jobs
 Learn how to [launch jobs with UCR]({{ site.baseurl }}/docs/ucr.html).
 
+## Using Secrets
+Learn how to securely provide passwords and other sensitive information using [Metronome Secrets]({{ site.baseurl }}/docs/secrets.html).
+
 ## Metrics
 See what [metrics]({{ site.baseurl }}/docs/metrics.html) Metronome exposes.
 
