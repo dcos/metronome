@@ -14,7 +14,7 @@ jenkins_github = {
 
 
 def main(gh_user, gh_password, commit, status, target_url, context):
-    uri = 'https://api.github.com/repos/mesosphere/metronome/statuses/{}'.format(commit)
+    uri = 'https://api.github.com/repos/dcos/metronome/statuses/{}'.format(commit)
     data = {
         'state': jenkins_github[status],
         'target_url': target_url,
