@@ -276,6 +276,30 @@ def test_secret_env_var(secret_fixture):
         job_run_has_secret()
 
 
+@shakedown.dcos_1_10
+@pytest.mark.skipif("shakedown.ee_version() is None")
+def test_secret_env_var(secret_fixture):
+
+    secret_name, secret_value = secret_fixture
+
+    client = metronome.create_client()
+    job_id = uuid.uuid4().hex
+    job_def = common.job_with_file_based_secret(job_id, secret_name=secret_name)
+
+    with job(job_def):
+        run_id = client.run_job(job_id)['id']
+        common.wait_for_job_started(job_id, run_id, timeout=timedelta(minutes=5).total_seconds())
+
+        @retry(wait_fixed=1000, stop_max_delay=5000)
+        def job_run_has_secret():
+            stdout, stderr, return_code = shakedown.run_dcos_command("task log {} fbs-secret".format(run_id))
+            logged_secret = stdout.rstrip()
+            assert secret_value == logged_secret, ("secret value in stdout log incorrect or missing. "
+                                                   "'{}' should be '{}'").format(logged_secret, secret_value)
+
+        job_run_has_secret()
+
+
 @shakedown.dcos_1_11
 def test_metronome_shutdown_with_no_extra_tasks():
     """ Test for METRONOME-100 regression

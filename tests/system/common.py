@@ -53,6 +53,37 @@ def job_with_secrets(id='pikachu',
     }
 
 
+def job_with_file_based_secret(id='pikachu-fbs',
+                     cmd='cat $MESOS_SANDBOX/secret-file > $MESOS_SANDBOX/fbs-secret; sleep 5',
+                     secret_name='secret_name'):
+    return {
+        'id': id,
+        'description': 'electrifying rodent',
+        'run': {
+            'cmd': cmd,
+            'cpus': 0.01,
+            'mem': 32,
+            'disk': 0,
+            "volumes": [
+                {
+                    "containerPath": "/secret-file",
+                    "secret": "secret1"
+                }
+            ],
+            "secrets": {
+                "secret1": {
+                    "source": secret_name
+                }
+            }
+        },
+        'ucr': {
+            "image": {
+                "id": "busybox"
+            }
+        }
+    }
+
+
 def schedule():
     return {
         "concurrencyPolicy": "ALLOW",
