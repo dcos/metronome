@@ -276,7 +276,7 @@ def test_secret_env_var(secret_fixture):
         job_run_has_secret()
 
 
-@shakedown.dcos_1_10
+@common.dcos_1_13
 @pytest.mark.skipif("shakedown.ee_version() is None")
 def test_secret_file(secret_fixture):
 

@@ -14,6 +14,7 @@ from dcos.errors import DCOSException
 from json.decoder import JSONDecodeError
 from retrying import retry
 
+dcos_1_13 = pytest.mark.skipif('shakedown.dcos_version_less_than("1.13")')
 
 def job_no_schedule(id='pikachu', cmd='sleep 10000'):
     return {
