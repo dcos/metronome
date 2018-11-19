@@ -53,9 +53,10 @@ def job_with_secrets(id='pikachu',
     }
 
 
-def job_with_file_based_secret(id='pikachu-fbs',
-                     cmd='cat $MESOS_SANDBOX/secret-file > $MESOS_SANDBOX/fbs-secret; sleep 5',
-                     secret_name='secret_name'):
+def job_with_file_based_secret(
+        id='pikachu-fbs',
+        cmd='cat $MESOS_SANDBOX/secret-file > $MESOS_SANDBOX/fbs-secret; sleep 5',
+        secret_name='secret_name'):
     return {
         'id': id,
         'description': 'electrifying rodent',
