@@ -108,6 +108,7 @@ message JobSpec {
     optional string cmd = 4;
     repeated string arguments = 5;
     optional string user = 6;
+    optional int64 gpus = 18;
 
     /**
      * Key, value pair used to store environment variables.
