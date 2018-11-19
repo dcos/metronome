@@ -75,7 +75,7 @@
           "minimum": 0.01
         },
         "gpus": {
-          "type": "number",
+          "type": "integer",
           "description": "The number of GPU shares this job needs per instance. This number does not have to be integer, but can be a fraction.",
           "minimum": 0
         },
