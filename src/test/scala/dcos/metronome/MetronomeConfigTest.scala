@@ -43,4 +43,33 @@ class MetronomeConfigTest extends FunSuite with Matchers with GivenWhenThen {
     Then("Effective port should be https")
     cfg.effectivePort shouldEqual 9010
   }
+
+  test("feature gpu_resources is enabled when gpu_scheduling_behavior is set") {
+
+    Given("A config with gpu_scheduling_behavior")
+    val cfg = fromConfig(
+      s"""
+         | metronome.gpu_scheduling_behavior="restricted"
+       """.stripMargin)
+
+    When("enabled features are requested")
+    val featues =
+      Then("features should contain gpu_resources")
+    cfg.scallopConf.features.toOption.get.contains("gpu_resources") shouldEqual true
+    And("gpu_scheduling_behavior must be set")
+    cfg.scallopConf.gpuSchedulingBehavior.toOption.contains("restricted") shouldEqual true
+  }
+
+  test("feature gpu_resources is disabled when gpu_scheduling_behavior is not set") {
+
+    Given("A config with gpu_scheduling_behavior")
+    val cfg = fromConfig("")
+
+    When("enabled features are requested")
+    val featues =
+      Then("features should contain gpu_resources")
+    cfg.scallopConf.features.toOption.get shouldEqual Set.empty
+    And("gpu_scheduling_behavior must be set")
+    cfg.scallopConf.gpuSchedulingBehavior.toOption shouldEqual Some("undefined")
+  }
 }
