@@ -19,6 +19,7 @@ from retrying import retry
 pytestmark = [pytest.mark.skipif("shakedown.dcos_version_less_than('1.8')")]
 metronone_0_6_0 = pytest.mark.skipif('common.metronome_version_less_than("0.6.0")')
 
+
 def test_add_job():
     client = metronome.create_client()
     with job(job_no_schedule()):

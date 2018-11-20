@@ -313,6 +313,7 @@ def get_metronome_version():
     info = get_metronome_info()
     return LooseVersion(info.get("version"))
 
+
 # add to shakedown
 def metronome_version_less_than(version):
     """ Returns True if metronome has a version less than {version}.
