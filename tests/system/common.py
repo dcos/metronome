@@ -9,6 +9,8 @@ import shlex
 import time
 import pytest
 
+from distutils.version import LooseVersion
+
 from dcos import metronome, packagemanager, cosmos
 from dcos.errors import DCOSException
 from json.decoder import JSONDecodeError
@@ -48,6 +50,38 @@ def job_with_secrets(id='pikachu',
                 "secret1": {
                     "source": secret_name
                 }
+            }
+        }
+    }
+
+
+def job_with_file_based_secret(
+        id='pikachu-fbs',
+        cmd='cat $MESOS_SANDBOX/secret-file > $MESOS_SANDBOX/fbs-secret; sleep 5',
+        secret_name='secret_name'):
+    return {
+        'id': id,
+        'description': 'electrifying rodent',
+        'run': {
+            'cmd': cmd,
+            'cpus': 0.01,
+            'mem': 32,
+            'disk': 0,
+            "volumes": [
+                {
+                    "containerPath": "/secret-file",
+                    "secret": "secret1"
+                }
+            ],
+            "secrets": {
+                "secret1": {
+                    "source": secret_name
+                }
+            }
+        },
+        'ucr': {
+            "image": {
+                "id": "busybox"
             }
         }
     }
@@ -148,7 +182,7 @@ def ignore_exception(exc):
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=5*60*1000, retry_on_exception=ignore_exception)  # 5 mins
 def wait_for_metronome():
     """ Waits for the Metronome API url to be available for a given timeout. """
-    url = metronome_api_url()
+    url = shakedown.dcos_url_path("/service/metronome/v1/jobs")
     try:
         response = http.get(url)
         assert response.status_code == 200, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last response: {response.content}"  # noqa
@@ -164,10 +198,6 @@ def wait_for_cosmos():
         cosmos_pm.has_capability('METRONOME')
     except Exception as e:
         assert False, f"Expecting Metronome service to be up but it did not get healthy after 5 minutes. Last exception: {e}"  # noqa
-
-
-def metronome_api_url():
-    return shakedown.dcos_url_path("/service/metronome/v1/jobs")
 
 
 def assert_job_run(client, job_id, runs_number=1, active_tasks_number=1):
@@ -271,6 +301,28 @@ def delete_secret(secret_name):
     print('Removing existing secret {}'.format(secret_name))
     stdout, stderr, return_code = shakedown.run_dcos_command('security secrets delete {}'.format(secret_name))
     assert return_code == 0, "Failed to remove existing secret"
+
+
+def get_metronome_info():
+    url = shakedown.dcos_url_path("/service/metronome/info")
+    response = http.get(url)
+    return response.json()
+
+
+def get_metronome_version():
+    info = get_metronome_info()
+    return LooseVersion(info.get("version"))
+
+
+# add to shakedown
+def metronome_version_less_than(version):
+    """ Returns True if metronome has a version less than {version}.
+        :param version: required version
+        :type: string
+        :return: True if version < MoM version
+        :rtype: bool
+    """
+    return get_metronome_version() < LooseVersion(version)
 
 
 def create_secret(name, value=None, description=None):
