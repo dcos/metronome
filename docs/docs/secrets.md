@@ -2,11 +2,11 @@
 
 Metronome has a pluggable interface for secret store providers. The secrets API provides a way for applications to consume sensitive data without exposing that data directly via API objects. For example, you can use a secret to securely provide a database password that is needed by a service or pod without embedding the password itself into the Metronome app or pod JSON.
 
-Secrets are an opt-in feature in Metronome. Enable them by specifying secrets with the --enable_features command line flag.
+Secrets are an opt-in feature in Metronome. Enable them by specifying `secrets` with the `METRONOME_FEATURES_ENABLE` environmental variable.
 
 Metronome does not ship with a default secrets plugin implementation out-of-the-box. If you enable the secrets feature without providing and configuring a plugin, Metronome will consume API objects that use secrets, but no secrets will actually be passed to apps/pods at launch time.
 
-Internally, Metronome relies on Marathon to work with secrets plugins implementations. Marathon plugins are configured using the --plugin_dir and --plugin_conf command line flags. For further information regarding plugin development and configuration see [Extend Marathon with Plugins](https://mesosphere.github.io/marathon/docs/plugin.html).
+Internally, Metronome relies on Marathon to work with secrets plugins implementations. Marathon plugins are configured using the `METRONOME_PLUGIN_DIR` and `METRONOME_PLUGIN_CONF` environmental variables. For further information regarding plugin development and configuration see [Extend Marathon with Plugins](https://mesosphere.github.io/marathon/docs/plugin.html).
 
 **Important:** Metronome will only provide the API to configure and store these secrets. You need to write and register a Marathon plugin that interprets these secrets.
 
