@@ -57,6 +57,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
 
   lazy val gpuSchedulingBehavior = configuration.getOptional[String]("metronome.gpu_scheduling_behavior")
 
+  // gpu turned on by default if gpu scheduling is defined + additional enabled features
   private lazy val featuresString = (enableFeatures ++ gpuSchedulingBehavior.map(_ => "gpu_resources")).mkString(",")
 
   private lazy val features = if (featuresString.nonEmpty) Some(featuresString) else None
