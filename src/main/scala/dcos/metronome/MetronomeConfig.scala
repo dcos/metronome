@@ -55,6 +55,13 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   lazy val httpScheme: String = httpPort.map(_ => "http").getOrElse("https")
   lazy val webuiURL: String = configuration.getOptional[String]("metronome.web.ui.url").getOrElse(s"$httpScheme://$hostnameWithPort")
 
+  lazy val gpuSchedulingBehavior = configuration.getOptional[String]("metronome.gpu_scheduling_behavior")
+
+  // gpu turned on by default if gpu scheduling is defined + additional enabled features
+  private lazy val featuresString = (enableFeatures ++ gpuSchedulingBehavior.map(_ => "gpu_resources")).mkString(",")
+
+  private lazy val features = if (featuresString.nonEmpty) Some(featuresString) else None
+
   override lazy val scallopConf: AllConf = {
     val flags = Seq[Option[String]](
       if (httpPort.isEmpty) Some("--disable_http") else None,
@@ -82,7 +89,8 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       "--mesos_user" -> mesosUser,
       "--mesos_role" -> mesosRole,
       "--executor" -> Some(mesosExecutorDefault),
-      "--enable_features" -> enableFeatures,
+      "--enable_features" -> features,
+      "--gpu_scheduling_behavior" -> gpuSchedulingBehavior,
       "--failover_timeout" -> Some(mesosFailoverTimeout.toMillis.toString),
       "--leader_proxy_connection_timeout" -> Some(leaderProxyTimeout.toMillis.toString),
       "--task_launch_timeout" -> Some(taskLaunchTimeout.toMillis.toString),
