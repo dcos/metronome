@@ -17,10 +17,6 @@ from json.decoder import JSONDecodeError
 from retrying import retry
 
 
-dcos_1_13 = pytest.mark.skipif('shakedown.dcos_version_less_than("1.13")')
-metronone_0_6_0 = pytest.mark.skipif('metronome_version_less_than("0.6.0")')
-
-
 def job_no_schedule(id='pikachu', cmd='sleep 10000'):
     return {
         'id': id,
