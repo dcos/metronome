@@ -597,6 +597,30 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     argument.getValue.container.get.docker.get.privileged shouldBe true
   }
 
+  test("gpus are passed to Marathon when launching task") {
+
+    val f = new Fixture
+
+    Given("a jobRunSpec with gpus")
+    val image = ImageSpec(
+      id = "image")
+    val jobSpec = JobSpec(
+      id = JobId("/test"),
+      run = JobRunSpec(ucr = Some(UcrSpec(image)), gpus = 4))
+    val (_, jobRun) = f.setupInitialExecutorActor(Some(jobSpec))
+
+    And("a new task is launched")
+    val msg = f.persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
+    msg.jobRun.status shouldBe JobRunStatus.Starting
+    f.persistenceActor.reply(JobRunPersistenceActor.JobRunCreated(f.persistenceActor.ref, jobRun, Unit))
+    import org.mockito.ArgumentCaptor
+    val argument: ArgumentCaptor[RunSpec] = ArgumentCaptor.forClass(classOf[RunSpec])
+
+    And("RunSpec is submitted to LaunchQueue with a correct gpus number")
+    verify(f.launchQueue, atLeast(1)).add(argument.capture(), any)
+    argument.getValue.resources.gpus shouldBe 4
+  }
+
   test("docker parameters are passed to Marathon when launching task") {
 
     val f = new Fixture

@@ -194,6 +194,7 @@ package object models {
     (__ \ "cpus").formatNullable[Double].withDefault(JobRunSpec.DefaultCpus) ~
     (__ \ "mem").formatNullable[Double].withDefault(JobRunSpec.DefaultMem) ~
     (__ \ "disk").formatNullable[Double].withDefault(JobRunSpec.DefaultDisk) ~
+    (__ \ "gpus").formatNullable[Int].withDefault(JobRunSpec.DefaultGpus) ~
     (__ \ "cmd").formatNullable[String] ~
     (__ \ "args").formatNullable[Seq[String]] ~
     (__ \ "user").formatNullable[String] ~
