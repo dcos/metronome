@@ -187,6 +187,32 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       status(unauthorized) mustBe FORBIDDEN
     }
 
+    "creates a job when sending a valid job ucr spec with gpus defined" in {
+      Given("No job")
+
+      When("A job with UCR with gpus is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(ucrGpuJobJson)).get
+
+      Then("The job is created")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+      contentAsJson(response) mustBe ucrGpuJobJson
+    }
+
+    "indicates a problem when sending a valid job docker spec with gpus defined" in {
+      Given("No job")
+
+      When("A job with Docker gpus is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(dockerGpuJobJson)).get
+
+      val c = contentAsJson(response)
+
+      Then("The job is created")
+      status(response) mustBe UNPROCESSABLE_ENTITY
+      contentType(response) mustBe Some("application/json")
+      contentAsString(response).contains("GPUs are only supported by UCR") mustBe true
+    }
+
     "create a job with secrets" in {
       Given("No job")
 
@@ -564,6 +590,17 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
   val jobSpecWithSecretVarsOnlyJson = Json.toJson(jobSpecWithSecretVarsOnly)
   val jobSpecWithSecretVolumesOnlyJson = Json.toJson(jobSpecWithSecretVolumesOnly)
   val jobSpecWithSecretDefsOnlyJson = Json.toJson(jobSpecWithSecretDefsOnly)
+
+  val ucrGpuJob = {
+    val s = ucrSpec("ucr-gpu")
+    s.copy(run = s.run.copy(gpus = 4))
+  }
+  val ucrGpuJobJson = Json.toJson(ucrGpuJob)
+  val dockerGpuJob = {
+    val s = spec(id = "ucr-gpu")
+    s.copy(run = s.run.copy(gpus = 4))
+  }
+  val dockerGpuJobJson = Json.toJson(dockerGpuJob)
   val auth = new TestAuthFixture
 
   before {

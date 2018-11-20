@@ -54,6 +54,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
     cpus <- Gen.posNum[Double]
     mem <- Gen.posNum[Double]
     disk <- Gen.posNum[Double]
+    gpus <- Gen.posNum[Int]
     cmd <- Gen.option(nonEmptyAlphaStrGen)
     args <- Gen.option(Gen.nonEmptyListOf(nonEmptyAlphaStrGen))
     user <- Gen.option(nonEmptyAlphaStrGen)
@@ -75,6 +76,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
       cpus,
       mem,
       disk,
+      gpus,
       cmd,
       args,
       user,

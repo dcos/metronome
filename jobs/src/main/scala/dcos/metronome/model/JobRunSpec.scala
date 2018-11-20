@@ -11,6 +11,7 @@ case class JobRunSpec(
   cpus:                       Double                           = JobRunSpec.DefaultCpus,
   mem:                        Double                           = JobRunSpec.DefaultMem,
   disk:                       Double                           = JobRunSpec.DefaultDisk,
+  gpus:                       Int                              = JobRunSpec.DefaultGpus,
   cmd:                        Option[String]                   = JobRunSpec.DefaultCmd,
   args:                       Option[Seq[String]]              = JobRunSpec.DefaultArgs,
   user:                       Option[String]                   = JobRunSpec.DefaultUser,
@@ -29,6 +30,7 @@ object JobRunSpec {
   val DefaultCpus: Double = 1.0
   val DefaultMem: Double = 128.0
   val DefaultDisk: Double = 0.0
+  val DefaultGpus: Int = 0
   val DefaultPlacement = PlacementSpec()
   val DefaultMaxLaunchDelay = 1.hour
   val DefaultCmd = None
@@ -71,6 +73,8 @@ object JobRunSpec {
       def noSecretVolumesExists: Boolean = jobRunSpec.volumes.forall(v => !isSecretVolume(v))
       check(noSecretVolumesExists || jobRunSpec.ucr.isDefined, JobRunSpecMessages.fileBasedSecretsAreUcrOnly)
 
+      check(jobRunSpec.gpus == 0 || jobRunSpec.ucr.isDefined, JobRunSpecMessages.gpusAreUcrOnly)
+
       violations.headOption.getOrElse(Success)
     }
   }
@@ -83,4 +87,5 @@ object JobRunSpecMessages {
   }
   val onlyDockerOrUcr = "Either Docker or UCR should be provided, but not both"
   val fileBasedSecretsAreUcrOnly = "File based secrets are only supported by UCR"
+  val gpusAreUcrOnly = "GPUs are only supported by UCR"
 }

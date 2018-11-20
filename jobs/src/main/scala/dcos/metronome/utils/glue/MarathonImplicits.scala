@@ -112,7 +112,7 @@ object MarathonImplicits {
         user = jobSpec.run.user,
         env = MarathonConversions.envVarToMarathon(jobSpec.run.env),
         instances = 1,
-        resources = Resources(cpus = jobSpec.run.cpus, mem = jobSpec.run.mem, disk = jobSpec.run.disk),
+        resources = Resources(cpus = jobSpec.run.cpus, mem = jobSpec.run.mem, disk = jobSpec.run.disk, gpus = jobSpec.run.gpus),
         executor = "//cmd",
         constraints = jobSpec.run.placement.constraints.flatMap(spec => spec.toProto)(collection.breakOut),
         fetch = jobSpec.run.artifacts.map(_.toFetchUri),

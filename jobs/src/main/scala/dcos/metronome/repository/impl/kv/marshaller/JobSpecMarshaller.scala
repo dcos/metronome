@@ -122,6 +122,7 @@ object RunSpecConversions {
         .setCpus(runSpec.cpus)
         .setMem(runSpec.mem)
         .setDisk(runSpec.disk)
+        .setGpus(runSpec.gpus)
         .setMaxLaunchDelay(runSpec.maxLaunchDelay.toSeconds)
         .setPlacement(runSpec.placement.toProto)
         .setRestart(runSpec.restart.toProto)
@@ -157,6 +158,7 @@ object RunSpecConversions {
         cpus = runSpec.getCpus,
         mem = runSpec.getMem,
         disk = runSpec.getDisk,
+        gpus = runSpec.getGpus,
         maxLaunchDelay = runSpec.getMaxLaunchDelay.seconds,
         placement = runSpec.getPlacement.toModel,
         restart = runSpec.getRestart.toModel,

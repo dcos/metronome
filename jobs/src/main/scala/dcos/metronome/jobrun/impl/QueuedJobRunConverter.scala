@@ -46,6 +46,7 @@ object QueuedJobRunConverter {
         run.resources.cpus,
         run.resources.mem,
         run.resources.disk,
+        run.resources.gpus,
         run.cmd,
         Some(run.args),
         run.user,
