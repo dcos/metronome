@@ -5,7 +5,7 @@
 * [#273](https://github.com/dcos/metronome/pull/273) Provide proper version from /info end point.
 * [#285](https://github.com/dcos/metronome/pull/285) Improvements to zk leadership election.
 
-Diff [0.4.4-0.4.5](https://github.com/dcos/metronome/compare/v0.4.4...0.4.5)
+Diff [0.4.4-0.4.5](https://github.com/dcos/metronome/compare/v0.4.4...v0.4.5)
 
 # Version 0.4.4
 
