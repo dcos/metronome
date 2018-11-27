@@ -24,6 +24,9 @@ Learn how to [launch jobs with UCR]({{ site.baseurl }}/docs/ucr.html).
 ## Using Secrets
 Learn how to securely provide passwords and other sensitive information using [Metronome Secrets]({{ site.baseurl }}/docs/secrets.html).
 
+## Jobs with GPU support
+Learn how to launch jobs which require [GPU resources]({{ site.baseurl }}/docs/generated/gpus.html).
+
 ## Metrics
 See what [metrics]({{ site.baseurl }}/docs/metrics.html) Metronome exposes.
 
