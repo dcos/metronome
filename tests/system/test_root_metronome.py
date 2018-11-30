@@ -327,7 +327,7 @@ def setup_module(module):
     common.wait_for_cosmos()
     agents = shakedown.get_private_agents()
     if len(agents) < 2:
-        assert False, "Incorrect Agent count"
+        assert False, f"Incorrect Agent count. Expecting at least 2 agents, but have {len(agents)}"
     remove_jobs()
 
 
