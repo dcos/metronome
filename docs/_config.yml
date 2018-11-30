@@ -19,6 +19,7 @@ plugins:
   - jekyll-redirect-from
 
 baseurl: "/metronome"
+encoding: utf-8
 highlighter: rouge
 lsi: false
 markdown: kramdown
