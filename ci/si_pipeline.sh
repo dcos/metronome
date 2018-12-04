@@ -39,7 +39,7 @@ function exit-with-cluster-launch-error {
     echo "$1"
     create-junit-xml "dcos-launch" "cluster.create" "$1"
     pipenv run dcos-launch -i "$INFO_PATH" delete
-    "$ROOT_PATH/ci/dataDogClient.sc" "marathon.build.$JOB_NAME_SANITIZED.cluster_launch.failure" 1
+    echo "metronome.build.$JOB_NAME_SANITIZED.cluster_launch.failure"
     exit 0
 }
 
@@ -74,15 +74,15 @@ CLUSTER_LAUNCH_CODE=$?
 export DCOS_URL
 case $CLUSTER_LAUNCH_CODE in
   0)
-      "$ROOT_PATH/ci/dataDogClient.sc" "marathon.build.$JOB_NAME_SANITIZED.cluster_launch.success" 1
+      echo "marathon.build.$JOB_NAME_SANITIZED.cluster_launch.success"
       cp -f "$DOT_SHAKEDOWN" "$HOME/.shakedown"
-      timeout --preserve-status -s KILL 2h make test
+      timeout --preserve-status -s KILL 1.5h make test
       SI_CODE=$?
       if [ ${SI_CODE} -gt 0 ]; then
-        "$ROOT_PATH/ci/dataDogClient.sc" "marathon.build.$JOB_NAME_SANITIZED.failure" 1
+        echo "marathon.build.$JOB_NAME_SANITIZED.failure"
         download-diagnostics-bundle
       else
-        "$ROOT_PATH/ci/dataDogClient.sc" "marathon.build.$JOB_NAME_SANITIZED.success" 1
+        echo "marathon.build.$JOB_NAME_SANITIZED.success"
       fi
       pipenv run dcos-launch -i "$INFO_PATH" delete || true
       exit "$SI_CODE" # Propagate return code.
