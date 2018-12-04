@@ -76,7 +76,7 @@ case $CLUSTER_LAUNCH_CODE in
   0)
       echo "marathon.build.$JOB_NAME_SANITIZED.cluster_launch.success"
       cp -f "$DOT_SHAKEDOWN" "$HOME/.shakedown"
-      timeout --preserve-status -s KILL 2h make test
+      timeout --preserve-status -s KILL 1.5h make test
       SI_CODE=$?
       if [ ${SI_CODE} -gt 0 ]; then
         echo "marathon.build.$JOB_NAME_SANITIZED.failure"
