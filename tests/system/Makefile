@@ -28,7 +28,7 @@ test:
       --stdout all \
       --stdout-inline \
       --ssl-no-verify \
-      --timeout 360000 \
+      --timeout 1800 \
       --pytest-option "--junitxml=../../shakedown.xml" \
       --pytest-option --verbose \
       --pytest-option --full-trace \

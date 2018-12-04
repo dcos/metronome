@@ -128,6 +128,7 @@ def test_disable_schedule_recovery_from_master_bounce():
 
         # bounce metronome master
         common.run_command_on_metronome_leader('sudo /sbin/shutdown -r now')
+        common.wait_for_cosmos()
         common.wait_for_metronome()
 
         # wait for the next run
