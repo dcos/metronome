@@ -243,6 +243,7 @@ def test_docker_job():
         assert len(client.get_runs(job_id)) == 1
 
 
+@metronone_0_6_0
 def test_ucr_job():
     client = metronome.create_client()
     job_id = uuid.uuid4().hex
