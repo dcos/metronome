@@ -349,6 +349,7 @@ def job(job_json):
 
 @pytest.fixture(scope="function")
 def secret_fixture():
+    common.wait_for_cosmos()
     if not common.is_enterprise_cli_package_installed():
         common.install_enterprise_cli_package()
 
