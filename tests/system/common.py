@@ -57,8 +57,9 @@ def job_with_secrets(id='pikachu',
 
 def job_with_file_based_secret(
         id='pikachu-fbs',
-        cmd='cat $MESOS_SANDBOX/secret-file > $MESOS_SANDBOX/fbs-secret; sleep 5',
+        cmd='cat $MESOS_SANDBOX/secret-file > $MESOS_SANDBOX/fbs-secret; sleep 30',
         secret_name='secret_name'):
+    # secret container path can not have '/' prefix for secret, otherwise needs it
     return {
         'id': id,
         'description': 'electrifying rodent',
@@ -69,19 +70,19 @@ def job_with_file_based_secret(
             'disk': 0,
             "volumes": [
                 {
-                    "containerPath": "/secret-file",
+                    "containerPath": "secret-file",
                     "secret": "secret1"
                 }
             ],
+            'ucr': {
+                "image": {
+                    "id": "busybox"
+                }
+            },
             "secrets": {
                 "secret1": {
                     "source": secret_name
                 }
-            }
-        },
-        'ucr': {
-            "image": {
-                "id": "busybox"
             }
         }
     }

@@ -250,8 +250,7 @@
               "containerPath": {
                 "type": "string",
                 "description": "The path of the volume in the container",
-                "minLength": 1,
-                "pattern": "^/[^/].*$"
+                "minLength": 1
               },
               "hostPath": {
                 "type": "string",
