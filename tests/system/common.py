@@ -57,7 +57,7 @@ def job_with_secrets(id='pikachu',
 
 def job_with_file_based_secret(
         id='pikachu-fbs',
-        cmd='cat $MESOS_SANDBOX/secret-file > $MESOS_SANDBOX/fbs-secret; sleep 5',
+        cmd='cat $MESOS_SANDBOX/secret-file > $MESOS_SANDBOX/fbs-secret; sleep 30',
         secret_name='secret_name'):
     return {
         'id': id,
@@ -69,7 +69,7 @@ def job_with_file_based_secret(
             'disk': 0,
             "volumes": [
                 {
-                    "containerPath": "/secret-file",
+                    "containerPath": "secret-file",
                     "secret": "secret1"
                 }
             ],

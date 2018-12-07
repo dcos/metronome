@@ -289,7 +289,8 @@ def test_secret_file(secret_fixture):
     job_id = uuid.uuid4().hex
     job_def = common.job_with_file_based_secret(job_id, secret_name=secret_name)
     print(job_def)
-
+    # secret container path can not have '/' prefix for secret, otherwise needs it
+    # shakedown / dcos cli validates that '/' must be there :(
     with job(job_def):
         run_id = client.run_job(job_id)['id']
         common.wait_for_job_started(job_id, run_id, timeout=timedelta(minutes=5).total_seconds())
