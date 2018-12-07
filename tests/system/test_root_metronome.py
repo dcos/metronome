@@ -271,7 +271,7 @@ def test_secret_env_var(secret_fixture):
 
         @retry(wait_fixed=1000, stop_max_delay=5000)
         def job_run_has_secret():
-            stdout, stderr, return_code = shakedown.run_dcos_command("task log {} secret-env".format(run_id))
+            stdout, stderr, return_code = shakedown.run_dcos_command("task log --all {} secret-env".format(run_id))
             logged_secret = stdout.rstrip()
             assert secret_value == logged_secret, ("secret value in stdout log incorrect or missing. "
                                                    "'{}' should be '{}'").format(logged_secret, secret_value)
@@ -288,6 +288,7 @@ def test_secret_file(secret_fixture):
     client = metronome.create_client()
     job_id = uuid.uuid4().hex
     job_def = common.job_with_file_based_secret(job_id, secret_name=secret_name)
+    print(job_def)
 
     with job(job_def):
         run_id = client.run_job(job_id)['id']
@@ -295,7 +296,7 @@ def test_secret_file(secret_fixture):
 
         @retry(wait_fixed=1000, stop_max_delay=5000)
         def job_run_has_secret():
-            stdout, stderr, return_code = shakedown.run_dcos_command("task log {} fbs-secret".format(run_id))
+            stdout, stderr, return_code = shakedown.run_dcos_command("task log --all {} fbs-secret".format(run_id))
             logged_secret = stdout.rstrip()
             assert secret_value == logged_secret, ("secret value in stdout log incorrect or missing. "
                                                    "'{}' should be '{}'").format(logged_secret, secret_value)

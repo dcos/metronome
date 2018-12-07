@@ -73,15 +73,15 @@ def job_with_file_based_secret(
                     "secret": "secret1"
                 }
             ],
+            'ucr': {
+                "image": {
+                    "id": "busybox"
+                }
+            },
             "secrets": {
                 "secret1": {
                     "source": secret_name
                 }
-            }
-        },
-        'ucr': {
-            "image": {
-                "id": "busybox"
             }
         }
     }
