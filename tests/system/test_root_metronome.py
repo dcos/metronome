@@ -17,7 +17,7 @@ from retrying import retry
 
 # DC/OS 1.8 is when Metronome was added.  Skip prior clusters
 pytestmark = [pytest.mark.skipif("shakedown.dcos_version_less_than('1.8')")]
-metronone_0_6_0 = pytest.mark.skipif('common.metronome_version_less_than("0.6.0")')
+metronone_0_6_5 = pytest.mark.skipif('common.metronome_version_less_than("0.6.5")')
 
 
 def test_add_job():
@@ -243,7 +243,7 @@ def test_docker_job():
         assert len(client.get_runs(job_id)) == 1
 
 
-@metronone_0_6_0
+@metronone_0_6_5
 def test_ucr_job():
     client = metronome.create_client()
     job_id = uuid.uuid4().hex
@@ -279,7 +279,7 @@ def test_secret_env_var(secret_fixture):
         job_run_has_secret()
 
 
-@metronone_0_6_0
+@metronone_0_6_5
 @pytest.mark.skipif("shakedown.ee_version() is None")
 def test_secret_file(secret_fixture):
 
