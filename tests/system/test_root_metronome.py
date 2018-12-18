@@ -126,7 +126,7 @@ def test_disable_schedule_recovery_from_master_bounce():
         job_schedule['enabled'] = False
         client.update_schedule(job_id, 'nightly', job_schedule)
 
-        # bounce metronome master
+        # bounce mesos master
         shakedown.run_command_on_leader('sudo systemctl restart dcos-mesos-master')
         common.wait_for_cosmos()
         common.wait_for_metronome()
