@@ -1,7 +1,6 @@
 """ Commons for Metronome """
 
 from datetime import timedelta
-from dcos import http
 
 import json
 import shakedown
