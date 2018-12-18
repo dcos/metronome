@@ -11,7 +11,7 @@ import pytest
 
 from distutils.version import LooseVersion
 
-from dcos import metronome, packagemanager, cosmos
+from dcos import metronome, packagemanager, cosmos, http
 from dcos.errors import DCOSException
 from json.decoder import JSONDecodeError
 from retrying import retry
@@ -348,3 +348,24 @@ def create_secret(name, value=None, description=None):
         description_opt,
         name), print_output=True)
     assert return_code == 0, "Failed to create a secret"
+
+
+def get_metronome_endpoint(path, metronome_name='metronome'):
+    """Returns the url for the metronome endpoint."""
+    return shakedown.dcos_url_path('service/{}/{}'.format(metronome_name, path))
+
+
+def metronome_version():
+    """Returns the JSON of verison information for Metronome.
+    """
+    response = http.get(get_metronome_endpoint('info'))
+    return response.json()
+
+
+def cluster_info():
+    print("DC/OS: {}, in {} mode".format(shakedown.dcos_version(), shakedown.ee_version()))
+    agents = shakedown.get_private_agents()
+    print("Agents: {}".format(len(agents)))
+
+    about = metronome_version()
+    print("Marathon version: {}".format(about))
