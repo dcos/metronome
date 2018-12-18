@@ -126,8 +126,8 @@ def test_disable_schedule_recovery_from_master_bounce():
         job_schedule['enabled'] = False
         client.update_schedule(job_id, 'nightly', job_schedule)
 
-        # bounce metronome master
-        common.run_command_on_metronome_leader('sudo /sbin/shutdown -r now')
+        # bounce mesos master
+        shakedown.run_command_on_leader('sudo systemctl restart dcos-mesos-master')
         common.wait_for_cosmos()
         common.wait_for_metronome()
 
@@ -327,6 +327,7 @@ def test_metronome_shutdown_with_no_extra_tasks():
 def setup_module(module):
     common.wait_for_metronome()
     common.wait_for_cosmos()
+    common.cluster_info()
     agents = shakedown.get_private_agents()
     if len(agents) < 2:
         assert False, f"Incorrect Agent count. Expecting at least 2 agents, but have {len(agents)}"
