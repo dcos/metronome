@@ -1,3 +1,11 @@
+# Version 0.4.6
+
+## Bugs and Tracking
+
+* [#318](https://github.com/dcos/metronome/pull/318) Backport to remove config logs at startup.
+
+Diff [0.4.5-0.4.6](https://github.com/dcos/metronome/compare/v0.4.5...v0.4.6)
+
 # Version 0.4.5
 
 ## Bugs and Tracking
