@@ -13,7 +13,7 @@ python_version = "3.6"
 [packages]
 
 shakedown = {git = "https://github.com/dcos/shakedown.git", ref = "1.5.0"}
-dcos-launch = {git = "https://github.com/dcos/dcos-launch.git", ref = "db4c1848e9b41218b5e955eb2203c4ce6266c7d0"}
+dcos-launch = {git = "https://github.com/dcos/dcos-launch.git", ref = "3b4d8c0a49e8449c10d0d99d458f04f3de3283ff"}
 dcos-test-utils = {git = "https://github.com/dcos/dcos-test-utils", ref = "c9a4fc583a4a0bca18040ad4c7772e187e51aa74"}
 
 
