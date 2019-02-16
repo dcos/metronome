@@ -30,7 +30,8 @@
     },
     "default": {
         "dcos-launch": {
-            "git": "https://github.com/dcos/dcos-launch.git"
+            "git": "https://github.com/dcos/dcos-launch.git",
+            "ref": "4a2515f4819f0a7efc051eb5ad2c5ceb34da5975"
         },
         "dcos-test-utils": {
             "git": "https://github.com/dcos/dcos-test-utils",
