@@ -1,4 +1,19 @@
-# Unreleased
+# 0.6.11
+
+Updated Marathon dependency to 1.7.202
+
+# 0.6.10
+
+Updated Marathon dependency to 1.7.188
+
+# 0.5.71
+
+Metronome uses Marathon as a library for scheduling. We have bumped the dependency to the current Marathon, which is 1.7.183.
+This brings a lot of bug fixes and new features from the last 3 versions of Marathon. At the same time, it allows us to add UCR and secrets support.
+
+## Breaking changes
+
+Metronome 0.5.71 contains new Metrics endpoint with new metrics exposed that should allow you to monitor Metronome more easily. For detailed information please refer to the Metrics page in our docs.
 
 ## In replaces Eq operator
 
@@ -36,30 +51,15 @@ When you ask for it back, the operator will be "IN":
 
 Previous jobs are automatically migrated as well.
 
-# Version 0.5.3
+## New features
+* [DCOS_OSS-4344](https://jira.mesosphere.com/browse/DCOS_OSS-4344) Support UCR
+* [DCOS_OSS-4464](https://jira.mesosphere.com/browse/DCOS_OSS-4464) EQ operator is replaced with IS (in backward compatible way)
+* [DCOS_OSS-4446](https://jira.mesosphere.com/browse/DCOS_OSS-4446) Support file based secrets
+* [DCOS_OSS-4440](https://jira.mesosphere.com/browse/DCOS_OSS-4440) GPU support
 
-## Bugs
-
-Fixed bug introduced in cleaning up compiler warnings.   The bug prevented configuring an HTTP Port to be disabled which is useful for HTTPS only environments.
-
-Diff [0.5.2-0.5.3](https://github.com/dcos/metronome/compare/v0.5.2...0.5.3)
-
-# Version 0.5.2
-
-* [DCOS_OSS-4024][https://jira.mesosphere.com/browse/DCOS_OSS-4024] Use newer Caffeine dependency
-
-Diff [0.5.1-0.5.2](https://github.com/dcos/metronome/compare/v0.5.1...0.5.2)
-
-# Version 0.5.1
-
-Metronome uses Marathon as a library for scheduling. We have bumped the dependency to the current Marathon, which is 1.7.50.
-This brings a lot of bug fixes and new features from the last 3 versions of Marathon. At the same time, it allows
-us to add UCR and secrets support.
-
-Metronome 0.5.1 also contains new Metrics endpoint with new metrics exposed that should allow you to monitor Metronome more easily.
-For detailed information please refer to the Metrics page in our docs.
-
-Diff [0.4.4-0.5.1](https://github.com/dcos/metronome/compare/v0.4.4...0.5.1)
+## Bug fixes
+* [DCOS_OSS-4024](https://jira.mesosphere.com/browse/DCOS_OSS-4024) Use newer Caffeine dependency
+* [DCOS_OSS-4239](https://jira.mesosphere.com/browse/DCOS_OSS-4239) Crash when Zookeeper connection fails to establish
 
 # Version 0.4.4
 
