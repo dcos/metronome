@@ -210,7 +210,19 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       Then("The job is created")
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
-      contentAsString(response).contains("GPUs are only supported by UCR") mustBe true
+      contentAsString(response).contains("GPUs are not supported with Docker") mustBe true
+    }
+
+    "creates a job sending a valid job with cmd and no docker or ucr container" in {
+      Given("No job")
+
+      When("A job with CMD with gpus is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(cmdGpuJobJson)).get
+
+      Then("The job is created")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+      contentAsJson(response) mustBe cmdGpuJobJson
     }
 
     "create a job with secrets" in {
@@ -548,6 +560,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
 
   def spec(id: String) = JobSpec(JobId(id), run = JobRunSpec(taskKillGracePeriodSeconds = Some(10 seconds), docker = Some(DockerSpec("image", forcePullImage = true))))
   def ucrSpec(id: String) = JobSpec(JobId(id), run = JobRunSpec(taskKillGracePeriodSeconds = Some(10 seconds), ucr = Some(UcrSpec(ImageSpec(id = "image", forcePull = true)))))
+  def cmdSpec(id: String) = JobSpec(JobId(id), run = JobRunSpec(taskKillGracePeriodSeconds = Some(10 seconds), cmd = Some("sleep")))
   val CronSpec(cron) = "* * * * *"
   val schedule1 = ScheduleSpec("id1", cron)
   val jobSpec1 = spec("spec1")
@@ -602,6 +615,12 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
   }
   val dockerGpuJobJson = Json.toJson(dockerGpuJob)
   val auth = new TestAuthFixture
+
+  val cmdGpuJob = {
+    val s = cmdSpec("cmd-gpu")
+    s.copy(run = s.run.copy(gpus = 4))
+  }
+  val cmdGpuJobJson = Json.toJson(cmdGpuJob)
 
   before {
     auth.authorized = true
