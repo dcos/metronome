@@ -66,6 +66,7 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
     val flags = Seq[Option[String]](
       if (httpPort.isEmpty) Some("--disable_http") else None,
       if (zkCompressionEnabled) Some("--zk_compression") else None,
+      if (metricsStatsDReporter) Some("--metrics_statsd") else None,
       if (mesosAuthentication) Some("--mesos_authentication") else None,
       if (metricsHistogramReservoirResetPeriodically.isDefined) Some("--metrics_histogram_reservoir_reset_periodically") else None,
       if (suppressOffers) Some("--suppress_offers") else Some("--disable_suppress_offers"))
@@ -105,6 +106,9 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       "--kill_retry_timeout" -> Some(killRetryTimeout.toString),
 
       "--metrics_name_prefix" -> Some(metricsNamePrefix),
+      "--metrics_statsd_host" -> metricsStatsDHost.map(_.toString),
+      "--metrics_statsd_port" -> metricsStatsDPort.map(_.toString),
+      "--metrics_statsd_transmission_interval_ms" -> metricsStatsDTransmissionIntervalMs.map(_.toString),
       "--metrics_histogram_reservoir_significant_digits" -> metricsHistogramReservoirSignificantDigits.map(_.toString),
       "--metrics_histogram_reservoir_resetting_interval_ms" -> metricsHistogramReservoirResettingIntervalMs.map(_.toString),
       "--metrics_histogram_reservoir_resetting_chunks" -> metricsHistogramReservoirResettingChunks.map(_.toString))
@@ -129,6 +133,11 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   override lazy val maxActorStartupTime: FiniteDuration = configuration.getFiniteDuration("metronome.akka.actor.startup.max").getOrElse(10.seconds)
 
   lazy val metricsNamePrefix: String = configuration.getOptional[String]("metronome.metrics.prefix").getOrElse("metronome")
+
+  lazy val metricsStatsDReporter: Boolean = configuration.getOptional[Boolean]("metronome.metrics.reporter.statsd").getOrElse(false)
+  lazy val metricsStatsDHost: Option[String] = configuration.getOptional[String]("metronome.metrics.statsd.host")
+  lazy val metricsStatsDPort: Option[Int] = configuration.getOptional[Int]("metronome.metrics.statsd.port")
+  lazy val metricsStatsDTransmissionIntervalMs: Option[Long] = configuration.getOptional[Long]("metronome.metrics.statsd.transmission.interval.ms")
 
   lazy val metricsHistogramReservoirSignificantDigits: Option[Int] = configuration.getOptional[Int]("metronome.metrics.histogram.reservoir.significant.digits")
   lazy val metricsHistogramReservoirResetPeriodically: Option[Boolean] = configuration.getOptional[Boolean]("metronome.metrics.histogram.reservoir.reset.periodically")
