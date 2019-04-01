@@ -1,3 +1,8 @@
+# 0.6.12
+
+## Bug fixes
+* [DCOS_OSS-4978](https://jira.mesosphere.com/browse/DCOS_OSS-4978) Allow using `IS` operator when creating jobs. This was broken since introduction of the `IS` operator, which replaced `EQ` but was not a valid schema value. 
+
 # 0.6.11
 
 Updated Marathon dependency to 1.7.202
@@ -15,9 +20,9 @@ This brings a lot of bug fixes and new features from the last 3 versions of Mara
 
 Metronome 0.5.71 contains new Metrics endpoint with new metrics exposed that should allow you to monitor Metronome more easily. For detailed information please refer to the Metrics page in our docs.
 
-## In replaces Eq operator
+## IS replaces EQ operator
 
-In order to bring better alignment between Marathon and Metronome, the Eq constraint operator has been replaced with In. The change is semantic; Job definitions using Eq will continue to function the same and are transparently mapped to the new operator with the same constraint behavior.
+In order to bring better alignment between Marathon and Metronome, the `EQ` constraint operator has been replaced with `IS`. The change is semantic; Job definitions using `EQ` will continue to function the same and are transparently mapped to the new operator with the same constraint behavior.
 
 If you post the following Job definition:
 
@@ -34,7 +39,7 @@ If you post the following Job definition:
 }
 ```
 
-When you ask for it back, the operator will be "IN":
+When you ask for it back, the operator will be "IS":
 
 ```json
 {
@@ -43,7 +48,7 @@ When you ask for it back, the operator will be "IN":
   "run": {
     ...
     "placement": {
-      "constraints": [{"attribute": "@region", "operator": "IN", "value": "us-east-1"}]
+      "constraints": [{"attribute": "@region", "operator": "IS", "value": "us-east-1"}]
     }
   }
 }

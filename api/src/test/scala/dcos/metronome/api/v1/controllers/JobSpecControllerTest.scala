@@ -325,6 +325,114 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       contentType(response) mustBe Some("application/json")
       contentAsString(response).contains("expected HostVolume or SecretVolume") mustBe true
     }
+
+    "convert EQ and allow IS placement operators in v1" in {
+      Given("Job spec with both EQ and IS placement operators")
+      val specJson =
+        """{
+          |  "id": "prod.example.app",
+          |  "run": {
+          |    "cmd": "sleep 10000",
+          |    "cpus": 1,
+          |    "mem": 32,
+          |    "disk": 128,
+          |    "placement": {
+          |      "constraints": [
+          |        {
+          |          "attribute": "heaven",
+          |          "operator": "EQ",
+          |          "value": "a myth"
+          |        },
+          |        {
+          |          "attribute": "hell",
+          |          "operator": "IS",
+          |          "value": "round the corner"
+          |        }
+          |      ]
+          |    }
+          |  }
+          |}""".stripMargin
+
+      When("the job is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(Json.parse(specJson))).get
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+
+      Then("the EQ has been converted to an IS operator")
+      val constraints = contentAsJson(response).as[JobSpec].run.placement.constraints
+      constraints must have size 2
+      constraints.contains(ConstraintSpec("heaven", Operator.Is, Some("a myth"))) mustBe true
+      constraints.contains(ConstraintSpec("hell", Operator.Is, Some("round the corner"))) mustBe true
+    }
+
+    "convert EQ and allow IS placement operators in v0" in {
+      Given("Job spec with both EQ and IS placement operators")
+      val specJson =
+        """{
+          |  "id": "prod.example.app",
+          |  "run": {
+          |    "cmd": "sleep 10000",
+          |    "cpus": 1,
+          |    "mem": 32,
+          |    "disk": 128,
+          |    "placement": {
+          |      "constraints": [
+          |        {
+          |          "attribute": "heaven",
+          |          "operator": "EQ",
+          |          "value": "a myth"
+          |        },
+          |        {
+          |          "attribute": "hell",
+          |          "operator": "IS",
+          |          "value": "round the corner"
+          |        }
+          |      ]
+          |    }
+          |  }
+          |}""".stripMargin
+
+      When("the job is created")
+      val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(Json.parse(specJson))).get
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+
+      Then("the EQ has been converted to an IS operator")
+      val constraints = contentAsJson(response).as[JobSpec].run.placement.constraints
+      constraints must have size 2
+      constraints.contains(ConstraintSpec("heaven", Operator.Is, Some("a myth"))) mustBe true
+      constraints.contains(ConstraintSpec("hell", Operator.Is, Some("round the corner"))) mustBe true
+    }
+
+    "fail for invalid placement operator" in {
+      Given("Job spec with an invalid placement operator")
+      val specJson =
+        """{
+          |  "id": "prod.example.app",
+          |  "run": {
+          |    "cmd": "sleep 10000",
+          |    "cpus": 1,
+          |    "mem": 32,
+          |    "disk": 128,
+          |    "placement": {
+          |      "constraints": [
+          |        {
+          |          "attribute": "foo",
+          |          "operator": "invalid",
+          |          "value": "bar"
+          |        }
+          |      ]
+          |    }
+          |  }
+          |}""".stripMargin
+
+      When("the job is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(Json.parse(specJson))).get
+
+      Then("a validation error is returned")
+      status(response) mustBe UNPROCESSABLE_ENTITY
+      contentType(response) mustBe Some("application/json")
+    }
   }
 
   "GET /jobs" should {
