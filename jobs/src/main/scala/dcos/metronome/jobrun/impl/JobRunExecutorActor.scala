@@ -105,8 +105,8 @@ class JobRunExecutorActor(
     startingDeadlineTimer = Some(scheduler.scheduleOnce(timeout, self, StartTimeout))
   }
 
-  def addTaskToLaunchQueue(): Unit = async {
-    if (existsInLaunchQueue()) {
+  def addTaskToLaunchQueue(restart: Boolean = false): Unit = async {
+    if (!restart && existsInLaunchQueue()) {
       // we have to handle a case when actor is restarted (e.g. because of exception) and it already put something into the queue
       // during restart it is possible, that actor that was in state Starting will be restarted with state initial
       log.info(s"Job run ${jobRun.id} already exists in LaunchQueue - not adding")
@@ -184,7 +184,7 @@ class JobRunExecutorActor(
         jobRun = jobRun.copy(tasks = updatedTasks(update))
         persistenceActor ! Update(_ => jobRun)
         context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
-        addTaskToLaunchQueue()
+        addTaskToLaunchQueue(true)
 
       case _ =>
         becomeFailing(jobRun.copy(
