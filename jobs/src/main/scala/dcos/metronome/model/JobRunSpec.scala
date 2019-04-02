@@ -73,7 +73,7 @@ object JobRunSpec {
       def noSecretVolumesExists: Boolean = jobRunSpec.volumes.forall(v => !isSecretVolume(v))
       check(noSecretVolumesExists || jobRunSpec.ucr.isDefined, JobRunSpecMessages.fileBasedSecretsAreUcrOnly)
 
-      check(jobRunSpec.gpus == 0 || jobRunSpec.ucr.isDefined, JobRunSpecMessages.gpusAreUcrOnly)
+      check(jobRunSpec.gpus == 0 || jobRunSpec.docker.isEmpty, JobRunSpecMessages.gpusNotValidWithDocker)
 
       violations.headOption.getOrElse(Success)
     }
@@ -87,5 +87,5 @@ object JobRunSpecMessages {
   }
   val onlyDockerOrUcr = "Either Docker or UCR should be provided, but not both"
   val fileBasedSecretsAreUcrOnly = "File based secrets are only supported by UCR"
-  val gpusAreUcrOnly = "GPUs are only supported by UCR"
+  val gpusNotValidWithDocker = "GPUs are not supported with Docker"
 }

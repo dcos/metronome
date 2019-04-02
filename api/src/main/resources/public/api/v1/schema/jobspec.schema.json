@@ -202,7 +202,7 @@
                   "operator": {
                     "type": "string",
                     "description": "The operator for this constraint.",
-                    "enum": ["EQ", "LIKE", "UNLIKE"]
+                    "enum": ["IS", "EQ", "LIKE", "UNLIKE"]
                   },
                   "value": {
                     "type": "string",
