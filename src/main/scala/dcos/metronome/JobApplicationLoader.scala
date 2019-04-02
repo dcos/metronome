@@ -31,13 +31,13 @@ import scala.util.Failure
   */
 class JobApplicationLoader extends ApplicationLoader with StrictLogging {
   private[this] val log = LoggerFactory.getLogger(getClass)
+  private val startedAt = System.currentTimeMillis()
 
   def load(context: Context): Application = try {
     val jobComponents = new JobComponents(context)
 
     jobComponents.metricsModule.start(jobComponents.actorSystem)
 
-    val startedAt = System.currentTimeMillis()
     jobComponents.metricsModule.metrics.closureGauge(
       "uptime",
       () => (System.currentTimeMillis() - startedAt).toDouble / 1000.0, unit = UnitOfMeasurement.Time)
