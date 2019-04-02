@@ -1,5 +1,9 @@
-# 0.6.NEXT
+# 0.6.XX
+
 * [DCOS_OSS-4636](https://jira.mesosphere.com/browse/DCOS_OSS-4636) Failure when restart policy is `ON_FAILURE`.  This bug was introduced through the fix of another bug regarding stopping invalid extra instances of a job run.  Metronome should not check the launch queue when a restart is invoked.
+
+## New features
+- Added new metric `metronome.uptime.gauge.seconds`
 
 # 0.6.12
 

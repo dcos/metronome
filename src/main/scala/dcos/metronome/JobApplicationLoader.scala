@@ -12,6 +12,7 @@ import dcos.metronome.api.{ ApiModule, ErrorHandler }
 import mesosphere.marathon.MetricsModule
 import mesosphere.marathon.core.async.ExecutionContexts
 import mesosphere.marathon.core.base.{ CrashStrategy, JvmExitsCrashStrategy }
+import mesosphere.marathon.metrics.current.UnitOfMeasurement
 import org.slf4j.LoggerFactory
 import play.shaded.ahc.org.asynchttpclient.{ AsyncHttpClientConfig, DefaultAsyncHttpClient }
 import play.api.ApplicationLoader.Context
@@ -30,11 +31,16 @@ import scala.util.Failure
   */
 class JobApplicationLoader extends ApplicationLoader with StrictLogging {
   private[this] val log = LoggerFactory.getLogger(getClass)
+  private val startedAt = System.currentTimeMillis()
 
   def load(context: Context): Application = try {
     val jobComponents = new JobComponents(context)
 
     jobComponents.metricsModule.start(jobComponents.actorSystem)
+
+    jobComponents.metricsModule.metrics.closureGauge(
+      "uptime",
+      () => (System.currentTimeMillis() - startedAt).toDouble / 1000.0, unit = UnitOfMeasurement.Time)
 
     Future {
       jobComponents.schedulerService.run()
