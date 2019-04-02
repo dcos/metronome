@@ -1,4 +1,7 @@
-# 0.6.12
+# 0.6.XX
+
+## New features
+- Added new metric `metronome.uptime.gauge.seconds`
 
 ## Bug fixes
 * [DCOS_OSS-4978](https://jira.mesosphere.com/browse/DCOS_OSS-4978) Allow using `IS` operator when creating jobs. This was broken since introduction of the `IS` operator, which replaced `EQ` but was not a valid schema value. 
