@@ -423,7 +423,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     noMoreInteractions(launchQueue)
   }
 
-  test("RestartPolicy is handled correctly") {
+  test("RestartPolicy is handled correctly for job that originally launched successfully") {
     import scala.concurrent.duration._
     val f = new Fixture
 
@@ -459,6 +459,56 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     actor ! f.statusUpdate(TaskState.Failed)
 
     verifyFailureActions(jobRun, expectedTaskCount = 1, f)
+  }
+
+  test("RestartPolicy is handled correctly for job that failed to reached task_running") {
+    import scala.concurrent.duration._
+    val f = new Fixture
+
+    Given("a jobRunSpec with a RestartPolicy OnFailure and a 10s timeout")
+    val jobSpec = JobSpec(
+      id = JobId("/test"),
+      run = JobRunSpec(restart = RestartSpec(
+        policy = RestartPolicy.OnFailure,
+        activeDeadline = Some(10.seconds))))
+    val (actor, jobRun) = f.setupActiveExecutorActor(Some(jobSpec))
+    val runSpecId = jobRun.id.toRunSpecId
+    //  the task would still be in the queue
+    f.launchQueue.get(runSpecId) returns Future.successful(Some(QueuedInstanceInfo(
+      jobRun.toRunSpec,
+      true,
+      1,
+      1,
+      Timestamp.now(f.clock),
+      Timestamp.now(f.clock))))
+
+    When("the task fails")
+    actor ! f.statusUpdate(TaskState.Failed)
+
+    Then("the update is propagated")
+    val updateMsg = f.parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
+    updateMsg.startedJobRun.jobRun.status shouldBe JobRunStatus.Active
+    updateMsg.startedJobRun.jobRun.tasks should have size 1
+    updateMsg.startedJobRun.jobRun.tasks.head._2.status shouldBe TaskState.Failed
+    updateMsg.startedJobRun.jobRun.tasks.head._2.completedAt shouldBe None
+
+    And("the jobRun is updated")
+    f.persistenceActor.expectMsgType[JobRunPersistenceActor.Update]
+    f.persistenceActor.reply(JobRunPersistenceActor.JobRunUpdated(f.persistenceActor.ref, jobRun, ()))
+
+    And("a new task is launched")
+    //    the add to the queue happens a second time if the restart works
+    verify(f.launchQueue, atLeast(2)).add(any, any)
+
+    When("there is no time left")
+    f.clock += 15.seconds
+
+    And("the second task also fails")
+    actor ! f.statusUpdate(TaskState.Failed)
+
+    verifyFailureActions(jobRun, expectedTaskCount = 1, f)
+    //    no additional add to the queue based on no time left
+    verify(f.launchQueue, atLeast(2)).add(any, any)
   }
 
   test("taskKillGracePeriodSeconds is passed to Marathon when launching task") {
