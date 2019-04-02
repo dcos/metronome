@@ -8,17 +8,18 @@ import controllers.AssetsComponents
 import com.softwaremill.macwire._
 import com.typesafe.scalalogging.StrictLogging
 import dcos.metronome.api.v1.LeaderProxyFilter
-import dcos.metronome.api.{ ApiModule, ErrorHandler }
+import dcos.metronome.api.{ApiModule, ErrorHandler}
 import mesosphere.marathon.MetricsModule
 import mesosphere.marathon.core.async.ExecutionContexts
-import mesosphere.marathon.core.base.{ CrashStrategy, JvmExitsCrashStrategy }
+import mesosphere.marathon.core.base.{CrashStrategy, JvmExitsCrashStrategy}
+import mesosphere.marathon.metrics.current.UnitOfMeasurement
 import org.slf4j.LoggerFactory
-import play.shaded.ahc.org.asynchttpclient.{ AsyncHttpClientConfig, DefaultAsyncHttpClient }
+import play.shaded.ahc.org.asynchttpclient.{AsyncHttpClientConfig, DefaultAsyncHttpClient}
 import play.api.ApplicationLoader.Context
 import play.api._
 import play.api.i18n._
-import play.api.libs.ws.ahc.{ AhcConfigBuilder, AhcWSClient, AhcWSClientConfig, StandaloneAhcWSClient }
-import play.api.libs.ws.{ WSClient, WSConfigParser }
+import play.api.libs.ws.ahc.{AhcConfigBuilder, AhcWSClient, AhcWSClientConfig, StandaloneAhcWSClient}
+import play.api.libs.ws.{WSClient, WSConfigParser}
 import play.api.mvc.EssentialFilter
 import play.api.routing.Router
 
@@ -35,6 +36,11 @@ class JobApplicationLoader extends ApplicationLoader with StrictLogging {
     val jobComponents = new JobComponents(context)
 
     jobComponents.metricsModule.start(jobComponents.actorSystem)
+
+    val startedAt = System.currentTimeMillis()
+    jobComponents.metricsModule.metrics.closureGauge(
+      "uptime",
+      () => (System.currentTimeMillis() - startedAt).toDouble / 1000.0, unit = UnitOfMeasurement.Time)
 
     Future {
       jobComponents.schedulerService.run()
