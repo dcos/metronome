@@ -1,3 +1,7 @@
+# Next
+
+* [DCOS_OSS-5019](https://jira.mesosphere.com/browse/DCOS_OSS-5019) Improve secrets validation to only point out unprovided secrets
+
 # 0.6.18
 
 * [DCOS_OSS-4636](https://jira.mesosphere.com/browse/DCOS_OSS-4636) Failure when restart policy is `ON_FAILURE`.  This bug was introduced through the fix of another bug regarding stopping invalid extra instances of a job run.  Metronome should not check the launch queue when a restart is invoked.
