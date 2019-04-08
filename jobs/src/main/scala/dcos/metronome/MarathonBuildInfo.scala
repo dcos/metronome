@@ -20,7 +20,6 @@ case object MarathonBuildInfo {
     */
   private lazy val marathonManifestPath: List[java.net.URL] =
     getClass().getClassLoader().getResources("META-INF/MANIFEST.MF").toIterator.filter { manifest =>
-      println(manifest.getPath)
       marathonJar.findFirstMatchIn(manifest.getPath).nonEmpty
     }.toList
 
