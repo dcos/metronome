@@ -1,18 +1,21 @@
 package dcos.metronome
 package api
 
+import java.time.Duration
+import java.util.concurrent.TimeUnit
+
 import akka.util.ByteString
 import dcos.metronome.jobinfo.JobSpecSelector
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.model.{ JobRun, JobSpec, QueuedJobRunInfo }
+import dcos.metronome.model.{JobRun, JobSpec, QueuedJobRunInfo}
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.plugin.auth._
-import mesosphere.marathon.plugin.http.{ HttpRequest, HttpResponse }
-import play.api.http.{ HeaderNames, HttpEntity, Status }
+import mesosphere.marathon.plugin.http.{HttpRequest, HttpResponse}
+import play.api.http.{HeaderNames, HttpEntity, Status}
 import play.api.mvc._
 
-import scala.concurrent.{ ExecutionContext, Future }
-import scala.util.{ Failure, Success }
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 /**
   * A request that adds the User for the current call
@@ -83,8 +86,17 @@ abstract class Authorization(
   private[this] val http4XX = metrics.counter("http.responses.4xx.rate")
   private[this] val http5XX = metrics.counter("http.responses.5xx.rate")
   private[this] val apiErrors = metrics.counter("http.responses.errors.rate")
+  private[this] val requestDurationMetric = metrics.timer("http.requests.duration.timer.seconds")
+  private[this] val requestSizeMetric = metrics.counter("http.requests.size")
+  private[this] val responseSizeMetric = metrics.counter("http.responses.size")
 
   def measured[A](action: Action[A]) = Action.async(action.parser) { request =>
+    val startTimeNanos = System.nanoTime()
+    val requestSizeBytesOpt = request.headers.get(play.api.http.HeaderNames.CONTENT_LENGTH)
+    requestSizeBytesOpt.map(_.toLong).foreach { requestSizeBytes =>
+      requestSizeMetric.increment(requestSizeBytes)
+    }
+
     val result = action(request)
     result.onComplete {
       case Success(response) =>
@@ -95,8 +107,13 @@ abstract class Authorization(
           case status if status < 500  => http4XX.increment()
           case status if status >= 500 => http5XX.increment()
         }
+        response.body.contentLength.foreach { responseSizeBytes =>
+          responseSizeMetric.increment(responseSizeBytes)
+        }
       case Failure(_) => apiErrors.increment()
     }
+
+    requestDurationMetric.update(System.nanoTime() - startTimeNanos)
 
     result
   }
