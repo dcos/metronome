@@ -2,7 +2,6 @@ package dcos.metronome
 
 import java.util.jar.{ Attributes, Manifest }
 
-import mesosphere.marathon.BuildInfo
 import mesosphere.marathon.io.IO
 
 import scala.collection.JavaConverters._
@@ -65,6 +64,6 @@ case object MetronomeBuildInfo {
 
   lazy val scalaVersion: String = getAttribute("Scala-Version").getOrElse("2.x.x")
 
-  lazy val marathonVersion: mesosphere.marathon.SemVer = BuildInfo.version
+  lazy val marathonVersion: mesosphere.marathon.SemVer = MarathonBuildInfo.version
 
 }

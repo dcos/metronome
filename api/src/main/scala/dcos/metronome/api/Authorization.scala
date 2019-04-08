@@ -7,15 +7,15 @@ import java.util.concurrent.TimeUnit
 import akka.util.ByteString
 import dcos.metronome.jobinfo.JobSpecSelector
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.model.{JobRun, JobSpec, QueuedJobRunInfo}
+import dcos.metronome.model.{ JobRun, JobSpec, QueuedJobRunInfo }
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.plugin.auth._
-import mesosphere.marathon.plugin.http.{HttpRequest, HttpResponse}
-import play.api.http.{HeaderNames, HttpEntity, Status}
+import mesosphere.marathon.plugin.http.{ HttpRequest, HttpResponse }
+import play.api.http.{ HeaderNames, HttpEntity, Status }
 import play.api.mvc._
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.{ Failure, Success }
 
 /**
   * A request that adds the User for the current call
