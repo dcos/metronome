@@ -9,6 +9,7 @@ import dcos.metronome.jobinfo.JobSpecSelector
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model.{JobRun, JobSpec, QueuedJobRunInfo}
 import mesosphere.marathon.metrics.Metrics
+import mesosphere.marathon.metrics.current.UnitOfMeasurement
 import mesosphere.marathon.plugin.auth._
 import mesosphere.marathon.plugin.http.{HttpRequest, HttpResponse}
 import play.api.http.{HeaderNames, HttpEntity, Status}
@@ -87,8 +88,8 @@ abstract class Authorization(
   private[this] val http5XX = metrics.counter("http.responses.5xx.rate")
   private[this] val apiErrors = metrics.counter("http.responses.errors.rate")
   private[this] val requestDurationMetric = metrics.timer("http.requests.duration")
-  private[this] val requestSizeMetric = metrics.counter("http.requests.size")
-  private[this] val responseSizeMetric = metrics.counter("http.responses.size")
+  private[this] val requestSizeMetric = metrics.counter("http.requests.size", UnitOfMeasurement.Memory)
+  private[this] val responseSizeMetric = metrics.counter("http.responses.size", UnitOfMeasurement.Memory)
 
   def measured[A](action: Action[A]) = Action.async(action.parser) { request =>
     val startTimeNanos = System.nanoTime()
