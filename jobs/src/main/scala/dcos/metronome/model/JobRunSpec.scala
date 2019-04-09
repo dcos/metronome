@@ -64,7 +64,8 @@ object JobRunSpec {
 
       check(jobRunSpec.cmd.isDefined || jobRunSpec.docker.exists(d => d.image.nonEmpty) || jobRunSpec.ucr.nonEmpty, JobRunSpecMessages.cmdOrDockerValidation)
       val undefinedSecrets = referencedSecretNames.diff(providedSecretNames)
-      check(undefinedSecrets.isEmpty, JobRunSpecMessages.secretsValidation(undefinedSecrets))
+      val unusedSecrets = providedSecretNames.diff(referencedSecretNames)
+      check(undefinedSecrets.isEmpty && unusedSecrets.isEmpty, JobRunSpecMessages.secretsValidation(undefinedSecrets, unusedSecrets))
       check(!(jobRunSpec.docker.nonEmpty & jobRunSpec.ucr.nonEmpty), JobRunSpecMessages.onlyDockerOrUcr)
 
       def isSecretVolume(volume: Volume): Boolean = volume match {
@@ -72,7 +73,7 @@ object JobRunSpec {
         case _               => false
       }
       def noSecretVolumesExists: Boolean = jobRunSpec.volumes.forall(v => !isSecretVolume(v))
-      check(noSecretVolumesExists || jobRunSpec.ucr.isDefined, JobRunSpecMessages.fileBasedSecretsAreUcrOnly)
+      check(noSecretVolumesExists || jobRunSpec.docker.isEmpty, JobRunSpecMessages.fileBasedSecretsAreUcrOnly)
 
       check(jobRunSpec.gpus == 0 || jobRunSpec.docker.isEmpty, JobRunSpecMessages.gpusNotValidWithDocker)
 
@@ -83,8 +84,17 @@ object JobRunSpec {
 
 object JobRunSpecMessages {
   val cmdOrDockerValidation = "Cmd, Docker or UCR image must be specified"
-  def secretsValidation(undefinedSecrets: Set[String]) = {
-    s"The following secrets are referenced, but undefined: ${undefinedSecrets.mkString(", ")}"
+  def secretsValidation(undefinedSecrets: Set[String], unusedSecrets: Set[String]) = {
+    val sb = StringBuilder.newBuilder
+    if (undefinedSecrets.nonEmpty) sb.
+      append("The following secrets are referenced, but undefined: ").
+      append(undefinedSecrets.mkString(", ")).
+      append(". Please add them to the secrets field.")
+    if (unusedSecrets.nonEmpty) sb.
+      append("The following secrets are defined, but not referenced: ").
+      append(unusedSecrets.mkString(", ")).
+      append(". Please remove them from the secrets field.")
+    sb.mkString
   }
   val onlyDockerOrUcr = "Either Docker or UCR should be provided, but not both"
   val fileBasedSecretsAreUcrOnly = "File based secrets are only supported by UCR"

@@ -285,14 +285,14 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       contentType(response) mustBe Some("application/json")
     }
 
-    "indicate no problem when creating a job with unused secrets" in {
+    "indicate a problem when creating a job with unused secrets" in {
       Given("No job")
 
       When("A job is created")
       val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpecWithSecretDefsOnlyJson)).get
 
       Then("A validation error is returned")
-      status(response) mustBe CREATED
+      status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
     }
 
