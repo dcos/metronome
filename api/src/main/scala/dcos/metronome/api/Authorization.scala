@@ -86,7 +86,7 @@ abstract class Authorization(
   private[this] val http4XX = metrics.counter("http.responses.4xx.rate")
   private[this] val http5XX = metrics.counter("http.responses.5xx.rate")
   private[this] val apiErrors = metrics.counter("http.responses.errors.rate")
-  private[this] val requestDurationMetric = metrics.timer("http.requests.duration.timer.seconds")
+  private[this] val requestDurationMetric = metrics.timer("http.requests.duration")
   private[this] val requestSizeMetric = metrics.counter("http.requests.size")
   private[this] val responseSizeMetric = metrics.counter("http.responses.size")
 
