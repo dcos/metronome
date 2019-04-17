@@ -294,6 +294,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       Then("A validation error is returned")
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
+      contentAsString(response).contains("secretId") mustBe true
     }
 
     "indicate a problem when creating a job which contains fields both for secret and normal volume" in {

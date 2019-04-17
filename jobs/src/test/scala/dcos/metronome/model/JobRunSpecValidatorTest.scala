@@ -15,6 +15,7 @@ class JobRunSpecValidatorTest extends FunSuite with Matchers with GivenWhenThen 
 
     Then("a validation error is returned")
     result.isFailure shouldBe true
+    result.toFailure.toString.contains("undefined-vol-secret") shouldBe true
   }
 
   test("Undefined env var secret is invalid") {
@@ -28,6 +29,7 @@ class JobRunSpecValidatorTest extends FunSuite with Matchers with GivenWhenThen 
 
     Then("a validation error is returned")
     result.isFailure shouldBe true
+    result.toFailure.toString.contains("undefined-env-secret") shouldBe true
   }
 
   test("Unused secrets is invalid") {
@@ -41,6 +43,7 @@ class JobRunSpecValidatorTest extends FunSuite with Matchers with GivenWhenThen 
 
     Then("a validation error is returned")
     result.isFailure shouldBe true
+    result.toFailure.toString.contains("unused-secret") shouldBe true
   }
 
   test("Used secrets are valid") {
