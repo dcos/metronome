@@ -285,7 +285,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       contentType(response) mustBe Some("application/json")
     }
 
-    "indicate a problem when creating a job without a secret name" in {
+    "indicate a problem when creating a job with unused secrets" in {
       Given("No job")
 
       When("A job is created")
@@ -294,7 +294,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       Then("A validation error is returned")
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
-      //      contentAsJson(response) \ "message" mustBe JsDefined(JsString("Object is not valid"))
+      contentAsString(response).contains("secretId") mustBe true
     }
 
     "indicate a problem when creating a job which contains fields both for secret and normal volume" in {
