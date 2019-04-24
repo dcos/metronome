@@ -1,6 +1,8 @@
 # Next
 
-* [DCOS_OSS-5019](https://jira.mesosphere.com/browse/DCOS_OSS-5019) Improve secrets validation to only point out unprovided secrets
+# 0.6.21
+
+* [DCOS_OSS-5020](https://jira.mesosphere.com/browse/DCOS_OSS-5020) Add missing HTTP metrics in Metronome.
 
 # 0.6.18
 
