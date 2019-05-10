@@ -64,7 +64,7 @@ In the example below, the secret will have the filename /mnt/test and will be av
     },
     "volumes": [
          {
-           "containerPath": "/mnt/test",
+           "containerPath": "mnt/test",
            "secret": "secret1"
          }
     ],
