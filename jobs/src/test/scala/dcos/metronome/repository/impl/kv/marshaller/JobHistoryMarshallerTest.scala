@@ -4,6 +4,7 @@ package repository.impl.kv.marshaller
 import java.time.{ Clock, LocalDateTime, ZoneOffset }
 
 import dcos.metronome.model._
+import mesosphere.marathon.core.task.Task
 import org.scalatest.{ FunSuite, Matchers }
 
 class JobHistoryMarshallerTest extends FunSuite with Matchers {
@@ -21,12 +22,14 @@ class JobHistoryMarshallerTest extends FunSuite with Matchers {
     val successfulJobRunInfo = JobRunInfo(
       JobRunId(JobId("/test"), "successful"),
       LocalDateTime.parse("2004-09-06T08:50:12.000").toInstant(ZoneOffset.UTC),
-      LocalDateTime.parse("2014-09-06T08:50:12.000").toInstant(ZoneOffset.UTC))
+      LocalDateTime.parse("2014-09-06T08:50:12.000").toInstant(ZoneOffset.UTC),
+      tasks = Seq(Task.Id("test_finished.77a7bc7d-4429-11e9-969f-3a74960279c0")))
 
     val finishedJobRunInfo = JobRunInfo(
       JobRunId(JobId("/test"), "finished"),
       LocalDateTime.parse("1984-09-06T08:50:12.000").toInstant(ZoneOffset.UTC),
-      LocalDateTime.parse("1994-09-06T08:50:12.000").toInstant(ZoneOffset.UTC))
+      LocalDateTime.parse("1994-09-06T08:50:12.000").toInstant(ZoneOffset.UTC),
+      tasks = Seq(Task.Id("test_finished.77a7bc7d-4429-11e9-969f-3a74960279c0")))
 
     val jobHistory = JobHistory(
       JobId("/my/wonderful/job"),

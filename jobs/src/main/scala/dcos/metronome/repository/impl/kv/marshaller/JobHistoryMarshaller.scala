@@ -5,6 +5,7 @@ import java.time.Instant
 
 import dcos.metronome.model.{ JobHistory, JobId, JobRunInfo }
 import dcos.metronome.repository.impl.kv.EntityMarshaller
+import mesosphere.marathon.core.task.Task
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -72,7 +73,8 @@ object JobHistoryConversions {
       JobRunInfo(
         id = proto.getJobRunId.toModel,
         createdAt = Instant.ofEpochMilli(proto.getCreatedAt),
-        finishedAt = Instant.ofEpochMilli(proto.getFinishedAt))
+        finishedAt = Instant.ofEpochMilli(proto.getFinishedAt),
+        tasks = proto.getTasksList.asScala.map(Task.Id(_)).to[Seq])
     }.toList
   }
 }
