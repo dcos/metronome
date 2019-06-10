@@ -58,11 +58,14 @@ object JobHistoryConversions {
     import JobRunConversions.JobRunIdToProto
 
     def toProto: Seq[Protos.JobHistory.JobRunInfo] = jobRunInfos.map { jobRunInfo =>
-      Protos.JobHistory.JobRunInfo.newBuilder()
+      val proto = Protos.JobHistory.JobRunInfo.newBuilder()
         .setJobRunId(jobRunInfo.id.toProto)
         .setCreatedAt(jobRunInfo.createdAt.toEpochMilli)
         .setFinishedAt(jobRunInfo.finishedAt.toEpochMilli)
-        .build()
+
+      proto.addAllTasks(jobRunInfo.tasks.map(_.idString).asJava)
+
+      proto.build()
     }
   }
 
