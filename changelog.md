@@ -1,5 +1,9 @@
 # Next
 
+# 0.6.NEXT
+
+* When querying run detail with `embed=history`, `successfulFinishedRuns` and `failedFinishedRuns` contains new field `tasks` which is an array of taskIds of that finished run. This allow people to query task ids even for finished job runs.
+
 # 0.6.21
 
 * [DCOS_OSS-5020](https://jira.mesosphere.com/browse/DCOS_OSS-5020) Add missing HTTP metrics in Metronome.
