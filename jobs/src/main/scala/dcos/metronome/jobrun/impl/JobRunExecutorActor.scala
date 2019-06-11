@@ -118,6 +118,7 @@ class JobRunExecutorActor(
   }
 
   def becomeActive(update: TaskStateChangedEvent): Unit = {
+    log.info(s"Processing update $update")
     cancelStartingDeadline()
     jobRun = jobRun.copy(status = JobRunStatus.Active, tasks = updatedTasks(update))
     persistenceActor ! Update(_ => jobRun)
