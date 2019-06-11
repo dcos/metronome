@@ -301,6 +301,10 @@ class JobRunExecutorActor(
 
   def active: Receive = {
     receiveKill orElse {
+      case ForwardStatusUpdate(update) if isActive(update.taskState) =>
+        jobRun = jobRun.copy(status = JobRunStatus.Active, tasks = updatedTasks(update))
+        persistenceActor ! Update(_ => jobRun)
+        context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
       case ForwardStatusUpdate(update) if isFinished(update.taskState) =>
         becomeFinishing(jobRun.copy(
           status = JobRunStatus.Success,

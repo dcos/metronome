@@ -147,10 +147,10 @@ class JobRunServiceActor(
 
     allRunExecutors.get(jobRunId) match {
       case Some(actorRef) =>
-        log.debug("Forwarding status update to {}", actorRef.path)
+        log.info("Forwarding status update {} to {}", update, actorRef.path)
         actorRef ! ForwardStatusUpdate(update)
       case None =>
-        log.debug("Ignoring TaskStateChangedEvent for {}. No one interested.", jobRunId)
+        log.info("Ignoring TaskStateChangedEvent for {}. No one interested.", jobRunId)
     }
   }
 
