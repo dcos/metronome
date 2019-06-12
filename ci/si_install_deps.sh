@@ -11,7 +11,7 @@ if ! command -v envsubst >/dev/null 2>&1; then
         PATH=$PATH:/usr/local/opt/gettext/bin/
         export PATH
     else
-        apt-get update && apt-get install -y -t jessie-backports gettext-base wget
+        apt-get update && apt-get install -y gettext-base wget
     fi
 fi
 
