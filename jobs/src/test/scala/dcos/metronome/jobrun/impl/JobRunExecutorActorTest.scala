@@ -65,8 +65,8 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     When("A subsequent RUNNING update is processed")
     actor ! f.statusUpdate(TaskState.Running)
 
-    Then("Nothing is persisted because the JobRunStatus is still Active")
-    f.persistenceActor.expectNoMsg(500.millis)
+    Then("New task status is persisted")
+    f.persistenceActor.expectMsgType[JobRunPersistenceActor.Update]
 
     And("No additional message is send because the job is still active")
     f.parent.expectNoMsg(500.millis)
