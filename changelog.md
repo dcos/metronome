@@ -3,6 +3,7 @@
 # 0.6.NEXT
 
 * When querying run detail with `embed=history`, `successfulFinishedRuns` and `failedFinishedRuns` contains new field `tasks` which is an array of taskIds of that finished run. This allow people to query task ids even for finished job runs.
+* Fixed a bug when task status was not updated after the task turned running (when querying embed=activeRuns).
 
 # 0.6.21
 
