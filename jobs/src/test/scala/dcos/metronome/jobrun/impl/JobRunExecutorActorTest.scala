@@ -67,9 +67,6 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
     Then("New task status is persisted")
     f.persistenceActor.expectMsgType[JobRunPersistenceActor.Update]
-
-    And("No additional message is send because the job is still active")
-    f.parent.expectNoMsg(500.millis)
   }
 
   test("ForwardStatusUpdate FINISHED") {
