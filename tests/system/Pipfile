@@ -7,10 +7,10 @@ verify_ssl = true
 python_version = "3.6"
 
 [packages]
+paramiko = "==2.4.2"
 shakedown = {git = "https://github.com/dcos/shakedown.git",ref = "1.5.0"}
 dcos-launch = {git = "https://github.com/dcos/dcos-launch.git"}
 dcos-test-utils = {git = "https://github.com/dcos/dcos-test-utils",ref = "c9a4fc583a4a0bca18040ad4c7772e187e51aa74"}
-paramiko = "==2.4.2"
 
 [dev-packages]
 "flake8" = "*"
