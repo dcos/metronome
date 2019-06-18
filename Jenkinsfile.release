@@ -32,9 +32,9 @@ ansiColor('xterm') {
         }
       } finally {
         junit(allowEmptyResults: true, testResults: '*/target/test-reports/*.xml')
-        archive includes: "sandboxes.tar.gz"
-        archive includes: "ci-${env.BUILD_TAG}.log.tar.gz"
-        archive includes: "ci-${env.BUILD_TAG}.log"  // Only in case the build was  aborted and the logs weren't zipped
+        archiveArtifacts "sandboxes.tar.gz"
+        archiveArtifacts "ci-${env.BUILD_TAG}.log.tar.gz"
+        archiveArtifacts "ci-${env.BUILD_TAG}.log"  // Only in case the build was aborted and the logs weren't zipped
       }
     }
   }

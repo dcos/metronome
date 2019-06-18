@@ -27,8 +27,8 @@ ansiColor('gnome-terminal') {
         } finally {
             junit(allowEmptyResults: true, testResults: 'target/test-reports/*.xml')
             junit(allowEmptyResults: true, testResults: 'tests/integration/target/test-reports/*.xml')
-            archive includes: "*sandboxes.tar.gz"
-            archive includes: "*log.tar.gz"
+            archiveArtifacts "*sandboxes.tar.gz"
+            archiveArtifacts "*log.tar.gz"
         }
       }
     }
