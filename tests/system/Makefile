@@ -15,6 +15,7 @@ help:
 init:
 	pip3 install pipenv
 	pipenv sync
+        pipenv graph
 
 build:
 	pipenv run flake8 --count --max-line-length=120 system
