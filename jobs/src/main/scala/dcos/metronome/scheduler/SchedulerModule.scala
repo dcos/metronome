@@ -170,10 +170,7 @@ class SchedulerModule(
   private[this] lazy val offersWanted: Source[Boolean, Cancellable] = {
     offerMatcherManagerModule.globalOfferMatcherWantsOffers
       .via(EnrichedFlow.combineLatest(offerMatcherReconcilerModule.offersWantedObservable, eagerComplete = true))
-      .map { case (managerWantsOffers, reconciliationWantsOffers) => {
-        println(s"Processing offersWanted with ${managerWantsOffers} and ${reconciliationWantsOffers}")
-        managerWantsOffers || reconciliationWantsOffers
-      } }
+      .map { case (managerWantsOffers, reconciliationWantsOffers) => managerWantsOffers || reconciliationWantsOffers }
   }
 
   val launchQueueModule = new LaunchQueueModule(
@@ -185,6 +182,8 @@ class SchedulerModule(
     taskTracker = instanceTrackerModule.instanceTracker,
     taskOpFactory = launcherModule.taskOpFactory,
     () => scheduler.getLocalRegion)
+
+  offerMatcherReconcilerModule.start()
 
   taskJobsModule.expungeOverdueLostTasks(instanceTrackerModule.instanceTracker)
 
