@@ -97,9 +97,6 @@ class SchedulerModule(
       persistenceModule.groupRepository,
       leadershipModule)(actorsModule.materializer)
 
-  lazy val taskStatusProcessor: TaskStatusUpdateProcessor = new TaskStatusUpdateProcessorImpl(
-    metrics, clock, instanceTrackerModule.instanceTracker, schedulerDriverHolder, killService, eventBus)
-
   private[this] lazy val launcherModule: LauncherModule = {
     val instanceTracker: InstanceTracker = instanceTrackerModule.instanceTracker
     val offerMatcher: OfferMatcher = StopOnFirstMatchingOfferMatcher(
@@ -173,7 +170,10 @@ class SchedulerModule(
   private[this] lazy val offersWanted: Source[Boolean, Cancellable] = {
     offerMatcherManagerModule.globalOfferMatcherWantsOffers
       .via(EnrichedFlow.combineLatest(offerMatcherReconcilerModule.offersWantedObservable, eagerComplete = true))
-      .map { case (managerWantsOffers, reconciliationWantsOffers) => managerWantsOffers || reconciliationWantsOffers }
+      .map { case (managerWantsOffers, reconciliationWantsOffers) => {
+        println(s"Processing offersWanted with ${managerWantsOffers} and ${reconciliationWantsOffers}")
+        managerWantsOffers || reconciliationWantsOffers
+      } }
   }
 
   val launchQueueModule = new LaunchQueueModule(
