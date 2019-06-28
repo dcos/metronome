@@ -88,19 +88,9 @@ class SchedulerModule(
     leadershipModule,
     () => scheduler.getLocalRegion)(actorsModule.materializer)
 
-  private[this] lazy val offerMatcherReconcilerModule =
-    new OfferMatcherReconciliationModule(
-      scallopConf,
-      clock,
-      actorSystem.eventStream,
-      instanceTrackerModule.instanceTracker,
-      persistenceModule.groupRepository,
-      leadershipModule)(actorsModule.materializer)
-
   private[this] lazy val launcherModule: LauncherModule = {
     val instanceTracker: InstanceTracker = instanceTrackerModule.instanceTracker
     val offerMatcher: OfferMatcher = StopOnFirstMatchingOfferMatcher(
-      offerMatcherReconcilerModule.offerMatcherReconciler,
       offerMatcherManagerModule.globalOfferMatcher)
 
     new LauncherModule(metrics, scallopConf, instanceTracker, schedulerDriverHolder, offerMatcher, pluginModule.pluginManager)(clock)
@@ -167,11 +157,7 @@ class SchedulerModule(
   lazy val electionService: ElectionService = electionModule.service
 
   /** Combine offersWanted state from multiple sources. */
-  private[this] lazy val offersWanted: Source[Boolean, Cancellable] = {
-    offerMatcherManagerModule.globalOfferMatcherWantsOffers
-      .via(EnrichedFlow.combineLatest(offerMatcherReconcilerModule.offersWantedObservable, eagerComplete = true))
-      .map { case (managerWantsOffers, reconciliationWantsOffers) => managerWantsOffers || reconciliationWantsOffers }
-  }
+  private[this] lazy val offersWanted: Source[Boolean, Cancellable] = offerMatcherManagerModule.globalOfferMatcherWantsOffers
 
   val launchQueueModule = new LaunchQueueModule(
     scallopConf,
@@ -182,8 +168,6 @@ class SchedulerModule(
     taskTracker = instanceTrackerModule.instanceTracker,
     taskOpFactory = launcherModule.taskOpFactory,
     () => scheduler.getLocalRegion)
-
-  offerMatcherReconcilerModule.start()
 
   taskJobsModule.expungeOverdueLostTasks(instanceTrackerModule.instanceTracker)
 
