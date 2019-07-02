@@ -12,7 +12,7 @@ object Dependencies {
     val PlayJson = "2.6.10"
     val ScalaTestPlusPlay = "3.1.2"
     val PlayIteratees = "2.6.1"
-    val CronUtils = "7.0.5"
+    val CronUtils = "9.0.0"
     val Threeten = "1.3.3"
     val WixAccord = "0.7.1"
     val Akka = "2.5.15"
