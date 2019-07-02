@@ -13,7 +13,6 @@ object Dependencies {
     val ScalaTestPlusPlay = "3.1.2"
     val PlayIteratees = "2.6.1"
     val CronUtils = "9.0.0"
-    val Threeten = "1.4.0"
     val WixAccord = "0.7.1"
     val Akka = "2.5.15"
     val Mockito = "2.21.0"
@@ -36,7 +35,6 @@ object Dependencies {
   val marathon = "mesosphere.marathon" %% "marathon" % V.Marathon exclude("com.typesafe.play", "*") exclude("mesosphere.marathon", "ui") exclude("mesosphere", "chaos") exclude("org.apache.hadoop", "hadoop-hdfs") exclude("org.apache.hadoop", "hadoop-common") exclude("mesosphere.marathon", "plugin-interface_2.12")
   val marathonPlugin = "mesosphere.marathon" %% "plugin-interface" % V.MarathonPluginInterface
   val cronUtils = "com.cronutils" % "cron-utils" % V.CronUtils exclude("org.threeten", "threetenbp")
-  val threeten = "org.threeten" % "threetenbp" % V.Threeten
   val wixAccord = "com.wix" %% "accord-core" % V.WixAccord
   val akka = "com.typesafe.akka" %%  "akka-actor" % V.Akka
   val jsonValidate = "com.eclipsesource" %% "play-json-schema-validator" % V.JsonValidate

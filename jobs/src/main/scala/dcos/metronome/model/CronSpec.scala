@@ -1,16 +1,15 @@
 package dcos.metronome
 package model
 
-import java.time.{ Instant, ZoneId, ZonedDateTime }
+import java.time.ZonedDateTime
 
-import com.cronutils.model.definition.{ CronConstraint, CronDefinition, CronDefinitionBuilder }
-import com.cronutils.model.time.ExecutionTime
 import com.cronutils.model.Cron
+import com.cronutils.model.definition.{ CronConstraint, CronDefinition, CronDefinitionBuilder }
 import com.cronutils.model.field.expression.{ Between, On }
 import com.cronutils.model.field.value.IntegerFieldValue
 import com.cronutils.model.field.{ CronField, CronFieldName }
+import com.cronutils.model.time.ExecutionTime
 import com.cronutils.parser.CronParser
-import org.threeten.bp.{ Instant => ThreeTenInstant, ZoneId => ThreeTenZoneId, ZonedDateTime => ThreeTenZonedDateTime }
 
 import scala.util.control.NonFatal
 
@@ -19,21 +18,11 @@ class CronSpec(val cron: Cron) {
   private[this] lazy val executionTime: ExecutionTime = ExecutionTime.forCron(cron)
 
   def nextExecution(from: ZonedDateTime): ZonedDateTime = {
-    val fromDateTime: ThreeTenZonedDateTime = javaTimeToThreetenTime(from)
-    executionTime.nextExecution(threetenToJavaTime(fromDateTime)).get()
+    executionTime.nextExecution(from).get()
   }
 
   def lastExecution(from: ZonedDateTime): ZonedDateTime = {
-    val fromDateTime: ThreeTenZonedDateTime = javaTimeToThreetenTime(from)
-    executionTime.lastExecution(threetenToJavaTime(fromDateTime)).get()
-  }
-
-  private def threetenToJavaTime(from: ThreeTenZonedDateTime): ZonedDateTime = {
-    ZonedDateTime.ofInstant(Instant.ofEpochMilli(from.toInstant.toEpochMilli), ZoneId.of(from.getZone.getId))
-  }
-
-  private def javaTimeToThreetenTime(from: ZonedDateTime): ThreeTenZonedDateTime = {
-    ThreeTenZonedDateTime.ofInstant(ThreeTenInstant.ofEpochMilli(from.toInstant.toEpochMilli), ThreeTenZoneId.of(from.getZone.toString))
+    executionTime.lastExecution(from).get()
   }
 
   override def hashCode(): Int = cron.hashCode()
