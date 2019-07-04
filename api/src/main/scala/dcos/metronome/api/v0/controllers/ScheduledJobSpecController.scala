@@ -34,7 +34,7 @@ class ScheduledJobSpecController(
     }
   }
 
-  def updateJob(id: JobId) = AuthorizedAction.async(validate.jsonWith[JobSpec](_.copy(id = id))) { implicit request =>
+  def updateJob(id: JobId) = AuthorizedAction.async(validate.jsonWith[JobSpec](optionalBody = false)(_.copy(id = id))) { implicit request =>
     request.authorizedAsync(UpdateRunSpec) { jobSpec =>
       jobSpecService.updateJobSpec(id, _ => jobSpec).map(Ok(_)).recover {
         case JobSpecDoesNotExist(_) => NotFound(UnknownJob(id))

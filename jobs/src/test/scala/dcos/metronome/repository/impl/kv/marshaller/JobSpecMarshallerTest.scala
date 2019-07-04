@@ -117,8 +117,8 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
 
   test("reading EQ constraint comes through as IS") {
     // This asserts that jobSpecs stored with the EQ Operator are properly mapped to IS
-    import Protos.JobSpec.RunSpec.PlacementSpec.Constraint
-    import RunSpecConversions.ProtosToConstraintSpec
+    import Protos.PlacementSpec.Constraint
+    import PlacementMarshaller.ProtosToConstraintSpec
     val converted = Seq(Constraint.newBuilder().setAttribute("field").setOperator(Constraint.Operator.EQ).setValue("value").build).toModel
     converted.head.operator.name shouldBe "IS"
   }

@@ -40,7 +40,11 @@ private[jobrun] class JobRunServiceDelegate(
     actorRef.ask(GetActiveJobRuns(jobId)).mapTo[Iterable[StartedJobRun]]
   }
 
-  override def startJobRun(jobSpec: JobSpec, schedule: Option[ScheduleSpec] = None): Future[StartedJobRun] = startRunTimeMetric {
-    actorRef.ask(TriggerJobRun(jobSpec, schedule)).mapTo[StartedJobRun]
-  }
+  override def startJobRun(
+    jobSpec:   JobSpec,
+    schedule:  Option[ScheduleSpec] = None,
+    overrides: JobRunSpecOverrides  = JobRunSpecOverrides.empty): Future[StartedJobRun] =
+    startRunTimeMetric {
+      actorRef.ask(TriggerJobRun(jobSpec, schedule, overrides)).mapTo[StartedJobRun]
+    }
 }

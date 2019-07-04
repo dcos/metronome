@@ -60,7 +60,7 @@ class JobScheduleController(
   }
 
   def updateSchedule(id: JobId, scheduleId: String) = measured {
-    AuthorizedAction.async(validate.jsonWith[ScheduleSpec](_.copy(id = scheduleId))) { implicit request =>
+    AuthorizedAction.async(validate.jsonWith[ScheduleSpec](optionalBody = false)(_.copy(id = scheduleId))) { implicit request =>
       def changeSchedule(jobSpec: JobSpec) = {
         require(jobSpec.schedules.count(_.id == scheduleId) == 1, "Can only update an existing schedule")
         jobSpec.copy(schedules = request.body +: jobSpec.schedules.filterNot(_.id == scheduleId))

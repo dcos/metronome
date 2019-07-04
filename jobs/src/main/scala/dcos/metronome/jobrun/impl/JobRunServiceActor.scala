@@ -52,7 +52,7 @@ class JobRunServiceActor(
     case KillJobRun(id)                => killJobRun(id)
 
     // trigger messages
-    case TriggerJobRun(spec, schedule) => triggerJobRun(spec, schedule)
+    case trigger: TriggerJobRun        => triggerJobRun(trigger)
 
     // executor messages
     case JobRunUpdate(started)         => updateJobRun(started)
@@ -66,15 +66,19 @@ class JobRunServiceActor(
 
   def runsForJob(jobId: JobId): Iterable[StartedJobRun] = allJobRuns.values.filter(_.jobRun.id.jobId == jobId)
 
-  def triggerJobRun(spec: JobSpec, schedule: Option[ScheduleSpec]): Unit = {
-    log.info(s"Trigger new JobRun for JobSpec: $spec")
+  def triggerJobRun(trigger: TriggerJobRun): Unit = {
+    val spec = trigger.jobSpec
+    val schedule = trigger.schedule
+    val overrides = trigger.overrides
+
+    log.info(s"Trigger new JobRun for JobSpec: $spec with overrides $overrides")
 
     val skipRun = schedule.exists(schedule => schedule.concurrencyPolicy == ConcurrencyPolicy.Forbid && runsForJob(spec.id).nonEmpty)
     if (skipRun) {
       log.info(s"Skipping scheduled run for ${spec.id} based on concurrency policy")
     } else {
       val startingDeadline: Option[Duration] = schedule.map(_.startingDeadline)
-      val jobRun = JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.instant(), None, startingDeadline, Map.empty)
+      val jobRun = JobRun(JobRunId(spec), spec, overrides, JobRunStatus.Initial, clock.instant(), None, startingDeadline, Map.empty)
       val startedJobRun = startJobRun(jobRun)
       sender() ! startedJobRun
     }
@@ -175,7 +179,7 @@ object JobRunServiceActor {
   case class GetJobRun(id: JobRunId)
   case class GetActiveJobRuns(jobId: JobId)
   case class KillJobRun(id: JobRunId)
-  case class TriggerJobRun(jobSpec: JobSpec, schedule: Option[ScheduleSpec])
+  case class TriggerJobRun(jobSpec: JobSpec, schedule: Option[ScheduleSpec], overrides: JobRunSpecOverrides)
 
   def props(
     clock:           Clock,

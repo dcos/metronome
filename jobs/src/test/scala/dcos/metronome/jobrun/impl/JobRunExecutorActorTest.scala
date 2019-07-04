@@ -320,7 +320,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
   test("Init of JobRun with JobRunStatus.Success") {
     val f = new Fixture
     import f._
-    val successfulJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Success, clock.instant(), None, None, Map.empty)
+    val successfulJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunSpecOverrides.empty, JobRunStatus.Success, clock.instant(), None, None, Map.empty)
     val actorRef: ActorRef = executorActor(successfulJobRun)
 
     verify(launchQueue, timeout(1000)).purge(successfulJobRun.id.toRunSpecId)
@@ -336,7 +336,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val f = new Fixture
 
     Given("a jobRun in status Failed")
-    val failedJobRun = JobRun(JobRunId(f.defaultJobSpec), f.defaultJobSpec, JobRunStatus.Failed, f.clock.instant(), Some(f.clock.instant()), None, Map.empty)
+    val failedJobRun = JobRun(JobRunId(f.defaultJobSpec), f.defaultJobSpec, JobRunSpecOverrides.empty, JobRunStatus.Failed, f.clock.instant(), Some(f.clock.instant()), None, Map.empty)
 
     When("an executor is initialized with the failed jobRun")
     f.executorActor(failedJobRun)
@@ -349,7 +349,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     import f._
 
     Given("a JobRun with status Active")
-    val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Active, clock.instant(), None, None, Map.empty)
+    val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunSpecOverrides.empty, JobRunStatus.Active, clock.instant(), None, None, Map.empty)
     val runSpecId = activeJobRun.id.toRunSpecId
     f.launchQueue.get(runSpecId) returns Future.successful(None)
     instanceTracker.specInstancesSync(runSpecId) returns Seq.empty
@@ -366,7 +366,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     import f._
 
     Given("a JobRun with status Starting")
-    val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Starting, clock.instant(), None, None, Map.empty)
+    val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunSpecOverrides.empty, JobRunStatus.Starting, clock.instant(), None, None, Map.empty)
     val runSpecId = activeJobRun.id.toRunSpecId
     val runSpec: RunSpec = activeJobRun.toRunSpec
     val queuedTaskInfo = QueuedInstanceInfo(
@@ -394,7 +394,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     import f._
 
     Given("a JobRun with status Active")
-    val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Active, clock.instant(), None, None, Map.empty)
+    val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunSpecOverrides.empty, JobRunStatus.Active, clock.instant(), None, None, Map.empty)
     val runSpecId = activeJobRun.id.toRunSpecId
     val runSpec: RunSpec = activeJobRun.toRunSpec
     val queuedTaskInfo = QueuedInstanceInfo(
@@ -887,7 +887,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       */
     def setupInitialExecutorActor(spec: Option[JobSpec] = None, startingDeadline: Option[Duration] = None, createdAt: Instant = clock.instant()): (TestActorRef[JobRunExecutorActor], JobRun) = {
       val jobSpec = spec.getOrElse(defaultJobSpec)
-      val startingJobRun = JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Initial, createdAt, None, startingDeadline, Map.empty)
+      val startingJobRun = JobRun(JobRunId(jobSpec), jobSpec, JobRunSpecOverrides.empty, JobRunStatus.Initial, createdAt, None, startingDeadline, Map.empty)
       val actorRef = executorActor(startingJobRun, startingDeadline)
       (actorRef, startingJobRun)
     }
@@ -898,7 +898,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       * @return A tuple containing the ActorRef and the JobRun
       */
     def setupStartingExecutorActor(): (ActorRef, JobRun) = {
-      val startingJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Initial, clock.instant(), None, None, Map.empty)
+      val startingJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunSpecOverrides.empty, JobRunStatus.Initial, clock.instant(), None, None, Map.empty)
       val actorRef: ActorRef = executorActor(startingJobRun)
       val msg = persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
       msg.jobRun.status shouldBe JobRunStatus.Starting
@@ -908,7 +908,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     }
 
     def setupRunningExecutorActor(): (ActorRef, JobRun) = {
-      val activeJob = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Active, clock.instant(), None, None,
+      val activeJob = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunSpecOverrides.empty, JobRunStatus.Active, clock.instant(), None, None,
         Map(Task.Id("app_682ebe64-0771-11e4-b05d-e0f84720c54e") -> JobRunTask(Task.Id("app_682ebe64-0771-11e4-b05d-e0f84720c54e"), null, None, TaskState.Running)))
       val actorRef: ActorRef = executorActor(activeJob)
       val runSpecId = activeJob.id.toRunSpecId
@@ -930,7 +930,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       */
     def setupActiveExecutorActor(spec: Option[JobSpec] = None, startingDeadline: Option[Duration] = None): (TestActorRef[JobRunExecutorActor], JobRun) = {
       val jobSpec = spec.getOrElse(defaultJobSpec)
-      val startingJobRun = JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Initial, clock.instant(), None, None, Map.empty)
+      val startingJobRun = JobRun(JobRunId(jobSpec), jobSpec, JobRunSpecOverrides.empty, JobRunStatus.Initial, clock.instant(), None, None, Map.empty)
       val actorRef: TestActorRef[JobRunExecutorActor] = executorActor(startingJobRun, startingDeadline)
       persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
       persistenceActor.reply(JobRunPersistenceActor.JobRunCreated(persistenceActor.ref, startingJobRun, Unit))

@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "env": {
+      "type": "object",
+      "patternProperties": {
+        ".*": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "description": "An environment variable set to a secret",
+              "properties": {
+                "secret": {
+                  "type": "string",
+                  "documentation": "The name of the secret to refer to. At runtime, the value of the secret will be injected into the value of the variable."
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "placement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "constraints": {
+          "type": "array",
+          "description": "The array of constraints to place this job.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "attribute": {
+                "type": "string",
+                "description": "The attribute name for this constraint."
+              },
+              "operator": {
+                "type": "string",
+                "description": "The operator for this constraint.",
+                "enum": ["IS", "EQ", "LIKE", "UNLIKE"]
+              },
+              "value": {
+                "type": "string",
+                "description": "The value for this constraint."
+              }
+            },
+            "required": ["attribute", "operator"]
+          }
+        }
+      }
+    }
+  }
+}

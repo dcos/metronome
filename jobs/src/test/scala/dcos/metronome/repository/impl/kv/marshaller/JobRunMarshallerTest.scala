@@ -26,6 +26,7 @@ class JobRunMarshallerTest extends FunSuite with Matchers {
     val jobRun = JobRun(
       JobRunId(jobSpec.id, "run.id"),
       jobSpec,
+      JobRunSpecOverrides.empty,
       JobRunStatus.Active,
       LocalDateTime.parse("2004-09-06T08:50:12.000").toInstant(ZoneOffset.UTC),
       Some(LocalDateTime.parse("2004-09-06T08:50:12.000").toInstant(ZoneOffset.UTC)),

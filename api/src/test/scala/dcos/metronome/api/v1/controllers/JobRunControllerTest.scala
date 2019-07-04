@@ -3,7 +3,7 @@ package api.v1.controllers
 
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
-import dcos.metronome.model.{ JobId, JobRunSpec, JobRunStatus, JobSpec }
+import dcos.metronome.model.{ JobId, JobRunSpec, JobRunSpecOverrides, JobRunStatus, JobSpec }
 import mesosphere.marathon.core.plugin.PluginManager
 import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
@@ -28,7 +28,24 @@ class JobRunControllerTest extends PlaySpec with OneAppPerTestWithComponents[Moc
       Then("The job run is created")
       status(response) mustBe CREATED
       contentType(response) mustBe Some("application/json")
-      (contentAsJson(response) \ "status").as[JobRunStatus] mustBe JobRunStatus.Active
+      val contentJson = contentAsJson(response)
+      (contentJson \ "status").as[JobRunStatus] mustBe JobRunStatus.Active
+      (contentJson \ "overrides").as[JobRunSpecOverrides] mustBe JobRunSpecOverrides.empty
+    }
+
+    "create a job run with overrides when posting to the runs endpoint" in {
+      Given("An existing app")
+      route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
+
+      When("The request is sent")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs/$specId/runs").withJsonBody(overridesJson)).get
+
+      Then("The job run is created")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+      val contentJson = contentAsJson(response)
+      (contentJson \ "status").as[JobRunStatus] mustBe JobRunStatus.Active
+      (contentJson \ "overrides").as[JobRunSpecOverrides] mustBe overrides
     }
 
     "not found if the job id is not known" in {
@@ -242,6 +259,25 @@ class JobRunControllerTest extends PlaySpec with OneAppPerTestWithComponents[Moc
   val specId = JobId("spec")
   val jobSpec = JobSpec(specId, run = JobRunSpec(cmd = Some("cmd")))
   val jobSpecJson = Json.toJson(jobSpec)
+  val overridesPlain =
+    """
+      |{
+      |  "placement": {
+      |    "constraints": [
+      |      {
+      |        "attribute": "rack",
+      |        "operator": "IS",
+      |        "value": "rack-1"
+      |      }
+      |    ]
+      |  },
+      |  "env": {
+      |    "MESSAGE": "this is a parameterized job run message"
+      |  }
+      |}
+    """.stripMargin
+  val overridesJson = Json.parse(overridesPlain)
+  val overrides = overridesJson.as[JobRunSpecOverrides]
 
   before {
     auth.authorized = true

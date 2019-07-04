@@ -1,0 +1,14 @@
+{
+  "placement": {
+    "constraints": [
+      {
+        "attribute": "rack",
+        "operator": "IS",
+        "value": "rack-1"
+      }
+    ]
+  },
+  "env": {
+    "DATA_URL": "path/to/my/data"
+  }
+}

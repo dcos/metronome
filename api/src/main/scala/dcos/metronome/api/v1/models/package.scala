@@ -209,6 +209,10 @@ package object models {
     (__ \ "taskKillGracePeriodSeconds").formatNullable[FiniteDuration] ~
     (__ \ "secrets").formatNullable[Map[String, SecretDef]].withDefault(JobRunSpec.DefaultSecrets))(JobRunSpec.apply, unlift(JobRunSpec.unapply))
 
+  implicit lazy val JobRunOverrideSpecFormat: Format[JobRunSpecOverrides] = (
+    (__ \ "env").formatNullable[Map[String, EnvVarValueOrSecret]].withDefault(JobRunSpec.DefaultEnv) ~
+    (__ \ "placement").formatNullable[PlacementSpec].withDefault(JobRunSpec.DefaultPlacement)) (JobRunSpecOverrides.apply, unlift(JobRunSpecOverrides.unapply))
+
   implicit lazy val JobSpecFormat: Format[JobSpec] = (
     (__ \ "id").format[JobId] ~
     (__ \ "description").formatNullable[String] ~
@@ -245,6 +249,7 @@ package object models {
     override def writes(run: JobRun): JsValue = Json.obj(
       "id" -> run.id,
       "jobId" -> run.jobSpec.id,
+      "overrides" -> run.overrides,
       "status" -> run.status,
       "createdAt" -> run.createdAt,
       "completedAt" -> run.completedAt,

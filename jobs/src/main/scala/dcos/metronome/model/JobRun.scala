@@ -11,6 +11,7 @@ import scala.concurrent.duration.Duration
 case class JobRun(
   id:               JobRunId,
   jobSpec:          JobSpec,
+  overrides:        JobRunSpecOverrides,
   status:           JobRunStatus,
   createdAt:        Instant,
   completedAt:      Option[Instant],

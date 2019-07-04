@@ -39,9 +39,10 @@ trait JobRunService {
     * In order to register an on complete hook, you can use the complete future in StartedJobRun.
     *
     * @param jobSpec the specification to run.
+    * @param overrides additional parameters that are used to override the job spec config
     * @return the started job run
     */
-  def startJobRun(jobSpec: JobSpec, schedule: Option[ScheduleSpec] = None): Future[StartedJobRun]
+  def startJobRun(jobSpec: JobSpec, schedule: Option[ScheduleSpec] = None, overrides: JobRunSpecOverrides = JobRunSpecOverrides.empty): Future[StartedJobRun]
 
   /**
     * Kill a given job run by the given job run id.

@@ -105,16 +105,20 @@ object MarathonImplicits {
     def toRunSpec: RunSpec = {
       val jobSpec = run.jobSpec
 
+      // apply overrides to config from the JobRunSpec
+      val env = jobSpec.run.env.to[Seq] ++ run.overrides.env
+      val constraints = jobSpec.run.placement.constraints ++ run.overrides.placement.constraints
+
       AppDefinition(
         id = run.id.toRunSpecId,
         cmd = jobSpec.run.cmd,
         args = jobSpec.run.args.getOrElse(Seq.empty),
         user = jobSpec.run.user,
-        env = MarathonConversions.envVarToMarathon(jobSpec.run.env),
+        env = MarathonConversions.envVarToMarathon(env.toMap),
         instances = 1,
         resources = Resources(cpus = jobSpec.run.cpus, mem = jobSpec.run.mem, disk = jobSpec.run.disk, gpus = jobSpec.run.gpus),
         executor = "//cmd",
-        constraints = jobSpec.run.placement.constraints.flatMap(spec => spec.toProto)(collection.breakOut),
+        constraints = constraints.flatMap(spec => spec.toProto)(collection.breakOut),
         fetch = jobSpec.run.artifacts.map(_.toFetchUri),
         portDefinitions = Seq.empty[PortDefinition],
         requirePorts = false,

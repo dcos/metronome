@@ -33,6 +33,9 @@ object JobRunMarshaller extends EntityMarshaller[JobRun] {
 }
 
 object JobRunConversions {
+  import PlacementMarshaller._
+  import EnvironmentMarshaller._
+
   implicit class JobRunIdToProto(val jobRunId: JobRunId) extends AnyVal {
     def toProto: Protos.JobRun.Id = {
       Protos.JobRun.Id.newBuilder()
@@ -89,6 +92,7 @@ object JobRunConversions {
       JobRun(
         id = proto.getId.toModel,
         jobSpec = proto.getJobSpec.toModel,
+        overrides = if (proto.hasOverrides) proto.getOverrides.toModel else JobRunSpecOverrides.empty,
         status = proto.getStatus.toModel,
         createdAt = Instant.ofEpochMilli(proto.getCreatedAt),
         completedAt = if (proto.hasFinishedAt) Some(Instant.ofEpochMilli(proto.getFinishedAt)) else None,
@@ -114,5 +118,18 @@ object JobRunConversions {
 
   implicit class ProtoToTaskState(val proto: Protos.JobRun.JobRunTask.Status) extends AnyVal {
     def toModel: TaskState = TaskState.names(proto.toString)
+  }
+
+  implicit class JobRunSpecOverridesToProto(val overrides: JobRunSpecOverrides) extends AnyVal {
+    def toProto: Protos.JobRun.JobRunSpecOverrides = Protos.JobRun.JobRunSpecOverrides.newBuilder()
+      .addAllEnvironment(overrides.env.toEnvProto.asJava)
+      .setPlacement(overrides.placement.toProto)
+      .build()
+  }
+
+  implicit class ProtoToJobRunSpecOverrides(val proto: Protos.JobRun.JobRunSpecOverrides) extends AnyVal {
+    def toModel: JobRunSpecOverrides = JobRunSpecOverrides(
+      env = proto.getEnvironmentList.asScala.toModel,
+      placement = proto.getPlacement.toModel)
   }
 }

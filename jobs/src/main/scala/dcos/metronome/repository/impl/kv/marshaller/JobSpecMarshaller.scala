@@ -114,6 +114,9 @@ object JobSpecConversions {
 }
 
 object RunSpecConversions {
+  import PlacementMarshaller._
+  import EnvironmentMarshaller._
+
   implicit class RunSpecToProto(val runSpec: JobRunSpec) extends AnyVal {
     def toProto: Protos.JobSpec.RunSpec = {
       val builder = Protos.JobSpec.RunSpec.newBuilder()
@@ -231,42 +234,6 @@ object RunSpecConversions {
     }.toList
   }
 
-  implicit class PlacementSpecToProto(val placement: PlacementSpec) extends AnyVal {
-    def toProto: Protos.JobSpec.RunSpec.PlacementSpec = {
-      Protos.JobSpec.RunSpec.PlacementSpec.newBuilder()
-        .addAllConstraints(placement.constraints.toProto.asJava)
-        .build()
-    }
-  }
-
-  implicit class ProtoToPlacementSpec(val placementSpec: Protos.JobSpec.RunSpec.PlacementSpec) extends AnyVal {
-    def toModel: PlacementSpec = PlacementSpec(constraints = placementSpec.getConstraintsList.asScala.toModel)
-  }
-
-  implicit class ConstraintsToProto(val constraints: Seq[ConstraintSpec]) extends AnyVal {
-    def toProto: Iterable[Protos.JobSpec.RunSpec.PlacementSpec.Constraint] = constraints.map { constraint =>
-      val builder = Protos.JobSpec.RunSpec.PlacementSpec.Constraint.newBuilder
-
-      constraint.value.foreach(builder.setValue)
-
-      builder
-        .setAttribute(constraint.attribute)
-        .setOperator(
-          Protos.JobSpec.RunSpec.PlacementSpec.Constraint.Operator.valueOf(constraint.operator.name))
-        .build()
-    }
-  }
-
-  implicit class ProtosToConstraintSpec(val constraints: Iterable[Protos.JobSpec.RunSpec.PlacementSpec.Constraint]) extends AnyVal {
-    def toModel: Seq[ConstraintSpec] = constraints.map { constraint =>
-      val value = if (constraint.hasValue) Some(constraint.getValue) else None
-      ConstraintSpec(
-        attribute = constraint.getAttribute,
-        operator = Operator.names(constraint.getOperator.toString),
-        value = value)
-    }(collection.breakOut)
-  }
-
   implicit class ArtifactsToProto(val artifacts: Seq[Artifact]) extends AnyVal {
     def toProto: Iterable[Protos.JobSpec.RunSpec.Artifact] = artifacts.map { artifact =>
       Protos.JobSpec.RunSpec.Artifact.newBuilder()
@@ -353,50 +320,4 @@ object RunSpecConversions {
       image = ucrSpec.getImage.toModel,
       privileged = ucrSpec.getPrivileged)
   }
-
-  implicit class EnvironmentToProto(val environment: Map[String, EnvVarValueOrSecret]) extends AnyVal {
-    def toEnvProto: Iterable[Protos.JobSpec.RunSpec.EnvironmentVariable] = environment.collect {
-      case (key, EnvVarValue(value)) =>
-        Protos.JobSpec.RunSpec.EnvironmentVariable.newBuilder()
-          .setKey(key)
-          .setValue(value)
-          .build
-    }
-    def toEnvSecretProto: Iterable[Protos.JobSpec.RunSpec.EnvironmentVariableSecret] = environment.collect {
-      case (name, EnvVarSecret(secretId)) =>
-        Protos.JobSpec.RunSpec.EnvironmentVariableSecret.newBuilder()
-          .setName(name)
-          .setSecretId(secretId)
-          .build
-    }
-  }
-
-  implicit class SecretsToProto(val secrets: Map[String, SecretDef]) extends AnyVal {
-    def toProto: Iterable[Protos.JobSpec.RunSpec.Secret] = secrets.map {
-      case (secretId, SecretDef(source)) =>
-        Protos.JobSpec.RunSpec.Secret.newBuilder()
-          .setId(secretId)
-          .setSource(source)
-          .build()
-    }
-  }
-
-  implicit class ProtosToEnvironment(val environmentVariables: mutable.Buffer[Protos.JobSpec.RunSpec.EnvironmentVariable]) extends AnyVal {
-    def toModel: Map[String, EnvVarValueOrSecret] = environmentVariables.map { environmentVariable =>
-      environmentVariable.getKey -> EnvVarValue(environmentVariable.getValue)
-    }.toMap
-  }
-
-  implicit class ProtosToEnvironmentSecrets(val environmentSecrets: mutable.Buffer[Protos.JobSpec.RunSpec.EnvironmentVariableSecret]) extends AnyVal {
-    def toModel: Map[String, EnvVarValueOrSecret] = environmentSecrets.map { environmentSecret =>
-      environmentSecret.getName -> EnvVarSecret(environmentSecret.getSecretId)
-    }.toMap
-  }
-
-  implicit class ProtosToSecrets(val secrets: mutable.Buffer[Protos.JobSpec.RunSpec.Secret]) extends AnyVal {
-    def toModel: Map[String, SecretDef] = secrets.map { secret =>
-      secret.getId -> SecretDef(secret.getSource)
-    }.toMap
-  }
-
 }

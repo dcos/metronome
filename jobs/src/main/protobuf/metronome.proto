@@ -78,6 +78,42 @@ message JobRun {
   }
   repeated JobRunTask tasks = 6;
   optional int64 starting_deadline_seconds = 7;
+
+  message JobRunSpecOverrides {
+    repeated EnvironmentVariable environment = 1;
+    optional PlacementSpec placement = 2;
+  }
+  optional JobRunSpecOverrides overrides = 8;
+}
+
+/**
+ * Key, value pair used to store environment variables.
+ */
+message EnvironmentVariable {
+  optional string key = 1;
+  optional string value = 2;
+}
+message PlacementSpec {
+  message Constraint {
+    optional string attribute = 1;
+
+    enum Operator {
+      UNKNOWN = 1;
+      // Tasks will be clustered, i.e. all tasks need to have the same value. If value is not set, any value will be
+      // accepted for the first task, and subsequent tasks must use that same value.
+      EQ = 2;
+      // Field must match the regex given by value.
+      LIKE = 3;
+      // Field must not match the regex given by value.
+      UNLIKE = 4;
+      // Field must be the specified value
+      IS = 6;
+    }
+    optional Operator operator = 2;
+    optional string value = 3;
+  }
+
+  repeated Constraint constraints = 1;
 }
 
 message JobSpec {
@@ -111,37 +147,8 @@ message JobSpec {
     optional string user = 6;
     optional int32 gpus = 18;
 
-    /**
-     * Key, value pair used to store environment variables.
-     */
-    message EnvironmentVariable {
-      optional string key = 1;
-      optional string value = 2;
-    }
     repeated EnvironmentVariable environment = 7;
 
-    message PlacementSpec {
-      message Constraint {
-        optional string attribute = 1;
-
-        enum Operator {
-          UNKNOWN = 1;
-          // Tasks will be clustered, i.e. all tasks need to have the same value. If value is not set, any value will be
-          // accepted for the first task, and subsequent tasks must use that same value.
-          EQ = 2;
-          // Field must match the regex given by value.
-          LIKE = 3;
-          // Field must not match the regex given by value.
-          UNLIKE = 4;
-          // Field must be the specified value
-          IS = 6;
-        }
-        optional Operator operator = 2;
-        optional string value = 3;
-      }
-
-      repeated Constraint constraints = 1;
-    }
     optional PlacementSpec placement = 8;
 
     message Artifact {

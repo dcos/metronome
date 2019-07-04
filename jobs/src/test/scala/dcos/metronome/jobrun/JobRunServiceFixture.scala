@@ -32,9 +32,9 @@ object JobRunServiceFixture {
     override def listRuns(filter: JobRun => Boolean): Future[Iterable[StartedJobRun]] = {
       Future.successful(specs.values.filter(r => filter(r.jobRun)))
     }
-    override def startJobRun(jobSpec: JobSpec, schedule: Option[ScheduleSpec] = None): Future[StartedJobRun] = {
+    override def startJobRun(jobSpec: JobSpec, schedule: Option[ScheduleSpec] = None, overrides: JobRunSpecOverrides = JobRunSpecOverrides.empty): Future[StartedJobRun] = {
       val startingDeadline: Option[Duration] = schedule.map(_.startingDeadline)
-      val run = JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Active, Clock.systemUTC().instant(), None, startingDeadline, Map.empty[Task.Id, JobRunTask])
+      val run = JobRun(JobRunId(jobSpec), jobSpec, overrides, JobRunStatus.Active, Clock.systemUTC().instant(), None, startingDeadline, Map.empty[Task.Id, JobRunTask])
       val startedRun = StartedJobRun(run, Promise[JobResult].future)
       specs += run.id -> startedRun
       Future.successful(startedRun)

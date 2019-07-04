@@ -2,12 +2,14 @@ package dcos.metronome
 package api.v1.controllers
 
 import dcos.metronome.api.v1.models._
+import dcos.metronome.api.v1.models.schema._
 import dcos.metronome.api.{ ApiConfig, Authorization, UnknownJob, UnknownJobRun }
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.model.{ JobId, JobRunId }
+import dcos.metronome.model.{ JobId, JobRunId, JobRunSpecOverrides }
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer, UpdateRunSpec, ViewRunSpec }
+import org.slf4j.LoggerFactory
 import play.api.mvc.ControllerComponents
 
 import scala.async.Async.{ async, await }
@@ -65,13 +67,16 @@ class JobRunController(
   }
 
   def triggerJob(id: JobId) = measured {
-    AuthorizedAction.async { implicit request =>
+    AuthorizedAction.async(validate.optionalJson[JobRunSpecOverrides]) { implicit request =>
+      val overrides = request.body
+      JobRunController.log.info(s"overrides: $overrides")
+
       async {
         await(jobSpecService.getJobSpec(id)) match {
           case Some(spec) =>
             await {
               request.authorizedAsync(UpdateRunSpec, spec) { _ =>
-                jobRunService.startJobRun(spec).map(Created(_))
+                jobRunService.startJobRun(jobSpec = spec, schedule = None, overrides = overrides).map(Created(_))
               }
             }
           case None =>
@@ -80,4 +85,8 @@ class JobRunController(
       }
     }
   }
+}
+
+object JobRunController {
+  val log = LoggerFactory.getLogger(getClass)
 }

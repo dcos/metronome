@@ -4,6 +4,7 @@ package api
 import com.eclipsesource.schema.SchemaValidator
 import com.wix.accord.{ Failure, Success, Validator }
 import mesosphere.marathon.api.v2.Validation
+import org.slf4j.LoggerFactory
 import play.api.http.{ ContentTypeOf, ContentTypes, Writeable }
 import play.api.libs.json._
 import play.api.mvc._
@@ -19,13 +20,18 @@ class RestController(cc: ControllerComponents) extends AbstractController(cc) {
 
   object validate {
 
-    val schemaValidator = SchemaValidator()
+    private val schemaValidator = SchemaValidator()
+    private val log = LoggerFactory.getLogger(getClass)
 
     def json[A](implicit reader: Reads[A], schema: JsonSchema[A], validator: Validator[A]): BodyParser[A] = {
-      jsonWith[A](identity)
+      jsonWith[A](optionalBody = false)(identity)
     }
 
-    def jsonWith[A](fn: A => A)(implicit reader: Reads[A], schema: JsonSchema[A], validator: Validator[A]): BodyParser[A] = {
+    def optionalJson[A](implicit reader: Reads[A], schema: JsonSchema[A], validator: Validator[A]): BodyParser[A] = {
+      jsonWith[A](optionalBody = true)(identity)
+    }
+
+    def jsonWith[A](optionalBody: Boolean = false)(fn: A => A)(implicit reader: Reads[A], schema: JsonSchema[A], validator: Validator[A]): BodyParser[A] = {
       BodyParser("json reader and validator") { request =>
         import play.api.libs.iteratee.Execution.Implicits.trampoline
 
@@ -49,7 +55,15 @@ class RestController(cc: ControllerComponents) extends AbstractController(cc) {
         }
 
         parse.json(request).map {
+          // the request has no body but body is optional, so we fallback to an empty payload
+          case Left(_) if !request.hasBody && optionalBody =>
+            log.info("request has no body, fallback to empty JsObject")
+            schemaValidate(JsObject.empty)
+
+          // the request has a body and parsing the json failed
           case Left(simpleResult) => Left(simpleResult)
+
+          // parsing body was successful -> validate
           case Right(jsValue)     => schemaValidate(jsValue)
         }
       }

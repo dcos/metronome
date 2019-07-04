@@ -1,5 +1,62 @@
 # Next
 
+## Parameterized JobRuns
+
+Metronome now allows to override environment variables and add placement constraints for manually triggered JobRuns. This added functionality allows you to treat a JobSpec as a template, and trigger customized invocations based on this template. For example, you can now use a single generic JobSpec that processes data, and invoke a JobRun pointing to a specific bucket. Or, you could invoke a JobRun on a specific agent. Either way, you don't need to create individual JobSpecs and delete them once they're no longer needed.
+
+Before this addition, the job run endpoint only accepted POST requests with an empty body. This can still be used to trigger a non-customized incarnation of the JobSpec. This endpoint now also accepts a JSON payload according to the [JobRunSpecOverride Schema](api/src/main/resources/public/api/v1/schema/jobrunoverride.schema.json).
+
+An example of how you could use this would be as follows. Given a JobSpec which is configured like this:
+
+```json
+{
+  "id": "my-job",
+  "run": {
+    "cmd": "wget $DATA_URL && doSomethingFancy",
+    "cpus": 0.01,
+    "mem": 32,
+    "disk": 0,
+    "env": {
+      "DATA_URL": ""
+    }
+  }
+}
+``` 
+
+Then you can invoke a customized invocation by specifying the `$DATA_URL` in the payload:
+```
+http POST :9000/v1/jobs/my-job/runs << EOF
+{
+  "env": {
+    "DATA_URL": "path/to/my/data"
+  }
+}
+EOF
+
+HTTP/1.1 201 Created
+Content-Length: 205
+Content-Type: application/json
+Date: Thu, 04 Jul 2019 18:09:42 GMT
+{
+    "completedAt": null, 
+    "createdAt": "2019-07-04T20:09:42.653+0200", 
+    "id": "20190704200942tFhgm", 
+    "jobId": "my-job", 
+    "overrides": {
+        "env": {
+            "DATA_URL": "path/to/my/data"
+        }, 
+        "placement": {
+            "constraints": []
+        }
+    }, 
+    "status": "INITIAL", 
+    "tasks": []
+}
+```
+
+Note this will trigger one JobRun with the provided additional configuration, and will not change your JobSpec. That means, if you want to retry such a failed run, you can and need to trigger it again with the same overrides.
+
 # 0.6.NEXT
 
 * Updated to the latest version of cron-utils `9.0.0` and removed threeten-backport.  This fixes a number of cron related issues in the underlying dependencies.
