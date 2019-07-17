@@ -320,7 +320,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
   test("Init of JobRun with JobRunStatus.Success") {
     val f = new Fixture
     import f._
-    val successfulJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunSpecOverrides.empty, JobRunStatus.Success, clock.instant(), None, None, Map.empty)
+    val successfulJobRun = JobRun (JobRunId(defaultJobSpec), defaultJobSpec, JobRunSpecOverrides.empty, JobRunStatus.Success, clock.instant(), None, None, Map.empty)
     val actorRef: ActorRef = executorActor(successfulJobRun)
 
     verify(launchQueue, timeout(1000)).purge(successfulJobRun.id.toRunSpecId)
@@ -359,6 +359,40 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
     And("a task is placed onto the launch queue")
     verify(launchQueue, timeout(1000)).add(any, any)
+  }
+
+  test("Init of JobRun with JobRunStatus.Active, nonexistent launchQueue and overrides") {
+    val f = new Fixture
+    import f._
+
+    Given("a JobRun with status Active and overrides")
+    val overrides = JobRunSpecOverrides(
+      env = Map("KEY" -> EnvVarValue("VALUE")),
+      placement = PlacementSpec(Seq(ConstraintSpec("rack", Operator.Is, Some("rack-1")))))
+    // We'll compare to a Marathon RunSpec representation of an env var
+    val expectedEnv = Map("KEY" -> mesosphere.marathon.state.EnvVarString("VALUE"))
+    val expectedConstraints = Set(mesosphere.marathon.Protos.Constraint.newBuilder()
+      .setField("rack")
+      .setOperator(mesosphere.marathon.Protos.Constraint.Operator.IS)
+      .setValue("rack-1")
+      .build())
+    val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, overrides, JobRunStatus.Active, clock.instant(), None, None, Map.empty)
+    val runSpecId = activeJobRun.id.toRunSpecId
+    f.launchQueue.get(runSpecId) returns Future.successful(None)
+    instanceTracker.specInstancesSync(runSpecId) returns Seq.empty
+
+    When("the actor is initialized")
+    val actorRef: ActorRef = executorActor(activeJobRun)
+
+    Then("a task is placed onto the launch queue")
+    import org.mockito.ArgumentCaptor
+    val argument: ArgumentCaptor[RunSpec] = ArgumentCaptor.forClass(classOf[RunSpec])
+    verify(launchQueue, timeout(1000)).add(argument.capture(), any)
+
+    And("the created JobRun has the overrides applied")
+    argument.getValue.env should have size 1
+    argument.getValue.env shouldBe expectedEnv
+    argument.getValue.constraints shouldBe expectedConstraints
   }
 
   test("Init of JobRun with JobRunStatus.Starting and EMPTY launchQueue") {

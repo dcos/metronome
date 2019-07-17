@@ -69,7 +69,6 @@ class JobRunController(
   def triggerJob(id: JobId) = measured {
     AuthorizedAction.async(validate.optionalJson[JobRunSpecOverrides]) { implicit request =>
       val overrides = request.body
-      JobRunController.log.info(s"overrides: $overrides")
 
       async {
         await(jobSpecService.getJobSpec(id)) match {
