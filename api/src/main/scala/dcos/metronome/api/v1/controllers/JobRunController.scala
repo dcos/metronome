@@ -3,7 +3,7 @@ package api.v1.controllers
 
 import dcos.metronome.api.v1.models._
 import dcos.metronome.api.{ ApiConfig, Authorization, UnknownJob, UnknownJobRun }
-import dcos.metronome.jobrun.JobRunService
+import dcos.metronome.jobrun.{ JobRunService, StartedJobRun }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobId, JobRunId }
 import mesosphere.marathon.metrics.Metrics
@@ -30,7 +30,20 @@ class JobRunController(
 
   def getJobRuns(id: JobId) = measured {
     AuthorizedAction.async { implicit request =>
-      jobRunService.activeRuns(id).map(_.filter(request.isAllowed)).map(Ok(_))
+      //      jobRunService.activeRuns(id).map(_.filter(request.isAllowed)).map(Ok(_))
+      async {
+        await(jobSpecService.getJobSpec(id)) match {
+          case Some(spec) =>
+            if (request.isAllowed(spec)) {
+              await {
+                jobRunService.activeRuns(id).map(Ok(_))
+              }
+            } else {
+              Ok(Array.empty[StartedJobRun])
+            }
+          case None => NotFound(UnknownJob(id))
+        }
+      }
     }
   }
 
