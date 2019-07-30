@@ -11,6 +11,60 @@ Metronome documentation is available on the [Metronome Project Site](https://dco
 ## Issue Tracking
 Metronome issues are tracked as JIRA tickets in Mesosphere's [on-premise JIRA instance](https://jira.mesosphere.com/issues/?jql=project%20%3D%20DCOS_OSS%20AND%20component%20%3D%20metronome) that anyone is able to view and add to using GitHub SSO. If you create a ticket, please set component `metronome`.
 
+
+## Installation
+
+The by far easiest way to get Metronome running is to use DC/OS.
+
+### Manual setup
+
+#### Dependencies
+
+When rolling the deployment of Metronome yourself make sure to align with the dependency on [Marathon](https://github.com/mesosphere/marathon) to match the version noted in the release notes of Metronome.
+
+#### Download
+
+Releases can be downloaded by finding out the version number and short commit hash from the [github releases](https://github.com/dcos/metronome/releases) to form the url like
+
+`https://s3.amazonaws.com/downloads.mesosphere.io/metronome/builds/0.6.33-b28106a/metronome-0.6.33-b28106a.tgz`
+
+#### Installation
+
+It is assumed that you have a running Mesos and Marathon setup. https://mesosphere.github.io/marathon/docs/ details how to setup Mesos and Marathon.
+
+You can start Metronome via systemd after unarchiving the download to e.g. `/opt/mesosphere/metronome`
+
+```
+[Unit]
+Description=Metronome
+After=network.target
+Wants=network.target
+[Service]
+EnvironmentFile=-/etc/sysconfig/metronome
+ExecStart=/opt/mesosphere/metronome/bin/metronome
+Restart=always
+RestartSec=20
+[Install]
+WantedBy=multi-user.target
+```
+
+Configuration in the case of above systemd file happens via EnfironmentFile at `/etc/sysconfig/metronome`
+
+```
+# configure the url to reach zookeeper on your managers
+METRONOME_ZK_URL=zk://manager0:2181,manager1:2181,manager2:2181/metronome
+# configure the url to reach the mesos zookeeper state
+METRONOME_MESOS_MASTER_URL=zk://manager0:2181,manager1:2181,manager2:2181/mesos
+# in case you have configured mesos roles and/or authentication
+# METRONOME_MESOS_ROLE=metronome
+# METRONOME_MESOS_AUTHENTICATION_ENABLED=true
+# METRONOME_MESOS_AUTHENTICATION_PRINCIPAL=metronome
+METRONOME_MESOS_AUTHENTICATION_SECRET_FILE=/etc/mesos/metronome.secret
+# configures url of Metronome web interface
+METRONOME_WEB_UI_URL=127.0.0.1:9999/ui
+```
+
+
 ## Getting Started
 
 Get familiar with Metronome with this step-by-step [Getting Started](https://dcos.io/docs/1.10/deploying-jobs/) guide.
