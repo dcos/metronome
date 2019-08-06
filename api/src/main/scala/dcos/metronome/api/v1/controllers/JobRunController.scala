@@ -30,7 +30,6 @@ class JobRunController(
 
   def getJobRuns(id: JobId) = measured {
     AuthorizedAction.async { implicit request =>
-      //      jobRunService.activeRuns(id).map(_.filter(request.isAllowed)).map(Ok(_))
       async {
         await(jobSpecService.getJobSpec(id)) match {
           case Some(spec) =>
