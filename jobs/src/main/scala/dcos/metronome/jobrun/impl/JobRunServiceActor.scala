@@ -3,6 +3,7 @@ package jobrun.impl
 
 import java.time.Clock
 
+import akka.actor.Status.Failure
 import akka.actor._
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
@@ -71,7 +72,8 @@ class JobRunServiceActor(
 
     val skipRun = schedule.exists(schedule => schedule.concurrencyPolicy == ConcurrencyPolicy.Forbid && runsForJob(spec.id).nonEmpty)
     if (skipRun) {
-      log.info(s"Skipping scheduled run for ${spec.id} based on concurrency policy")
+      log.warning(s"Skipping scheduled run for ${spec.id} based on concurrency policy")
+      sender() ! Failure(ConcurrentJobRunNotAllowed(spec))
     } else {
       val startingDeadline: Option[Duration] = schedule.map(_.startingDeadline)
       val jobRun = JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.instant(), None, startingDeadline, Map.empty)

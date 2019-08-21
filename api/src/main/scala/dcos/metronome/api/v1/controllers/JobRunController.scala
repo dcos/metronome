@@ -2,7 +2,7 @@ package dcos.metronome
 package api.v1.controllers
 
 import dcos.metronome.api.v1.models._
-import dcos.metronome.api.{ ApiConfig, Authorization, UnknownJob, UnknownJobRun }
+import dcos.metronome.api.{ ApiConfig, Authorization, ErrorDetail, UnknownJob, UnknownJobRun }
 import dcos.metronome.jobrun.{ JobRunService, StartedJobRun }
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.{ JobId, JobRunId }
@@ -83,7 +83,12 @@ class JobRunController(
           case Some(spec) =>
             await {
               request.authorizedAsync(UpdateRunSpec, spec) { _ =>
-                jobRunService.startJobRun(spec).map(Created(_))
+                // the schedule is considered the source of truth wrt scheduling behavior, so we're passing it along
+                // here. This way we can check via schedule.concurrencyPolicy whether or not another JobRun can be
+                // triggered. Automated/manual will be treated equally for this evaluation.
+                jobRunService.startJobRun(spec, spec.schedules.headOption).map(Created(_)).recover {
+                  case ex: ConcurrentJobRunNotAllowed => Conflict(ErrorDetail(ex.getMessage))
+                }
               }
             }
           case None =>
