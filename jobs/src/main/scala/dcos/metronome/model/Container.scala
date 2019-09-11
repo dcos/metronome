@@ -17,9 +17,10 @@ object DockerSpec {
 }
 
 case class ImageSpec(
-  id:        String,
-  kind:      String  = ImageSpec.DefaultKind,
-  forcePull: Boolean = false)
+  id:         String,
+  kind:       String                   = ImageSpec.DefaultKind,
+  forcePull:  Boolean                  = false,
+  pullConfig: Option[DockerPullConfig] = Option.empty[DockerPullConfig])
 
 object ImageSpec {
   val DefaultKind = "docker"
@@ -29,3 +30,4 @@ case class UcrSpec(
   image:      ImageSpec,
   privileged: Boolean   = false) extends Container
 
+case class DockerPullConfig(secret: String)

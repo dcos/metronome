@@ -308,11 +308,16 @@ object RunSpecConversions {
 
   implicit class ImageSpecToProto(val image: ImageSpec) extends AnyVal {
     def toProto: Protos.JobSpec.RunSpec.UcrSpec.Image = {
-      Protos.JobSpec.RunSpec.UcrSpec.Image.newBuilder()
+      val builder = Protos.JobSpec.RunSpec.UcrSpec.Image.newBuilder()
         .setId(image.id)
         .setKind(image.kind)
         .setForcePull(image.forcePull)
-        .build()
+
+      image.pullConfig.foreach { pullConfig =>
+        builder.setPullConfig(Protos.JobSpec.RunSpec.UcrSpec.Image.DockerPullConfig.newBuilder().setSecret(pullConfig.secret))
+      }
+
+      builder.build()
     }
   }
 
@@ -342,10 +347,16 @@ object RunSpecConversions {
   }
 
   implicit class ProtoToImageSpec(val imageSpec: Protos.JobSpec.RunSpec.UcrSpec.Image) extends AnyVal {
-    def toModel: ImageSpec = ImageSpec(
-      id = imageSpec.getId,
-      kind = imageSpec.getKind,
-      forcePull = imageSpec.getForcePull)
+    def toModel: ImageSpec = {
+      val pullConfig = if (imageSpec.hasPullConfig) {
+        Some(DockerPullConfig(imageSpec.getPullConfig.getSecret))
+      } else None
+      ImageSpec(
+        id = imageSpec.getId,
+        kind = imageSpec.getKind,
+        forcePull = imageSpec.getForcePull,
+        pullConfig = pullConfig)
+    }
   }
 
   implicit class ProtoToUcrSpec(val ucrSpec: Protos.JobSpec.RunSpec.UcrSpec) extends AnyVal {

@@ -224,12 +224,17 @@ message JobSpec {
 
     message UcrSpec {
       message Image {
+        message DockerPullConfig {
+          optional string secret = 1;
+        }
+
         optional string id = 1;
         optional string kind = 2 [default = "docker"];
         // With this flag set to true, the docker containerizer will
         // pull the docker image from the registry even if the image
         // is already downloaded on the agent.
         optional bool force_pull = 3;
+        optional DockerPullConfig pullConfig = 4;
       }
 
       optional Image image = 1;

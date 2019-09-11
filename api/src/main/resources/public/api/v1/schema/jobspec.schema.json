@@ -105,7 +105,18 @@
                 },
                 "forcePull": {
                   "type": "boolean",
-                  "documentation": "The containerizer will pull the image from the registry, even if the image is already downloaded on the agent."
+                  "documentation": "If true, the containerizer will pull the image from the registry, even if the image is already downloaded on the agent."
+                },
+                "pullConfig": {
+                  "type": "object",
+                  "documentation": "The Docker pull config.",
+                  "additionalProperties": false,
+                  "properties": {
+                    "secret": {
+                      "type": "string",
+                      "documentation": "Docker's config.json given as a secret name into a secret store which corresponding value is a content of `~/.docker/config.json`. It is supported only with Mesos containerizer."
+                    }
+                  }
                 }
               },
               "required": ["id"]
@@ -127,7 +138,7 @@
             },
             "forcePullImage": {
               "type": "boolean",
-              "documentation": "The containerizer will pull the image from the registry, even if the image is already downloaded on the agent."
+              "documentation": "If true, the containerizer will pull the image from the registry, even if the image is already downloaded on the agent."
             },
             "privileged": {
               "type": "boolean",

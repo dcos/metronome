@@ -33,7 +33,8 @@ object QueuedJobRunConverter {
     def toDockerModel: Option[DockerSpec] = container.flatMap(c => c.docker).map(d => DockerSpec(d.image, d.forcePullImage))
     def toUcrModel: Option[UcrSpec] = container.collect {
       case ucr: MesosDocker =>
-        val image = ImageSpec(id = ucr.image, forcePull = ucr.forcePullImage)
+        val pullConfig = ucr.pullConfig.map(pc => DockerPullConfig(pc.secret))
+        val image = ImageSpec(id = ucr.image, forcePull = ucr.forcePullImage, pullConfig = pullConfig)
         UcrSpec(image, privileged = false) // TODO: Add privileged once marathon will support it
     }
   }

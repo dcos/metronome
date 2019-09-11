@@ -94,7 +94,8 @@ object MarathonImplicits {
         Container.MesosDocker(
           image = ucrSpec.image.id,
           volumes = jobSpec.run.volumes.map(_.toMarathon),
-          forcePullImage = ucrSpec.image.forcePull) // TODO: pass privileged once marathon will support it
+          forcePullImage = ucrSpec.image.forcePull, // TODO: pass privileged once marathon will support it
+          pullConfig = ucrSpec.image.pullConfig.map(pc => Container.DockerPullConfig(pc.secret)))
       }
 
       maybeDocker.orElse(maybeUcr)

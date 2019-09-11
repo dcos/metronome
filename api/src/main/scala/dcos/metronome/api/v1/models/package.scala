@@ -173,10 +173,13 @@ package object models {
 
   implicit lazy val ParameterFormat: Format[mesosphere.marathon.state.Parameter] = Format(ParameterReads, ParameterWrites)
 
+  implicit lazy val DockerPullConfigFormat: Format[DockerPullConfig] = Json.format[DockerPullConfig]
+
   implicit lazy val ImageSpecFormat: Format[ImageSpec] = (
     (__ \ "id").format[String] ~
     (__ \ "kind").formatNullable[String].withDefault(ImageSpec.DefaultKind) ~
-    (__ \ "forcePull").formatNullable[Boolean].withDefault(false))(ImageSpec.apply, unlift(ImageSpec.unapply))
+    (__ \ "forcePull").formatNullable[Boolean].withDefault(false) ~
+    (__ \ "pullConfig").formatNullable[DockerPullConfig])(ImageSpec.apply, unlift(ImageSpec.unapply))
 
   implicit lazy val RestartSpecFormat: Format[RestartSpec] = (
     (__ \ "policy").formatNullable[RestartPolicy].withDefault(RestartSpec.DefaultRestartPolicy) ~
