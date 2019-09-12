@@ -2,9 +2,9 @@ package dcos.metronome
 package api
 
 import com.eclipsesource.schema.SchemaValidator
-import com.wix.accord.{ Failure, Success, Validator }
-import mesosphere.marathon.api.v2.Validation
-import play.api.http.{ ContentTypeOf, ContentTypes, Writeable }
+import com.wix.accord.{Failure, Success, Validator}
+import dcos.metronome.utils.Validation.failureWrites
+import play.api.http.{ContentTypeOf, ContentTypes, Writeable}
 import play.api.libs.json._
 import play.api.mvc._
 
@@ -31,7 +31,7 @@ class RestController(cc: ControllerComponents) extends AbstractController(cc) {
 
         def validateObject(a: A): Either[Result, A] = validator(a) match {
           case Success    => Right(a)
-          case f: Failure => Left(UnprocessableEntity(Validation.failureWrites.writes(f)))
+          case f: Failure => Left(UnprocessableEntity(failureWrites.writes(f)))
         }
 
         def readObject(jsValue: JsValue): Either[Result, A] = {

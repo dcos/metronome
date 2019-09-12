@@ -4,8 +4,8 @@ package model
 import com.wix.accord.Validator
 import com.wix.accord.dsl._
 import dcos.metronome.model.JobRunSpec._
-import mesosphere.marathon.api.v2.Validation.every
-import mesosphere.marathon.plugin.{ ApplicationSpec, NetworkSpec, VolumeMountSpec, VolumeSpec }
+import dcos.metronome.utils.Validation.every
+import mesosphere.marathon.plugin.{ApplicationSpec, NetworkSpec, VolumeMountSpec, VolumeSpec}
 
 case class JobSpec(
   id:          JobId,

@@ -21,7 +21,7 @@ import scala.concurrent.duration._
 
 package object models {
 
-  import mesosphere.marathon.api.v2.json.Formats.FormatWithDefault
+  import dcos.metronome.utils.Formats.FormatWithDefault
 
   implicit val errorFormat: Format[ErrorDetail] = Json.format[ErrorDetail]
   implicit val unknownJobsFormat: Format[UnknownJob] = Json.format[UnknownJob]
