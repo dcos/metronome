@@ -1,10 +1,10 @@
 package dcos.metronome.jobspec.impl
 
-import java.time.{Instant, ZoneId}
+import java.time.{ Instant, ZoneId }
 
-import dcos.metronome.model.{ConcurrencyPolicy, CronSpec, ScheduleSpec}
+import dcos.metronome.model.{ ConcurrencyPolicy, CronSpec, ScheduleSpec }
 import dcos.metronome.utils.test.Mockito
-import org.scalatest.{FunSuite, GivenWhenThen, Matchers}
+import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }
 
 import scala.concurrent.duration._
 

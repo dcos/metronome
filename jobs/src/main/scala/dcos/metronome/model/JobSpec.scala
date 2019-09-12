@@ -4,10 +4,8 @@ package model
 import com.wix.accord.Validator
 import com.wix.accord.dsl._
 import dcos.metronome.model.JobRunSpec._
-import dcos.metronome.utils.glue.MarathonConversions
-import mesosphere.marathon.api.v2.Validation._
-import mesosphere.marathon
-import mesosphere.marathon.plugin.{ ApplicationSpec, NetworkSpec, Secret, VolumeSpec, VolumeMountSpec }
+import mesosphere.marathon.api.v2.Validation.every
+import mesosphere.marathon.plugin.{ ApplicationSpec, NetworkSpec, VolumeMountSpec, VolumeSpec }
 
 case class JobSpec(
   id:          JobId,
@@ -19,8 +17,8 @@ case class JobSpec(
 
   override val user: Option[String] = run.user
   override val acceptedResourceRoles: Set[String] = Set.empty
-  override val secrets: Map[String, Secret] = MarathonConversions.secretsToMarathon(run.secrets)
-  override val env: Map[String, marathon.state.EnvVarValue] = MarathonConversions.envVarToMarathon(run.env)
+  override val secrets: Map[String, mesosphere.marathon.plugin.Secret] = run.secrets
+  override val env: Map[String, mesosphere.marathon.plugin.EnvVarValue] = run.env
   override val volumes: Seq[VolumeSpec] = Seq.empty
   override val networks: Seq[NetworkSpec] = Seq.empty
   override val volumeMounts: Seq[VolumeMountSpec] = Seq.empty

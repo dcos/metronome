@@ -10,6 +10,7 @@ import mesosphere.marathon.core.readiness.ReadinessCheck
 import mesosphere.marathon.raml.Resources
 import mesosphere.marathon.state.{ AppDefinition, BackoffStrategy, Container, FetchUri, PathId, PortDefinition, RunSpec, UpgradeStrategy, VersionInfo, VolumeMount }
 import mesosphere.marathon.state
+
 import scala.concurrent.duration._
 
 /**
@@ -47,7 +48,7 @@ object MarathonImplicits {
   }
 
   implicit class ConstraintSpecToProto(val spec: ConstraintSpec) extends AnyVal {
-    def toProto: Option[marathon.Protos.Constraint] = {
+    def toProto: Option[mesosphere.marathon.Protos.Constraint] = {
       /**
         * Unfortunately, Metronome has always allowed valueless constraint operators, but they never had any effect.
         *
@@ -59,12 +60,12 @@ object MarathonImplicits {
         */
       spec.value.map { value =>
         val marathonOperator = spec.operator match {
-          case Operator.Is     => marathon.Protos.Constraint.Operator.IS
-          case Operator.Like   => marathon.Protos.Constraint.Operator.LIKE
-          case Operator.Unlike => marathon.Protos.Constraint.Operator.UNLIKE
+          case Operator.Is     => mesosphere.marathon.Protos.Constraint.Operator.IS
+          case Operator.Like   => mesosphere.marathon.Protos.Constraint.Operator.LIKE
+          case Operator.Unlike => mesosphere.marathon.Protos.Constraint.Operator.UNLIKE
         }
 
-        val builder = marathon.Protos.Constraint.newBuilder()
+        val builder = mesosphere.marathon.Protos.Constraint.newBuilder()
           .setOperator(marathonOperator)
           .setField(spec.attribute)
         builder.setValue(value)
@@ -110,7 +111,7 @@ object MarathonImplicits {
         cmd = jobSpec.run.cmd,
         args = jobSpec.run.args.getOrElse(Seq.empty),
         user = jobSpec.run.user,
-        env = MarathonConversions.envVarToMarathon(jobSpec.run.env),
+        env = envVarToMarathon(jobSpec.run.env),
         instances = 1,
         resources = Resources(cpus = jobSpec.run.cpus, mem = jobSpec.run.mem, disk = jobSpec.run.disk, gpus = jobSpec.run.gpus),
         executor = "//cmd",
@@ -131,7 +132,18 @@ object MarathonImplicits {
         labels = jobSpec.labels,
         acceptedResourceRoles = Set.empty,
         versionInfo = VersionInfo.NoVersion,
-        secrets = MarathonConversions.secretsToMarathon(jobSpec.run.secrets))
+        secrets = secretsToMarathon(jobSpec.run.secrets))
+    }
+
+    private[this] def envVarToMarathon(envVars: Map[String, EnvVarValueOrSecret]): Map[String, marathon.state.EnvVarValue] = {
+      envVars.mapValues {
+        case EnvVarValue(value)   => marathon.state.EnvVarString(value)
+        case EnvVarSecret(secret) => marathon.state.EnvVarSecretRef(secret)
+      }
+    }
+
+    private[this] def secretsToMarathon(secrets: Map[String, SecretDef]): Map[String, marathon.state.Secret] = {
+      secrets.map { case (name, value) => name -> marathon.state.Secret(value.source) }
     }
   }
 }

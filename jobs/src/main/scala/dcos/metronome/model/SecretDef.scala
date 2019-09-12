@@ -4,7 +4,7 @@ package dcos.metronome.model
   * A secret declaration
   * @param source reference to a secret which will be injected with a value from the secret store.
   */
-case class SecretDef(source: String)
+case class SecretDef(source: String) extends mesosphere.marathon.plugin.Secret
 
 object SecretDef {
   import play.api.libs.json.Reads._
