@@ -1,7 +1,7 @@
 package dcos.metronome
 package api.v1
 
-import java.time.{ Instant, ZoneId }
+import java.time.{Instant, ZoneId}
 import java.time.format.DateTimeFormatter
 
 import dcos.metronome.api._
@@ -9,12 +9,12 @@ import dcos.metronome.jobinfo.JobInfo
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
-import mesosphere.marathon.SemVer
+import dcos.metronome.utils.SemVer
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.state.{ Parameter, Timestamp }
+import mesosphere.marathon.state.{Parameter, Timestamp}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
-import play.api.libs.json.{ Json, _ }
+import play.api.libs.json.{Json, _}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._

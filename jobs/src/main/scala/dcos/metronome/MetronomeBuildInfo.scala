@@ -2,7 +2,7 @@ package dcos.metronome
 
 import java.util.jar.{ Attributes, Manifest }
 
-import mesosphere.marathon.io.IO
+import dcos.metronome.utils.SemVer
 
 import scala.collection.JavaConverters._
 import scala.io.Source
@@ -39,10 +39,18 @@ case object MetronomeBuildInfo {
   lazy val manifest: Option[Manifest] = manifestPath match {
     case Nil => None
     case List(file) =>
-      val mf = new Manifest()
-      IO.using(file.openStream) { f =>
-        mf.read(f)
+      val closeable = file.openStream
+      try {
+        val mf = new Manifest()
+        mf.read(closeable)
         Some(mf)
+      } finally {
+        try {
+          closeable.close()
+        } catch {
+          case ex: Exception =>
+          // suppress exceptions
+        }
       }
     case otherwise =>
       throw new RuntimeException(s"Multiple metronome JAR manifests returned! $otherwise")
@@ -64,6 +72,6 @@ case object MetronomeBuildInfo {
 
   lazy val scalaVersion: String = getAttribute("Scala-Version").getOrElse("2.x.x")
 
-  lazy val marathonVersion: mesosphere.marathon.SemVer = MarathonBuildInfo.version
+  lazy val marathonVersion: SemVer = MarathonBuildInfo.version
 
 }
