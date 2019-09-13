@@ -1,6 +1,6 @@
 package dcos.metronome
 
-import mesosphere.marathon.SemVer
+import dcos.metronome.utils.SemVer
 
 case class MetronomeInfo(
   version:    String,

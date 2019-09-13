@@ -3,8 +3,8 @@ package api
 
 import dcos.metronome.jobinfo.JobInfo.Embed
 import dcos.metronome.model.JobId
-import play.api.mvc.{ QueryStringBindable, PathBindable }
-import mesosphere.marathon.api.v2.Validation.validateOrThrow
+import dcos.metronome.utils.Validation.validateOrThrow
+import play.api.mvc.{PathBindable, QueryStringBindable}
 
 import scala.util.control.NonFatal
 

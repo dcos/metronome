@@ -1,8 +1,10 @@
 package dcos.metronome.model
 
-trait EnvVarValueOrSecret
+import mesosphere.marathon.plugin.{ EnvVarSecretRef, EnvVarString }
 
-case class EnvVarValue(value: String) extends EnvVarValueOrSecret
+trait EnvVarValueOrSecret extends mesosphere.marathon.plugin.EnvVarValue
+
+case class EnvVarValue(value: String) extends EnvVarValueOrSecret with EnvVarString
 
 object EnvVarValue {
   implicit object playJsonFormat extends play.api.libs.json.Format[EnvVarValue] {
@@ -20,7 +22,7 @@ object EnvVarValue {
   * @param secret The name of the secret to refer to. At runtime, the value of the
   *   secret will be injected into the value of the variable.
   */
-case class EnvVarSecret(secret: String) extends EnvVarValueOrSecret
+case class EnvVarSecret(secret: String) extends EnvVarValueOrSecret with EnvVarSecretRef
 
 object EnvVarSecret {
   implicit val playJsonFormat = play.api.libs.json.Json.format[EnvVarSecret]

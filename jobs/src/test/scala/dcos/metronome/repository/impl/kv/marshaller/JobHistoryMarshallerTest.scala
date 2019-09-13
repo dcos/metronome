@@ -1,7 +1,7 @@
 package dcos.metronome
 package repository.impl.kv.marshaller
 
-import java.time.{ Clock, LocalDateTime, ZoneOffset }
+import java.time.{ LocalDateTime, ZoneOffset }
 
 import dcos.metronome.model._
 import mesosphere.marathon.core.task.Task
@@ -36,7 +36,7 @@ class JobHistoryMarshallerTest extends FunSuite with Matchers {
       successCount = 1337,
       failureCount = 31337,
       lastSuccessAt = Some(LocalDateTime.parse("2014-09-06T08:50:12.000").toInstant(ZoneOffset.UTC)),
-      lastFailureAt = Some(Clock.systemUTC().instant()),
+      lastFailureAt = Some(LocalDateTime.parse("2014-09-06T06:46:11.553").toInstant(ZoneOffset.UTC)),
       successfulRuns = Seq(successfulJobRunInfo),
       failedRuns = Seq(finishedJobRunInfo))
   }

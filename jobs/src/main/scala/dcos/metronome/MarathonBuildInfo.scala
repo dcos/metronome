@@ -2,11 +2,9 @@ package dcos.metronome
 
 import java.util.jar.{ Attributes, Manifest }
 
-import mesosphere.marathon.SemVer
-import mesosphere.marathon.io.IO
-import mesosphere.marathon.stream.Implicits._
+import dcos.metronome.utils.SemVer
 
-import scala.Predef._
+import scala.collection.JavaConverters
 import scala.util.control.NonFatal
 
 case object MarathonBuildInfo {
@@ -18,18 +16,29 @@ case object MarathonBuildInfo {
     * first matching file for the first JAR in the class path. Instead, we need to enumerate through all of the
     * manifests, and find the one that applies to the Marathon application jar.
     */
-  private lazy val marathonManifestPath: List[java.net.URL] =
-    getClass().getClassLoader().getResources("META-INF/MANIFEST.MF").toIterator.filter { manifest =>
-      marathonJar.findFirstMatchIn(manifest.getPath).nonEmpty
-    }.toList
+  private lazy val marathonManifestPath: List[java.net.URL] = {
+    val resources = JavaConverters.enumerationAsScalaIterator(getClass().getClassLoader().getResources("META-INF/MANIFEST.MF"))
+    resources
+      .filter(manifest => marathonJar.findFirstMatchIn(manifest.getPath).nonEmpty)
+      .toList
+  }
 
   lazy val manifest: Option[Manifest] = marathonManifestPath match {
     case Nil => None
     case List(file) =>
-      val mf = new Manifest()
-      IO.using(file.openStream) { f =>
-        mf.read(f)
+
+      val closeable = file.openStream
+      try {
+        val mf = new Manifest()
+        mf.read(closeable)
         Some(mf)
+      } finally {
+        try {
+          closeable.close()
+        } catch {
+          case ex: Exception =>
+          // suppress exceptions
+        }
       }
     case otherwise =>
       throw new RuntimeException(s"Multiple marathon JAR manifests returned! ${otherwise}")
