@@ -662,6 +662,20 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       status(failed) mustBe UNPROCESSABLE_ENTITY
       contentAsString(failed) must include(JobRunSpecMessages.cmdOrDockerValidation)
     }
+
+    "creates ucr job with pullConfig" in {
+      Given("a Job spec with pullConfig")
+      val specJson = """{"id": "spec1","run": {"cpus": 1,"mem": 128,"disk": 0,"ucr": {"image": {"id": "image","pullConfig": {"secret": "/docker-pull-secret"}}}}}"""
+
+      When("the job is created")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(Json.parse(specJson))).get
+
+      Then("The job is created")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+      val contentJson = contentAsJson(response)
+      (contentJson \ "run" \ "ucr" \ "image" \ "pullConfig" \ "secret").as[String] mustBe "/docker-pull-secret"
+    }
   }
 
   import scala.concurrent.duration._

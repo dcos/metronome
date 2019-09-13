@@ -771,6 +771,37 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     verify(f.launchQueue).add(any, any)
   }
 
+  test("Init of JobRun with docker pull config") {
+    val f = new Fixture
+    import f._
+
+    Given("a JobRun for a JobSpec with pullconfig")
+    val pullConfigSecret = "dockerpullsecret"
+    val jobSpec = JobSpec(
+      id = JobId("/test"),
+      run = JobRunSpec(ucr = Some(UcrSpec(ImageSpec(id = "my-image", pullConfig = Some(DockerPullConfig(pullConfigSecret)))))))
+
+    // We'll compare to a Marathon RunSpec representation of an env var
+    val activeJobRun = JobRun(JobRunId(defaultJobSpec), jobSpec, JobRunStatus.Active, clock.instant(), None, None, Map.empty)
+    val runSpecId = activeJobRun.id.toRunSpecId
+    f.launchQueue.get(runSpecId) returns Future.successful(None)
+    instanceTracker.specInstancesSync(runSpecId) returns Seq.empty
+
+    When("the actor is initialized")
+    val actorRef: ActorRef = executorActor(activeJobRun)
+
+    Then("a task is placed onto the launch queue")
+    import org.mockito.ArgumentCaptor
+    val argument: ArgumentCaptor[RunSpec] = ArgumentCaptor.forClass(classOf[RunSpec])
+    verify(launchQueue, timeout(1000)).add(argument.capture(), any)
+
+    And("the created JobRun has the overrides applied")
+    argument.getValue.container shouldBe defined
+    argument.getValue.container.get shouldBe a[MesosDocker]
+    argument.getValue.container.get.asInstanceOf[MesosDocker].pullConfig shouldBe defined
+    argument.getValue.container.get.asInstanceOf[MesosDocker].pullConfig.get.secret shouldBe pullConfigSecret
+  }
+
   def verifyFailureActions(jobRun: JobRun, expectedTaskCount: Int, f: Fixture): Unit = {
     import f._
 
