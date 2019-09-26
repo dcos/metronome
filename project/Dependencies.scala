@@ -6,7 +6,7 @@ object Dependencies {
     val ScalaTest = "3.0.5"
     val ScalaCheck = "1.14.0"
     val MacWire = "2.3.1"
-    val Marathon = "1.7.202"
+    val Marathon = "1.9.94"
     val MarathonPluginInterface = "1.7.202"
     val Play = "2.6.18"
     val PlayJson = "2.6.10"

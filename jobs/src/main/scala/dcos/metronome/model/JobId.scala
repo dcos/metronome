@@ -4,13 +4,13 @@ package model
 import com.wix.accord._
 import com.wix.accord.dsl._
 import mesosphere.marathon.plugin
-import mesosphere.marathon.state.PathId
+import mesosphere.marathon.state.AbsolutePathId
 
 case class JobId(path: Seq[String]) extends plugin.PathId {
 
   def safePath: String = path.mkString("_")
 
-  def toPathId: PathId = PathId(path)
+  def toPathId: AbsolutePathId = AbsolutePathId(path)
 
   override lazy val toString: String = path.mkString(".")
 }
@@ -21,7 +21,7 @@ object JobId {
     JobId(in.split("[.]").filter(_.nonEmpty).toList)
   }
 
-  def apply(pathId: PathId): JobId = {
+  def apply(pathId: AbsolutePathId): JobId = {
     JobId(pathId.path)
   }
 

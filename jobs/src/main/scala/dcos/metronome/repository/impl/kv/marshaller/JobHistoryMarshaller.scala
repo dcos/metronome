@@ -77,7 +77,7 @@ object JobHistoryConversions {
         id = proto.getJobRunId.toModel,
         createdAt = Instant.ofEpochMilli(proto.getCreatedAt),
         finishedAt = Instant.ofEpochMilli(proto.getFinishedAt),
-        tasks = proto.getTasksList.asScala.map(Task.Id(_)).to[Seq])
+        tasks = proto.getTasksList.asScala.map(Task.Id.parse).to[Seq])
     }.toList
   }
 }

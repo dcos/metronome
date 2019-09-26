@@ -8,8 +8,9 @@ import mesosphere.marathon
 import mesosphere.marathon.core.health.HealthCheck
 import mesosphere.marathon.core.readiness.ReadinessCheck
 import mesosphere.marathon.raml.Resources
-import mesosphere.marathon.state.{ AppDefinition, BackoffStrategy, Container, FetchUri, PathId, PortDefinition, RunSpec, UpgradeStrategy, VersionInfo, VolumeMount }
 import mesosphere.marathon.state
+import mesosphere.marathon.state.{ AbsolutePathId, AppDefinition, BackoffStrategy, Container, FetchUri, PortDefinition, RunSpec, UpgradeStrategy, VersionInfo, VolumeMount }
+
 import scala.concurrent.duration._
 
 /**
@@ -75,7 +76,7 @@ object MarathonImplicits {
 
   implicit class JobRunIdToRunSpecId(val jobRunId: JobRunId) extends AnyVal {
     // TODO: should we remove JobRunId.toPathId?
-    def toRunSpecId: PathId = jobRunId.toPathId
+    def toRunSpecId: AbsolutePathId = jobRunId.toPathId
   }
 
   implicit class JobSpecToContainer(val jobSpec: JobSpec) extends AnyVal {
@@ -126,12 +127,13 @@ object MarathonImplicits {
         healthChecks = Set.empty[HealthCheck],
         readinessChecks = Seq.empty[ReadinessCheck],
         taskKillGracePeriod = jobSpec.run.taskKillGracePeriodSeconds,
-        dependencies = Set.empty[PathId],
+        dependencies = Set.empty[AbsolutePathId],
         upgradeStrategy = UpgradeStrategy(minimumHealthCapacity = 0.0, maximumOverCapacity = 1.0),
         labels = jobSpec.labels,
         acceptedResourceRoles = Set.empty,
         versionInfo = VersionInfo.NoVersion,
-        secrets = MarathonConversions.secretsToMarathon(jobSpec.run.secrets))
+        secrets = MarathonConversions.secretsToMarathon(jobSpec.run.secrets),
+        role = "TODO: TO_BE_DEFINED")
     }
   }
 }

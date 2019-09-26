@@ -71,6 +71,6 @@ class JobsModule(
     jobRunModule.jobRunService,
     jobHistoryModule.jobHistoryService)
 
-  val queueModule = new LaunchQueueModule(schedulerModule.launchQueueModule.launchQueue)
+  val queueModule = new LaunchQueueModule(schedulerModule.instanceTrackerModule.instanceTracker)
 }
 

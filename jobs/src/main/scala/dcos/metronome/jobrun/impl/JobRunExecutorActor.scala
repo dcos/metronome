@@ -9,15 +9,15 @@ import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
 import dcos.metronome.scheduler.TaskState
-import mesosphere.marathon.core.task.tracker.InstanceTracker
-import mesosphere.marathon.{ MarathonSchedulerDriverHolder, StoreCommandFailedException }
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
+import mesosphere.marathon.core.task.tracker.InstanceTracker
+import mesosphere.marathon.{ MarathonSchedulerDriverHolder, StoreCommandFailedException }
 import org.apache.zookeeper.KeeperException.NodeExistsException
-import scala.async.Async.{ async, await }
 
-import scala.concurrent.duration.{ Duration, FiniteDuration }
-import scala.concurrent.{ Await, Promise }
+import scala.async.Async.async
+import scala.concurrent.Promise
+import scala.concurrent.duration.FiniteDuration
 
 /**
   * Handles one job run from start until the job either completes successful or failed.
@@ -140,8 +140,10 @@ class JobRunExecutorActor(
   }
 
   def existsInLaunchQueue(): Boolean = {
+    // TODO AN: Verify this...
+    instanceTracker.instancesBySpecSync.specInstances(runSpecId).nonEmpty
     // timeout is enforced on LaunchQueue implementation side
-    Await.result(launchQueue.get(runSpecId), Duration.Inf).exists(i => i.finalInstanceCount > 0)
+    //    Await.result(launchQueue.get(runSpecId), Duration.Inf).exists(i => i.finalInstanceCount > 0)
   }
 
   def updatedTasks(update: TaskStateChangedEvent): Map[Task.Id, JobRunTask] = {
@@ -165,7 +167,8 @@ class JobRunExecutorActor(
   }
 
   def becomeFinishing(updatedJobRun: JobRun): Unit = {
-    Await.result(launchQueue.purge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
+    //    Await.result(instanceTracker.instancesBySpec().map(ibs => ibs.specInstances(runSpecId)).map( _.foreach( i => instanceTracker.setGoal(i.instanceId, Goal.Stopped, GoalChangeReason.DeletingApp))), Duration.Inf)
+    //    Await.result(launchQueue.purge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
     jobRun = updatedJobRun
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
@@ -196,7 +199,7 @@ class JobRunExecutorActor(
 
   // FIXME: compare to becomeFinishing, there's lots of DRY violation
   def becomeFailing(updatedJobRun: JobRun): Unit = {
-    Await.result(launchQueue.purge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
+    //    Await.result(launchQueue.purge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
     jobRun = updatedJobRun
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
@@ -212,7 +215,7 @@ class JobRunExecutorActor(
     jobRun.tasks.values.filter(t => isActive(t.status)).foreach { t =>
       driverHolder.driver.foreach(_.killTask(t.id.mesosTaskId))
     }
-    Await.result(launchQueue.purge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
+    //    Await.result(launchQueue.purge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
 
     // Abort the jobRun
     jobRun = jobRun.copy(

@@ -1,11 +1,9 @@
 package dcos.metronome
 package jobrun.impl
 
-import dcos.metronome.Protos.JobSpec.RunSpec
 import dcos.metronome.model._
 import mesosphere.marathon.Protos.Constraint
-import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedInstanceInfo
-import mesosphere.marathon.state.Container.MesosDocker
+import mesosphere.marathon.state.Container.{ Docker, MesosDocker }
 import mesosphere.marathon.state.{ AppDefinition, Container }
 import org.slf4j.LoggerFactory
 
@@ -30,7 +28,8 @@ object QueuedJobRunConverter {
 
   implicit class MarathonContainerToDockerSpec(val container: Option[Container]) extends AnyVal {
 
-    def toDockerModel: Option[DockerSpec] = container.flatMap(c => c.docker).map(d => DockerSpec(d.image, d.forcePullImage))
+    def toDockerModel: Option[DockerSpec] = container.map{ case d: Docker => DockerSpec(d.image, d.forcePullImage) }
+
     def toUcrModel: Option[UcrSpec] = container.collect {
       case ucr: MesosDocker =>
         val image = ImageSpec(id = ucr.image, forcePull = ucr.forcePullImage)
@@ -67,19 +66,19 @@ object QueuedJobRunConverter {
     }
   }
 
-  implicit class QueuedTaskInfoToQueuedJobRunInfo(val instanceInfo: QueuedInstanceInfo) extends AnyVal {
-
-    def toModel: QueuedJobRunInfo = {
-      val jobRunSpec = instanceInfo.runSpec match {
-        case app: AppDefinition => app.toModel
-        case runSpec =>
-          throw new IllegalArgumentException(s"Unexpected runSpec type - jobs are translated to Apps on Marathon level, got $runSpec")
-      }
-      QueuedJobRunInfo(
-        id = instanceInfo.runSpec.id,
-        backOffUntil = instanceInfo.backOffUntil,
-        run = jobRunSpec,
-        acceptedResourceRoles = instanceInfo.runSpec.acceptedResourceRoles)
-    }
-  }
+  //  implicit class QueuedTaskInfoToQueuedJobRunInfo(val instanceInfo: QueuedInstanceInfo) extends AnyVal {
+  //
+  //    def toModel: QueuedJobRunInfo = {
+  //      val jobRunSpec = instanceInfo.runSpec match {
+  //        case app: AppDefinition => app.toModel
+  //        case runSpec =>
+  //          throw new IllegalArgumentException(s"Unexpected runSpec type - jobs are translated to Apps on Marathon level, got $runSpec")
+  //      }
+  //      QueuedJobRunInfo(
+  //        id = instanceInfo.runSpec.id,
+  //        backOffUntil = instanceInfo.backOffUntil,
+  //        run = jobRunSpec,
+  //        acceptedResourceRoles = instanceInfo.runSpec.acceptedResourceRoles)
+  //    }
+  //  }
 }

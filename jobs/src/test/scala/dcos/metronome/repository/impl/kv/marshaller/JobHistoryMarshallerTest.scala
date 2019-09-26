@@ -1,7 +1,7 @@
 package dcos.metronome
 package repository.impl.kv.marshaller
 
-import java.time.{ Clock, LocalDateTime, ZoneOffset }
+import java.time.{ LocalDateTime, ZoneOffset }
 
 import dcos.metronome.model._
 import mesosphere.marathon.core.task.Task
@@ -23,20 +23,20 @@ class JobHistoryMarshallerTest extends FunSuite with Matchers {
       JobRunId(JobId("/test"), "successful"),
       LocalDateTime.parse("2004-09-06T08:50:12.000").toInstant(ZoneOffset.UTC),
       LocalDateTime.parse("2014-09-06T08:50:12.000").toInstant(ZoneOffset.UTC),
-      tasks = Seq(Task.Id("test_finished.77a7bc7d-4429-11e9-969f-3a74960279c0")))
+      tasks = Seq(Task.Id.parse("test_finished.77a7bc7d-4429-11e9-969f-3a74960279c0")))
 
     val finishedJobRunInfo = JobRunInfo(
       JobRunId(JobId("/test"), "finished"),
       LocalDateTime.parse("1984-09-06T08:50:12.000").toInstant(ZoneOffset.UTC),
       LocalDateTime.parse("1994-09-06T08:50:12.000").toInstant(ZoneOffset.UTC),
-      tasks = Seq(Task.Id("test_finished.77a7bc7d-4429-11e9-969f-3a74960279c0")))
+      tasks = Seq(Task.Id.parse("test_finished.77a7bc7d-4429-11e9-969f-3a74960279c0")))
 
     val jobHistory = JobHistory(
       JobId("/my/wonderful/job"),
       successCount = 1337,
       failureCount = 31337,
       lastSuccessAt = Some(LocalDateTime.parse("2014-09-06T08:50:12.000").toInstant(ZoneOffset.UTC)),
-      lastFailureAt = Some(Clock.systemUTC().instant()),
+      lastFailureAt = Some(LocalDateTime.parse("2014-09-06T07:55:12.000").toInstant(ZoneOffset.UTC)),
       successfulRuns = Seq(successfulJobRunInfo),
       failedRuns = Seq(finishedJobRunInfo))
   }
