@@ -11,7 +11,7 @@ import scala.util.control.NonFatal
 
 case object MarathonBuildInfo {
   private val marathonJar = """\/mesosphere\/marathon\/marathon_2.12\/[0-9.]+""".r
-  val DefaultBuildVersion = SemVer(1, 7, 0, Some("SNAPSHOT"))
+  val DefaultBuildVersion = SemVer(1, 9, 0, Some("SNAPSHOT"))
 
   /**
     * sbt-native-package provides all of the files as individual JARs. By default, `getResourceAsStream` returns the

@@ -133,7 +133,7 @@ object MarathonImplicits {
         acceptedResourceRoles = Set.empty,
         versionInfo = VersionInfo.NoVersion,
         secrets = MarathonConversions.secretsToMarathon(jobSpec.run.secrets),
-        role = "TODO: TO_BE_DEFINED")
+        role = "foo") // TODO AN: Use role from config, or add it to jobSpec
     }
   }
 }

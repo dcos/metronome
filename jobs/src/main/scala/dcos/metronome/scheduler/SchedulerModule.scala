@@ -4,12 +4,12 @@ package scheduler
 import java.time.{ Clock, OffsetDateTime }
 import java.util.concurrent.Executors
 
-import akka.{ Done, NotUsed }
 import akka.actor.{ ActorRefFactory, ActorSystem, Cancellable }
 import akka.event.EventStream
 import akka.stream.scaladsl.Source
+import akka.{ Done, NotUsed }
 import dcos.metronome.repository.SchedulerRepositoriesModule
-import dcos.metronome.scheduler.impl.{ NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor }
+import dcos.metronome.scheduler.impl.{ NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor, UpdateGoalAndNotifyLaunchQueueStep }
 import mesosphere.marathon._
 import mesosphere.marathon.core.async.ExecutionContexts
 import mesosphere.marathon.core.base.{ ActorsModule, CrashStrategy, LifecycleState }
@@ -32,13 +32,14 @@ import mesosphere.marathon.core.task.termination.{ KillService, TaskTerminationM
 import mesosphere.marathon.core.task.tracker._
 import mesosphere.marathon.core.task.update.TaskStatusUpdateProcessor
 import mesosphere.marathon.core.task.update.impl.TaskStatusUpdateProcessorImpl
-import mesosphere.marathon.core.task.update.impl.steps.ContinueOnErrorStep
+import mesosphere.marathon.core.task.update.impl.steps.{ ContinueOnErrorStep, NotifyRateLimiterStepImpl }
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.state.{ AbsolutePathId, AppDefinition, Group, RootGroup, RunSpec, Timestamp }
 import mesosphere.marathon.storage.StorageConfig
 import mesosphere.marathon.storage.repository.{ GroupRepository, InstanceRepository }
 import mesosphere.util.state._
 import org.apache.mesos.Protos.FrameworkID
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.Random
@@ -53,6 +54,8 @@ class SchedulerModule(
   lifecycleState:    LifecycleState,
   crashStrategy:     CrashStrategy,
   actorsModule:      ActorsModule) {
+
+  private[this] val log = LoggerFactory.getLogger(getClass)
 
   private[this] lazy val scallopConf: AllConf = config.scallopConf
 
@@ -92,6 +95,8 @@ class SchedulerModule(
 
   lazy val instanceTrackerModule: InstanceTrackerModule = {
     val updateSteps: Seq[InstanceChangeHandler] = Seq(
+      ContinueOnErrorStep(new UpdateGoalAndNotifyLaunchQueueStep(() => instanceTrackerModule.instanceTracker, () => launchQueueModule.launchQueue)),
+      ContinueOnErrorStep(new NotifyRateLimiterStepImpl(() => launchQueueModule.launchQueue)),
       ContinueOnErrorStep(new NotifyOfTaskStateOperationStep(eventBus, clock)))
 
     new InstanceTrackerModule(
@@ -130,39 +135,92 @@ class SchedulerModule(
   }
 
   private[this] object FakeRootGroupManager extends GroupManager {
-    override def rootGroup(): RootGroup = ???
+    val localRootGroup = RootGroup()
 
-    override def rootGroupOption(): Option[RootGroup] = ???
+    override def rootGroup(): RootGroup = {
+      log.error(s"Call to rootGroup in FRGM")
+      localRootGroup
+    }
 
-    override def versions(id: AbsolutePathId): Source[Timestamp, NotUsed] = ???
+    override def rootGroupOption(): Option[RootGroup] = {
+      log.error(s"Call to rootGroup in FRGM")
+      Some(localRootGroup)
+    }
 
-    override def appVersions(id: AbsolutePathId): Source[OffsetDateTime, NotUsed] = ???
+    override def versions(id: AbsolutePathId): Source[Timestamp, NotUsed] = {
+      log.error(s"FRGM: Versions for ${id}")
+      Source.empty
+    }
 
-    override def appVersion(id: AbsolutePathId, version: OffsetDateTime): Future[Option[AppDefinition]] = ???
+    override def appVersions(id: AbsolutePathId): Source[OffsetDateTime, NotUsed] = {
+      log.error(s"FRGM: appVersions for ${id}")
+      Source.empty
+    }
 
-    override def podVersions(id: AbsolutePathId): Source[OffsetDateTime, NotUsed] = ???
+    override def appVersion(id: AbsolutePathId, version: OffsetDateTime): Future[Option[AppDefinition]] = {
+      log.error(s"FRGM: appVersion for ${id} in version ${version}")
+      Future.failed(new NotImplementedError("FRGM not implemented"))
+    }
 
-    override def podVersion(id: AbsolutePathId, version: OffsetDateTime): Future[Option[PodDefinition]] = ???
+    override def podVersions(id: AbsolutePathId): Source[OffsetDateTime, NotUsed] = {
+      log.error(s"FRGM: podVersions for ${id}")
+      Source.empty
+    }
 
-    override def group(id: AbsolutePathId): Option[Group] = ???
+    override def podVersion(id: AbsolutePathId, version: OffsetDateTime): Future[Option[PodDefinition]] = {
+      log.error(s"FRGM: podVersion for ${id} in version ${version}")
+      Future.failed(new NotImplementedError("FRGM not implemented"))
+    }
 
-    override def group(id: AbsolutePathId, version: Timestamp): Future[Option[Group]] = ???
+    override def group(id: AbsolutePathId): Option[Group] = {
+      log.error(s"FRGM: group for ${id}")
+      None
+    }
 
-    override def runSpec(id: AbsolutePathId): Option[RunSpec] = ???
+    override def group(id: AbsolutePathId, version: Timestamp): Future[Option[Group]] = {
+      log.error(s"FRGM: group for ${id} in version ${version}")
+      Future.failed(new NotImplementedError("FRGM not implemented"))
+    }
 
-    override def app(id: AbsolutePathId): Option[AppDefinition] = ???
+    override def runSpec(id: AbsolutePathId): Option[RunSpec] = {
+      log.error(s"FRGM: runSpec for ${id}")
+      None
+    }
 
-    override def apps(ids: Set[AbsolutePathId]): Map[AbsolutePathId, Option[AppDefinition]] = ???
+    override def app(id: AbsolutePathId): Option[AppDefinition] = {
+      log.error(s"FRGM: app for ${id}")
+      None
+    }
 
-    override def pod(id: AbsolutePathId): Option[PodDefinition] = ???
+    override def apps(ids: Set[AbsolutePathId]): Map[AbsolutePathId, Option[AppDefinition]] = {
+      log.error(s"FRGM: apps for ${ids}")
+      Map.empty
+    }
 
-    override def updateRootEither[T](id: AbsolutePathId, fn: RootGroup => Future[Either[T, RootGroup]], version: Timestamp, force: Boolean, toKill: Map[AbsolutePathId, Seq[Instance]]): Future[Either[T, DeploymentPlan]] = ???
+    override def pod(id: AbsolutePathId): Option[PodDefinition] = {
+      log.error(s"FRGM: pod for ${id}")
+      None
+    }
 
-    override def patchRoot(fn: RootGroup => RootGroup): Future[Done] = ???
+    override def updateRootEither[T](id: AbsolutePathId, fn: RootGroup => Future[Either[T, RootGroup]], version: Timestamp, force: Boolean, toKill: Map[AbsolutePathId, Seq[Instance]]): Future[Either[T, DeploymentPlan]] = {
+      log.error(s"FRGM: updateRootEither")
+      Future.failed(new NotImplementedError("FRGM not implemented"))
+    }
 
-    override def invalidateAndRefreshGroupCache(): Future[Done] = ???
+    override def patchRoot(fn: RootGroup => RootGroup): Future[Done] = {
+      log.error(s"FRGM: patchRoot")
+      Future.failed(new NotImplementedError("FRGM not implemented"))
+    }
 
-    override def invalidateGroupCache(): Future[Done] = ???
+    override def invalidateAndRefreshGroupCache(): Future[Done] = {
+      log.error(s"FRGM: invalidateAndRefreshGroupCache")
+      Future.failed(new NotImplementedError("FRGM not implemented"))
+    }
+
+    override def invalidateGroupCache(): Future[Done] = {
+      log.error(s"FRGM: invalidateGroupCache")
+      Future.failed(new NotImplementedError("FRGM not implemented"))
+    }
   }
 
   private[this] lazy val taskTerminationModule: TaskTerminationModule = new TaskTerminationModule(
@@ -259,4 +317,6 @@ class SchedulerModule(
     instanceTrackerModule.instanceTracker,
     killService,
     metrics)
+
+  launchQueueModule.reviveOffersActor()
 }
