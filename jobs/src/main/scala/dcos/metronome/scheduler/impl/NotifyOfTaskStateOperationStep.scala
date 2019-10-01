@@ -8,6 +8,9 @@ import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.instance.update.{ InstanceChange, InstanceChangeHandler }
 import java.time.Clock
 
+import mesosphere.marathon.core.condition.Condition
+import mesosphere.marathon.core.instance.Goal
+
 import scala.concurrent.Future
 
 class NotifyOfTaskStateOperationStep(eventBus: EventStream, clock: Clock) extends InstanceChangeHandler {
@@ -26,6 +29,15 @@ class NotifyOfTaskStateOperationStep(eventBus: EventStream, clock: Clock) extend
     Future.successful(Done)
   }
 
-  private[this] def taskState(instanceChange: InstanceChange): Option[TaskState] = TaskState(instanceChange.condition)
+  private[this] def taskState(instanceChange: InstanceChange): Option[TaskState] = {
+    instanceChange.condition match {
+      case Condition.Finished if instanceChange.instance.state.goal != Goal.Decommissioned =>
+        None
+      case Condition.Failed if instanceChange.instance.state.goal != Goal.Decommissioned =>
+        None
+      case _ =>
+        TaskState(instanceChange.condition)
+    }
+  }
 
 }
