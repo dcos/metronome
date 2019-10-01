@@ -1,25 +1,27 @@
 package dcos.metronome
 package scheduler
 
-import java.time.{ Clock, OffsetDateTime }
+import java.time.{Clock, OffsetDateTime}
 import java.util.concurrent.Executors
 
-import akka.actor.{ ActorRefFactory, ActorSystem, Cancellable }
+import akka.actor.{ActorRefFactory, ActorSystem, Cancellable}
 import akka.event.EventStream
 import akka.stream.scaladsl.Source
-import akka.{ Done, NotUsed }
+import akka.{Done, NotUsed}
+import com.google.inject.Provider
+import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.repository.SchedulerRepositoriesModule
-import dcos.metronome.scheduler.impl.{ NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor, UpdateGoalAndNotifyLaunchQueueStep }
+import dcos.metronome.scheduler.impl.{NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor, UpdateGoalAndNotifyLaunchQueueStep}
 import mesosphere.marathon._
 import mesosphere.marathon.core.async.ExecutionContexts
-import mesosphere.marathon.core.base.{ ActorsModule, CrashStrategy, LifecycleState }
+import mesosphere.marathon.core.base.{ActorsModule, CrashStrategy, LifecycleState}
 import mesosphere.marathon.core.deployment.DeploymentPlan
-import mesosphere.marathon.core.election.{ ElectionModule, ElectionService }
+import mesosphere.marathon.core.election.{ElectionModule, ElectionService}
 import mesosphere.marathon.core.flow.FlowModule
 import mesosphere.marathon.core.group.GroupManager
 import mesosphere.marathon.core.instance.Instance
 import mesosphere.marathon.core.instance.update.InstanceChangeHandler
-import mesosphere.marathon.core.launcher.{ LauncherModule, OfferProcessor }
+import mesosphere.marathon.core.launcher.{LauncherModule, OfferProcessor}
 import mesosphere.marathon.core.launchqueue.LaunchQueueModule
 import mesosphere.marathon.core.leadership.LeadershipModule
 import mesosphere.marathon.core.matcher.base.OfferMatcher
@@ -28,32 +30,33 @@ import mesosphere.marathon.core.plugin.PluginModule
 import mesosphere.marathon.core.pod.PodDefinition
 import mesosphere.marathon.core.storage.store.impl.zk.RichCuratorFramework
 import mesosphere.marathon.core.task.jobs.TaskJobsModule
-import mesosphere.marathon.core.task.termination.{ KillService, TaskTerminationModule }
+import mesosphere.marathon.core.task.termination.{KillService, TaskTerminationModule}
 import mesosphere.marathon.core.task.tracker._
 import mesosphere.marathon.core.task.update.TaskStatusUpdateProcessor
 import mesosphere.marathon.core.task.update.impl.TaskStatusUpdateProcessorImpl
-import mesosphere.marathon.core.task.update.impl.steps.{ ContinueOnErrorStep, NotifyRateLimiterStepImpl }
+import mesosphere.marathon.core.task.update.impl.steps.{ContinueOnErrorStep, NotifyRateLimiterStepImpl}
 import mesosphere.marathon.metrics.Metrics
-import mesosphere.marathon.state.{ AbsolutePathId, AppDefinition, Group, RootGroup, RunSpec, Timestamp }
+import mesosphere.marathon.state.{AbsolutePathId, AppDefinition, Group, RootGroup, RunSpec, Timestamp}
 import mesosphere.marathon.storage.StorageConfig
-import mesosphere.marathon.storage.repository.{ GroupRepository, InstanceRepository }
+import mesosphere.marathon.storage.repository.{GroupRepository, InstanceRepository}
 import mesosphere.util.state._
 import org.apache.mesos.Protos.FrameworkID
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.Random
 
 class SchedulerModule(
-  metrics:           Metrics,
-  config:            SchedulerConfig,
-  actorSystem:       ActorSystem,
-  clock:             Clock,
-  persistenceModule: SchedulerRepositoriesModule,
-  pluginModule:      PluginModule,
-  lifecycleState:    LifecycleState,
-  crashStrategy:     CrashStrategy,
-  actorsModule:      ActorsModule) {
+  metrics:                Metrics,
+  config:                 SchedulerConfig,
+  actorSystem:            ActorSystem,
+  clock:                  Clock,
+  persistenceModule:      SchedulerRepositoriesModule,
+  pluginModule:           PluginModule,
+  lifecycleState:         LifecycleState,
+  crashStrategy:          CrashStrategy,
+  actorsModule:           ActorsModule,
+  jobSpecServiceProvider: Provider[JobSpecService]) {
 
   private[this] val log = LoggerFactory.getLogger(getClass)
 
@@ -95,7 +98,7 @@ class SchedulerModule(
 
   lazy val instanceTrackerModule: InstanceTrackerModule = {
     val updateSteps: Seq[InstanceChangeHandler] = Seq(
-      ContinueOnErrorStep(new UpdateGoalAndNotifyLaunchQueueStep(() => instanceTrackerModule.instanceTracker, () => launchQueueModule.launchQueue)),
+      ContinueOnErrorStep(new UpdateGoalAndNotifyLaunchQueueStep(jobSpecServiceProvider, () => instanceTrackerModule.instanceTracker, () => launchQueueModule.launchQueue)),
       ContinueOnErrorStep(new NotifyRateLimiterStepImpl(() => launchQueueModule.launchQueue)),
       ContinueOnErrorStep(new NotifyOfTaskStateOperationStep(eventBus, clock)))
 
