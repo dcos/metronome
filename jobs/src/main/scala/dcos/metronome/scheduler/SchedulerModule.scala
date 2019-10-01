@@ -9,7 +9,7 @@ import akka.event.EventStream
 import akka.stream.scaladsl.Source
 import akka.{ Done, NotUsed }
 import dcos.metronome.repository.SchedulerRepositoriesModule
-import dcos.metronome.scheduler.impl.{ NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor, UpdateGoalAndNotifyLaunchQueueStep }
+import dcos.metronome.scheduler.impl.{ MetronomeExpungeStrategy, NotifyLaunchQueueStep, NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor }
 import mesosphere.marathon._
 import mesosphere.marathon.core.async.ExecutionContexts
 import mesosphere.marathon.core.base.{ ActorsModule, CrashStrategy, LifecycleState }
@@ -95,7 +95,7 @@ class SchedulerModule(
 
   lazy val instanceTrackerModule: InstanceTrackerModule = {
     val updateSteps: Seq[InstanceChangeHandler] = Seq(
-      ContinueOnErrorStep(new UpdateGoalAndNotifyLaunchQueueStep(() => instanceTrackerModule.instanceTracker, () => launchQueueModule.launchQueue)),
+      ContinueOnErrorStep(new NotifyLaunchQueueStep(() => launchQueueModule.launchQueue)),
       ContinueOnErrorStep(new NotifyRateLimiterStepImpl(() => launchQueueModule.launchQueue)),
       ContinueOnErrorStep(new NotifyOfTaskStateOperationStep(eventBus, clock)))
 
@@ -107,7 +107,8 @@ class SchedulerModule(
       instanceRepository,
       groupRepository,
       updateSteps,
-      crashStrategy)(actorsModule.materializer)
+      crashStrategy,
+      expungeStrategy = MetronomeExpungeStrategy)(actorsModule.materializer)
   }
 
   private[this] lazy val offerMatcherManagerModule = new OfferMatcherManagerModule(

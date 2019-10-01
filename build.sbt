@@ -165,10 +165,14 @@ lazy val jobs = (project in file("jobs"))
   }, projectSettings)
   .settings(pbSettings)
   .settings(
-    libraryDependencies ++= Seq(
+    libraryDependencies ++=
+      (
+        Dependencies.Curator.all ++
+        Dependencies.DropwizardMetrics.all ++
+      Seq(
       Dependencies.asyncAwait,
       Dependencies.playJson,
-      Dependencies.marathon,
+//      Dependencies.marathon,
       Dependencies.marathonPlugin,
       Dependencies.macWireMacros,
       Dependencies.macWireUtil,
@@ -178,12 +182,17 @@ lazy val jobs = (project in file("jobs"))
       Dependencies.twitterCommons,
       Dependencies.twitterZk,
       Dependencies.caffeine,
+      Dependencies.scallop,
+      Dependencies.uuidGenerator,
+      Dependencies.jGraphT,
+      Dependencies.java8Compat,
+      Dependencies.mesos,
       Dependencies.Test.scalatest,
       Dependencies.Test.akkaTestKit,
       Dependencies.Test.mockito,
       Dependencies.Test.scalatest,
       Dependencies.Test.scalaCheck,
-    ).map(
+    )).map(
       _.excludeAll(excludeSlf4jLog4j12)
         .excludeAll(excludeLog4j)
         .excludeAll(excludeJCL)
