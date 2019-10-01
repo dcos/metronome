@@ -2,6 +2,8 @@
 
 # 0.6.NEXT
 
+# 0.6.33
+
 * Updated to the latest version of cron-utils `9.0.0` and removed threeten-backport.  This fixes a number of cron related issues in the underlying dependencies.
 * When querying run detail with `embed=history`, `successfulFinishedRuns` and `failedFinishedRuns` contains new field `tasks` which is an array of taskIds of that finished run. This will allow people to query task ids even for finished job runs.
 * Fixed a bug when task status was not updated after the task turned running (when querying embed=activeRuns).
