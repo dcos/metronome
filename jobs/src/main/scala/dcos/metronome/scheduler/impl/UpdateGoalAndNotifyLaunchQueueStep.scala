@@ -2,7 +2,6 @@ package dcos.metronome.scheduler.impl
 
 import akka.Done
 import com.google.inject.Provider
-import dcos.metronome.jobspec.JobSpecService
 import mesosphere.marathon.core.condition.Condition
 import mesosphere.marathon.core.instance.update.{ InstanceChange, InstanceChangeHandler }
 import mesosphere.marathon.core.instance.{ Goal, GoalChangeReason }
@@ -13,7 +12,6 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.Future
 
 class UpdateGoalAndNotifyLaunchQueueStep(
-  jobSpecServiceProvider:  Provider[JobSpecService],
   instanceTrackerProvider: Provider[InstanceTracker],
   launchQueueProvider:     Provider[LaunchQueue]) extends InstanceChangeHandler {
 

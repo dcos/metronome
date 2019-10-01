@@ -8,8 +8,6 @@ import akka.actor.{ ActorRefFactory, ActorSystem, Cancellable }
 import akka.event.EventStream
 import akka.stream.scaladsl.Source
 import akka.{ Done, NotUsed }
-import com.google.inject.Provider
-import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.repository.SchedulerRepositoriesModule
 import dcos.metronome.scheduler.impl.{ NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor, UpdateGoalAndNotifyLaunchQueueStep }
 import mesosphere.marathon._
@@ -47,16 +45,15 @@ import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.Random
 
 class SchedulerModule(
-  metrics:                Metrics,
-  config:                 SchedulerConfig,
-  actorSystem:            ActorSystem,
-  clock:                  Clock,
-  persistenceModule:      SchedulerRepositoriesModule,
-  pluginModule:           PluginModule,
-  lifecycleState:         LifecycleState,
-  crashStrategy:          CrashStrategy,
-  actorsModule:           ActorsModule,
-  jobSpecServiceProvider: Provider[JobSpecService]) {
+  metrics:           Metrics,
+  config:            SchedulerConfig,
+  actorSystem:       ActorSystem,
+  clock:             Clock,
+  persistenceModule: SchedulerRepositoriesModule,
+  pluginModule:      PluginModule,
+  lifecycleState:    LifecycleState,
+  crashStrategy:     CrashStrategy,
+  actorsModule:      ActorsModule) {
 
   private[this] val log = LoggerFactory.getLogger(getClass)
 
@@ -98,7 +95,7 @@ class SchedulerModule(
 
   lazy val instanceTrackerModule: InstanceTrackerModule = {
     val updateSteps: Seq[InstanceChangeHandler] = Seq(
-      ContinueOnErrorStep(new UpdateGoalAndNotifyLaunchQueueStep(jobSpecServiceProvider, () => instanceTrackerModule.instanceTracker, () => launchQueueModule.launchQueue)),
+      ContinueOnErrorStep(new UpdateGoalAndNotifyLaunchQueueStep(() => instanceTrackerModule.instanceTracker, () => launchQueueModule.launchQueue)),
       ContinueOnErrorStep(new NotifyRateLimiterStepImpl(() => launchQueueModule.launchQueue)),
       ContinueOnErrorStep(new NotifyOfTaskStateOperationStep(eventBus, clock)))
 

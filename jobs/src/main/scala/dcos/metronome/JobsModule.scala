@@ -40,8 +40,7 @@ class JobsModule(
     pluginModule,
     lifecycleState,
     crashStrategy,
-    actorsModule,
-    () => jobSpecModule.jobSpecService)
+    actorsModule)
 
   val jobRunModule = {
     val launchQueue = schedulerModule.launchQueueModule.launchQueue
