@@ -1,3 +1,4 @@
+
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.services.s3.model.Region
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
@@ -120,8 +121,15 @@ lazy val metronome = (project in file("."))
       Dependencies.macWireMacros,
       Dependencies.macWireUtil,
       Dependencies.macWireProxy,
-      Dependencies.Test.scalatest
+      Dependencies.Test.scalatest,
+      Dependencies.Test.usiTestUtils
     )
+      .map(
+        _.excludeAll(excludeSlf4jLog4j12)
+          .excludeAll(excludeLog4j)
+          .excludeAll(excludeJCL)
+          .excludeAll(excludeAkkaHttpExperimental)
+      )
   )
 
 val silencerVersion = "1.1"
@@ -190,3 +198,33 @@ lazy val jobs = (project in file("jobs"))
         .excludeAll(excludeAkkaHttpExperimental)
     )
   )
+
+lazy val integrationTestSettings = Seq(
+  testListeners := Nil, // TODO(MARATHON-8215): Remove this line
+
+  fork in Test := true,
+  testOptions in Test := Seq(
+    Tests.Argument(
+      "-u", "target/test-reports", // TODO(MARATHON-8215): Remove this line
+      "-o", "-eDFG",
+      "-y", "org.scalatest.WordSpec")),
+  parallelExecution in Test := true,
+  testForkedParallel in Test := true,
+  concurrentRestrictions in Test := Seq(Tags.limitAll(math.max(1, java.lang.Runtime.getRuntime.availableProcessors() / 2))),
+  javaOptions in (Test, test) ++= Seq(
+    "-Dakka.actor.default-dispatcher.fork-join-executor.parallelism-min=2",
+    "-Dakka.actor.default-dispatcher.fork-join-executor.factor=1",
+    "-Dakka.actor.default-dispatcher.fork-join-executor.parallelism-max=4",
+    "-Dscala.concurrent.context.minThreads=2",
+    "-Dscala.concurrent.context.maxThreads=32"
+  ),
+  concurrentRestrictions in Test := Seq(Tags.limitAll(math.max(1, java.lang.Runtime.getRuntime.availableProcessors() / 2)))
+)
+
+lazy val integration = (project in file("./tests/integration"))
+  .settings(integrationTestSettings : _*)
+  .settings(projectSettings: _*)
+  .settings(
+    cleanFiles += baseDirectory { base => base / "sandboxes" }.value
+  )
+  .dependsOn(metronome % "test->test")
