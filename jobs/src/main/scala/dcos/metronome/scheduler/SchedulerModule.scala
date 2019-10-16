@@ -139,87 +139,87 @@ class SchedulerModule(
     val localRootGroup = RootGroup()
 
     override def rootGroup(): RootGroup = {
-      log.error(s"Call to rootGroup in FRGM")
+      log.error(s"Call to rootGroup in FRGM", new RuntimeException())
       localRootGroup
     }
 
     override def rootGroupOption(): Option[RootGroup] = {
-      log.error(s"Call to rootGroup in FRGM")
+      log.error(s"Call to rootGroup in FRGM", new RuntimeException())
       Some(localRootGroup)
     }
 
     override def versions(id: AbsolutePathId): Source[Timestamp, NotUsed] = {
-      log.error(s"FRGM: Versions for ${id}")
+      log.error(s"FRGM: Versions for ${id}", new RuntimeException())
       Source.empty
     }
 
     override def appVersions(id: AbsolutePathId): Source[OffsetDateTime, NotUsed] = {
-      log.error(s"FRGM: appVersions for ${id}")
+      log.error(s"FRGM: appVersions for ${id}", new RuntimeException())
       Source.empty
     }
 
     override def appVersion(id: AbsolutePathId, version: OffsetDateTime): Future[Option[AppDefinition]] = {
-      log.error(s"FRGM: appVersion for ${id} in version ${version}")
+      log.error(s"FRGM: appVersion for ${id} in version ${version}", new RuntimeException())
       Future.failed(new NotImplementedError("FRGM not implemented"))
     }
 
     override def podVersions(id: AbsolutePathId): Source[OffsetDateTime, NotUsed] = {
-      log.error(s"FRGM: podVersions for ${id}")
+      log.error(s"FRGM: podVersions for ${id}", new RuntimeException())
       Source.empty
     }
 
     override def podVersion(id: AbsolutePathId, version: OffsetDateTime): Future[Option[PodDefinition]] = {
-      log.error(s"FRGM: podVersion for ${id} in version ${version}")
+      log.error(s"FRGM: podVersion for ${id} in version ${version}", new RuntimeException())
       Future.failed(new NotImplementedError("FRGM not implemented"))
     }
 
     override def group(id: AbsolutePathId): Option[Group] = {
-      log.error(s"FRGM: group for ${id}")
+      log.error(s"FRGM: group for ${id}", new RuntimeException())
       None
     }
 
     override def group(id: AbsolutePathId, version: Timestamp): Future[Option[Group]] = {
-      log.error(s"FRGM: group for ${id} in version ${version}")
+      log.error(s"FRGM: group for ${id} in version ${version}", new RuntimeException())
       Future.failed(new NotImplementedError("FRGM not implemented"))
     }
 
     override def runSpec(id: AbsolutePathId): Option[RunSpec] = {
-      log.error(s"FRGM: runSpec for ${id}")
+      log.error(s"FRGM: runSpec for ${id}", new RuntimeException())
       None
     }
 
     override def app(id: AbsolutePathId): Option[AppDefinition] = {
-      log.error(s"FRGM: app for ${id}")
+      log.error(s"FRGM: app for ${id}", new RuntimeException())
       None
     }
 
     override def apps(ids: Set[AbsolutePathId]): Map[AbsolutePathId, Option[AppDefinition]] = {
-      log.error(s"FRGM: apps for ${ids}")
+      log.error(s"FRGM: apps for ${ids}", new RuntimeException())
       Map.empty
     }
 
     override def pod(id: AbsolutePathId): Option[PodDefinition] = {
-      log.error(s"FRGM: pod for ${id}")
+      log.error(s"FRGM: pod for ${id}", new RuntimeException())
       None
     }
 
     override def updateRootEither[T](id: AbsolutePathId, fn: RootGroup => Future[Either[T, RootGroup]], version: Timestamp, force: Boolean, toKill: Map[AbsolutePathId, Seq[Instance]]): Future[Either[T, DeploymentPlan]] = {
-      log.error(s"FRGM: updateRootEither")
+      log.error(s"FRGM: updateRootEither", new RuntimeException())
       Future.failed(new NotImplementedError("FRGM not implemented"))
     }
 
     override def patchRoot(fn: RootGroup => RootGroup): Future[Done] = {
-      log.error(s"FRGM: patchRoot")
+      log.error(s"FRGM: patchRoot", new RuntimeException())
       Future.failed(new NotImplementedError("FRGM not implemented"))
     }
 
     override def invalidateAndRefreshGroupCache(): Future[Done] = {
-      log.error(s"FRGM: invalidateAndRefreshGroupCache")
+      log.error(s"FRGM: invalidateAndRefreshGroupCache", new RuntimeException())
       Future.failed(new NotImplementedError("FRGM not implemented"))
     }
 
     override def invalidateGroupCache(): Future[Done] = {
-      log.error(s"FRGM: invalidateGroupCache")
+      log.error(s"FRGM: invalidateGroupCache", new RuntimeException())
       Future.failed(new NotImplementedError("FRGM not implemented"))
     }
   }
