@@ -21,6 +21,7 @@ object Dependencies {
     val TwitterZk = "18.8.0"
     val MoultingYaml = "0.4.0"
     val Caffeine = "2.6.2"
+    val UsiTestUtils = "0.1.4"
   }
 
   val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
@@ -54,6 +55,9 @@ object Dependencies {
     val scalatestPlay = "org.scalatestplus.play" %% "scalatestplus-play" % V.ScalaTestPlusPlay % "test"
     val akkaTestKit = "com.typesafe.akka" %%  "akka-testkit" % V.Akka % "test"
     val mockito = "org.mockito" % "mockito-core" % V.Mockito % "test"
+
+    val usiTestUtils = "com.mesosphere.usi" % "test-utils" % V.UsiTestUtils % "test"
+
   }
 
 

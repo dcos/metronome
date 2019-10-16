@@ -36,7 +36,7 @@ class JobHistoryMarshallerTest extends FunSuite with Matchers {
       successCount = 1337,
       failureCount = 31337,
       lastSuccessAt = Some(LocalDateTime.parse("2014-09-06T08:50:12.000").toInstant(ZoneOffset.UTC)),
-      lastFailureAt = Some(LocalDateTime.parse("2014-09-06T07:55:12.000").toInstant(ZoneOffset.UTC)),
+      lastFailureAt = Some(LocalDateTime.parse("2014-09-06T07:50:12.000").toInstant(ZoneOffset.UTC)),
       successfulRuns = Seq(successfulJobRunInfo),
       failedRuns = Seq(finishedJobRunInfo))
   }
