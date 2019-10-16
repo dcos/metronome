@@ -202,13 +202,12 @@ lazy val jobs = (project in file("jobs"))
       Dependencies.Test.mockito,
       Dependencies.Test.scalatest,
       Dependencies.Test.scalaCheck,
-    ))
-//        .map(
-//      _.excludeAll(excludeSlf4jLog4j12)
-//        .excludeAll(excludeLog4j)
-//        .excludeAll(excludeJCL)
-//        .excludeAll(excludeAkkaHttpExperimental)
-//    )
+    ))        .map(
+      _.excludeAll(excludeSlf4jLog4j12)
+        .excludeAll(excludeLog4j)
+        .excludeAll(excludeJCL)
+        .excludeAll(excludeAkkaHttpExperimental)
+    )
   )
 
 lazy val integrationTestSettings = Seq(
