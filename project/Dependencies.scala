@@ -14,14 +14,14 @@ object Dependencies {
     val PlayIteratees = "2.6.1"
     val CronUtils = "9.0.0"
     val WixAccord = "0.7.1"
-    val Akka = "2.5.15"
+    val Akka = "2.5.23"
     val Mockito = "2.21.0"
     val JsonValidate = "0.9.4"
     val TwitterCommons = "0.0.76"
     val TwitterZk = "18.8.0"
     val MoultingYaml = "0.4.0"
     val Caffeine = "2.6.2"
-    val UsiTestUtils = "0.1.4"
+    val UsiTestUtils = "0.1.12"
   }
 
   val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
@@ -38,6 +38,7 @@ object Dependencies {
   val cronUtils = "com.cronutils" % "cron-utils" % V.CronUtils exclude("org.threeten", "threetenbp")
   val wixAccord = "com.wix" %% "accord-core" % V.WixAccord
   val akka = "com.typesafe.akka" %%  "akka-actor" % V.Akka
+  val akkaStream = "com.typesafe.akka" %% "akka-stream" % V.Akka
   val jsonValidate = "com.eclipsesource" %% "play-json-schema-validator" % V.JsonValidate
   val twitterCommons = "com.twitter.common.zookeeper" % "candidate" % V.TwitterCommons
   val twitterZk = "com.twitter" %% "util-zk" % V.TwitterZk exclude("com.github.ben-manes.caffeine", "caffeine")
@@ -54,6 +55,7 @@ object Dependencies {
     val scalaCheck = "org.scalacheck" %% "scalacheck" % V.ScalaCheck % "test"
     val scalatestPlay = "org.scalatestplus.play" %% "scalatestplus-play" % V.ScalaTestPlusPlay % "test"
     val akkaTestKit = "com.typesafe.akka" %%  "akka-testkit" % V.Akka % "test"
+    val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % V.Akka % "test"
     val mockito = "org.mockito" % "mockito-core" % V.Mockito % "test"
 
     val usiTestUtils = "com.mesosphere.usi" % "test-utils" % V.UsiTestUtils % "test"
@@ -69,7 +71,7 @@ object Dependencies {
       */
     val Version = "4.0.1"
 
-    val TestVersion = "2.12.0"
+    val TestVersion = "2.13.0"
 
     val excludeZk35 = ExclusionRule(organization = "org.apache.zookeeper", name = "zookeeper")
 

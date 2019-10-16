@@ -54,8 +54,10 @@ class SchedulerRepositoriesModule(metrics: Metrics, config: SchedulerConfig, rep
 
   lazy val curatorFramework: RichCuratorFramework = StorageConfig.curatorFramework(config.scallopConf, crashStrategy, lifecycleState)
 
-  lazy val storageConfig = StorageConfig(config.scallopConf, curatorFramework)
-  lazy val storageModule: StorageModule = StorageModule(metrics, storageConfig, config.scallopConf.mesosBridgeName())(actorsModule.materializer, ExecutionContext.global, actorSystem.scheduler, actorSystem)
+  lazy val storageModule: StorageModule = StorageModule(metrics, config.scallopConf, curatorFramework)(actorsModule.materializer, ExecutionContext.global, actorSystem.scheduler, actorSystem)
+
+  //  lazy val storageConfig = StorageConfig(config.scallopConf, curatorFramework)
+  //  lazy val storageModule: StorageModule = StorageModule(metrics, storageConfig, newGroupStrategy = RootGroup.NewGroupStrategy.fromConfig(config.scallopConf.newGroupEnforceRole()))(actorsModule.materializer, ExecutionContext.global, actorSystem.scheduler, actorSystem)
 
   lazy val instanceRepository: InstanceRepository = storageModule.instanceRepository
   lazy val groupRepository: GroupRepository = storageModule.groupRepository

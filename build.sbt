@@ -187,6 +187,7 @@ lazy val jobs = (project in file("jobs"))
       Dependencies.macWireProxy,
       Dependencies.cronUtils,
       Dependencies.akka,
+      Dependencies.akkaStream, // We need to include this, even if we don't use it to overwrite indirect dependencies 
       Dependencies.twitterCommons,
       Dependencies.twitterZk,
       Dependencies.caffeine,
@@ -196,16 +197,18 @@ lazy val jobs = (project in file("jobs"))
       Dependencies.java8Compat,
       Dependencies.mesos,
       Dependencies.Test.scalatest,
-      Dependencies.Test.akkaTestKit,
+      Dependencies.Test.akkaTestKit, 
+      Dependencies.Test.akkaSlf4j,
       Dependencies.Test.mockito,
       Dependencies.Test.scalatest,
       Dependencies.Test.scalaCheck,
-    )).map(
-      _.excludeAll(excludeSlf4jLog4j12)
-        .excludeAll(excludeLog4j)
-        .excludeAll(excludeJCL)
-        .excludeAll(excludeAkkaHttpExperimental)
-    )
+    ))
+//        .map(
+//      _.excludeAll(excludeSlf4jLog4j12)
+//        .excludeAll(excludeLog4j)
+//        .excludeAll(excludeJCL)
+//        .excludeAll(excludeAkkaHttpExperimental)
+//    )
   )
 
 lazy val integrationTestSettings = Seq(
