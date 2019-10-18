@@ -49,7 +49,7 @@ class ZKStore(val richCurator: RichCuratorFramework, rootPath: String, compressi
     val dataArray = CompactByteString(data.toProto(compressionConf).toByteArray)
     richCurator
       .create(path, Some(dataArray))
-      .map{ path =>ZKEntity(path, data, Some(0)) }
+      .map{ path => ZKEntity(path, data, Some(0)) }
       .recover(exceptionTransform(s"Can not create entity $path"))
   }
 

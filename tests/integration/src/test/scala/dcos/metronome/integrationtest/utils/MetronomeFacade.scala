@@ -27,8 +27,17 @@ class MetronomeFacade(val url: String, implicit val waitTime: FiniteDuration = 3
     result(request(Post(s"$url/v1/jobs", e)), waitTime)
   }
 
+  def startRun(jobId: String): RestResult[HttpResponse] = {
+    val e = HttpEntity(ContentTypes.`application/json`, "")
+    result(request(Post(s"$url/v1/jobs/${jobId}/runs", e)), waitTime)
+  }
+
   def getJob(jobId: String): RestResult[HttpResponse] = {
     result(request(Get(s"$url/v1/jobs")), waitTime)
+  }
+
+  def getRuns(jobId: String): RestResult[HttpResponse] = {
+    result(request(Get(s"$url/v1/jobs/${jobId}/runs")), waitTime)
   }
 
   private[this] def request(request: HttpRequest): Future[RestResult[HttpResponse]] = {
