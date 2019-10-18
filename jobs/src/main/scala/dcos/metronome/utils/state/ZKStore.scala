@@ -1,45 +1,56 @@
 package dcos.metronome
 package utils.state
 
+import java.nio.ByteBuffer
 import java.util.UUID
 
+import akka.util.CompactByteString
 import com.fasterxml.uuid.impl.UUIDUtil
 import com.google.protobuf.{ ByteString, InvalidProtocolBufferException }
-import com.twitter.util.{ Future => TWFuture }
-import com.twitter.zk.{ ZNode, ZkClient }
+import com.typesafe.scalalogging.StrictLogging
+import mesosphere.marathon.core.storage.store.impl.zk.{ ExistsResult, RichCuratorFramework }
 import mesosphere.marathon.{ Protos, StoreCommandFailedException }
-
 import org.apache.zookeeper.KeeperException
-import org.apache.zookeeper.KeeperException.{ NoNodeException, NodeExistsException }
-import ZKStore._
+import org.apache.zookeeper.KeeperException.NoNodeException
+import org.apache.zookeeper.server.ByteBufferInputStream
 
-import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.concurrent.{ ExecutionContext, Future }
 
 case class CompressionConf(enabled: Boolean, sizeLimit: Long)
 
-class ZKStore(val client: ZkClient, root: ZNode, compressionConf: CompressionConf) extends PersistentStore
-    with PersistentStoreManagement with PersistentStoreWithNestedPathsSupport {
+class ZKStore(val richCurator: RichCuratorFramework, rootPath: String, compressionConf: CompressionConf) extends PersistentStore
+    with PersistentStoreManagement with PersistentStoreWithNestedPathsSupport with StrictLogging {
 
   private[this] implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
+
+  private[this] def fullPath(subPath: ID): ID = {
+    rootPath + "/" + subPath
+  }
 
   /**
     * Fetch data and return entity.
     * The entity is returned also if it is not found in zk, since it is needed for the store operation.
     */
   override def load(key: ID): Future[Option[ZKEntity]] = {
-    val node = root(key)
-    node.getData().asScala
-      .map { data => Some(ZKEntity(node, ZKData(data.bytes), Some(data.stat.getVersion))) }
+    val path = fullPath(key)
+    richCurator
+      .data(path)
+      .map{ node =>
+        val zkData = ZKData(node.data.asByteBuffer)
+        Some(ZKEntity(node.path, zkData, Some(node.stat.getVersion)))
+      }
       .recover { case _: NoNodeException => None }
       .recover(exceptionTransform(s"Could not load key $key"))
   }
 
   override def create(key: ID, content: IndexedSeq[Byte]): Future[ZKEntity] = {
-    val node = root(key)
-    val data = ZKData(key, UUID.randomUUID(), content)
-    node.create(data.toProto(compressionConf).toByteArray).asScala
-      .map { n => ZKEntity(n, data, Some(0)) } //first version after create is 0
-      .recover(exceptionTransform(s"Can not create entity $key"))
+    val path = fullPath(key)
+    val data = ZKData(path, UUID.randomUUID(), content)
+    val dataArray = CompactByteString(data.toProto(compressionConf).toByteArray)
+    richCurator
+      .create(path, Some(dataArray))
+      .map{ path =>ZKEntity(path, data, Some(0)) }
+      .recover(exceptionTransform(s"Can not create entity $path"))
   }
 
   /**
@@ -52,8 +63,12 @@ class ZKStore(val client: ZkClient, root: ZNode, compressionConf: CompressionCon
     val zk = zkEntity(entity)
     val version = zk.version.getOrElse (
       throw new StoreCommandFailedException(s"Can not store entity $entity, since there is no version!"))
-    zk.node.setData(zk.data.toProto(compressionConf).toByteArray, version).asScala
-      .map { data => zk.copy(version = Some(data.stat.getVersion)) }
+
+    val dataArray = CompactByteString(zk.data.toProto(compressionConf).toByteArray)
+
+    richCurator
+      .setData(zk.id, dataArray, false, Some(version))
+      .map{ node => zk.copy(version = Some(node.stat.getVersion)) }
       .recover(exceptionTransform(s"Can not update entity $entity"))
   }
 
@@ -61,25 +76,27 @@ class ZKStore(val client: ZkClient, root: ZNode, compressionConf: CompressionCon
     * Delete an entry with given identifier.
     */
   override def delete(key: ID): Future[Boolean] = {
-    val node = root(key)
-    node.exists().asScala
-      .flatMap { d => node.delete(d.stat.getVersion).asScala.map(_ => true) }
+    val path = fullPath(key)
+    richCurator
+      .delete(path)
+      .map(_ => true)
       .recover { case _: NoNodeException => false }
-      .recover(exceptionTransform(s"Can not delete entity $key"))
+      .recover(exceptionTransform(s"Can not delete entity $path"))
   }
 
   override def allIds(): Future[Seq[ID]] = {
-    root.getChildren().asScala
-      .map(_.children.map(_.name).to[Seq])
+    richCurator
+      .children(rootPath)
+      .map(_.children)
       .recover(exceptionTransform("Can not list all identifiers"))
   }
 
   override def allIds(parent: ID): Future[Seq[ID]] = {
-    val rootNode = this.root(parent)
-
-    rootNode.getChildren().asScala
-      .map(_.children.map(_.name).to[Seq])
-      .recover(exceptionTransform(s"Can not list children of $parent"))
+    val path = fullPath(parent)
+    richCurator
+      .children(path)
+      .map(_.children)
+      .recover(exceptionTransform(s"Can not list children of $path"))
   }
 
   private[this] def exceptionTransform[T](errorMessage: => String): PartialFunction[Throwable, T] = {
@@ -93,32 +110,33 @@ class ZKStore(val client: ZkClient, root: ZNode, compressionConf: CompressionCon
     }
   }
 
-  private[this] def createPath(path: ZNode): Future[ZNode] = {
-    def nodeExists(node: ZNode): Future[Boolean] = node.exists().asScala
-      .map(_ => true)
-      .recover { case _: NoNodeException => false }
-      .recover(exceptionTransform("Can not query for exists"))
-
-    def createNode(node: ZNode): Future[ZNode] = node.create().asScala
-      .recover { case _: NodeExistsException => node }
-      .recover(exceptionTransform("Can not create"))
-
-    def createPath(node: ZNode): Future[ZNode] = {
-      nodeExists(node).flatMap {
-        case true  => Future.successful(node)
-        case false => createPath(node.parent).flatMap(_ => createNode(node))
+  private[this] def createAbsolutePath(path: String): Future[Unit] = {
+    logger.info(s"Check if ${path} exists...")
+    richCurator
+      .exists(path)
+      .recover { case _: NoNodeException => ExistsResult(path, null) }
+      .map{ res =>
+        if (res.stat == null) {
+          logger.info(s"Path ${path} does not exist, create now")
+          richCurator.create(path, None, creatingParentsIfNeeded = true, creatingParentContainersIfNeeded = true).map(_ => ())
+        } else {
+          logger.info(s"Path ${path} already exists, skip creation")
+        }
       }
-    }
-    createPath(path)
   }
 
-  override def initialize(): Future[Unit] = createPath(root).map(_ => ())
+  override def initialize(): Future[Unit] = {
+    logger.info(s"Initialize ZKStore with rootPath '${rootPath}")
+    createAbsolutePath(rootPath).map(_ => ())
+  }
 
-  override def createPath(path: String): Future[Unit] = createPath(root(path)).map(_ => ())
+  override def createPath(path: String): Future[Unit] = {
+    createAbsolutePath(fullPath(path))
+  }
 }
 
-case class ZKEntity(node: ZNode, data: ZKData, version: Option[Int] = None) extends PersistentEntity {
-  override def id: String = node.name
+case class ZKEntity(id: String, data: ZKData, version: Option[Int] = None) extends PersistentEntity {
+
   override def withNewContent(updated: IndexedSeq[Byte]): PersistentEntity = copy(data = data.copy(bytes = updated))
   override def bytes: IndexedSeq[Byte] = data.bytes
 }
@@ -138,6 +156,19 @@ case class ZKData(name: String, uuid: UUID, bytes: IndexedSeq[Byte] = Vector.emp
 }
 object ZKData {
   import IO.{ gzipUncompress => uncompress }
+
+  def apply(bytes: ByteBuffer): ZKData = {
+    try {
+      val byteStream = new ByteBufferInputStream(bytes)
+      val proto = Protos.ZKStoreEntry.parseFrom(byteStream)
+      val content = if (proto.getCompressed) uncompress(proto.getValue.toByteArray) else proto.getValue.toByteArray
+      new ZKData(proto.getName, UUIDUtil.uuid(proto.getUuid.toByteArray), content.to[IndexedSeq])
+    } catch {
+      case ex: InvalidProtocolBufferException =>
+        throw new StoreCommandFailedException(s"Can not deserialize Protobuf from ByteBuffer", ex)
+    }
+  }
+
   def apply(bytes: Array[Byte]): ZKData = {
     try {
       val proto = Protos.ZKStoreEntry.parseFrom(bytes)
@@ -151,12 +182,5 @@ object ZKData {
 }
 
 object ZKStore {
-  implicit class Twitter2Scala[T](val twitterF: TWFuture[T]) extends AnyVal {
-    def asScala: Future[T] = {
-      val promise = Promise[T]()
-      twitterF.onSuccess(promise.success)
-      twitterF.onFailure(promise.failure)
-      promise.future
-    }
-  }
+
 }
