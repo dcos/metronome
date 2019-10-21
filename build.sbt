@@ -188,8 +188,7 @@ lazy val jobs = (project in file("jobs"))
       Dependencies.cronUtils,
       Dependencies.akka,
       Dependencies.akkaStream, // We need to include this, even if we don't use it to overwrite indirect dependencies 
-      Dependencies.twitterCommons,
-      Dependencies.twitterZk,
+      Dependencies.akkaSlf4j,
       Dependencies.caffeine,
       Dependencies.scallop,
       Dependencies.uuidGenerator,

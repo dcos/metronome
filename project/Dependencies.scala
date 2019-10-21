@@ -17,8 +17,6 @@ object Dependencies {
     val Akka = "2.5.23"
     val Mockito = "2.21.0"
     val JsonValidate = "0.9.4"
-    val TwitterCommons = "0.0.76"
-    val TwitterZk = "18.8.0"
     val MoultingYaml = "0.4.0"
     val Caffeine = "2.6.2"
     val UsiTestUtils = "0.1.12"
@@ -39,9 +37,8 @@ object Dependencies {
   val wixAccord = "com.wix" %% "accord-core" % V.WixAccord
   val akka = "com.typesafe.akka" %%  "akka-actor" % V.Akka
   val akkaStream = "com.typesafe.akka" %% "akka-stream" % V.Akka
+  val akkaSlf4j = "com.typesafe.akka" %%  "akka-slf4j" % V.Akka
   val jsonValidate = "com.eclipsesource" %% "play-json-schema-validator" % V.JsonValidate
-  val twitterCommons = "com.twitter.common.zookeeper" % "candidate" % V.TwitterCommons
-  val twitterZk = "com.twitter" %% "util-zk" % V.TwitterZk exclude("com.github.ben-manes.caffeine", "caffeine")
   val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % V.Caffeine // we need to override caffeine version because of dependency in dcos plugins
 
   val scallop = "org.rogach" %% "scallop" % "3.1.2"
@@ -58,7 +55,7 @@ object Dependencies {
     val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % V.Akka % "test"
     val mockito = "org.mockito" % "mockito-core" % V.Mockito % "test"
 
-    val usiTestUtils = "com.mesosphere.usi" % "test-utils" % V.UsiTestUtils % "test"
+    val usiTestUtils = "com.mesosphere.usi" % "test-utils" % V.UsiTestUtils % "test" exclude("org.apache.zookeeper", "zookeeper")
 
   }
 
