@@ -187,7 +187,7 @@ lazy val jobs = (project in file("jobs"))
       Dependencies.macWireProxy,
       Dependencies.cronUtils,
       Dependencies.akka,
-      Dependencies.akkaStream, // We need to include this, even if we don't use it to overwrite indirect dependencies 
+      Dependencies.akkaStream, // We need to include this, even if we don't use it to overwrite indirect dependencies
       Dependencies.akkaSlf4j,
       Dependencies.caffeine,
       Dependencies.scallop,
@@ -195,8 +195,9 @@ lazy val jobs = (project in file("jobs"))
       Dependencies.jGraphT,
       Dependencies.java8Compat,
       Dependencies.mesos,
+      Dependencies.guice,
       Dependencies.Test.scalatest,
-      Dependencies.Test.akkaTestKit, 
+      Dependencies.Test.akkaTestKit,
       Dependencies.Test.akkaSlf4j,
       Dependencies.Test.mockito,
       Dependencies.Test.scalatest,

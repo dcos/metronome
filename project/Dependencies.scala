@@ -20,6 +20,7 @@ object Dependencies {
     val MoultingYaml = "0.4.0"
     val Caffeine = "2.6.2"
     val UsiTestUtils = "0.1.12"
+    val Guice = "4.1.0"
   }
 
   val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
@@ -40,6 +41,8 @@ object Dependencies {
   val akkaSlf4j = "com.typesafe.akka" %%  "akka-slf4j" % V.Akka
   val jsonValidate = "com.eclipsesource" %% "play-json-schema-validator" % V.JsonValidate
   val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % V.Caffeine // we need to override caffeine version because of dependency in dcos plugins
+
+  val guice = "com.google.inject" % "guice" % V.Guice
 
   val scallop = "org.rogach" %% "scallop" % "3.1.2"
   val uuidGenerator = "com.fasterxml.uuid" % "java-uuid-generator" % "3.1.4"

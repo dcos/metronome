@@ -35,8 +35,8 @@ class SchedulerRepositoriesModule(metrics: Metrics, config: SchedulerConfig, lif
 
   def jobHistoryRepository: Repository[JobId, JobHistory] = new ZkJobHistoryRepository(zkStore, ec)
 
-  lazy val storageConfig = StorageConfig(config.scallopConf, Some(curatorFramework))
-  lazy val storageModule: StorageModule = StorageModule(metrics, storageConfig, config.scallopConf.mesosBridgeName())(actorsModule.materializer, ExecutionContext.global, actorSystem.scheduler, actorSystem)
+  //  lazy val storageConfig = StorageConfig(config.scallopConf, curatorFramework)
+  lazy val storageModule: StorageModule = StorageModule(metrics, config.scallopConf, curatorFramework)(actorsModule.materializer, ExecutionContext.global, actorSystem.scheduler, actorSystem)
 
   lazy val instanceRepository: InstanceRepository = storageModule.instanceRepository
   lazy val groupRepository: GroupRepository = storageModule.groupRepository
