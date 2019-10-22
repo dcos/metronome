@@ -9,7 +9,7 @@ import org.scalatest.Inside
 
 import scala.concurrent.duration._
 
-class MetronomeIT extends AkkaUnitTest with MesosClusterTest with Inside with StrictLogging {
+class MetronomeITBase extends AkkaUnitTest with MesosClusterTest with Inside with StrictLogging {
 
   override lazy implicit val patienceConfig = PatienceConfig(180.seconds, interval = 1.second)
 
@@ -27,7 +27,9 @@ class MetronomeIT extends AkkaUnitTest with MesosClusterTest with Inside with St
     val zkUrl = s"zk://${zkserver.connectUrl}/metronome"
     val masterUrl = mesosFacade.url.getHost + ":" + mesosFacade.url.getPort
 
-    val metronomeFramework = new MetronomeFramework.LocalMetronome("xxx", masterUrl, zkUrl)
+    val currentITName = MetronomeITBase.this.getClass.getSimpleName
+
+    val metronomeFramework = MetronomeFramework.LocalMetronome(currentITName, masterUrl, zkUrl)
 
     logger.info("Starting metronome...")
     metronomeFramework.start().futureValue
