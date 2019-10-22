@@ -4,7 +4,7 @@ import play.api.libs.json.JsArray
 
 import scala.concurrent.duration._
 
-class SimpleJobsIT extends MetronomeIT {
+class SimpleJobsIT extends MetronomeITBase {
 
   override lazy implicit val patienceConfig = PatienceConfig(180.seconds, interval = 1.second)
 

@@ -111,16 +111,21 @@ class ZKStore(val richCurator: RichCuratorFramework, rootPath: String, compressi
   }
 
   private[this] def createAbsolutePath(path: String): Future[Unit] = {
-    logger.info(s"Check if ${path} exists...")
+    logger.debug(s"Check if ${path} exists...")
     richCurator
       .exists(path)
       .recover { case _: NoNodeException => ExistsResult(path, null) }
-      .map{ res =>
+      .flatMap{ res =>
         if (res.stat == null) {
-          logger.info(s"Path ${path} does not exist, create now")
-          richCurator.create(path, None, creatingParentsIfNeeded = true, creatingParentContainersIfNeeded = true).map(_ => ())
+          logger.debug(s"Path ${path} does not exist, create now")
+          richCurator
+            .create(path, None, creatingParentsIfNeeded = true, creatingParentContainersIfNeeded = true)
+            .map(r => {
+              logger.debug(s"Created new path ${path}")
+            })
         } else {
-          logger.info(s"Path ${path} already exists, skip creation")
+          logger.debug(s"Path ${path} already exists, skip creation")
+          Future.successful(())
         }
       }
   }

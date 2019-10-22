@@ -53,6 +53,8 @@ object MetronomeFramework {
     lazy val httpPort = PortAllocator.ephemeralPort()
     lazy val httpsPort = PortAllocator.ephemeralPort()
 
+    lazy val uniqueZkUrl = zkUrl + "_" + httpPort
+
     // lower the memory pressure by limiting threads.
     val akkaJvmArgs = Seq(
       "-Dakka.actor.default-dispatcher.fork-join-executor.parallelism-min=2",
@@ -84,7 +86,7 @@ object MetronomeFramework {
       "mesos_role" -> mesosRole,
       "http_port" -> httpPort.toString,
       "https_port" -> httpsPort.toString,
-      "zk" -> zkUrl,
+      "zk" -> uniqueZkUrl,
       "zk_timeout" -> 20.seconds.toMillis.toString,
       "zk_connection_timeout" -> 20.seconds.toMillis.toString,
       "zk_session_timeout" -> 20.seconds.toMillis.toString,
@@ -117,7 +119,7 @@ object MetronomeFramework {
 
       val cmd = Seq(java, "-Xmx1024m", "-Xms256m", "-XX:+UseConcMarkSweepGC", "-XX:ConcGCThreads=2") ++
         runtimeArguments ++ akkaJvmArgs ++
-        Seq(s"-DmarathonUUID=$uuid -DtestSuite=$suiteName", s"-Dmetronome.zk.url=$zkUrl", s"-Dmetronome.mesos.master.url=$masterUrl", s"-Dmetronome.framework.name=metronome-$uuid", s"-Dplay.server.http.port=$httpPort", s"-Dplay.server.https.port=$httpsPort", "-classpath", cp, "-client", mainClass) // ++ args
+        Seq(s"-DmarathonUUID=$uuid -DtestSuite=$suiteName", s"-Dmetronome.zk.url=$uniqueZkUrl", s"-Dmetronome.mesos.master.url=$masterUrl", s"-Dmetronome.framework.name=metronome-$uuid", s"-Dplay.server.http.port=$httpPort", s"-Dplay.server.https.port=$httpsPort", "-classpath", cp, "-client", mainClass) // ++ args
 
       logger.info(s"Starting process in ${workDir}, Cmd is ${cmd}")
 

@@ -2,7 +2,7 @@ package dcos.metronome.integrationtest
 
 import com.mesosphere.utils.mesos.MesosFacade.ITFramework
 
-class BasicTestsIT extends MetronomeIT {
+class BasicTestsIT extends MetronomeITBase {
 
   "Metronome should start" in withFixture() { f =>
     Then("once example framework is connected, Mesos should return it's framework Id")
