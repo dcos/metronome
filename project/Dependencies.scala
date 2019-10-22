@@ -19,7 +19,7 @@ object Dependencies {
     val JsonValidate = "0.9.4"
     val MoultingYaml = "0.4.0"
     val Caffeine = "2.6.2"
-    val UsiTestUtils = "0.1.4"
+    val UsiTestUtils = "0.1.12"
   }
 
   val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
