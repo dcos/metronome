@@ -1,23 +1,21 @@
 package dcos.metronome
 package scheduler
 
-import java.time.{ Clock, OffsetDateTime }
-import java.util.concurrent.Executors
+import java.time.Clock
+import java.util.concurrent.{ Executors, TimeUnit }
 
 import akka.actor.{ ActorRefFactory, ActorSystem, Cancellable }
 import akka.event.EventStream
 import akka.stream.scaladsl.Source
-import akka.{ Done, NotUsed }
+import dcos.metronome.model.JobRunId
 import dcos.metronome.repository.SchedulerRepositoriesModule
 import dcos.metronome.scheduler.impl.{ MetronomeExpungeStrategy, NotifyLaunchQueueStep, NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor }
 import mesosphere.marathon._
 import mesosphere.marathon.core.async.ExecutionContexts
 import mesosphere.marathon.core.base.{ ActorsModule, CrashStrategy, LifecycleState }
-import mesosphere.marathon.core.deployment.DeploymentPlan
 import mesosphere.marathon.core.election.{ ElectionModule, ElectionService }
 import mesosphere.marathon.core.flow.FlowModule
 import mesosphere.marathon.core.group.GroupManager
-import mesosphere.marathon.core.instance.Instance
 import mesosphere.marathon.core.instance.update.InstanceChangeHandler
 import mesosphere.marathon.core.launcher.{ LauncherModule, OfferProcessor }
 import mesosphere.marathon.core.launchqueue.LaunchQueueModule
@@ -25,7 +23,6 @@ import mesosphere.marathon.core.leadership.LeadershipModule
 import mesosphere.marathon.core.matcher.base.OfferMatcher
 import mesosphere.marathon.core.matcher.manager.OfferMatcherManagerModule
 import mesosphere.marathon.core.plugin.PluginModule
-import mesosphere.marathon.core.pod.PodDefinition
 import mesosphere.marathon.core.storage.store.impl.zk.RichCuratorFramework
 import mesosphere.marathon.core.task.jobs.TaskJobsModule
 import mesosphere.marathon.core.task.termination.{ KillService, TaskTerminationModule }
@@ -34,14 +31,15 @@ import mesosphere.marathon.core.task.update.TaskStatusUpdateProcessor
 import mesosphere.marathon.core.task.update.impl.TaskStatusUpdateProcessorImpl
 import mesosphere.marathon.core.task.update.impl.steps.{ ContinueOnErrorStep, NotifyRateLimiterStepImpl }
 import mesosphere.marathon.metrics.Metrics
-import mesosphere.marathon.state.{ AbsolutePathId, AppDefinition, Group, RootGroup, RunSpec, Timestamp }
+import mesosphere.marathon.state.{ AbsolutePathId, RunSpec }
 import mesosphere.marathon.storage.StorageConfig
 import mesosphere.marathon.storage.repository.{ GroupRepository, InstanceRepository }
 import mesosphere.util.state._
 import org.apache.mesos.Protos.FrameworkID
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.concurrent.duration.Duration
+import scala.concurrent.{ Await, ExecutionContext, Promise }
 import scala.util.Random
 
 class SchedulerModule(
@@ -117,9 +115,7 @@ class SchedulerModule(
     leadershipModule,
     () => scheduler.getLocalRegion)(actorsModule.materializer)
 
-  private[this] val groupManager: GroupManager = {
-    FakeRootGroupManager
-  }
+  private[this] val runSpecProvider = RunSpecProvider
 
   private[this] lazy val launcherModule: LauncherModule = {
     val instanceTracker: InstanceTracker = instanceTrackerModule.instanceTracker
@@ -132,96 +128,21 @@ class SchedulerModule(
       schedulerDriverHolder,
       offerMatcher,
       pluginModule.pluginManager,
-      groupManager)(clock)
+      runSpecProvider)(clock)
   }
 
-  private[this] object FakeRootGroupManager extends GroupManager {
-    val localRootGroup = RootGroup()
-
-    override def rootGroup(): RootGroup = {
-      log.error(s"Call to rootGroup in FRGM", new RuntimeException())
-      localRootGroup
-    }
-
-    override def rootGroupOption(): Option[RootGroup] = {
-      log.error(s"Call to rootGroup in FRGM", new RuntimeException())
-      Some(localRootGroup)
-    }
-
-    override def versions(id: AbsolutePathId): Source[Timestamp, NotUsed] = {
-      log.error(s"FRGM: Versions for ${id}", new RuntimeException())
-      Source.empty
-    }
-
-    override def appVersions(id: AbsolutePathId): Source[OffsetDateTime, NotUsed] = {
-      log.error(s"FRGM: appVersions for ${id}", new RuntimeException())
-      Source.empty
-    }
-
-    override def appVersion(id: AbsolutePathId, version: OffsetDateTime): Future[Option[AppDefinition]] = {
-      log.error(s"FRGM: appVersion for ${id} in version ${version}", new RuntimeException())
-      Future.failed(new NotImplementedError("FRGM not implemented"))
-    }
-
-    override def podVersions(id: AbsolutePathId): Source[OffsetDateTime, NotUsed] = {
-      log.error(s"FRGM: podVersions for ${id}", new RuntimeException())
-      Source.empty
-    }
-
-    override def podVersion(id: AbsolutePathId, version: OffsetDateTime): Future[Option[PodDefinition]] = {
-      log.error(s"FRGM: podVersion for ${id} in version ${version}", new RuntimeException())
-      Future.failed(new NotImplementedError("FRGM not implemented"))
-    }
-
-    override def group(id: AbsolutePathId): Option[Group] = {
-      log.error(s"FRGM: group for ${id}", new RuntimeException())
-      None
-    }
-
-    override def group(id: AbsolutePathId, version: Timestamp): Future[Option[Group]] = {
-      log.error(s"FRGM: group for ${id} in version ${version}", new RuntimeException())
-      Future.failed(new NotImplementedError("FRGM not implemented"))
-    }
+  private[this] object RunSpecProvider extends GroupManager.RunSpecProvider with GroupManager.EnforceRoleSettingProvider {
 
     override def runSpec(id: AbsolutePathId): Option[RunSpec] = {
-      log.error(s"FRGM: runSpec for ${id}", new RuntimeException())
-      None
+      import dcos.metronome.utils.glue.MarathonImplicits._
+
+      log.error(s"Need to provide runSpec for ${id}", new RuntimeException())
+      val jobId = JobRunId(id)
+      Await.result(persistenceModule.jobRunRepository.get(jobId), Duration(30, TimeUnit.SECONDS)).map(_.toRunSpec)
     }
 
-    override def app(id: AbsolutePathId): Option[AppDefinition] = {
-      log.error(s"FRGM: app for ${id}", new RuntimeException())
-      None
-    }
+    override def enforceRoleSetting(id: AbsolutePathId): Boolean = false
 
-    override def apps(ids: Set[AbsolutePathId]): Map[AbsolutePathId, Option[AppDefinition]] = {
-      log.error(s"FRGM: apps for ${ids}", new RuntimeException())
-      Map.empty
-    }
-
-    override def pod(id: AbsolutePathId): Option[PodDefinition] = {
-      log.error(s"FRGM: pod for ${id}", new RuntimeException())
-      None
-    }
-
-    override def updateRootEither[T](id: AbsolutePathId, fn: RootGroup => Future[Either[T, RootGroup]], version: Timestamp, force: Boolean, toKill: Map[AbsolutePathId, Seq[Instance]]): Future[Either[T, DeploymentPlan]] = {
-      log.error(s"FRGM: updateRootEither", new RuntimeException())
-      Future.failed(new NotImplementedError("FRGM not implemented"))
-    }
-
-    override def patchRoot(fn: RootGroup => RootGroup): Future[Done] = {
-      log.error(s"FRGM: patchRoot", new RuntimeException())
-      Future.failed(new NotImplementedError("FRGM not implemented"))
-    }
-
-    override def invalidateAndRefreshGroupCache(): Future[Done] = {
-      log.error(s"FRGM: invalidateAndRefreshGroupCache", new RuntimeException())
-      Future.failed(new NotImplementedError("FRGM not implemented"))
-    }
-
-    override def invalidateGroupCache(): Future[Done] = {
-      log.error(s"FRGM: invalidateGroupCache", new RuntimeException())
-      Future.failed(new NotImplementedError("FRGM not implemented"))
-    }
   }
 
   private[this] lazy val taskTerminationModule: TaskTerminationModule = new TaskTerminationModule(
@@ -305,9 +226,7 @@ class SchedulerModule(
     driverHolder = schedulerDriverHolder,
     instanceTracker = instanceTrackerModule.instanceTracker,
     eventStream = eventBus,
-    groupManager = groupManager,
-    //    maybeOfferReviver = flowModule.maybeOfferReviver(metrics, clock, scallopConf, eventBus, offersWanted, schedulerDriverHolder),
-    //    taskTracker = instanceTrackerModule.instanceTracker,
+    runSpecProvider = runSpecProvider,
     taskOpFactory = launcherModule.taskOpFactory,
     localRegion = () => scheduler.getLocalRegion,
     initialFrameworkInfo = initialFrameworkInfo)(actorsModule.materializer, ExecutionContext.global)
