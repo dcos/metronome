@@ -1,12 +1,13 @@
 package dcos.metronome
 package scheduler.impl
 
+import java.time.Clock
+
 import akka.Done
 import akka.event.EventStream
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.instance.update.{ InstanceChange, InstanceChangeHandler }
-import java.time.Clock
 
 import scala.concurrent.Future
 

@@ -22,25 +22,23 @@ class SchedulerRepositoriesModule(metrics: Metrics, config: SchedulerConfig, lif
 
   private[this] val zkRootPath = config.zkStatePath
 
-  lazy val curatorFramework: Option[RichCuratorFramework] = StorageConfig.curatorFramework(config.scallopConf, crashStrategy, lifecycleState)
+  // Initialize Apache Curator Framework (wrapped in [[RichCuratorFramework]] and connect/sync with the storage
+  // for an underlying Zookeeper storage.
+  val curatorFramework: RichCuratorFramework = StorageConfig.curatorFramework(config.scallopConf, crashStrategy, lifecycleState)
 
-  val zkStore: ZKStore = new ZKStore(
-    curatorFramework.get,
+  private[this] val zkStore: ZKStore = new ZKStore(
+    curatorFramework,
     zkRootPath,
     CompressionConf(config.zkCompressionEnabled, config.zkCompressionThreshold))
 
   def jobSpecRepository: Repository[JobId, JobSpec] = new ZkJobSpecRepository(zkStore, ec)
-
   def jobRunRepository: Repository[JobRunId, JobRun] = new ZkJobRunRepository(zkStore, ec)
-
   def jobHistoryRepository: Repository[JobId, JobHistory] = new ZkJobHistoryRepository(zkStore, ec)
 
-  lazy val storageConfig = StorageConfig(config.scallopConf, curatorFramework)
-  lazy val storageModule: StorageModule = StorageModule(metrics, storageConfig, config.scallopConf.mesosBridgeName())(actorsModule.materializer, ExecutionContext.global, actorSystem.scheduler, actorSystem)
+  lazy val storageModule: StorageModule = StorageModule(metrics, config.scallopConf, curatorFramework)(actorsModule.materializer, ExecutionContext.global, actorSystem.scheduler, actorSystem)
 
   lazy val instanceRepository: InstanceRepository = storageModule.instanceRepository
   lazy val groupRepository: GroupRepository = storageModule.groupRepository
-
   lazy val frameworkIdRepository: FrameworkIdRepository = storageModule.frameworkIdRepository
 
   lazy val migration: Migration = new MigrationImpl(zkStore)

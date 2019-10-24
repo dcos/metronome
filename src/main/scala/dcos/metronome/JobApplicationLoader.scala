@@ -1,20 +1,18 @@
 package dcos.metronome
 
-import dcos.metronome.scheduler.SchedulerService
-import dcos.metronome.scheduler.impl.SchedulerServiceImpl
 import java.time.Clock
 
-import controllers.AssetsComponents
-import com.softwaremill.macwire._
 import com.typesafe.scalalogging.StrictLogging
+import controllers.AssetsComponents
 import dcos.metronome.api.v1.LeaderProxyFilter
 import dcos.metronome.api.{ ApiModule, ErrorHandler }
+import dcos.metronome.scheduler.SchedulerService
+import dcos.metronome.scheduler.impl.SchedulerServiceImpl
 import mesosphere.marathon.MetricsModule
 import mesosphere.marathon.core.async.ExecutionContexts
 import mesosphere.marathon.core.base.{ CrashStrategy, JvmExitsCrashStrategy }
 import mesosphere.marathon.metrics.current.UnitOfMeasurement
 import org.slf4j.LoggerFactory
-import play.shaded.ahc.org.asynchttpclient.{ AsyncHttpClientConfig, DefaultAsyncHttpClient }
 import play.api.ApplicationLoader.Context
 import play.api._
 import play.api.i18n._
@@ -22,9 +20,9 @@ import play.api.libs.ws.ahc.{ AhcConfigBuilder, AhcWSClient, AhcWSClientConfig, 
 import play.api.libs.ws.{ WSClient, WSConfigParser }
 import play.api.mvc.EssentialFilter
 import play.api.routing.Router
+import play.shaded.ahc.org.asynchttpclient.{ AsyncHttpClientConfig, DefaultAsyncHttpClient }
 
 import scala.concurrent.Future
-import scala.util.Failure
 
 /**
   * Application loader that wires up the application dependencies using Macwire
@@ -70,7 +68,7 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
 
   val config = new MetronomeConfig(configuration)
 
-  val metricsModule = MetricsModule(config.scallopConf, configuration.underlying)
+  val metricsModule = MetricsModule(config.scallopConf)
 
   private[this] val jobsModule: JobsModule = new JobsModule(config, actorSystem, clock, metricsModule)
 

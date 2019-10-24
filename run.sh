@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ZK_URL="${1:-zk://127.0.0.1:2181/metronome}"
-MESOS_MASTER_URL="${2:-zk://127.0.0.1:2181/mesos}"
+MESOS_MASTER_URL="${2:-127.0.0.1:5050}"
 HTTP_PORT="${3:-9000}"
 
 if [ -z "$NOBUILD" ]; then

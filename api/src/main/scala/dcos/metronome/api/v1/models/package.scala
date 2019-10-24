@@ -216,7 +216,7 @@ package object models {
     (__ \ "run").format[JobRunSpec])(JobSpec.apply(_, _, _, Seq.empty, _), s => (s.id, s.description, s.labels, s.run))
 
   implicit lazy val TaskIdFormat: Format[Task.Id] = Format(
-    Reads.of[String](Reads.minLength[String](3)).map(Task.Id(_)),
+    Reads.of[String](Reads.minLength[String](3)).map(Task.Id.parse),
     Writes[Task.Id] { id => JsString(id.idString) })
 
   implicit lazy val TaskStateFormat: Format[TaskState] = new Format[TaskState] {

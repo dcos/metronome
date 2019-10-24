@@ -3,9 +3,9 @@ package queue
 
 import com.softwaremill.macwire.wire
 import dcos.metronome.queue.impl.LaunchQueueServiceImpl
-import mesosphere.marathon.core.launchqueue.LaunchQueue
+import mesosphere.marathon.core.task.tracker.InstanceTracker
 
-class LaunchQueueModule(launchQueue: LaunchQueue) {
+class LaunchQueueModule(instanceTracker: InstanceTracker) {
 
   def launchQueueService = wire[LaunchQueueServiceImpl]
 }

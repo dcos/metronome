@@ -20,12 +20,8 @@ class ApplicationController(cc: ControllerComponents, metricsModule: MetricsModu
   }
 
   def showMetrics = Action {
-    val metricsJsonString = metricsModule.snapshot() match {
-      case Left(_) =>
-        // Kamon snapshot
-        throw new IllegalArgumentException("Only Dropwizard format is supported, cannot render metrics from Kamon snapshot. Make sure your metrics are configured correctly.")
-      case Right(dropwizardRegistry) => Json.stringify(Json.toJson(Raml.toRaml(dropwizardRegistry)))
-    }
+    val snapshot = Raml.toRaml(metricsModule.snapshot())
+    val metricsJsonString = Json.stringify(Json.toJson(snapshot))
     Ok(metricsJsonString).as(ContentTypes.JSON)
   }
 }

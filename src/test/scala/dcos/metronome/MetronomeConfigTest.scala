@@ -1,6 +1,7 @@
 package dcos.metronome
 
 import com.typesafe.config.ConfigFactory
+import mesosphere.marathon.GpuSchedulingBehavior
 import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }
 import play.api.Configuration
 
@@ -53,11 +54,11 @@ class MetronomeConfigTest extends FunSuite with Matchers with GivenWhenThen {
        """.stripMargin)
 
     When("enabled features are requested")
-    val featues =
-      Then("features should contain gpu_resources")
+    Then("features should contain gpu_resources")
     cfg.scallopConf.features.toOption.get.contains("gpu_resources") shouldEqual true
+
     And("gpu_scheduling_behavior must be set")
-    cfg.scallopConf.gpuSchedulingBehavior.toOption.contains("restricted") shouldEqual true
+    cfg.scallopConf.gpuSchedulingBehavior.toOption shouldEqual Some(GpuSchedulingBehavior.Restricted)
   }
 
   test("feature gpu_resources is disabled when gpu_scheduling_behavior is not set") {
@@ -66,10 +67,10 @@ class MetronomeConfigTest extends FunSuite with Matchers with GivenWhenThen {
     val cfg = fromConfig("")
 
     When("enabled features are requested")
-    val featues =
-      Then("features should contain gpu_resources")
+    Then("features should contain gpu_resources")
     cfg.scallopConf.features.toOption.get shouldEqual Set.empty
+
     And("gpu_scheduling_behavior must be set")
-    cfg.scallopConf.gpuSchedulingBehavior.toOption shouldEqual Some("undefined")
+    cfg.scallopConf.gpuSchedulingBehavior.toOption shouldEqual Some(GpuSchedulingBehavior.Restricted)
   }
 }

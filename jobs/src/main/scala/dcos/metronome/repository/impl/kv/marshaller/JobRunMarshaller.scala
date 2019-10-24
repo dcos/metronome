@@ -55,7 +55,7 @@ object JobRunConversions {
 
   implicit class ProtoToJobRunTask(val proto: Protos.JobRun.JobRunTask) extends AnyVal {
     def toModel: JobRunTask = JobRunTask(
-      Task.Id(proto.getId),
+      Task.Id.parse(proto.getId),
       Instant.ofEpochMilli(proto.getStartedAt),
       if (proto.hasCompletedAt) Some(Instant.ofEpochMilli(proto.getCompletedAt)) else None,
       proto.getStatus.toModel)

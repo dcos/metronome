@@ -2,17 +2,21 @@ package dcos.metronome
 package scheduler
 
 import java.time.Clock
-import java.util.concurrent.Executors
+import java.util.concurrent.{ Executors, TimeUnit }
 
 import akka.actor.{ ActorRefFactory, ActorSystem, Cancellable }
 import akka.event.EventStream
 import akka.stream.scaladsl.Source
+import dcos.metronome.model.JobRunId
 import dcos.metronome.repository.SchedulerRepositoriesModule
-import dcos.metronome.scheduler.impl.{ NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor }
+import dcos.metronome.scheduler.impl.{ MetronomeExpungeStrategy, NotifyLaunchQueueStep, NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor }
+import dcos.metronome.utils.glue.MarathonImplicits
 import mesosphere.marathon._
+import mesosphere.marathon.core.async.ExecutionContexts
 import mesosphere.marathon.core.base.{ ActorsModule, CrashStrategy, LifecycleState }
 import mesosphere.marathon.core.election.{ ElectionModule, ElectionService }
 import mesosphere.marathon.core.flow.FlowModule
+import mesosphere.marathon.core.group.GroupManager
 import mesosphere.marathon.core.instance.update.InstanceChangeHandler
 import mesosphere.marathon.core.launcher.{ LauncherModule, OfferProcessor }
 import mesosphere.marathon.core.launchqueue.LaunchQueueModule
@@ -25,12 +29,16 @@ import mesosphere.marathon.core.task.termination.{ KillService, TaskTerminationM
 import mesosphere.marathon.core.task.tracker._
 import mesosphere.marathon.core.task.update.TaskStatusUpdateProcessor
 import mesosphere.marathon.core.task.update.impl.TaskStatusUpdateProcessorImpl
-import mesosphere.marathon.core.task.update.impl.steps.ContinueOnErrorStep
+import mesosphere.marathon.core.task.update.impl.steps.{ ContinueOnErrorStep, NotifyRateLimiterStepImpl }
 import mesosphere.marathon.metrics.Metrics
-import mesosphere.marathon.storage.repository.InstanceRepository
+import mesosphere.marathon.state.{ AbsolutePathId, RunSpec }
+import mesosphere.marathon.storage.repository.{ GroupRepository, InstanceRepository }
 import mesosphere.util.state._
+import org.apache.mesos.Protos.FrameworkID
+import org.slf4j.LoggerFactory
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.Duration
+import scala.concurrent.{ Await, ExecutionContext, Promise }
 import scala.util.Random
 
 class SchedulerModule(
@@ -43,6 +51,8 @@ class SchedulerModule(
   lifecycleState:    LifecycleState,
   crashStrategy:     CrashStrategy,
   actorsModule:      ActorsModule) {
+
+  private[this] val log = LoggerFactory.getLogger(getClass)
 
   private[this] lazy val scallopConf: AllConf = config.scallopConf
 
@@ -63,7 +73,9 @@ class SchedulerModule(
     eventBus,
     hostPort,
     crashStrategy,
+    persistenceModule.curatorFramework.client.usingNamespace(null), // using non-namespaced client for leader-election
     ExecutionContext.fromExecutor(electionExecutor))
+
   val leadershipModule: LeadershipModule = {
     val actorRefFactory: ActorRefFactory = actorsModule.actorRefFactory
 
@@ -72,11 +84,24 @@ class SchedulerModule(
 
   val instanceRepository: InstanceRepository = persistenceModule.instanceRepository
 
+  val groupRepository: GroupRepository = persistenceModule.groupRepository
+
   lazy val instanceTrackerModule: InstanceTrackerModule = {
     val updateSteps: Seq[InstanceChangeHandler] = Seq(
+      ContinueOnErrorStep(new NotifyLaunchQueueStep(() => launchQueueModule.launchQueue)),
+      ContinueOnErrorStep(new NotifyRateLimiterStepImpl(() => launchQueueModule.launchQueue)),
       ContinueOnErrorStep(new NotifyOfTaskStateOperationStep(eventBus, clock)))
 
-    new InstanceTrackerModule(metrics, clock, scallopConf, leadershipModule, instanceRepository, updateSteps)(actorsModule.materializer)
+    new InstanceTrackerModule(
+      metrics,
+      clock,
+      scallopConf,
+      leadershipModule,
+      instanceRepository,
+      groupRepository,
+      updateSteps,
+      crashStrategy,
+      expungeStrategy = MetronomeExpungeStrategy)(actorsModule.materializer)
   }
 
   private[this] lazy val offerMatcherManagerModule = new OfferMatcherManagerModule(
@@ -85,11 +110,33 @@ class SchedulerModule(
     leadershipModule,
     () => scheduler.getLocalRegion)(actorsModule.materializer)
 
+  private[this] val runSpecProvider = RunSpecProvider
+
   private[this] lazy val launcherModule: LauncherModule = {
     val instanceTracker: InstanceTracker = instanceTrackerModule.instanceTracker
     val offerMatcher: OfferMatcher = offerMatcherManagerModule.globalOfferMatcher
 
-    new LauncherModule(metrics, scallopConf, instanceTracker, schedulerDriverHolder, offerMatcher, pluginModule.pluginManager)(clock)
+    new LauncherModule(
+      metrics,
+      scallopConf,
+      instanceTracker,
+      schedulerDriverHolder,
+      offerMatcher,
+      pluginModule.pluginManager,
+      runSpecProvider)(clock)
+  }
+
+  private[this] object RunSpecProvider extends GroupManager.RunSpecProvider with GroupManager.EnforceRoleSettingProvider {
+
+    override def runSpec(id: AbsolutePathId): Option[RunSpec] = {
+      val jobId = JobRunId(id)
+      Await.result(persistenceModule.jobRunRepository.get(jobId), Duration(30, TimeUnit.SECONDS)).map(jobRun => {
+        MarathonImplicits.toRunSpec(jobRun, scallopConf.mesosRole())
+      })
+    }
+
+    override def enforceRoleSetting(id: AbsolutePathId): Boolean = false
+
   }
 
   private[this] lazy val taskTerminationModule: TaskTerminationModule = new TaskTerminationModule(
@@ -98,8 +145,15 @@ class SchedulerModule(
     schedulerDriverHolder,
     config.taskKillConfig,
     metrics,
-    clock)
+    clock,
+    actorSystem)
   lazy val killService: KillService = taskTerminationModule.taskKillService
+
+  private val frameworkIdPromise = Promise[FrameworkID]
+  private val initialFrameworkInfo = frameworkIdPromise.future
+    .map { frameworkId =>
+      MarathonSchedulerDriver.newFrameworkInfo(Some(frameworkId), scallopConf, scallopConf)
+    }(ExecutionContexts.callerThread)
 
   private[this] lazy val scheduler: MarathonScheduler = {
     val instanceTracker: InstanceTracker = instanceTrackerModule.instanceTracker
@@ -118,7 +172,8 @@ class SchedulerModule(
       persistenceModule.frameworkIdRepository,
       leaderInfo,
       scallopConf,
-      crashStrategy)
+      crashStrategy,
+      frameworkIdPromise)
   }
 
   val schedulerDriverFactory: SchedulerDriverFactory = new MesosSchedulerDriverFactory(
@@ -156,14 +211,19 @@ class SchedulerModule(
   private[this] lazy val offersWanted: Source[Boolean, Cancellable] = offerMatcherManagerModule.globalOfferMatcherWantsOffers
 
   val launchQueueModule = new LaunchQueueModule(
-    scallopConf,
-    leadershipModule,
-    clock,
-    offerMatcherManagerModule.subOfferMatcherManager,
-    maybeOfferReviver = flowModule.maybeOfferReviver(metrics, clock, scallopConf, eventBus, offersWanted, schedulerDriverHolder),
-    taskTracker = instanceTrackerModule.instanceTracker,
+    config = scallopConf,
+    reviveConfig = scallopConf,
+    metrics = metrics,
+    leadershipModule = leadershipModule,
+    clock = clock,
+    subOfferMatcherManager = offerMatcherManagerModule.subOfferMatcherManager,
+    driverHolder = schedulerDriverHolder,
+    instanceTracker = instanceTrackerModule.instanceTracker,
+    eventStream = eventBus,
+    runSpecProvider = runSpecProvider,
     taskOpFactory = launcherModule.taskOpFactory,
-    () => scheduler.getLocalRegion)
+    localRegion = () => scheduler.getLocalRegion,
+    initialFrameworkInfo = initialFrameworkInfo)(actorsModule.materializer, ExecutionContext.global)
 
   taskJobsModule.expungeOverdueLostTasks(instanceTrackerModule.instanceTracker)
 
@@ -171,4 +231,6 @@ class SchedulerModule(
     instanceTrackerModule.instanceTracker,
     killService,
     metrics)
+
+  launchQueueModule.reviveOffersActor()
 }

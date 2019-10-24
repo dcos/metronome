@@ -8,8 +8,9 @@ import mesosphere.marathon
 import mesosphere.marathon.core.health.HealthCheck
 import mesosphere.marathon.core.readiness.ReadinessCheck
 import mesosphere.marathon.raml.Resources
-import mesosphere.marathon.state.{ AppDefinition, BackoffStrategy, Container, FetchUri, PathId, PortDefinition, RunSpec, UpgradeStrategy, VersionInfo, VolumeMount }
 import mesosphere.marathon.state
+import mesosphere.marathon.state.{ AbsolutePathId, AppDefinition, BackoffStrategy, Container, FetchUri, PortDefinition, RunSpec, UpgradeStrategy, VersionInfo, VolumeMount }
+
 import scala.concurrent.duration._
 
 /**
@@ -75,7 +76,7 @@ object MarathonImplicits {
 
   implicit class JobRunIdToRunSpecId(val jobRunId: JobRunId) extends AnyVal {
     // TODO: should we remove JobRunId.toPathId?
-    def toRunSpecId: PathId = jobRunId.toPathId
+    def toRunSpecId: AbsolutePathId = jobRunId.toPathId
   }
 
   implicit class JobSpecToContainer(val jobSpec: JobSpec) extends AnyVal {
@@ -101,37 +102,37 @@ object MarathonImplicits {
     }
   }
 
-  implicit class JobRunToRunSpec(val run: JobRun) extends AnyVal {
-    def toRunSpec: RunSpec = {
-      val jobSpec = run.jobSpec
+  def toRunSpec(run: JobRun, role: String): RunSpec = {
+    val jobSpec = run.jobSpec
 
-      AppDefinition(
-        id = run.id.toRunSpecId,
-        cmd = jobSpec.run.cmd,
-        args = jobSpec.run.args.getOrElse(Seq.empty),
-        user = jobSpec.run.user,
-        env = MarathonConversions.envVarToMarathon(jobSpec.run.env),
-        instances = 1,
-        resources = Resources(cpus = jobSpec.run.cpus, mem = jobSpec.run.mem, disk = jobSpec.run.disk, gpus = jobSpec.run.gpus),
-        executor = "//cmd",
-        constraints = jobSpec.run.placement.constraints.flatMap(spec => spec.toProto)(collection.breakOut),
-        fetch = jobSpec.run.artifacts.map(_.toFetchUri),
-        portDefinitions = Seq.empty[PortDefinition],
-        requirePorts = false,
-        backoffStrategy = BackoffStrategy(
-          backoff = 0.seconds,
-          factor = 0.0,
-          maxLaunchDelay = FiniteDuration(jobSpec.run.maxLaunchDelay.toMillis, TimeUnit.MILLISECONDS)),
-        container = jobSpec.toContainer,
-        healthChecks = Set.empty[HealthCheck],
-        readinessChecks = Seq.empty[ReadinessCheck],
-        taskKillGracePeriod = jobSpec.run.taskKillGracePeriodSeconds,
-        dependencies = Set.empty[PathId],
-        upgradeStrategy = UpgradeStrategy(minimumHealthCapacity = 0.0, maximumOverCapacity = 1.0),
-        labels = jobSpec.labels,
-        acceptedResourceRoles = Set.empty,
-        versionInfo = VersionInfo.NoVersion,
-        secrets = MarathonConversions.secretsToMarathon(jobSpec.run.secrets))
-    }
+    AppDefinition(
+      id = run.id.toRunSpecId,
+      cmd = jobSpec.run.cmd,
+      args = jobSpec.run.args.getOrElse(Seq.empty),
+      user = jobSpec.run.user,
+      env = MarathonConversions.envVarToMarathon(jobSpec.run.env),
+      instances = 1,
+      resources = Resources(cpus = jobSpec.run.cpus, mem = jobSpec.run.mem, disk = jobSpec.run.disk, gpus = jobSpec.run.gpus),
+      executor = "//cmd",
+      constraints = jobSpec.run.placement.constraints.flatMap(spec => spec.toProto)(collection.breakOut),
+      fetch = jobSpec.run.artifacts.map(_.toFetchUri),
+      portDefinitions = Seq.empty[PortDefinition],
+      requirePorts = false,
+      backoffStrategy = BackoffStrategy(
+        backoff = 0.seconds,
+        factor = 0.0,
+        maxLaunchDelay = FiniteDuration(jobSpec.run.maxLaunchDelay.toMillis, TimeUnit.MILLISECONDS)),
+      container = jobSpec.toContainer,
+      healthChecks = Set.empty[HealthCheck],
+      readinessChecks = Seq.empty[ReadinessCheck],
+      taskKillGracePeriod = jobSpec.run.taskKillGracePeriodSeconds,
+      dependencies = Set.empty[AbsolutePathId],
+      upgradeStrategy = UpgradeStrategy(minimumHealthCapacity = 0.0, maximumOverCapacity = 1.0),
+      labels = jobSpec.labels,
+      acceptedResourceRoles = Set.empty,
+      versionInfo = VersionInfo.NoVersion,
+      secrets = MarathonConversions.secretsToMarathon(jobSpec.run.secrets),
+      role = role)
   }
+
 }

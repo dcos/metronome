@@ -1,14 +1,14 @@
 package dcos.metronome
 package model
 
-import java.time.{ Clock, ZoneId }
 import java.time.format.DateTimeFormatter
+import java.time.{ Clock, ZoneId }
 
-import mesosphere.marathon.state.PathId
+import mesosphere.marathon.state.AbsolutePathId
 
 case class JobRunId(jobId: JobId, value: String) {
   override def toString: String = s"${jobId.path.mkString(".")}.$value"
-  def toPathId: PathId = jobId.toPathId / value
+  def toPathId: AbsolutePathId = jobId.toPathId / value
 }
 
 object JobRunId {
@@ -21,7 +21,7 @@ object JobRunId {
     JobRunId(job.id, s"$date$random")
   }
 
-  def apply(runSpecId: PathId): JobRunId = {
+  def apply(runSpecId: AbsolutePathId): JobRunId = {
     JobRunId(JobId(runSpecId.parent), runSpecId.path.last)
   }
 }

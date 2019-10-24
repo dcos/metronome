@@ -6,7 +6,7 @@ object Dependencies {
     val ScalaTest = "3.0.5"
     val ScalaCheck = "1.14.0"
     val MacWire = "2.3.1"
-    val Marathon = "1.7.202"
+    val Marathon = "1.9.94"
     val MarathonPluginInterface = "1.7.202"
     val Play = "2.6.18"
     val PlayJson = "2.6.10"
@@ -14,12 +14,13 @@ object Dependencies {
     val PlayIteratees = "2.6.1"
     val CronUtils = "9.0.0"
     val WixAccord = "0.7.1"
-    val Akka = "2.5.15"
+    val Akka = "2.5.23"
     val Mockito = "2.21.0"
     val JsonValidate = "0.9.4"
     val MoultingYaml = "0.4.0"
     val Caffeine = "2.6.2"
     val UsiTestUtils = "0.1.12"
+    val Guice = "4.1.0"
   }
 
   val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
@@ -36,18 +37,67 @@ object Dependencies {
   val cronUtils = "com.cronutils" % "cron-utils" % V.CronUtils exclude("org.threeten", "threetenbp")
   val wixAccord = "com.wix" %% "accord-core" % V.WixAccord
   val akka = "com.typesafe.akka" %%  "akka-actor" % V.Akka
+  val akkaStream = "com.typesafe.akka" %% "akka-stream" % V.Akka
   val akkaSlf4j = "com.typesafe.akka" %%  "akka-slf4j" % V.Akka
   val jsonValidate = "com.eclipsesource" %% "play-json-schema-validator" % V.JsonValidate
   val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % V.Caffeine // we need to override caffeine version because of dependency in dcos plugins
+
+  val guice = "com.google.inject" % "guice" % V.Guice
+
+  val scallop = "org.rogach" %% "scallop" % "3.1.2"
+  val uuidGenerator = "com.fasterxml.uuid" % "java-uuid-generator" % "3.1.4"
+  val jGraphT = "org.javabits.jgrapht" % "jgrapht-core" % "0.9.3"
+  val java8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
+  val mesos = "org.apache.mesos" % "mesos" % "1.9.0"
 
   object Test {
     val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"
     val scalaCheck = "org.scalacheck" %% "scalacheck" % V.ScalaCheck % "test"
     val scalatestPlay = "org.scalatestplus.play" %% "scalatestplus-play" % V.ScalaTestPlusPlay % "test"
     val akkaTestKit = "com.typesafe.akka" %%  "akka-testkit" % V.Akka % "test"
+    val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % V.Akka % "test"
     val mockito = "org.mockito" % "mockito-core" % V.Mockito % "test"
 
     val usiTestUtils = "com.mesosphere.usi" % "test-utils" % V.UsiTestUtils % "test" exclude("org.apache.zookeeper", "zookeeper")
 
   }
+
+
+  object Curator {
+    /**
+      * According to Curator's Zookeeper Compatibility Docs [http://curator.apache.org/zk-compatibility.html], 4.0.0
+      * is the recommended version to use with Zookeeper 3.4.x. You do need to exclude the 3.5.x dependency and specify
+      * your 3.4.x dependency.
+      */
+    val Version = "4.0.1"
+
+    val TestVersion = "2.13.0"
+
+    val excludeZk35 = ExclusionRule(organization = "org.apache.zookeeper", name = "zookeeper")
+
+    val curator = Seq(
+      "org.apache.curator" % "curator-recipes" % Version % "compile",
+      "org.apache.curator" % "curator-client" % Version % "compile",
+      "org.apache.curator" % "curator-framework" % Version % "compile",
+      "org.apache.curator" % "curator-x-async" % Version % "compile",
+      "org.apache.curator" % "curator-test" % TestVersion % "test").map(_.excludeAll(excludeZk35))
+
+    val zk = Seq("org.apache.zookeeper" % "zookeeper" % "3.4.11")
+    val all = curator ++ zk
+  }
+
+  object DropwizardMetrics {
+    val Version = "4.0.2"
+
+    val core = "io.dropwizard.metrics" % "metrics-core" % Version % "compile"
+    val jersey = "io.dropwizard.metrics" % "metrics-jersey2" % Version % "compile"
+    val jetty = "io.dropwizard.metrics" % "metrics-jetty9" % Version % "compile"
+    val jvm = "io.dropwizard.metrics" % "metrics-jvm" % Version % "compile"
+    val servlets = "io.dropwizard.metrics" % "metrics-servlets" % Version % "compile"
+    val rollingMetrics = "com.github.vladimir-bukhtoyarov" % "rolling-metrics" % "2.0.4" % "compile"
+    val hdrHistogram = "org.hdrhistogram" % "HdrHistogram" % "2.1.10" % "compile"
+
+    val all = Seq(core, jersey, jetty, jvm, servlets, rollingMetrics, hdrHistogram)
+  }
+
 }

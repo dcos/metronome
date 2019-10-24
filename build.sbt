@@ -173,24 +173,36 @@ lazy val jobs = (project in file("jobs"))
   }, projectSettings)
   .settings(pbSettings)
   .settings(
-    libraryDependencies ++= Seq(
+    libraryDependencies ++=
+      (
+        Dependencies.Curator.all ++
+        Dependencies.DropwizardMetrics.all ++
+      Seq(
       Dependencies.asyncAwait,
       Dependencies.playJson,
-      Dependencies.marathon,
+//      Dependencies.marathon,
       Dependencies.marathonPlugin,
       Dependencies.macWireMacros,
       Dependencies.macWireUtil,
       Dependencies.macWireProxy,
       Dependencies.cronUtils,
       Dependencies.akka,
+      Dependencies.akkaStream, // We need to include this, even if we don't use it to overwrite indirect dependencies
       Dependencies.akkaSlf4j,
       Dependencies.caffeine,
+      Dependencies.scallop,
+      Dependencies.uuidGenerator,
+      Dependencies.jGraphT,
+      Dependencies.java8Compat,
+      Dependencies.mesos,
+      Dependencies.guice,
       Dependencies.Test.scalatest,
       Dependencies.Test.akkaTestKit,
+      Dependencies.Test.akkaSlf4j,
       Dependencies.Test.mockito,
       Dependencies.Test.scalatest,
       Dependencies.Test.scalaCheck,
-    ).map(
+    ))        .map(
       _.excludeAll(excludeSlf4jLog4j12)
         .excludeAll(excludeLog4j)
         .excludeAll(excludeJCL)

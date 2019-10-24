@@ -9,15 +9,16 @@ import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
 import dcos.metronome.scheduler.TaskState
-import mesosphere.marathon.core.task.tracker.InstanceTracker
-import mesosphere.marathon.{ MarathonSchedulerDriverHolder, StoreCommandFailedException }
+import dcos.metronome.utils.glue.MarathonImplicits
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
+import mesosphere.marathon.core.task.tracker.InstanceTracker
+import mesosphere.marathon.{ AllConf, MarathonSchedulerDriverHolder, StoreCommandFailedException }
 import org.apache.zookeeper.KeeperException.NodeExistsException
-import scala.async.Async.{ async, await }
 
-import scala.concurrent.duration.{ Duration, FiniteDuration }
-import scala.concurrent.{ Await, Promise }
+import scala.async.Async.async
+import scala.concurrent.Promise
+import scala.concurrent.duration.FiniteDuration
 
 /**
   * Handles one job run from start until the job either completes successful or failed.
@@ -31,6 +32,7 @@ class JobRunExecutorActor(
   launchQueue:                LaunchQueue,
   instanceTracker:            InstanceTracker,
   driverHolder:               MarathonSchedulerDriverHolder,
+  config:                     AllConf,
   clock:                      Clock)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
@@ -112,8 +114,8 @@ class JobRunExecutorActor(
       log.info(s"Job run ${jobRun.id} already exists in LaunchQueue - not adding")
     } else {
       log.info("addTaskToLaunchQueue")
-      import dcos.metronome.utils.glue.MarathonImplicits._
-      launchQueue.add(jobRun.toRunSpec, count = 1)
+      val runSpec = MarathonImplicits.toRunSpec(jobRun, config.mesosRole())
+      launchQueue.add(runSpec, count = 1)
     }
   }
 
@@ -140,8 +142,7 @@ class JobRunExecutorActor(
   }
 
   def existsInLaunchQueue(): Boolean = {
-    // timeout is enforced on LaunchQueue implementation side
-    Await.result(launchQueue.get(runSpecId), Duration.Inf).exists(i => i.finalInstanceCount > 0)
+    instanceTracker.instancesBySpecSync.specInstances(runSpecId).nonEmpty
   }
 
   def updatedTasks(update: TaskStateChangedEvent): Map[Task.Id, JobRunTask] = {
@@ -165,7 +166,6 @@ class JobRunExecutorActor(
   }
 
   def becomeFinishing(updatedJobRun: JobRun): Unit = {
-    Await.result(launchQueue.purge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
     jobRun = updatedJobRun
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
@@ -196,7 +196,6 @@ class JobRunExecutorActor(
 
   // FIXME: compare to becomeFinishing, there's lots of DRY violation
   def becomeFailing(updatedJobRun: JobRun): Unit = {
-    Await.result(launchQueue.purge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
     jobRun = updatedJobRun
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
@@ -212,7 +211,6 @@ class JobRunExecutorActor(
     jobRun.tasks.values.filter(t => isActive(t.status)).foreach { t =>
       driverHolder.driver.foreach(_.killTask(t.id.mesosTaskId))
     }
-    Await.result(launchQueue.purge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
 
     // Abort the jobRun
     jobRun = jobRun.copy(
@@ -403,9 +401,10 @@ object JobRunExecutorActor {
     launchQueue:                LaunchQueue,
     instanceTracker:            InstanceTracker,
     driverHolder:               MarathonSchedulerDriverHolder,
+    config:                     AllConf,
     clock:                      Clock)(implicit scheduler: Scheduler): Props = Props(
     new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
-      launchQueue, instanceTracker, driverHolder, clock))
+      launchQueue, instanceTracker, driverHolder, config, clock))
 }
 
 object TaskStates {
