@@ -5,7 +5,7 @@ import dcos.metronome.model.QueuedJobRunInfo
 import dcos.metronome.queue.LaunchQueueService
 import mesosphere.marathon.core.task.tracker.InstanceTracker
 import mesosphere.marathon.core.task.tracker.InstanceTracker.SpecInstances
-import mesosphere.marathon.state.{AbsolutePathId, AppDefinition}
+import mesosphere.marathon.state.{ AbsolutePathId, AppDefinition }
 
 class LaunchQueueServiceImpl(instanceTracker: InstanceTracker) extends LaunchQueueService {
 

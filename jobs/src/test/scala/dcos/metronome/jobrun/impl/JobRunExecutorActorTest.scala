@@ -9,6 +9,7 @@ import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.impl.JobRunExecutorActor.ForwardStatusUpdate
 import dcos.metronome.model._
 import dcos.metronome.scheduler.TaskState
+import dcos.metronome.utils.glue.MarathonImplicits
 import dcos.metronome.utils.glue.MarathonImplicits._
 import dcos.metronome.utils.test.Mockito
 import mesosphere.marathon.core.condition.Condition
@@ -20,7 +21,7 @@ import mesosphere.marathon.core.task.tracker.InstanceTracker
 import mesosphere.marathon.core.task.tracker.InstanceTracker.{ InstancesBySpec, SpecInstances }
 import mesosphere.marathon.state.Container.{ Docker, MesosDocker }
 import mesosphere.marathon.state.{ AppDefinition, RunSpec, Timestamp }
-import mesosphere.marathon.{ MarathonSchedulerDriverHolder, StoreCommandFailedException, state }
+import mesosphere.marathon.{ AllConf, MarathonSchedulerDriverHolder, StoreCommandFailedException, state }
 import org.apache.mesos
 import org.apache.mesos.SchedulerDriver
 import org.apache.zookeeper.KeeperException.NodeExistsException
@@ -840,9 +841,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val defaultJobSpec = JobSpec(runSpecId, Some("test"))
     val clock = new SettableClock(Clock.fixed(LocalDateTime.parse("2016-06-01T08:50:12.000").toInstant(ZoneOffset.UTC), ZoneOffset.UTC))
     val launchQueue: LaunchQueue = mock[LaunchQueue]
-    //    launchQueue.purge(any).returns(Future.successful(Done))
     val instanceTracker: InstanceTracker = mock[InstanceTracker]
-    //    launchQueue.get(any).returns(Future.successful(None))
     instanceTracker.instancesBySpecSync.returns(InstancesBySpec.empty)
     val driver = mock[SchedulerDriver]
     val driverHolder: MarathonSchedulerDriverHolder = {
@@ -850,6 +849,8 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       holder.driver = Some(driver)
       holder
     }
+
+    val config = AllConf()
 
     def statusUpdate(state: TaskState) = ForwardStatusUpdate(TaskStateChangedEvent(
       taskId = taskId, taskState = state, timestamp = Clock.systemUTC().instant()))
@@ -862,7 +863,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     def executorActor(jobRun: JobRun, startingDeadline: Option[Duration] = None): TestActorRef[JobRunExecutorActor] = {
       import JobRunExecutorActorTest._
       val actorRef = TestActorRef[JobRunExecutorActor](JobRunExecutorActor.props(jobRun, promise, persistenceActorFactory,
-        launchQueue, instanceTracker, driverHolder, clock)(scheduler), parent.ref, "JobRunExecutor")
+        launchQueue, instanceTracker, driverHolder, config, clock)(scheduler), parent.ref, "JobRunExecutor")
       actor = Some(actorRef)
       actorRef
     }
@@ -916,7 +917,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
         Map(Task.Id.parse("app_682ebe64-0771-11e4-b05d-e0f84720c54e") -> JobRunTask(Task.Id.parse("app_682ebe64-0771-11e4-b05d-e0f84720c54e"), null, None, TaskState.Running)))
       val actorRef: ActorRef = executorActor(activeJob)
       val runSpecId = activeJob.id.toRunSpecId
-      val runSpec = activeJob.toRunSpec
+      val runSpec = MarathonImplicits.toRunSpec(activeJob, "foo")
       instanceTracker.specInstancesSync(runSpecId) returns Seq(
         Instance(
           instanceId,

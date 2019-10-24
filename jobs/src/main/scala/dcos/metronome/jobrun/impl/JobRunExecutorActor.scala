@@ -9,10 +9,11 @@ import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
 import dcos.metronome.scheduler.TaskState
+import dcos.metronome.utils.glue.MarathonImplicits
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.tracker.InstanceTracker
-import mesosphere.marathon.{ MarathonSchedulerDriverHolder, StoreCommandFailedException }
+import mesosphere.marathon.{ AllConf, MarathonSchedulerDriverHolder, StoreCommandFailedException }
 import org.apache.zookeeper.KeeperException.NodeExistsException
 
 import scala.async.Async.async
@@ -31,6 +32,7 @@ class JobRunExecutorActor(
   launchQueue:                LaunchQueue,
   instanceTracker:            InstanceTracker,
   driverHolder:               MarathonSchedulerDriverHolder,
+  config:                     AllConf,
   clock:                      Clock)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
@@ -112,8 +114,8 @@ class JobRunExecutorActor(
       log.info(s"Job run ${jobRun.id} already exists in LaunchQueue - not adding")
     } else {
       log.info("addTaskToLaunchQueue")
-      import dcos.metronome.utils.glue.MarathonImplicits._
-      launchQueue.add(jobRun.toRunSpec, count = 1)
+      val runSpec = MarathonImplicits.toRunSpec(jobRun, config.mesosRole())
+      launchQueue.add(runSpec, count = 1)
     }
   }
 
@@ -399,9 +401,10 @@ object JobRunExecutorActor {
     launchQueue:                LaunchQueue,
     instanceTracker:            InstanceTracker,
     driverHolder:               MarathonSchedulerDriverHolder,
+    config:                     AllConf,
     clock:                      Clock)(implicit scheduler: Scheduler): Props = Props(
     new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
-      launchQueue, instanceTracker, driverHolder, clock))
+      launchQueue, instanceTracker, driverHolder, config, clock))
 }
 
 object TaskStates {
