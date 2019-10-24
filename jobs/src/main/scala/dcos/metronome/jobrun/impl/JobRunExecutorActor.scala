@@ -140,10 +140,7 @@ class JobRunExecutorActor(
   }
 
   def existsInLaunchQueue(): Boolean = {
-    // TODO AN: Verify this...
     instanceTracker.instancesBySpecSync.specInstances(runSpecId).nonEmpty
-    // timeout is enforced on LaunchQueue implementation side
-    //    Await.result(launchQueue.get(runSpecId), Duration.Inf).exists(i => i.finalInstanceCount > 0)
   }
 
   def updatedTasks(update: TaskStateChangedEvent): Map[Task.Id, JobRunTask] = {
@@ -167,8 +164,6 @@ class JobRunExecutorActor(
   }
 
   def becomeFinishing(updatedJobRun: JobRun): Unit = {
-    //    Await.result(instanceTracker.instancesBySpec().map(ibs => ibs.specInstances(runSpecId)).map( _.foreach( i => instanceTracker.setGoal(i.instanceId, Goal.Stopped, GoalChangeReason.DeletingApp))), Duration.Inf)
-    //    Await.result(launchQueue.purge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
     jobRun = updatedJobRun
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
@@ -199,7 +194,6 @@ class JobRunExecutorActor(
 
   // FIXME: compare to becomeFinishing, there's lots of DRY violation
   def becomeFailing(updatedJobRun: JobRun): Unit = {
-    //    Await.result(launchQueue.purge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
     jobRun = updatedJobRun
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
@@ -215,7 +209,6 @@ class JobRunExecutorActor(
     jobRun.tasks.values.filter(t => isActive(t.status)).foreach { t =>
       driverHolder.driver.foreach(_.killTask(t.id.mesosTaskId))
     }
-    //    Await.result(launchQueue.purge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
 
     // Abort the jobRun
     jobRun = jobRun.copy(

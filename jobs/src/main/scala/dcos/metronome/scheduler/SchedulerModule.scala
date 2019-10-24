@@ -2,44 +2,42 @@ package dcos.metronome
 package scheduler
 
 import java.time.Clock
-import java.util.concurrent.{ Executors, TimeUnit }
+import java.util.concurrent.{Executors, TimeUnit}
 
-import akka.actor.{ ActorRefFactory, ActorSystem, Cancellable }
+import akka.actor.{ActorRefFactory, ActorSystem, Cancellable}
 import akka.event.EventStream
 import akka.stream.scaladsl.Source
 import dcos.metronome.model.JobRunId
 import dcos.metronome.repository.SchedulerRepositoriesModule
-import dcos.metronome.scheduler.impl.{ MetronomeExpungeStrategy, NotifyLaunchQueueStep, NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor }
+import dcos.metronome.scheduler.impl.{MetronomeExpungeStrategy, NotifyLaunchQueueStep, NotifyOfTaskStateOperationStep, PeriodicOperationsImpl, ReconciliationActor}
 import mesosphere.marathon._
 import mesosphere.marathon.core.async.ExecutionContexts
-import mesosphere.marathon.core.base.{ ActorsModule, CrashStrategy, LifecycleState }
-import mesosphere.marathon.core.election.{ ElectionModule, ElectionService }
+import mesosphere.marathon.core.base.{ActorsModule, CrashStrategy, LifecycleState}
+import mesosphere.marathon.core.election.{ElectionModule, ElectionService}
 import mesosphere.marathon.core.flow.FlowModule
 import mesosphere.marathon.core.group.GroupManager
 import mesosphere.marathon.core.instance.update.InstanceChangeHandler
-import mesosphere.marathon.core.launcher.{ LauncherModule, OfferProcessor }
+import mesosphere.marathon.core.launcher.{LauncherModule, OfferProcessor}
 import mesosphere.marathon.core.launchqueue.LaunchQueueModule
 import mesosphere.marathon.core.leadership.LeadershipModule
 import mesosphere.marathon.core.matcher.base.OfferMatcher
 import mesosphere.marathon.core.matcher.manager.OfferMatcherManagerModule
 import mesosphere.marathon.core.plugin.PluginModule
-import mesosphere.marathon.core.storage.store.impl.zk.RichCuratorFramework
 import mesosphere.marathon.core.task.jobs.TaskJobsModule
-import mesosphere.marathon.core.task.termination.{ KillService, TaskTerminationModule }
+import mesosphere.marathon.core.task.termination.{KillService, TaskTerminationModule}
 import mesosphere.marathon.core.task.tracker._
 import mesosphere.marathon.core.task.update.TaskStatusUpdateProcessor
 import mesosphere.marathon.core.task.update.impl.TaskStatusUpdateProcessorImpl
-import mesosphere.marathon.core.task.update.impl.steps.{ ContinueOnErrorStep, NotifyRateLimiterStepImpl }
+import mesosphere.marathon.core.task.update.impl.steps.{ContinueOnErrorStep, NotifyRateLimiterStepImpl}
 import mesosphere.marathon.metrics.Metrics
-import mesosphere.marathon.state.{ AbsolutePathId, RunSpec }
-import mesosphere.marathon.storage.StorageConfig
-import mesosphere.marathon.storage.repository.{ GroupRepository, InstanceRepository }
+import mesosphere.marathon.state.{AbsolutePathId, RunSpec}
+import mesosphere.marathon.storage.repository.{GroupRepository, InstanceRepository}
 import mesosphere.util.state._
 import org.apache.mesos.Protos.FrameworkID
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{ Await, ExecutionContext, Promise }
+import scala.concurrent.{Await, ExecutionContext, Promise}
 import scala.util.Random
 
 class SchedulerModule(
@@ -67,10 +65,6 @@ class SchedulerModule(
 
   private[this] val electionExecutor = Executors.newSingleThreadExecutor()
 
-  // Initialize Apache Curator Framework (wrapped in [[RichCuratorFramework]] and connect/sync with the storage
-  // for an underlying Zookeeper storage.
-  lazy val richCuratorFramework: RichCuratorFramework = StorageConfig.curatorFramework(scallopConf, crashStrategy, lifecycleState)
-
   lazy val electionModule: ElectionModule = new ElectionModule(
     metrics,
     scallopConf,
@@ -78,7 +72,7 @@ class SchedulerModule(
     eventBus,
     hostPort,
     crashStrategy,
-    richCuratorFramework.client.usingNamespace(null), // using non-namespaced client for leader-election
+    persistenceModule.curatorFramework.client.usingNamespace(null), // using non-namespaced client for leader-election
     ExecutionContext.fromExecutor(electionExecutor))
 
   val leadershipModule: LeadershipModule = {

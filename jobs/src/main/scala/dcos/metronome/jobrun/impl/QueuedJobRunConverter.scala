@@ -65,20 +65,4 @@ object QueuedJobRunConverter {
       }
     }
   }
-
-  //  implicit class QueuedTaskInfoToQueuedJobRunInfo(val instanceInfo: QueuedInstanceInfo) extends AnyVal {
-  //
-  //    def toModel: QueuedJobRunInfo = {
-  //      val jobRunSpec = instanceInfo.runSpec match {
-  //        case app: AppDefinition => app.toModel
-  //        case runSpec =>
-  //          throw new IllegalArgumentException(s"Unexpected runSpec type - jobs are translated to Apps on Marathon level, got $runSpec")
-  //      }
-  //      QueuedJobRunInfo(
-  //        id = instanceInfo.runSpec.id,
-  //        backOffUntil = instanceInfo.backOffUntil,
-  //        run = jobRunSpec,
-  //        acceptedResourceRoles = instanceInfo.runSpec.acceptedResourceRoles)
-  //    }
-  //  }
 }
