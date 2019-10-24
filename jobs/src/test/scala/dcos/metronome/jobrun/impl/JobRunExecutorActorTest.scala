@@ -850,7 +850,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       holder
     }
 
-    val config = AllConf()
+    val config = AllConf.withTestConfig()
 
     def statusUpdate(state: TaskState) = ForwardStatusUpdate(TaskStateChangedEvent(
       taskId = taskId, taskState = state, timestamp = Clock.systemUTC().instant()))
