@@ -57,6 +57,7 @@ class PersistenceIT extends MetronomeITBase {
     Then("The Job and the Run should be available")
     val jobResp = f.metronome.getJob(appId)
     jobResp.value.status.intValue() shouldBe 200
+    jobResp.entityJson.as[JsArray].value.head.as[JsObject].value("id").as[String] shouldBe appId
 
     val runResp = f.metronome.getRuns(appId)
     val runs = runResp.entityJson.as[JsArray]

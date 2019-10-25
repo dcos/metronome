@@ -24,7 +24,8 @@ class ZKStore(val richCurator: RichCuratorFramework, rootPath: String, compressi
   private[this] implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
 
   private[this] def fullPath(subPath: ID): ID = {
-    rootPath + "/" + subPath
+    // Previous implementation didn't take the rootPath into account, therefore we can't either.
+    "/" + subPath
   }
 
   /**
