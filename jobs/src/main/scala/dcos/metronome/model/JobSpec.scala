@@ -22,7 +22,7 @@ case class JobSpec(
   override val secrets: Map[String, Secret] = MarathonConversions.secretsToMarathon(run.secrets)
   override val env: Map[String, marathon.state.EnvVarValue] = MarathonConversions.envVarToMarathon(run.env)
   override val volumes: Seq[VolumeSpec] = Seq.empty
-  override val networks: Seq[NetworkSpec] = Seq.empty
+  override val networks: Seq[NetworkSpec] = run.networks.map(MarathonConversions.networkToMarathon)
   override val volumeMounts: Seq[VolumeMountSpec] = Seq.empty
 }
 

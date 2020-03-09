@@ -44,6 +44,18 @@ package object models {
     (__ \ "executable").formatNullable[Boolean].withDefault(false) ~
     (__ \ "cache").formatNullable[Boolean].withDefault(false))(Artifact.apply, unlift(Artifact.unapply))
 
+  implicit lazy val networkModeFormat: Format[Network.NetworkMode] = Format(
+    Reads { json =>
+      json.validate[String].flatMap { networkModeName =>
+        Network.NetworkMode.byName.get(networkModeName).map(JsSuccess(_)).getOrElse {
+          JsError(s"${networkModeName} is not a valid network mode; expected one of ${Network.NetworkMode.byName.keys.mkString(",")}")
+        }
+      }
+    },
+    Writes({ networkMode: Network.NetworkMode => JsString(networkMode.name) }))
+
+  implicit lazy val networkFormat: Format[Network] = Json.format[Network]
+
   implicit lazy val CronFormat: Format[CronSpec] = new Format[CronSpec] {
     override def writes(o: CronSpec): JsValue = JsString(o.toString)
     override def reads(json: JsValue): JsResult[CronSpec] = json match {
@@ -207,8 +219,29 @@ package object models {
     (__ \ "volumes").formatNullable[Seq[Volume]].withDefault(JobRunSpec.DefaultVolumes) ~
     (__ \ "restart").formatNullable[RestartSpec].withDefault(JobRunSpec.DefaultRestartSpec) ~
     (__ \ "taskKillGracePeriodSeconds").formatNullable[FiniteDuration] ~
-    (__ \ "secrets").formatNullable[Map[String, SecretDef]].withDefault(JobRunSpec.DefaultSecrets))(JobRunSpec.apply, unlift(JobRunSpec.unapply))
+    (__ \ "secrets").formatNullable[Map[String, SecretDef]].withDefault(JobRunSpec.DefaultSecrets) ~
+    (__ \ "networks").formatNullable[Seq[Network]].withDefault(JobRunSpec.DefaultNetworks))(JobRunSpec.apply, unlift(JobRunSpec.unapply))
 
+  /**
+    * [error] /Users/tim/src/m8e/metronome/api/src/main/scala/dcos/metronome/api/v1/models/package.scala:224:6:
+    * (play.api.libs.functional.FunctionalBuilder[play.api.libs.json.OFormat]#CanBuild17[Double,Double,Double,Int,Option[String],
+    * Option[scala.collection.immutable.Seq[String]],
+    * Option[String],
+    * scala.collection.immutable.Map[String,dcos.metronome.model.EnvVarValueOrSecret],
+    * dcos.metronome.model.PlacementSpec,
+    * scala.collection.immutable.Seq[dcos.metronome.model.Artifact],
+    * scala.concurrent.duration.Duration,
+    * Option[dcos.metronome.model.DockerSpec],
+    * Option[dcos.metronome.model.UcrSpec],
+    * scala.collection.immutable.Seq[dcos.metronome.model.Volume],
+    * dcos.metronome.model.RestartSpec,
+    * Option[scala.concurrent.duration.FiniteDuration],
+    * Map[String,dcos.metronome.model.SecretDef]],
+    * play.api.libs.json.OFormat[dcos.metronome.Seq[dcos.metronome.model.Network]]) does not take parameters
+    * [error]     )(JobRunSpec.apply, unlift(JobRunSpec.unapply))
+    * [error]   *
+    *
+    */
   implicit lazy val JobSpecFormat: Format[JobSpec] = (
     (__ \ "id").format[JobId] ~
     (__ \ "description").formatNullable[String] ~

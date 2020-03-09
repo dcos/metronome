@@ -26,6 +26,10 @@
       "CONNECT": "direct"
     },
     "maxLaunchDelay": 3600,
+    "networks": [{
+      "name": "calico",
+      "mode": "container"
+    }],
     "placement": {
       "constraints": [
         {

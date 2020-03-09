@@ -1,9 +1,6 @@
 package dcos.metronome
 package api
 
-import java.time.Duration
-import java.util.concurrent.TimeUnit
-
 import akka.util.ByteString
 import dcos.metronome.jobinfo.JobSpecSelector
 import dcos.metronome.jobrun.StartedJobRun

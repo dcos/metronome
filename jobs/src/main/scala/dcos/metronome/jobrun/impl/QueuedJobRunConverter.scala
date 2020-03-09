@@ -1,10 +1,10 @@
 package dcos.metronome
 package jobrun.impl
 
-import dcos.metronome.Protos.JobSpec.RunSpec
 import dcos.metronome.model._
 import mesosphere.marathon.Protos.Constraint
 import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedInstanceInfo
+import mesosphere.marathon.core.pod
 import mesosphere.marathon.state.Container.MesosDocker
 import mesosphere.marathon.state.{ AppDefinition, Container }
 import org.slf4j.LoggerFactory
@@ -54,7 +54,14 @@ object QueuedJobRunConverter {
         maxLaunchDelay = run.backoffStrategy.maxLaunchDelay,
         taskKillGracePeriodSeconds = run.taskKillGracePeriod,
         docker = run.container.toDockerModel,
-        ucr = run.container.toUcrModel)
+        ucr = run.container.toUcrModel,
+        networks = convertNetworks)
+    }
+
+    private def convertNetworks = run.networks.map {
+      case pod.HostNetwork         => Network(None, mode = Network.NetworkMode.Host, labels = Map.empty)
+      case n: pod.ContainerNetwork => Network(Some(n.name), mode = Network.NetworkMode.Container, labels = n.labels)
+      case _: pod.BridgeNetwork    => Network(None, mode = Network.NetworkMode.ContainerBridge, labels = Map.empty)
     }
 
     // TODO: remove once placement is fixed.

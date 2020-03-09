@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit
 import dcos.metronome.model._
 import mesosphere.marathon
 import mesosphere.marathon.core.health.HealthCheck
+import mesosphere.marathon.core.pod
 import mesosphere.marathon.core.readiness.ReadinessCheck
 import mesosphere.marathon.raml.Resources
 import mesosphere.marathon.state.{ AppDefinition, BackoffStrategy, Container, FetchUri, PathId, PortDefinition, RunSpec, UpgradeStrategy, VersionInfo, VolumeMount }
@@ -131,7 +132,16 @@ object MarathonImplicits {
         labels = jobSpec.labels,
         acceptedResourceRoles = Set.empty,
         versionInfo = VersionInfo.NoVersion,
-        secrets = MarathonConversions.secretsToMarathon(jobSpec.run.secrets))
+        secrets = MarathonConversions.secretsToMarathon(jobSpec.run.secrets),
+        networks = convertNetworks)
+    }
+
+    private def convertNetworks: Seq[pod.Network] = {
+      run.jobSpec.networks.map {
+        case n: pod.Network => n
+        case o =>
+          throw new IllegalStateException(s"s${o} is an illegal state and should not have been permitted by validation")
+      }
     }
   }
 }
