@@ -25,7 +25,6 @@ ansiColor('xterm') {
             string(credentialsId: 'f585ec9a-3c38-4f67-8bdb-79e5d4761937',variable: 'AWS_SECRET_ACCESS_KEY'),
         ]) {
           sshagent (credentials: ['0f7ec9c9-99b2-4797-9ed5-625572d5931d']) {
-            sh "bin/install-protobuf.sh"
             sh "ci/ci_provision.sh"
             sh """PATH=\$PATH:\$HOME/protobuf/bin ci/pipeline release $params.version $params.gitsha"""
           }

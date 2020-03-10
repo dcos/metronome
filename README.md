@@ -35,8 +35,6 @@ To build Metronome from source, check out this repo and use sbt to build a unive
         cd metronome
         sbt universal:packageBin
 
-In order to build from source you will need protobuf version 2.6.1.  This can be installed by executing the `./bin/install-protobuf.sh`.   This will install protobuf to `$HOME/protobuf`.    You will need `$HOME/protobuf/bin` in your path ( `export PATH=~/protobuf/bin:$PATH`).
-
 ### Running in Development Mode
 
 Mesos local mode allows you to run Metronome without launching a full Mesos
