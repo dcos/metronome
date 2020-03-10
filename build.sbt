@@ -103,7 +103,7 @@ lazy val nativePackageSettings = Seq(
 )
 
 val pbSettings = PB.projectSettings ++ Seq(
-  (version in ProtobufConfig) := "3.3.0"
+  (protobufRunProtoc in ProtobufConfig) := (args => com.github.os72.protocjar.Protoc.runProtoc("-v330" +: args.toArray))
 )
 
 lazy val metronome = (project in file("."))
