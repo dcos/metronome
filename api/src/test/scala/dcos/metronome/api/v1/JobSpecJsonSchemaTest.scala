@@ -30,7 +30,14 @@ class JobSpecJsonSchemaTest extends FunSuite with Mockito with Matchers with Tab
       ("-a", false),
       (".a", false),
       ("-a1.a", false),
-      (".a1.a1", false))
+      (".a1.a1", false),
+
+      // invalid characters
+      ("a?.a", false),
+      ("a?a.a", false),
+      ("a.a?", false),
+      ("a.a?a", false),
+  )
 
   val schemaValidator = SchemaValidator()
 
