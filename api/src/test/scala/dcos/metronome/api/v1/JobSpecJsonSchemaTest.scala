@@ -45,7 +45,6 @@ class JobSpecJsonSchemaTest extends FunSuite with Mockito with Matchers with Tab
     forAll(jobSpecIds) { (id, shouldSucceed) =>
       val updated = template + ("id", JsString(id))
       val result = schemaValidator.validate(schema.JobSpecSchema.schemaType, updated)
-      println(result)
       withClue(result.toString) {
         result.isSuccess shouldBe (shouldSucceed)
       }
