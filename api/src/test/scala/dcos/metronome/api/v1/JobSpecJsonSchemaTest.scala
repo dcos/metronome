@@ -30,6 +30,7 @@ class JobSpecJsonSchemaTest extends FunSuite with Mockito with Matchers with Tab
       ("-a", false),
       (".a", false),
       ("-a1.a", false),
+      ("a1-.a", false),
       (".a1.a1", false),
 
       // invalid characters
