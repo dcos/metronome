@@ -76,10 +76,6 @@ val excludeSlf4jLog4j12 =
 val excludeLog4j = ExclusionRule(organization = "log4j", name = "log4j")
 val excludeJCL =
   ExclusionRule(organization = "commons-logging", name = "commons-logging")
-val excludeAkkaHttpExperimental = ExclusionRule(
-  organization = "com.typesafe.akka",
-  name = "akka-http-experimental_2.12"
-)
 
 lazy val formatSettings = Seq(
   scalariformAutoformat := true,
@@ -121,19 +117,19 @@ lazy val metronome = (project in file("."))
   .settings(nativePackageSettings)
   .settings(packagingSettings)
   .settings(
-    libraryDependencies ++= Seq(
-      Dependencies.macWireMacros,
-      Dependencies.macWireUtil,
-      Dependencies.macWireProxy,
-      Dependencies.Test.scalatest,
-      Dependencies.Test.usiTestUtils
-    )
-      .map(
-        _.excludeAll(excludeSlf4jLog4j12)
-          .excludeAll(excludeLog4j)
-          .excludeAll(excludeJCL)
-          .excludeAll(excludeAkkaHttpExperimental)
+    libraryDependencies ++= Dependencies.akkaHttp ++
+      Seq(
+        Dependencies.macWireMacros,
+        Dependencies.macWireUtil,
+        Dependencies.macWireProxy,
+        Dependencies.Test.scalatest,
+        Dependencies.Test.usiTestUtils
       )
+        .map(
+          _.excludeAll(excludeSlf4jLog4j12)
+            .excludeAll(excludeLog4j)
+            .excludeAll(excludeJCL)
+        )
   )
 
 val silencerVersion = "1.1"
@@ -146,7 +142,8 @@ lazy val api = (project in file("api"))
   .settings(projectSettings)
   .settings(
     RoutesKeys.routesImport ++= Seq("dcos.metronome.api.Binders._"),
-    libraryDependencies ++= Seq(
+    libraryDependencies ++=
+      Dependencies.akkaHttp ++ Seq(
       Dependencies.playJson,
       Dependencies.playWS,
       Dependencies.marathonPlugin,
@@ -167,7 +164,6 @@ lazy val api = (project in file("api"))
       _.excludeAll(excludeSlf4jLog4j12)
         .excludeAll(excludeLog4j)
         .excludeAll(excludeJCL)
-        .excludeAll(excludeAkkaHttpExperimental)
     )
   )
 
@@ -200,7 +196,6 @@ lazy val jobs = (project in file("jobs"))
       _.excludeAll(excludeSlf4jLog4j12)
         .excludeAll(excludeLog4j)
         .excludeAll(excludeJCL)
-        .excludeAll(excludeAkkaHttpExperimental)
     )
   )
 

@@ -19,7 +19,8 @@ object Dependencies {
     val JsonValidate = "0.9.4"
     val MoultingYaml = "0.4.0"
     val Caffeine = "2.6.2"
-    val UsiTestUtils = "0.1.35-2f42537-SNAPSHOT"
+    val UsiTestUtils = "0.1.38-01cc89f-SNAPSHOT"
+    val AkkaHttp = "10.1.11"
   }
 
   val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
@@ -39,6 +40,10 @@ object Dependencies {
   val akkaSlf4j = "com.typesafe.akka" %%  "akka-slf4j" % V.Akka
   val jsonValidate = "com.eclipsesource" %% "play-json-schema-validator" % V.JsonValidate
   val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % V.Caffeine // we need to override caffeine version because of dependency in dcos plugins
+  val akkaHttp = Seq(
+    "com.typesafe.akka" %% "akka-http" % V.AkkaHttp,
+    "com.typesafe.akka" %% "akka-http-xml" % V.AkkaHttp,
+    "de.heikoseeberger" %% "akka-http-play-json" % "1.31.0")
 
   object Test {
     val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"

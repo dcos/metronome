@@ -13,6 +13,7 @@ import mesosphere.marathon.SemVer
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.state.{ Parameter, Timestamp }
 import play.api.libs.functional.syntax._
+import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json.Reads._
 import play.api.libs.json.{ Json, _ }
 
@@ -54,7 +55,24 @@ package object models {
     },
     Writes({ networkMode: Network.NetworkMode => JsString(networkMode.name) }))
 
-  implicit lazy val networkFormat: Format[Network] = Json.format[Network]
+  implicit lazy val networkReads: Reads[Network] = (
+    (__ \ "name").readNullable[String] ~
+    (__ \ "mode").read[Network.NetworkMode] ~
+    (__ \ "labels").readWithDefault[Map[String, String]](Map.empty[String, String]))(Network.apply _)
+
+  implicit lazy val networkWrites: Writes[Network] = new Writes[Network] {
+    override def writes(o: Network): JsValue = {
+      val b = Seq.newBuilder[(String, JsValueWrapper)]
+      o.name.foreach { name =>
+        b += ("name" -> name)
+      }
+      b += "mode" -> o.mode
+      if (o.labels.nonEmpty) {
+        b += "labels" -> o.labels
+      }
+      Json.obj(b.result: _*)
+    }
+  }
 
   implicit lazy val CronFormat: Format[CronSpec] = new Format[CronSpec] {
     override def writes(o: CronSpec): JsValue = JsString(o.toString)
