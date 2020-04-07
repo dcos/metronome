@@ -321,7 +321,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val f = new Fixture
     import f._
     val successfulJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Success, clock.instant(), None, None, Map.empty)
-    val actorRef: ActorRef = executorActor(successfulJobRun)
+    executorActor(successfulJobRun)
 
     verify(launchQueue, timeout(1000)).purge(successfulJobRun.id.toRunSpecId)
     val parentUpdate = parent.expectMsgType[JobRunExecutorActor.JobRunUpdate]
@@ -355,7 +355,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     instanceTracker.specInstancesSync(runSpecId) returns Seq.empty
 
     When("the actor is initialized")
-    val actorRef: ActorRef = executorActor(activeJobRun)
+    executorActor(activeJobRun)
 
     And("a task is placed onto the launch queue")
     verify(launchQueue, timeout(1000)).add(any, any)
@@ -380,7 +380,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     instanceTracker.specInstancesSync(runSpecId) returns Seq.empty[Instance]
 
     When("the actor is initialized")
-    val actorRef: ActorRef = executorActor(activeJobRun)
+    executorActor(activeJobRun)
 
     Then("it will fetch info about queued or running tasks")
     verify(f.launchQueue, atLeastOnce).get(runSpecId)
@@ -414,7 +414,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
         Timestamp.now(clock), UnreachableDisabled, None))
 
     When("the actor is initialized")
-    val actorRef: ActorRef = executorActor(activeJobRun)
+    executorActor(activeJobRun)
 
     And("NO task is placed onto the launch queue")
     noMoreInteractions(launchQueue)
@@ -712,7 +712,6 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
   }
 
   test("startingDeadline is cancelled when job is started") {
-    import scala.concurrent.duration._
     val f = new Fixture
 
     Given("a jobRunSpec with startingDeadline")
@@ -764,7 +763,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val f = new Fixture
     Given("a jobRun initial where node already exists")
     val (_, jobRun) = f.setupInitialExecutorActor()
-    val msg = f.persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
+    f.persistenceActor.expectMsgType[JobRunPersistenceActor.Create]
     f.persistenceActor.reply(JobRunPersistenceActor.PersistFailed(f.persistenceActor.ref, jobRun.id, new StoreCommandFailedException("", new NodeExistsException()), ()))
 
     Then("run goes to starting phase instead of restarting the actor and starting from the beginning")

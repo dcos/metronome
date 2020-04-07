@@ -236,7 +236,20 @@ message JobSpec {
       optional bool privileged = 2 [default = false];
     }
     optional UcrSpec ucr = 17;
-
+    repeated NetworkDefinition networks = 19;
   }
+
   optional RunSpec run = 6;
+}
+
+message NetworkDefinition {
+  enum Mode {
+    HOST = 1;
+    CONTAINER = 2;
+    BRIDGE = 3;
+  }
+
+  optional Mode mode = 1;
+  optional string name = 2; // for CONTAINER mode only
+  repeated Label labels = 3; // for CONTAINER, BRIDGE modes only
 }

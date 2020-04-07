@@ -3,6 +3,7 @@ package repository.impl.kv.marshaller
 
 import java.time.ZoneId
 
+import dcos.metronome.Protos.{ Label, NetworkDefinition }
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.kv.EntityMarshaller
 import mesosphere.marathon.state.Parameter
@@ -131,6 +132,7 @@ object RunSpecConversions {
         .addAllArtifacts(runSpec.artifacts.toProto.asJava)
         .addAllVolumes(runSpec.volumes.toProto.asJava)
         .addAllSecrets(runSpec.secrets.toProto.asJava)
+        .addAllNetworks(runSpec.networks.view.map(_.toProto).asJava)
 
       runSpec.cmd.foreach(builder.setCmd)
       runSpec.args.foreach { args => builder.addAllArguments(args.asJava) }
@@ -152,6 +154,7 @@ object RunSpecConversions {
       val user = if (runSpec.hasUser) Some(runSpec.getUser) else None
       val docker = if (runSpec.hasDocker) Some(runSpec.getDocker.toModel) else None
       val ucr = if (runSpec.hasUcr) Some(runSpec.getUcr.toModel) else None
+      val networks = runSpec.getNetworksList.asScala.iterator.map(_.toModel).to[Seq]
       val taskKillGracePeriodSeconds = if (runSpec.hasTaskKillGracePeriodSeconds) Some(Duration(runSpec.getTaskKillGracePeriodSeconds, SECONDS)) else None
 
       JobRunSpec(
@@ -171,6 +174,7 @@ object RunSpecConversions {
         docker = docker,
         ucr = ucr,
         taskKillGracePeriodSeconds = taskKillGracePeriodSeconds,
+        networks = networks,
         secrets = runSpec.getSecretsList.asScala.toModel)
     }
   }
@@ -229,6 +233,44 @@ object RunSpecConversions {
           mode = Mode.names(volume.getMode.toString))
       }
     }.toList
+  }
+
+  implicit class NetworkToProto(val network: Network) extends AnyVal {
+    def toProto: NetworkDefinition = {
+      val networkMode = network.mode match {
+        case Network.NetworkMode.Host            => NetworkDefinition.Mode.HOST
+        case Network.NetworkMode.ContainerBridge => NetworkDefinition.Mode.BRIDGE
+        case Network.NetworkMode.Container       => NetworkDefinition.Mode.CONTAINER
+      }
+      val labels = network.labels.view.map {
+        case (k, v) =>
+          Label.newBuilder().setKey(k).setValue(v).build
+      }
+
+      val b = NetworkDefinition.newBuilder()
+        .setMode(networkMode)
+        .addAllLabels(labels.asJava)
+
+      network.name.foreach(b.setName)
+
+      b.build()
+    }
+  }
+
+  implicit class ProtoToNetwork(val network: NetworkDefinition) extends AnyVal {
+    def toModel: Network = {
+      val mode: Network.NetworkMode = network.getMode match {
+        case NetworkDefinition.Mode.HOST      => Network.NetworkMode.Host
+        case NetworkDefinition.Mode.BRIDGE    => Network.NetworkMode.ContainerBridge
+        case NetworkDefinition.Mode.CONTAINER => Network.NetworkMode.Container
+      }
+      val name = if (network.hasName) Some(network.getName) else None
+      val labels: Map[String, String] = network.getLabelsList.asScala.iterator.map { l =>
+        l.getKey -> l.getValue
+      }.toMap
+
+      Network(name, mode, labels)
+    }
   }
 
   implicit class PlacementSpecToProto(val placement: PlacementSpec) extends AnyVal {

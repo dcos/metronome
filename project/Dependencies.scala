@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
   object V {
     val AsyncAwait = "0.9.7"
-    val ScalaTest = "3.0.5"
+    val ScalaTest = "3.0.8"
     val ScalaCheck = "1.14.0"
     val MacWire = "2.3.1"
     val Marathon = "1.7.202"
@@ -13,13 +13,14 @@ object Dependencies {
     val ScalaTestPlusPlay = "3.1.2"
     val PlayIteratees = "2.6.1"
     val CronUtils = "9.0.0"
-    val WixAccord = "0.7.1"
-    val Akka = "2.5.15"
+    val WixAccord = "0.7.5"
+    val Akka = "2.6.3"
     val Mockito = "2.21.0"
     val JsonValidate = "0.9.4"
     val MoultingYaml = "0.4.0"
     val Caffeine = "2.6.2"
-    val UsiTestUtils = "0.1.12"
+    val UsiTestUtils = "0.1.39"
+    val AkkaHttp = "10.1.11"
   }
 
   val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
@@ -39,6 +40,10 @@ object Dependencies {
   val akkaSlf4j = "com.typesafe.akka" %%  "akka-slf4j" % V.Akka
   val jsonValidate = "com.eclipsesource" %% "play-json-schema-validator" % V.JsonValidate
   val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % V.Caffeine // we need to override caffeine version because of dependency in dcos plugins
+  val akkaHttp = Seq(
+    "com.typesafe.akka" %% "akka-http" % V.AkkaHttp,
+    "com.typesafe.akka" %% "akka-http-xml" % V.AkkaHttp,
+    "de.heikoseeberger" %% "akka-http-play-json" % "1.31.0")
 
   object Test {
     val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"
@@ -47,7 +52,7 @@ object Dependencies {
     val akkaTestKit = "com.typesafe.akka" %%  "akka-testkit" % V.Akka % "test"
     val mockito = "org.mockito" % "mockito-core" % V.Mockito % "test"
 
-    val usiTestUtils = "com.mesosphere.usi" % "test-utils" % V.UsiTestUtils % "test" exclude("org.apache.zookeeper", "zookeeper")
+    val usiTestUtils = "com.mesosphere.usi" %% "test-utils" % V.UsiTestUtils % "test" exclude("org.apache.zookeeper", "zookeeper")
 
   }
 }

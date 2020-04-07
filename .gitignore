@@ -33,3 +33,4 @@ native/
 .dir-locals.el
 /scratch/
 /docs/docs/generated
+sandboxes/

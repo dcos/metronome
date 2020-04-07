@@ -14,7 +14,7 @@ import mesosphere.marathon.{ MarathonSchedulerDriverHolder, StoreCommandFailedEx
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
 import org.apache.zookeeper.KeeperException.NodeExistsException
-import scala.async.Async.{ async, await }
+import scala.async.Async.async
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.concurrent.{ Await, Promise }

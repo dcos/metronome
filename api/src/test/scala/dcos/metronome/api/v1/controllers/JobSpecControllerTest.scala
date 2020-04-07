@@ -205,7 +205,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       When("A job with Docker gpus is created")
       val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(dockerGpuJobJson)).get
 
-      val c = contentAsJson(response)
+      contentAsJson(response)
 
       Then("The job is created")
       status(response) mustBe UNPROCESSABLE_ENTITY
@@ -255,7 +255,7 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
       When("A job with Docker with file based secrets is created")
       val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(dockerJobSpecWithFileBasedSecretsJson)).get
 
-      val c = contentAsJson(response)
+      contentAsJson(response)
 
       Then("The job is created")
       status(response) mustBe UNPROCESSABLE_ENTITY

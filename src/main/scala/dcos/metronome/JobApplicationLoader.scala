@@ -5,7 +5,6 @@ import dcos.metronome.scheduler.impl.SchedulerServiceImpl
 import java.time.Clock
 
 import controllers.AssetsComponents
-import com.softwaremill.macwire._
 import com.typesafe.scalalogging.StrictLogging
 import dcos.metronome.api.v1.LeaderProxyFilter
 import dcos.metronome.api.{ ApiModule, ErrorHandler }
@@ -24,7 +23,6 @@ import play.api.mvc.EssentialFilter
 import play.api.routing.Router
 
 import scala.concurrent.Future
-import scala.util.Failure
 
 /**
   * Application loader that wires up the application dependencies using Macwire

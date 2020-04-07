@@ -13,7 +13,6 @@ import dcos.metronome.model._
 import dcos.metronome.repository.impl.InMemoryRepository
 import dcos.metronome.utils.test.Mockito
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.metrics.dummy.DummyMetrics
 import org.scalatest._
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
@@ -120,7 +119,7 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
     val actor = f.serviceActor
     // triggered job
     actor ! TriggerJobRun(f.jobSpec, None)
-    val startedRun = expectMsgClass(classOf[StartedJobRun])
+    expectMsgClass(classOf[StartedJobRun])
 
     When("An existing jobRun is queried")
     actor ! TriggerJobRun(f.jobSpec, Some(f.forbidSchedule))

@@ -13,6 +13,7 @@ import mesosphere.marathon.SemVer
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.state.{ Parameter, Timestamp }
 import play.api.libs.functional.syntax._
+import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json.Reads._
 import play.api.libs.json.{ Json, _ }
 
@@ -43,6 +44,35 @@ package object models {
     (__ \ "extract").formatNullable[Boolean].withDefault(true) ~
     (__ \ "executable").formatNullable[Boolean].withDefault(false) ~
     (__ \ "cache").formatNullable[Boolean].withDefault(false))(Artifact.apply, unlift(Artifact.unapply))
+
+  implicit lazy val networkModeFormat: Format[Network.NetworkMode] = Format(
+    Reads { json =>
+      json.validate[String].flatMap { networkModeName =>
+        Network.NetworkMode.byName.get(networkModeName).map(JsSuccess(_)).getOrElse {
+          JsError(s"${networkModeName} is not a valid network mode; expected one of ${Network.NetworkMode.byName.keys.mkString(",")}")
+        }
+      }
+    },
+    Writes({ networkMode: Network.NetworkMode => JsString(networkMode.name) }))
+
+  implicit lazy val networkReads: Reads[Network] = (
+    (__ \ "name").readNullable[String] ~
+    (__ \ "mode").read[Network.NetworkMode] ~
+    (__ \ "labels").readWithDefault[Map[String, String]](Map.empty[String, String]))(Network.apply _)
+
+  implicit lazy val networkWrites: Writes[Network] = new Writes[Network] {
+    override def writes(o: Network): JsValue = {
+      val b = Seq.newBuilder[(String, JsValueWrapper)]
+      o.name.foreach { name =>
+        b += ("name" -> name)
+      }
+      b += "mode" -> o.mode
+      if (o.labels.nonEmpty) {
+        b += "labels" -> o.labels
+      }
+      Json.obj(b.result: _*)
+    }
+  }
 
   implicit lazy val CronFormat: Format[CronSpec] = new Format[CronSpec] {
     override def writes(o: CronSpec): JsValue = JsString(o.toString)
@@ -207,7 +237,8 @@ package object models {
     (__ \ "volumes").formatNullable[Seq[Volume]].withDefault(JobRunSpec.DefaultVolumes) ~
     (__ \ "restart").formatNullable[RestartSpec].withDefault(JobRunSpec.DefaultRestartSpec) ~
     (__ \ "taskKillGracePeriodSeconds").formatNullable[FiniteDuration] ~
-    (__ \ "secrets").formatNullable[Map[String, SecretDef]].withDefault(JobRunSpec.DefaultSecrets))(JobRunSpec.apply, unlift(JobRunSpec.unapply))
+    (__ \ "secrets").formatNullable[Map[String, SecretDef]].withDefault(JobRunSpec.DefaultSecrets) ~
+    (__ \ "networks").formatNullable[Seq[Network]].withDefault(JobRunSpec.DefaultNetworks))(JobRunSpec.apply, unlift(JobRunSpec.unapply))
 
   implicit lazy val JobSpecFormat: Format[JobSpec] = (
     (__ \ "id").format[JobId] ~

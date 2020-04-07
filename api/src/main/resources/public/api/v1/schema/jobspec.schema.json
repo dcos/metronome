@@ -85,6 +85,34 @@
           "description": "How much disk space is needed for this job. This number does not have to be an integer, but can be a fraction.",
           "minimum": 0
         },
+        "networks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "definition of a network",
+            "additionalProperties": false,
+            "required": ["mode"],
+            "properties": {
+              "name": {
+                "description": "Network name. Required for and only applicable for network mode container.",
+                "type": "string"
+              },
+              "mode": {
+                "description": "Network mode. One of: host, container/bridge, or container.",
+                "type": "string",
+                "enum": ["host", "container/bridge", "container"]
+              },
+              "labels": {
+                "description": "Labels to pass to the network plugin. Applicable only to container or container/bridge network modes.",
+                "type": "object",
+                "required": [],
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
         "ucr": {
           "type": "object",
           "additionalProperties": false,

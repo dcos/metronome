@@ -6,12 +6,12 @@ import java.time.ZoneId
 import dcos.metronome.model._
 import org.scalacheck.{ Arbitrary, Gen }
 import org.scalatest.{ FunSuite, Matchers }
-import org.scalatest.prop.PropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.collection.immutable._
 import scala.concurrent.duration.FiniteDuration
 
-class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
+class JobSpecMarshallerTest extends FunSuite with Matchers with ScalaCheckPropertyChecks {
 
   test("unmarshal with invalid proto data should return None") {
     val invalidBytes = "foobar".getBytes
@@ -50,6 +50,16 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
 
   val volumeGen = Gen.oneOf(hostVolumeGen, secretVolumeGen)
 
+  val userNetworkGen: Gen[Network] = {
+    Gen.zip(nonEmptyAlphaStrGen, nonEmptyAlphaStrGen, nonEmptyAlphaStrGen).map {
+      case (name, labelKey, labelValue) =>
+        Network(name = Some(name), mode = Network.NetworkMode.Container, labels = Map(labelKey -> labelValue))
+    }
+  }
+
+  val hostNetworkGen = Gen.const(Network(name = None, mode = Network.NetworkMode.Host, labels = Map.empty))
+  val networkGen: Gen[Network] = Gen.oneOf[Network](userNetworkGen, hostNetworkGen)
+
   val jobRunSpecGen = for {
     cpus <- Gen.posNum[Double]
     mem <- Gen.posNum[Double]
@@ -64,6 +74,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
     maxLaunchDelay <- durationGen
     container <- dockerOrUcrGen
     volumes <- volumeGen
+    networks <- networkGen
     restart <- Gen.zip(Gen.oneOf(RestartPolicy.Never, RestartPolicy.OnFailure), Gen.option(durationGen)).map{ case (rp, d) => RestartSpec(rp, d) }
     taskKillGracePeriodSeconds <- Gen.option(durationGen)
     secrets <- Gen.mapOf(Gen.zip(nonEmptyAlphaStrGen, nonEmptyAlphaStrGen.map(s => SecretDef(s))))
@@ -89,7 +100,8 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
       volumes,
       restart,
       taskKillGracePeriodSeconds,
-      secrets)
+      secrets,
+      Seq(networks))
   }
 
   val jobSpecGen = for {
@@ -110,8 +122,10 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with PropertyChecks {
   implicit val jobSpecArbitrary = Arbitrary(jobSpecGen)
 
   test("round-trip of a complete JobSpec") {
-    forAll (jobSpecGen) { jobSpec =>
-      JobSpecMarshaller.fromBytes(JobSpecMarshaller.toBytes(jobSpec)) shouldEqual Some(jobSpec)
+    1.until(20).foreach { _ =>
+      forAll(jobSpecGen) { jobSpec =>
+        JobSpecMarshaller.fromBytes(JobSpecMarshaller.toBytes(jobSpec)) shouldEqual Some(jobSpec)
+      }
     }
   }
 

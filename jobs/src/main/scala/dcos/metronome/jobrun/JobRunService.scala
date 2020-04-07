@@ -4,7 +4,6 @@ package jobrun
 import dcos.metronome.model._
 
 import scala.concurrent.Future
-import scala.concurrent.duration.Duration
 
 /**
   * The JobRunService can be used to start JobRuns, kill started JobRuns and list active JobRuns.

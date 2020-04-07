@@ -5,7 +5,7 @@ import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.{ Answer, OngoingStubbing }
 import org.mockito.verification.VerificationMode
 import org.mockito.{ ArgumentMatchers, Mockito => M }
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 
 /**
   * ScalaTest mockito support is quite limited and ugly.
