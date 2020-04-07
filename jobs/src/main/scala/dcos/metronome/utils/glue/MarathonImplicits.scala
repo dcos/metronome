@@ -136,7 +136,9 @@ object MarathonImplicits {
         networks = convertNetworks)
     }
 
-    private def convertNetworks: Seq[pod.Network] = {
+    private def convertNetworks: Seq[pod.Network] = if (run.jobSpec.networks.isEmpty) {
+      AppDefinition.DefaultNetworks
+    } else {
       run.jobSpec.networks.map {
         case n: pod.Network => n
         case o =>

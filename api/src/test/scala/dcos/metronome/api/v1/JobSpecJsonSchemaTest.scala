@@ -3,12 +3,11 @@ package dcos.metronome.api.v1
 import com.eclipsesource.schema.SchemaValidator
 import com.mesosphere.utils.UnitTest
 import dcos.metronome.api.v1.models.schema
-import org.scalatest.{FunSuite, Matchers}
 import dcos.metronome.utils.test.Mockito
 import org.scalatest.prop.TableDrivenPropertyChecks
 import play.api.libs.json._
 
-class JobSpecJsonSchemaTest extends UnitTest with Mockito with Matchers with TableDrivenPropertyChecks {
+class JobSpecJsonSchemaTest extends UnitTest with Mockito with TableDrivenPropertyChecks {
   val runTemplate = Json.obj(
     "cpus" -> 1,
     "disk" -> 0,
