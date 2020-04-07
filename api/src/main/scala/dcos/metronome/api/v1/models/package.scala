@@ -240,26 +240,6 @@ package object models {
     (__ \ "secrets").formatNullable[Map[String, SecretDef]].withDefault(JobRunSpec.DefaultSecrets) ~
     (__ \ "networks").formatNullable[Seq[Network]].withDefault(JobRunSpec.DefaultNetworks))(JobRunSpec.apply, unlift(JobRunSpec.unapply))
 
-  /**
-    * [error] /Users/tim/src/m8e/metronome/api/src/main/scala/dcos/metronome/api/v1/models/package.scala:224:6:
-    * (play.api.libs.functional.FunctionalBuilder[play.api.libs.json.OFormat]#CanBuild17[Double,Double,Double,Int,Option[String],
-    * Option[scala.collection.immutable.Seq[String]],
-    * Option[String],
-    * scala.collection.immutable.Map[String,dcos.metronome.model.EnvVarValueOrSecret],
-    * dcos.metronome.model.PlacementSpec,
-    * scala.collection.immutable.Seq[dcos.metronome.model.Artifact],
-    * scala.concurrent.duration.Duration,
-    * Option[dcos.metronome.model.DockerSpec],
-    * Option[dcos.metronome.model.UcrSpec],
-    * scala.collection.immutable.Seq[dcos.metronome.model.Volume],
-    * dcos.metronome.model.RestartSpec,
-    * Option[scala.concurrent.duration.FiniteDuration],
-    * Map[String,dcos.metronome.model.SecretDef]],
-    * play.api.libs.json.OFormat[dcos.metronome.Seq[dcos.metronome.model.Network]]) does not take parameters
-    * [error]     )(JobRunSpec.apply, unlift(JobRunSpec.unapply))
-    * [error]   *
-    *
-    */
   implicit lazy val JobSpecFormat: Format[JobSpec] = (
     (__ \ "id").format[JobId] ~
     (__ \ "description").formatNullable[String] ~
