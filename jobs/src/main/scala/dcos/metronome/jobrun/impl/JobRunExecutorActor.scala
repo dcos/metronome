@@ -4,20 +4,19 @@ package jobrun.impl
 import java.time.Clock
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Scheduler, Stash }
+import akka.actor.{Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Scheduler, Stash}
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
+import dcos.metronome.model.{JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy}
 import dcos.metronome.scheduler.TaskState
-import mesosphere.marathon.core.task.tracker.InstanceTracker
-import mesosphere.marathon.{ MarathonSchedulerDriverHolder, StoreCommandFailedException }
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
+import mesosphere.marathon.core.task.tracker.InstanceTracker
+import mesosphere.marathon.{MarathonSchedulerDriverHolder, StoreCommandFailedException}
 import org.apache.zookeeper.KeeperException.NodeExistsException
-import scala.async.Async.async
 
-import scala.concurrent.duration.{ Duration, FiniteDuration }
-import scala.concurrent.{ Await, Promise }
+import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.{Await, Promise}
 
 /**
   * Handles one job run from start until the job either completes successful or failed.
@@ -105,7 +104,12 @@ class JobRunExecutorActor(
     startingDeadlineTimer = Some(scheduler.scheduleOnce(timeout, self, StartTimeout))
   }
 
-  def addTaskToLaunchQueue(restart: Boolean = false): Unit = async {
+  /**
+    * Asynchronously adds the jobRun to the launch queue
+    *
+    * @param restart
+    */
+  def addTaskToLaunchQueue(restart: Boolean = false): Unit = {
     if (!restart && existsInLaunchQueue()) {
       // we have to handle a case when actor is restarted (e.g. because of exception) and it already put something into the queue
       // during restart it is possible, that actor that was in state Starting will be restarted with state initial
