@@ -1,6 +1,14 @@
 # Next
 
-# 0.6.NEXT
+# 0.6.42
+
+* Allow Metronome jobs to specify networks to join [MARATHON-8727](https://jira.mesosphere.com/browse/MARATHON-8727)
+
+# 0.6.41
+
+* Optimize JsonSchema validation for JobSpec ids [MARATHON-8730](https://jira.mesosphere.com/browse/MARATHON-8730)
+* Fixes issue in which JobSpec history sometimes wasn't properly cleaned up [DCOS_OSS-3997](https://jira.d2iq.com/browse/DCOS_OSS-3997)
+* Fixes an issue with DST [DCOS_OSS-2509](https://jira.mesosphere.com/browse/DCOS_OSS-2509)
 
 # 0.6.33
 
