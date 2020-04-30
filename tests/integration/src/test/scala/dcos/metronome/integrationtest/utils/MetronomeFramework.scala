@@ -44,7 +44,40 @@ object MetronomeFramework {
     val system: ActorSystem,
                                                                          val mat:       Materializer,
                                                                          val ctx:       ExecutionContext,
-                                                                         val scheduler: Scheduler) extends StrictLogging {
+                                                                         val scheduler: Scheduler) extends MetronomeBase {
+
+    // it'd be great to be able to execute in memory, but we can't due to GuiceFilter using a static :(
+    val processBuilder = {
+      val java = sys.props.get("java.home").fold("java")(_ + "/bin/java")
+      val cp = sys.props.getOrElse("java.class.path", "target/classes")
+
+      // Get JVM arguments, such as -javaagent:some.jar
+      val runtimeMxBean = ManagementFactory.getRuntimeMXBean
+      val runtimeArguments = JavaConverters.collectionAsScalaIterable(runtimeMxBean.getInputArguments).toSeq
+
+      val cmd = Seq(java, "-Xmx1024m", "-Xms256m", "-XX:+UseConcMarkSweepGC", "-XX:ConcGCThreads=2") ++
+        runtimeArguments ++ akkaJvmArgs ++
+        Seq(s"-DmarathonUUID=$uuid -DtestSuite=$suiteName", s"-Dmetronome.zk.url=$zkUrl", s"-Dmetronome.mesos.master.url=$masterUrl", s"-Dmetronome.framework.name=metronome-$uuid", s"-Dplay.server.http.port=$httpPort", s"-Dplay.server.https.port=$httpsPort", "-classpath", cp, "-client", mainClass) // ++ args
+
+      logger.info(s"Starting process in ${workDir}, Cmd is ${cmd}")
+
+      Process(cmd, workDir, sys.env.toSeq: _*)
+    }
+
+  }
+
+  trait MetronomeBase extends StrictLogging {
+
+    val mainClass: String
+    val suiteName: String
+    val masterUrl: String
+    val zkUrl: String
+    val conf: Map[String, String]
+
+    implicit val system: ActorSystem
+    implicit val mat: Materializer
+    implicit val ctx: ExecutionContext
+    implicit val scheduler: Scheduler
 
     final val defaultRole = "foo"
 
@@ -53,7 +86,7 @@ object MetronomeFramework {
     lazy val httpPort = PortAllocator.ephemeralPort()
     lazy val httpsPort = PortAllocator.ephemeralPort()
 
-    lazy val uniqueZkUrl = zkUrl + "_" + httpPort
+    val processBuilder: scala.sys.process.ProcessBuilder
 
     // lower the memory pressure by limiting threads.
     val akkaJvmArgs = Seq(
@@ -86,7 +119,7 @@ object MetronomeFramework {
       "mesos_role" -> mesosRole,
       "http_port" -> httpPort.toString,
       "https_port" -> httpsPort.toString,
-      "zk" -> uniqueZkUrl,
+      "zk" -> zkUrl,
       "zk_timeout" -> 20.seconds.toMillis.toString,
       "zk_connection_timeout" -> 20.seconds.toMillis.toString,
       "zk_session_timeout" -> 20.seconds.toMillis.toString,
@@ -107,24 +140,6 @@ object MetronomeFramework {
           Seq(s"--$k")
         }
     }(collection.breakOut)
-
-    // it'd be great to be able to execute in memory, but we can't due to GuiceFilter using a static :(
-    val processBuilder = {
-      val java = sys.props.get("java.home").fold("java")(_ + "/bin/java")
-      val cp = sys.props.getOrElse("java.class.path", "target/classes")
-
-      // Get JVM arguments, such as -javaagent:some.jar
-      val runtimeMxBean = ManagementFactory.getRuntimeMXBean
-      val runtimeArguments = JavaConverters.collectionAsScalaIterable(runtimeMxBean.getInputArguments).toSeq
-
-      val cmd = Seq(java, "-Xmx1024m", "-Xms256m", "-XX:+UseConcMarkSweepGC", "-XX:ConcGCThreads=2") ++
-        runtimeArguments ++ akkaJvmArgs ++
-        Seq(s"-DmarathonUUID=$uuid -DtestSuite=$suiteName", s"-Dmetronome.zk.url=$uniqueZkUrl", s"-Dmetronome.mesos.master.url=$masterUrl", s"-Dmetronome.framework.name=metronome-$uuid", s"-Dplay.server.http.port=$httpPort", s"-Dplay.server.https.port=$httpsPort", "-classpath", cp, "-client", mainClass) // ++ args
-
-      logger.info(s"Starting process in ${workDir}, Cmd is ${cmd}")
-
-      Process(cmd, workDir, sys.env.toSeq: _*)
-    }
 
     def activePids: Seq[String] = {
       val PIDRE = """^\s*(\d+)\s+(\S*)\s*(.*)$""".r

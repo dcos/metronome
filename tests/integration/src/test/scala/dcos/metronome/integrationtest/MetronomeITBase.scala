@@ -1,5 +1,6 @@
 package dcos.metronome.integrationtest
 
+import com.fasterxml.jackson.annotation.ObjectIdGenerators.UUIDGenerator
 import com.mesosphere.utils.AkkaUnitTest
 import com.mesosphere.utils.mesos.MesosClusterTest
 import com.typesafe.scalalogging.StrictLogging
@@ -24,7 +25,7 @@ class MetronomeITBase extends AkkaUnitTest with MesosClusterTest with Inside wit
   class Fixture(existingFrameworkId: Option[FrameworkID.Builder] = None) extends StrictLogging {
     logger.info("Create Fixture with new Metronome...")
 
-    val zkUrl = s"zk://${zkserver.connectUrl}/metronome"
+    val zkUrl = s"zk://${zkserver.connectUrl}/metronome_" + new UUIDGenerator().generateId().toString
     val masterUrl = mesosFacade.url.getHost + ":" + mesosFacade.url.getPort
 
     val currentITName = MetronomeITBase.this.getClass.getSimpleName
