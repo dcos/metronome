@@ -44,7 +44,7 @@ class BasicTestsIT extends MetronomeITBase {
     val jobJson = f.metronome.getJob("my-job")
 
     Then("The job should be returned")
-    val job = jobJson.entityJson(0)
+    val job = jobJson.entityJson
 
     (job \ "id").as[String] shouldBe "my-job"
     (job \ "run" \ "mem").as[Int] shouldBe 32

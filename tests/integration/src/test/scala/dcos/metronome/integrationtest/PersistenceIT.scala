@@ -13,11 +13,11 @@ class PersistenceIT extends MetronomeITBase {
 
   "A job and run should be available after a restart of metronome" in withFixture() { f =>
     When("A job description is posted")
-    val appId = "my-job"
+    val jobId = "my-job"
     val jobDef =
       s"""
         |{
-        |  "id": "${appId}",
+        |  "id": "${jobId}",
         |  "description": "A job that sleeps",
         |  "run": {
         |    "cmd": "sleep 120",
@@ -34,13 +34,13 @@ class PersistenceIT extends MetronomeITBase {
     resp.value.status.intValue() shouldBe 201
 
     When("A job run is started")
-    val startRunResp = f.metronome.startRun(appId)
+    val startRunResp = f.metronome.startRun(jobId)
 
     Then("The response should be OK")
     startRunResp.value.status.intValue() shouldBe 201
 
     eventually(timeout(30.seconds)) {
-      val runsJson = f.metronome.getRuns(appId)
+      val runsJson = f.metronome.getRuns(jobId)
       runsJson.value.status.intValue() shouldBe 200
       val runs = runsJson.entityJson.as[JsArray]
       runs.value.length shouldBe 1
@@ -55,11 +55,11 @@ class PersistenceIT extends MetronomeITBase {
     Await.result(f.metronomeFramework.start(), 60.seconds)
 
     Then("The Job and the Run should be available")
-    val jobResp = f.metronome.getJob(appId)
+    val jobResp = f.metronome.getJob(jobId)
     jobResp.value.status.intValue() shouldBe 200
-    jobResp.entityJson.as[JsArray].value.head.as[JsObject].value("id").as[String] shouldBe appId
+    (jobResp.entityJson \ "id").as[String] shouldBe jobId
 
-    val runResp = f.metronome.getRuns(appId)
+    val runResp = f.metronome.getRuns(jobId)
     val runs = runResp.entityJson.as[JsArray]
     runs.value.length shouldBe 1
   }
