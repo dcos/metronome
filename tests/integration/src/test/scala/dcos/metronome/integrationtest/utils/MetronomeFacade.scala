@@ -33,6 +33,10 @@ class MetronomeFacade(val url: String, implicit val waitTime: FiniteDuration = 3
   }
 
   def getJob(jobId: String): RestResult[HttpResponse] = {
+    result(request(Get(s"$url/v1/jobs/${jobId}")), waitTime)
+  }
+
+  def getJobs(): RestResult[HttpResponse] = {
     result(request(Get(s"$url/v1/jobs")), waitTime)
   }
 

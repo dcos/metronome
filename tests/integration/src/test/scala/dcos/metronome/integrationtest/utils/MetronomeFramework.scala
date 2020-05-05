@@ -85,6 +85,7 @@ object MetronomeFramework {
 
     lazy val httpPort = PortAllocator.ephemeralPort()
     lazy val httpsPort = PortAllocator.ephemeralPort()
+    lazy val httpUrl = "http://localhost:" + httpPort
 
     val processBuilder: scala.sys.process.ProcessBuilder
 

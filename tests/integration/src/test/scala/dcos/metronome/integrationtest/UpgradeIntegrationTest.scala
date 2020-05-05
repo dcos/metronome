@@ -15,7 +15,7 @@ import mesosphere.marathon.SemVer
 import mesosphere.marathon.io.IO
 import org.apache.commons.io.FileUtils
 import org.scalatest.Inside
-import play.api.libs.json.{ JsArray, JsObject }
+import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -31,22 +31,15 @@ class UpgradeIntegrationTest extends AkkaUnitTest with MesosClusterTest with Ins
 
   val zkURLBase = s"zk://${zkserver.connectUrl}/metronome-$suiteName"
 
-  //  val marathonMinus3Artifact = MetronomeArtifact(SemVer(1, 6, 567, Some("2d8b3e438")))
-  val metronomeMinus2Artifact = MetronomeArtifact(SemVer(0, 4, 4, None), "releases") // DC/OS 1.10
-  val metronomeMinus1Artifact = MetronomeArtifact(SemVer(0, 6, 33, Some("b28106a"))) // DC/OS 1.13
-
-  //   Configure Mesos to provide the Mesos containerizer with Docker image support.
-  override lazy val agentConfig = MesosAgentConfig(
-    launcher = "linux",
-    isolation = Some("filesystem/linux,docker/runtime"),
-    imageProviders = Some("docker"))
+  val metronomePre8746Regression = MetronomeArtifact(SemVer(0, 6, 33, Some("b28106a"))) // DC/OS 1.13.9
+  val metronome8746Regression = MetronomeArtifact(SemVer(0, 6, 43, Some("4e1eac1"))) // DC/OS 2.0.1
 
   override def beforeAll(): Unit = {
     logger.info("Download and extract older metronome versions")
 
     // Download Releases
-    metronomeMinus1Artifact.downloadAndExtract()
-    metronomeMinus2Artifact.downloadAndExtract()
+    metronomePre8746Regression.downloadAndExtract()
+    metronome8746Regression.downloadAndExtract()
 
     logger.info("Done with preparations")
     super.beforeAll()
@@ -90,64 +83,100 @@ class UpgradeIntegrationTest extends AkkaUnitTest with MesosClusterTest with Ins
 
       Process(cmd, workDir, sys.env.toSeq: _*)
     }
+
   }
 
   def versionWithoutCommit(version: SemVer): String = version.copy(commit = None).toString
 
-  "A created job is persisted and survive update" in {
-    When("The previous metronome is started")
-    val zkUrl = s"$zkURLBase-upgrade-from-n-2"
-    var metronomeFramework: MetronomeBase = PackagedMetronome(metronomeMinus1Artifact.metronomeBaseFolder, suiteName = s"$suiteName-n-minus-1", mesosMasterZkUrl, zkUrl)
+  def startMetronome(metronomeFramework: MetronomeBase): Unit = {
     metronomeFramework.start().futureValue
-    var metronomeUrl = "http://localhost:" + metronomeFramework.httpPort
-    logger.info(s"Metronome n-2 started, reachable on: ${metronomeUrl}")
-
-    Then("Metronome should be reachable")
-    var metronome = new MetronomeFacade(metronomeUrl)
+    val metronome = new MetronomeFacade(metronomeFramework.httpUrl)
     metronome.info().value.status.intValue() shouldBe 200
-
-    When("A job is created")
-    val appId = "my-job"
-    val jobDef =
-      s"""
-         |{
-         |  "id": "${appId}",
-         |  "description": "A job that sleeps",
-         |  "run": {
-         |    "cmd": "sleep 60",
-         |    "cpus": 0.01,
-         |    "mem": 32,
-         |    "disk": 0
-         |  }
-         |}
-      """.stripMargin
-
-    val resp = metronome.createJob(jobDef)
-
-    Then("The response should be OK")
-    resp.value.status.intValue() shouldBe 201
-    val createJobResp = metronome.getJob(appId)
-    createJobResp.value.status.intValue() shouldBe 200
-    logger.info("JobJson: " + createJobResp.entityPrettyJsonString)
-    createJobResp.entityJson.as[JsArray].value.head.as[JsObject].value("id").as[String] shouldBe appId
-
-    When("The current metronome is started")
-    metronomeFramework.stop().futureValue
-
-    metronomeFramework = MetronomeFramework.LocalMetronome(suiteName, mesosMasterZkUrl, zkUrl)
-    metronomeFramework.start().futureValue
-
-    metronomeUrl = "http://localhost:" + metronomeFramework.httpPort
-    logger.info(s"Metronome dev started, reachable on: ${metronomeUrl}")
-
-    metronome = new MetronomeFacade(metronomeUrl)
-
-    Then("The Job should be available")
-    val jobResp = metronome.getJob(appId)
-    jobResp.value.status.intValue() shouldBe 200
-    logger.info("JobJson: " + jobResp.entityPrettyJsonString)
-    jobResp.entityJson.as[JsArray].value.head.as[JsObject].value("id").as[String] shouldBe appId
-
   }
 
+  def startedMetronome(metronomeArtifact: MetronomeArtifact, zkUrl: String, name: String): PackagedMetronome = {
+    val metronomeFramework = PackagedMetronome(metronomeArtifact.metronomeBaseFolder, suiteName = s"$suiteName-$name", mesosMasterZkUrl, zkUrl)
+    startMetronome(metronomeFramework)
+    logger.info(s"Metronome ${name} started, reachable on: ${metronomeFramework.httpUrl}")
+    metronomeFramework
+  }
+
+  def createJobSuccessfully(metronome: MetronomeFacade, jobId: String, description: String): Unit = {
+    val jobDef = Json.obj(
+      "id" -> jobId,
+      "description" -> description,
+      "run" -> Json.obj(
+        "cmd" -> "sleep 60",
+        "cpus" -> 0.01,
+        "mem" -> 32,
+        "disk" -> 0))
+
+    val resp = metronome.createJob(jobDef.toString())
+
+    Then("The response should be OK")
+    resp.value.status.intValue() shouldBe 201 withClue resp.entityPrettyJsonString
+
+    val getJob = metronome.getJob(jobId)
+    getJob.value.status.intValue() shouldBe 200
+    logger.info("JobJson: " + getJob.entityPrettyJsonString)
+    (getJob.entityJson \ "id").as[String] shouldBe jobId
+  }
+
+  "A created job is persisted and survives update" in {
+    When("The previous metronome is started")
+
+    val job1Id = "job-1"
+    val job2Id = "job-2"
+    val jobOriginalDescription = "original description"
+    val jobUpdatedDescription = "updated description"
+    val zkUrl = s"$zkURLBase-upgrade-around-8746"
+
+    inside(startedMetronome(metronomePre8746Regression, zkUrl = zkUrl, name = "pre-8746")) {
+      case metronomeFramework =>
+        val metronome = new MetronomeFacade(metronomeFramework.httpUrl)
+
+        When("Two jobs are created, job-1 and job-2")
+        createJobSuccessfully(metronome, job1Id, jobOriginalDescription)
+        createJobSuccessfully(metronome, job2Id, jobOriginalDescription)
+
+        val createJobResp = metronome.getJob(job1Id)
+        createJobResp.value.status.intValue() shouldBe 200
+        logger.info("JobJson: " + createJobResp.entityPrettyJsonString)
+        (createJobResp.entityJson \ "id").as[String] shouldBe job1Id
+
+        metronomeFramework.stop().futureValue
+    }
+
+    And("A version with the MARATHON-8746 regression is started")
+    inside(startedMetronome(metronome8746Regression, zkUrl = zkUrl, name = "with-8746")) {
+      case metronomeFramework =>
+        val metronome = new MetronomeFacade(metronomeFramework.httpUrl)
+
+        And("A new version of job-2 is created")
+        createJobSuccessfully(metronome, job2Id, jobUpdatedDescription)
+        metronomeFramework.stop().futureValue
+    }
+
+    And(" current version of Metronome is started")
+    inside(MetronomeFramework.LocalMetronome(suiteName, mesosMasterZkUrl, zkUrl)) {
+      case metronomeFramework =>
+        startMetronome(metronomeFramework)
+        val metronome = new MetronomeFacade(metronomeFramework.httpUrl)
+        Then("Metronome should have both jobs 1 and 2")
+
+        val job1Response = metronome.getJob(job1Id)
+        val job2Response = metronome.getJob(job2Id)
+        logger.info(metronome.getJobs().entityPrettyJsonString)
+
+        job1Response.success shouldBe true withClue job1Response.entityPrettyJsonString
+        job2Response.success shouldBe true withClue job2Response.entityPrettyJsonString
+
+        val job1Description = (job1Response.entityJson \ "description").as[String]
+        val job2Description = (job2Response.entityJson \ "description").as[String]
+
+        And("jobs 1 and 2 should be in the same state as created prior to the MARATHON-8746 version")
+        job1Description shouldBe jobOriginalDescription
+        job2Description shouldBe jobOriginalDescription
+    }
+  }
 }
