@@ -85,7 +85,6 @@ def runWithTimeout(timeout: FiniteDuration, logFileName: String)(commands: Seq[S
     .directory(new java.io.File(pwd.toString))
     .command(commands.asJava)
     .inheritIO()
-    .redirectOutput(ProcessBuilder.Redirect.appendTo(ciLogFile(logFileName)))
     .start()
 
     val exited = buildProcess.waitFor(timeout.length, timeout.unit)
