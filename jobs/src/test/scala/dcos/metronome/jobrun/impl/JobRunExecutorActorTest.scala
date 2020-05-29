@@ -45,8 +45,6 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     with ImplicitSender
     with Mockito {
 
-  import system.dispatcher
-
   private implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
   test("ForwardStatusUpdate STAGING with subsequent RUNNING") {
@@ -419,7 +417,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     f.executorActor(activeJobRun)
 
     And("NO task is placed onto the launch queue")
-    noMoreInteractions(f.launchQueue)
+    verify(f.launchQueue, never).add(any, any)
   }
 
   test("RestartPolicy is handled correctly for job that originally launched successfully") {
@@ -753,7 +751,8 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     f.setupRunningExecutorActor()
 
     Then("no new tasks are launched")
-    noMoreInteractions(f.launchQueue)
+    verify(f.launchQueue, never).add(any, any)
+
     Then("Nothing is persisted because the JobRunStatus is still Active")
     f.persistenceActor.expectNoMsg(500.millis)
 
@@ -843,7 +842,7 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     val clock = new SettableClock(Clock.fixed(LocalDateTime.parse("2016-06-01T08:50:12.000").toInstant(ZoneOffset.UTC), ZoneOffset.UTC))
     val launchQueue: LaunchQueue = mock[LaunchQueue]
     launchQueue.purge(any).returns(Future.successful(Done))
-    val instanceTracker: InstanceTracker = mock[InstanceTracker]
+    lazy val instanceTracker: InstanceTracker = mock[InstanceTracker]
     launchQueue.get(any).returns(Future.successful(None))
     val driver = mock[SchedulerDriver]
     val driverHolder: MarathonSchedulerDriverHolder = {

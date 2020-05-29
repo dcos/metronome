@@ -404,8 +404,8 @@ object JobRunExecutorActor {
     new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
       launchQueue, instanceTracker, driverHolder, clock))
 
-  def existsInLaunchQueue(launchQueue: LaunchQueue, runSpecId: PathId)(implicit ec: ExecutionContext): Future[Boolean] = async {
-    await(launchQueue.get(runSpecId)).exists(i => i.finalInstanceCount > 0)
+  def existsInLaunchQueue(launchQueue: LaunchQueue, runSpecId: PathId)(implicit ec: ExecutionContext): Future[Boolean] = {
+    launchQueue.get(runSpecId).map { _.exists(i => i.finalInstanceCount > 0) }
   }
 
   /**
