@@ -5,19 +5,22 @@ import java.time.Clock
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Scheduler, Stash }
+import akka.pattern.pipe
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
 import dcos.metronome.scheduler.TaskState
+import mesosphere.marathon.core.instance.Instance
 import mesosphere.marathon.core.task.tracker.InstanceTracker
 import mesosphere.marathon.{ MarathonSchedulerDriverHolder, StoreCommandFailedException }
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
+import mesosphere.marathon.state.PathId
 import org.apache.zookeeper.KeeperException.NodeExistsException
-import scala.async.Async.async
 
+import scala.async.Async.{ async, await }
 import scala.concurrent.duration.{ Duration, FiniteDuration }
-import scala.concurrent.{ Await, Promise }
+import scala.concurrent.{ Await, ExecutionContext, Future, Promise }
 
 /**
   * Handles one job run from start until the job either completes successful or failed.
@@ -54,19 +57,9 @@ class JobRunExecutorActor(
         becomeAborting()
       case JobRunStatus.Initial =>
         becomeCreating()
+
       case JobRunStatus.Starting | JobRunStatus.Active =>
-        val existingTasks = tasksFromInstanceTracker()
-        existingTasks match {
-          case tasks if tasks.nonEmpty =>
-            // the actor was probably just restarted and we did not lose contents of the launch queue
-            self ! Initialized(tasks)
-          case _ if jobRun.status == JobRunStatus.Starting && existsInLaunchQueue() =>
-            // we did attempt to launch something but there is no known existing task yet
-            // this is exactly the same as starting state with already launched item
-            context.become(starting)
-          case _ =>
-            self ! Initialized(Nil)
-        }
+        becomeInitializing()
 
       case JobRunStatus.Success => becomeFinishing(jobRun)
 
@@ -74,8 +67,15 @@ class JobRunExecutorActor(
     }
   }
 
-  // Transitions
+  def becomeInitializing() = {
+    log.info(s"JobRun ${jobRun.id} - initializing")
+    val instances = instanceTracker.specInstances(runSpecId)
+    val existsInLaunchQueue = JobRunExecutorActor.existsInLaunchQueue(launchQueue, runSpecId)
+    JobRunExecutorActor.decideNextStateDirective(instances, existsInLaunchQueue, jobRun.status).pipeTo(self)
+    context.become(initializing)
+  }
 
+  // Transitions
   def becomeCreating(): Unit = {
     log.info(s"Create JobRun ${jobRun.id} - become creating")
     persistenceActor ! Create(jobRun.copy(status = JobRunStatus.Starting))
@@ -106,7 +106,8 @@ class JobRunExecutorActor(
   }
 
   def addTaskToLaunchQueue(restart: Boolean = false): Unit = async {
-    if (!restart && existsInLaunchQueue()) {
+    val alreadyQueued = await(JobRunExecutorActor.existsInLaunchQueue(launchQueue, runSpecId))
+    if (!restart && alreadyQueued) {
       // we have to handle a case when actor is restarted (e.g. because of exception) and it already put something into the queue
       // during restart it is possible, that actor that was in state Starting will be restarted with state initial
       log.info(s"Job run ${jobRun.id} already exists in LaunchQueue - not adding")
@@ -130,18 +131,6 @@ class JobRunExecutorActor(
   def cancelStartingDeadline(): Unit = {
     startingDeadlineTimer.foreach { c => if (!c.isCancelled) c.cancel() }
     startingDeadlineTimer = None
-  }
-
-  def tasksFromInstanceTracker(): Iterable[JobRunTask] = {
-    instanceTracker.specInstancesSync(runSpecId).map(a => a.appTask).collect {
-      case task: Task => JobRunTask(task)
-      case task       => throw UnexpectedTaskState(task)
-    }
-  }
-
-  def existsInLaunchQueue(): Boolean = {
-    // timeout is enforced on LaunchQueue implementation side
-    Await.result(launchQueue.get(runSpecId), Duration.Inf).exists(i => i.finalInstanceCount > 0)
   }
 
   def updatedTasks(update: TaskStateChangedEvent): Map[Task.Id, JobRunTask] = {
@@ -227,7 +216,9 @@ class JobRunExecutorActor(
 
   // Behavior
 
-  override def receive: Receive = {
+  override def receive: Receive = initializing
+
+  def initializing: Receive = {
     case Initialized(Nil) =>
       log.info("initializing - no existing tasks in the queue")
       becomeStarting(jobRun)
@@ -248,6 +239,8 @@ class JobRunExecutorActor(
       }
       unstashAll()
 
+    case BecomeStarting =>
+      context.become(starting)
     case _ => stash()
   }
 
@@ -383,18 +376,22 @@ class JobRunExecutorActor(
 
 object JobRunExecutorActor {
 
-  case class Initialized(tasks: Iterable[JobRunTask])
+  sealed trait JobRunExecutorActorMessage
 
-  case object KillCurrentJobRun
-  case class JobRunUpdate(startedJobRun: StartedJobRun)
+  sealed trait JobRunExecutorActorMessageTransition extends JobRunExecutorActorMessage
+  case class Initialized(tasks: Iterable[JobRunTask]) extends JobRunExecutorActorMessageTransition
+  case object BecomeStarting extends JobRunExecutorActorMessageTransition
 
-  case class Finished(jobResult: JobResult)
-  case class Failed(jobResult: JobResult)
-  case class Aborted(jobResult: JobResult)
+  case object KillCurrentJobRun extends JobRunExecutorActorMessage
+  case class JobRunUpdate(startedJobRun: StartedJobRun) extends JobRunExecutorActorMessage
 
-  case object StartTimeout
+  case class Finished(jobResult: JobResult) extends JobRunExecutorActorMessage
+  case class Failed(jobResult: JobResult) extends JobRunExecutorActorMessage
+  case class Aborted(jobResult: JobResult) extends JobRunExecutorActorMessage
 
-  case class ForwardStatusUpdate(update: TaskStateChangedEvent)
+  case object StartTimeout extends JobRunExecutorActorMessage
+
+  case class ForwardStatusUpdate(update: TaskStateChangedEvent) extends JobRunExecutorActorMessage
 
   def props(
     run:                        JobRun,
@@ -406,6 +403,47 @@ object JobRunExecutorActor {
     clock:                      Clock)(implicit scheduler: Scheduler): Props = Props(
     new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
       launchQueue, instanceTracker, driverHolder, clock))
+
+  def existsInLaunchQueue(launchQueue: LaunchQueue, runSpecId: PathId)(implicit ec: ExecutionContext): Future[Boolean] = {
+    launchQueue.get(runSpecId).map { _.exists(i => i.finalInstanceCount > 0) }
+  }
+
+  /**
+    * Given the instance state and launch queue state, decide whether we should relaunch or not
+    *
+    * If we already have tasks for a job run, regardless of jobStatus, we will become initialized
+    *
+    * Otherwise, if the jobRun status is "starting", and the launch queue has the job, we'll transition to starting
+    *
+    * @param jobRunInstancesFuture The instances from the instanceTracker for the jobSpec
+    * @param existsInLaunchQueue Whether the job run exists in the launch queue
+    * @param currentJobRunStatus The current status of the jobRun
+    * @return
+    */
+  private def decideNextStateDirective(jobRunInstancesFuture: Future[Seq[Instance]], existsInLaunchQueue: Future[Boolean], currentJobRunStatus: JobRunStatus)(implicit ec: ExecutionContext): Future[JobRunExecutorActorMessageTransition] = {
+    async {
+      val existingTasks = await(jobRunInstancesFuture)
+        .map(a => a.appTask)
+        .collect {
+          case task: Task => JobRunTask(task)
+          case task       => throw UnexpectedTaskState(task)
+        }
+
+      val alreadyQueued = await(existsInLaunchQueue)
+
+      existingTasks match {
+        case tasks if tasks.nonEmpty =>
+          // the actor was probably just restarted and we did not lose contents of the launch queue
+          Initialized(tasks)
+        case _ if currentJobRunStatus == JobRunStatus.Starting && alreadyQueued =>
+          // we did attempt to launch something but there is no known existing task yet
+          // this is exactly the same as starting state with already launched item
+          BecomeStarting
+        case _ =>
+          Initialized(Nil)
+      }
+    }
+  }
 }
 
 object TaskStates {
