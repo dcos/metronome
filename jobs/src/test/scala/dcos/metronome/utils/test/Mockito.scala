@@ -53,3 +53,5 @@ trait Mockito extends MockitoSugar {
     }
   }
 }
+
+object Mockito extends Mockito

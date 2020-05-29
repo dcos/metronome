@@ -30,7 +30,7 @@ import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest._
 
-import scala.concurrent.{ Future, Promise }
+import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.collection.immutable.Seq
 import scala.concurrent.duration._
 
@@ -44,6 +44,8 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
     with Eventually
     with ImplicitSender
     with Mockito {
+
+  import system.dispatcher
 
   private implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
@@ -346,27 +348,27 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
 
   test("Init of JobRun with JobRunStatus.Active and nonexistent launchQueue") {
     val f = new Fixture
-    import f._
 
     Given("a JobRun with status Active")
-    val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Active, clock.instant(), None, None, Map.empty)
+    val activeJobRun = JobRun(JobRunId(f.defaultJobSpec), f.defaultJobSpec, JobRunStatus.Active,
+      f.clock.instant(), None, None, Map.empty)
     val runSpecId = activeJobRun.id.toRunSpecId
     f.launchQueue.get(runSpecId) returns Future.successful(None)
-    instanceTracker.specInstancesSync(runSpecId) returns Seq.empty
+    f.instanceTracker.specInstances(eq(runSpecId))(any[ExecutionContext]) returns Future.successful(Seq.empty[Instance])
 
     When("the actor is initialized")
-    executorActor(activeJobRun)
+    f.executorActor(activeJobRun)
 
     And("a task is placed onto the launch queue")
-    verify(launchQueue, timeout(1000)).add(any, any)
+    verify(f.launchQueue, timeout(1000)).add(any, any)
   }
 
   test("Init of JobRun with JobRunStatus.Starting and EMPTY launchQueue") {
     val f = new Fixture
-    import f._
 
     Given("a JobRun with status Starting")
-    val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Starting, clock.instant(), None, None, Map.empty)
+    val activeJobRun = JobRun(JobRunId(f.defaultJobSpec), f.defaultJobSpec, JobRunStatus.Starting,
+      f.clock.instant(), None, None, Map.empty)
     val runSpecId = activeJobRun.id.toRunSpecId
     val runSpec: RunSpec = activeJobRun.toRunSpec
     val queuedTaskInfo = QueuedInstanceInfo(
@@ -375,26 +377,26 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       instancesLeftToLaunch = 0,
       finalInstanceCount = 0,
       backOffUntil = Timestamp(0),
-      startedAt = Timestamp(clock.instant()))
+      startedAt = Timestamp(f.clock.instant()))
     f.launchQueue.get(runSpecId) returns Future.successful(Some(queuedTaskInfo))
-    instanceTracker.specInstancesSync(runSpecId) returns Seq.empty[Instance]
+    f.instanceTracker.specInstances(eq(runSpecId))(any[ExecutionContext]) returns Future.successful(Seq.empty[Instance])
 
     When("the actor is initialized")
-    executorActor(activeJobRun)
+    f.executorActor(activeJobRun)
 
     Then("it will fetch info about queued or running tasks")
     verify(f.launchQueue, atLeastOnce).get(runSpecId)
 
     And("a task is placed onto the launch queue")
-    verify(launchQueue, timeout(1000)).add(any, any)
+    verify(f.launchQueue, timeout(1000)).add(any, any)
   }
 
   test("Init of JobRun with JobRunStatus.Active and a task on the launchQueue and in the task tracker") {
     val f = new Fixture
-    import f._
 
     Given("a JobRun with status Active")
-    val activeJobRun = JobRun(JobRunId(defaultJobSpec), defaultJobSpec, JobRunStatus.Active, clock.instant(), None, None, Map.empty)
+    val activeJobRun = JobRun(JobRunId(f.defaultJobSpec), f.defaultJobSpec, JobRunStatus.Active,
+      f.clock.instant(), None, None, Map.empty)
     val runSpecId = activeJobRun.id.toRunSpecId
     val runSpec: RunSpec = activeJobRun.toRunSpec
     val queuedTaskInfo = QueuedInstanceInfo(
@@ -403,21 +405,21 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
       instancesLeftToLaunch = 0,
       finalInstanceCount = 1,
       backOffUntil = Timestamp(0),
-      startedAt = Timestamp(clock.instant()))
-    launchQueue.get(runSpecId) returns Future.successful(Some(queuedTaskInfo))
-    instanceTracker.specInstancesSync(runSpecId) returns Seq(
+      startedAt = Timestamp(f.clock.instant()))
+    f.launchQueue.get(runSpecId) returns Future.successful(Some(queuedTaskInfo))
+    f.instanceTracker.specInstances(eq(runSpecId))(any[ExecutionContext]) returns Future.successful(Seq(
       Instance(
-        instanceId,
+        f.instanceId,
         AgentInfo("localhost", None, None, None, Seq.empty),
-        Instance.InstanceState(Condition.Running, Timestamp.now(clock), Some(Timestamp.now(clock)), None, Goal.Running),
-        Map(taskId -> mockTask(taskId, Timestamp.now(clock), mesos.Protos.TaskState.TASK_RUNNING)),
-        Timestamp.now(clock), UnreachableDisabled, None))
+        Instance.InstanceState(Condition.Running, Timestamp.now(f.clock), Some(Timestamp.now(f.clock)), None, Goal.Running),
+        Map(f.taskId -> f.mockTask(f.taskId, Timestamp.now(f.clock), mesos.Protos.TaskState.TASK_RUNNING)),
+        Timestamp.now(f.clock), UnreachableDisabled, None)))
 
     When("the actor is initialized")
-    executorActor(activeJobRun)
+    f.executorActor(activeJobRun)
 
     And("NO task is placed onto the launch queue")
-    noMoreInteractions(launchQueue)
+    noMoreInteractions(f.launchQueue)
   }
 
   test("RestartPolicy is handled correctly for job that originally launched successfully") {
@@ -911,13 +913,13 @@ class JobRunExecutorActorTest extends TestKit(ActorSystem("test"))
         Map(Task.Id("app_682ebe64-0771-11e4-b05d-e0f84720c54e") -> JobRunTask(Task.Id("app_682ebe64-0771-11e4-b05d-e0f84720c54e"), null, None, TaskState.Running)))
       val actorRef: ActorRef = executorActor(activeJob)
       val runSpecId = activeJob.id.toRunSpecId
-      instanceTracker.specInstancesSync(runSpecId) returns Seq(
+      instanceTracker.specInstances(Mockito.eq(runSpecId))(any[ExecutionContext]) returns Future.successful(Seq(
         Instance(
           instanceId,
           AgentInfo("localhost", None, None, None, Seq.empty),
           Instance.InstanceState(Condition.Running, Timestamp.now(clock), Some(Timestamp.now(clock)), None, Goal.Running),
           Map(taskId -> mockTask(taskId, Timestamp.now(clock), mesos.Protos.TaskState.TASK_RUNNING)),
-          Timestamp.now(clock), UnreachableDisabled, None))
+          Timestamp.now(clock), UnreachableDisabled, None)))
       (actorRef, activeJob)
     }
 

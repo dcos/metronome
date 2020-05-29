@@ -14,10 +14,10 @@ import mesosphere.marathon.{ MarathonSchedulerDriverHolder, StoreCommandFailedEx
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
 import org.apache.zookeeper.KeeperException.NodeExistsException
-import scala.async.Async.async
+import scala.async.Async.{ async, await }
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
-import scala.concurrent.{ Await, Promise }
+import scala.concurrent.{ Await, Future, Promise }
 
 /**
   * Handles one job run from start until the job either completes successful or failed.
@@ -55,17 +55,20 @@ class JobRunExecutorActor(
       case JobRunStatus.Initial =>
         becomeCreating()
       case JobRunStatus.Starting | JobRunStatus.Active =>
-        val existingTasks = tasksFromInstanceTracker()
-        existingTasks match {
-          case tasks if tasks.nonEmpty =>
-            // the actor was probably just restarted and we did not lose contents of the launch queue
-            self ! Initialized(tasks)
-          case _ if jobRun.status == JobRunStatus.Starting && existsInLaunchQueue() =>
-            // we did attempt to launch something but there is no known existing task yet
-            // this is exactly the same as starting state with already launched item
-            context.become(starting)
-          case _ =>
-            self ! Initialized(Nil)
+        async {
+          val existingTasks = await(tasksFromInstanceTracker())
+          val alreadyQueued = await(existsInLaunchQueue())
+          existingTasks match {
+            case tasks if tasks.nonEmpty =>
+              // the actor was probably just restarted and we did not lose contents of the launch queue
+              self ! Initialized(tasks)
+            case _ if jobRun.status == JobRunStatus.Starting && alreadyQueued =>
+              // we did attempt to launch something but there is no known existing task yet
+              // this is exactly the same as starting state with already launched item
+              self ! BecomeStarting
+            case _ =>
+              self ! Initialized(Nil)
+          }
         }
 
       case JobRunStatus.Success => becomeFinishing(jobRun)
@@ -106,7 +109,8 @@ class JobRunExecutorActor(
   }
 
   def addTaskToLaunchQueue(restart: Boolean = false): Unit = async {
-    if (!restart && existsInLaunchQueue()) {
+    val alreadyQueued = await(existsInLaunchQueue())
+    if (!restart && alreadyQueued) {
       // we have to handle a case when actor is restarted (e.g. because of exception) and it already put something into the queue
       // during restart it is possible, that actor that was in state Starting will be restarted with state initial
       log.info(s"Job run ${jobRun.id} already exists in LaunchQueue - not adding")
@@ -132,16 +136,19 @@ class JobRunExecutorActor(
     startingDeadlineTimer = None
   }
 
-  def tasksFromInstanceTracker(): Iterable[JobRunTask] = {
-    instanceTracker.specInstancesSync(runSpecId).map(a => a.appTask).collect {
-      case task: Task => JobRunTask(task)
-      case task       => throw UnexpectedTaskState(task)
+  def tasksFromInstanceTracker(): Future[Iterable[JobRunTask]] = {
+    instanceTracker.specInstances(runSpecId).map { instances =>
+      instances
+        .map(a => a.appTask)
+        .collect {
+          case task: Task => JobRunTask(task)
+          case task       => throw UnexpectedTaskState(task)
+        }
     }
   }
 
-  def existsInLaunchQueue(): Boolean = {
-    // timeout is enforced on LaunchQueue implementation side
-    Await.result(launchQueue.get(runSpecId), Duration.Inf).exists(i => i.finalInstanceCount > 0)
+  def existsInLaunchQueue(): Future[Boolean] = async {
+    await(launchQueue.get(runSpecId)).exists(i => i.finalInstanceCount > 0)
   }
 
   def updatedTasks(update: TaskStateChangedEvent): Map[Task.Id, JobRunTask] = {
@@ -227,7 +234,9 @@ class JobRunExecutorActor(
 
   // Behavior
 
-  override def receive: Receive = {
+  override def receive: Receive = initializing
+
+  def initializing: Receive = {
     case Initialized(Nil) =>
       log.info("initializing - no existing tasks in the queue")
       becomeStarting(jobRun)
@@ -248,6 +257,8 @@ class JobRunExecutorActor(
       }
       unstashAll()
 
+    case BecomeStarting =>
+      context.become(starting)
     case _ => stash()
   }
 
@@ -384,6 +395,7 @@ class JobRunExecutorActor(
 object JobRunExecutorActor {
 
   case class Initialized(tasks: Iterable[JobRunTask])
+  case object BecomeStarting
 
   case object KillCurrentJobRun
   case class JobRunUpdate(startedJobRun: StartedJobRun)
