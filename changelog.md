@@ -1,5 +1,11 @@
 # Next
 
+# 0.6.48
+
+* [DCOS_OSS-5965](https://jira.mesosphere.com/browse/DCOS_OSS-5965) Fix an issue Metronome became unresponsive when too many `JobRunExecutorActor` instances queried instances and timed out.
+
+* [MARATHON-8746](https://jira.mesosphere.com/browse/MARATHON-8746) Fix a severe issue introduced in 0.6.41 in which the zk-store location was modified, causing Metronome to appear that it lost all jobs. Upgrading to 0.6.48 will resolves this issue and restores jobs created in previous versions of DC/OS.
+
 # 0.6.42
 
 * Allow Metronome jobs to specify networks to join [MARATHON-8727](https://jira.mesosphere.com/browse/MARATHON-8727)
