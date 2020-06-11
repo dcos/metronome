@@ -25,7 +25,7 @@ pipeline {
       agent {
         docker {
           image 'mesosphere/scala-sbt:marathon'
-          label 'large'
+          label 'python-dind'
           args '-u root'
        }
       }
@@ -36,5 +36,6 @@ pipeline {
         }
       }
     }
+    // TODO: integration tests on python-dind
   }
 }
