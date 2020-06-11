@@ -21,20 +21,20 @@ pipeline {
         user_is_authorized(master_branches, '8b793652-f26a-422f-a9ba-0d1e47eb9d89', '#dcos-security-ci')
       }
     }
-  }
-  stage("Build") {
-    agent {
-      docker {
-        image 'mesosphere/scala-sbt:marathon'
-        label 'large'
-        args '-u root'
-     }
-    }
-    steps {
-      ansiColor('xterm') {
-        sh 'sbt test'
-        junit 'target/test-reports/*.xml'
-        junit 'tests/integration/target/test-reports/*.xml'
+    stage("Build") {
+      agent {
+        docker {
+          image 'mesosphere/scala-sbt:marathon'
+          label 'large'
+          args '-u root'
+       }
+      }
+      steps {
+        ansiColor('xterm') {
+          sh 'sbt test'
+          junit 'target/test-reports/*.xml'
+          junit 'tests/integration/target/test-reports/*.xml'
+        }
       }
     }
   }
