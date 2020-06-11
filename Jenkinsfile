@@ -32,7 +32,7 @@ pipeline {
       steps {
         ansiColor('xterm') {
           sh 'sbt test'
-          junit 'target/test-reports/*.xml'
+          junit '**/test-reports/*.xml'
         }
       }
     }
