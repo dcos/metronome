@@ -33,7 +33,6 @@ pipeline {
         ansiColor('xterm') {
           sh 'sbt test'
           junit 'target/test-reports/*.xml'
-          junit 'tests/integration/target/test-reports/*.xml'
         }
       }
     }
