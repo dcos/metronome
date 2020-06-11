@@ -51,7 +51,7 @@ pipeline {
       }
       steps {
         ansiColor('xterm') {
-          sh 'sbt integration/test'
+          sh 'sudo sbt integration/test'
         }
       }
       post {
