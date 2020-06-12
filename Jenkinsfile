@@ -29,7 +29,7 @@ pipeline {
           //label 'python-dind' too few CPU cores.
           label 'docker'
           args '-u root'
-       }
+        }
       }
       steps {
         ansiColor('xterm') {
