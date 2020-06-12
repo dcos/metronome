@@ -52,12 +52,7 @@ pipeline {
       steps {
         ansiColor('xterm') {
           sh 'sudo ci/set_port_range.sh'
-          try {
-            sh 'sudo sbt integration/test'
-          } catch (err) {
-            echo "Unstable Integration Test. Caught: ${err}"
-            currentBuild.result = 'SUCCESS'
-          }
+          sh 'sudo sbt integration/test || true'
         }
       }
       post {
