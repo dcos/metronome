@@ -142,6 +142,9 @@ object MetronomeFramework {
         }
     }(collection.breakOut)
 
+    lazy val url = s"http://localhost:$httpPort"
+    lazy val facade = new MetronomeFacade(url)
+
     def activePids: Seq[String] = {
       val PIDRE = """^\s*(\d+)\s+(\S*)\s*(.*)$""".r
       Process("jps -lv").!!.split("\n").collect {
@@ -153,7 +156,7 @@ object MetronomeFramework {
 
     def create(): Process = {
       marathonProcess.getOrElse {
-        val process = processBuilder.run(ProcessOutputToLogStream(s"$suiteName-LocalMarathon-$httpPort"))
+        val process = processBuilder.run(ProcessOutputToLogStream(s"$suiteName-LocalMetronome-$httpPort"))
         marathonProcess = Some(process)
         process
       }
@@ -170,7 +173,7 @@ object MetronomeFramework {
           logger.info(s"Response is: ${result}")
           result.discardEntityBytes() // forget about the body
           if (result.status.isSuccess()) { // linter:ignore //async/await
-            logger.info("It's a success!")
+            logger.info("Metronome is reachable.")
             Done
           } else {
             throw new Exception(s"Metronome on port=$port hasn't started yet. Giving up waiting..")

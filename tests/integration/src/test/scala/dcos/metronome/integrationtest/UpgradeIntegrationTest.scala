@@ -6,7 +6,7 @@ import java.net.URL
 import akka.actor.{ ActorSystem, Scheduler }
 import akka.stream.Materializer
 import com.mesosphere.utils.AkkaUnitTest
-import com.mesosphere.utils.mesos.{ MesosAgentConfig, MesosClusterTest }
+import com.mesosphere.utils.mesos.MesosClusterTest
 import com.typesafe.scalalogging.StrictLogging
 import dcos.metronome.Seq
 import dcos.metronome.integrationtest.utils.MetronomeFramework.MetronomeBase
@@ -25,7 +25,11 @@ import scala.sys.process.Process
   * This integration test starts older Marathon versions one after another and finishes this upgrade procedure with the
   * current build. In each step we verify that all apps are still up and running.
   */
-class UpgradeIntegrationTest extends AkkaUnitTest with MesosClusterTest with Inside with StrictLogging {
+class UpgradeIntegrationTest extends AkkaUnitTest
+    with MesosClusterTest
+    with Inside
+    with RestResultMatchers
+    with StrictLogging {
 
   override lazy implicit val patienceConfig = PatienceConfig(180.seconds, interval = 1.second)
 
@@ -47,7 +51,7 @@ class UpgradeIntegrationTest extends AkkaUnitTest with MesosClusterTest with Ins
 
   case class MetronomeArtifact(version: SemVer, releasePath: String = "builds") {
     private val targetFolder: File = new File("target/universal").getAbsoluteFile
-    val tarballName = s"metronome-${version}.tgz"
+    val tarballName = s"metronome-$version.tgz"
     val tarball = new File(targetFolder, tarballName)
 
     val downloadURL: URL = new URL(s"https://downloads.mesosphere.io/metronome/${releasePath}/${version}/metronome-${version}.tgz")
@@ -91,7 +95,7 @@ class UpgradeIntegrationTest extends AkkaUnitTest with MesosClusterTest with Ins
   def startMetronome(metronomeFramework: MetronomeBase): Unit = {
     metronomeFramework.start().futureValue
     val metronome = new MetronomeFacade(metronomeFramework.httpUrl)
-    metronome.info().value.status.intValue() shouldBe 200
+    metronome.info() shouldBe OK
   }
 
   def startedMetronome(metronomeArtifact: MetronomeArtifact, zkUrl: String, name: String): PackagedMetronome = {
@@ -114,10 +118,10 @@ class UpgradeIntegrationTest extends AkkaUnitTest with MesosClusterTest with Ins
     val resp = metronome.createJob(jobDef.toString())
 
     Then("The response should be OK")
-    resp.value.status.intValue() shouldBe 201 withClue resp.entityPrettyJsonString
+    resp shouldBe Created
 
     val getJob = metronome.getJob(jobId)
-    getJob.value.status.intValue() shouldBe 200
+    getJob shouldBe OK
     logger.info("JobJson: " + getJob.entityPrettyJsonString)
     (getJob.entityJson \ "id").as[String] shouldBe jobId
   }
@@ -140,7 +144,7 @@ class UpgradeIntegrationTest extends AkkaUnitTest with MesosClusterTest with Ins
         createJobSuccessfully(metronome, job2Id, jobOriginalDescription)
 
         val createJobResp = metronome.getJob(job1Id)
-        createJobResp.value.status.intValue() shouldBe 200
+        createJobResp shouldBe OK
         logger.info("JobJson: " + createJobResp.entityPrettyJsonString)
         (createJobResp.entityJson \ "id").as[String] shouldBe job1Id
 

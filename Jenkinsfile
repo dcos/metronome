@@ -51,6 +51,7 @@ pipeline {
       }
       steps {
         ansiColor('xterm') {
+          sh 'sudo ci/set_port_range.sh'
           sh 'sudo sbt integration/test'
         }
       }

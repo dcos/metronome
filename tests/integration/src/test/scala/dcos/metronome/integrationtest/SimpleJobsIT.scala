@@ -28,19 +28,19 @@ class SimpleJobsIT extends MetronomeITBase {
     val resp = f.metronome.createJob(jobDef)
 
     Then("The response should be OK")
-    resp.value.status.intValue() shouldBe 201
+    resp shouldBe Created
 
     When("A job run is started")
     val startRunResp = f.metronome.startRun(appId)
 
     Then("The response should be OK")
-    startRunResp.value.status.intValue() shouldBe 201
+    startRunResp shouldBe Created
 
     eventually(timeout(30.seconds)) {
       val runsJson = f.metronome.getRuns(appId)
-      runsJson.value.status.intValue() shouldBe 200
+      runsJson shouldBe OK
       val runs = runsJson.entityJson.as[JsArray]
-      runs.value.length shouldBe 1
+      runs.value should have size 1
 
       val run = runs.value.head.as[JsObject]
       val status = run.value("status").as[String]
