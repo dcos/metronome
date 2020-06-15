@@ -1,5 +1,9 @@
 # Next
 
+# 0.6.x
+
+* [D2IQ-69445](https://jira.d2iq.com/browse/D2IQ-69445) Introduce `/leader` endpoint to query the current Metronome leader address in HA mode.
+
 # 0.6.48
 
 * [DCOS_OSS-5965](https://jira.mesosphere.com/browse/DCOS_OSS-5965) Fix an issue Metronome became unresponsive when too many `JobRunExecutorActor` instances queried instances and timed out.
