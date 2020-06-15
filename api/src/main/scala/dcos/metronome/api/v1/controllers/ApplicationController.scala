@@ -10,13 +10,13 @@ import play.api.http.ContentTypes
 import play.api.libs.json.Json
 import play.api.mvc.ControllerComponents
 
-class ApplicationController(cc: ControllerComponents, metricsModule: MetricsModule)
+class ApplicationController(cc: ControllerComponents, metricsModule: MetricsModule, config: JobsConfig)
     extends RestController(cc) {
 
   def ping = Action { Ok("pong") }
 
   def info = Action {
-    Ok(MetronomeInfoWrites.writes(MetronomeInfoBuilder.metronomeInfo))
+    Ok(MetronomeInfoWrites.writes(MetronomeInfo(config)))
   }
 
   def showMetrics = Action {

@@ -5,8 +5,6 @@ import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }
 import play.api.Configuration
 
 class MetronomeConfigTest extends FunSuite with Matchers with GivenWhenThen {
-  private def fromConfig(cfg: String): MetronomeConfig =
-    new MetronomeConfig(new Configuration(ConfigFactory.parseString(cfg)))
 
   test("Http and Https ports with valid parseable strings") {
     Given("http Port is a valid port string")
@@ -14,7 +12,7 @@ class MetronomeConfigTest extends FunSuite with Matchers with GivenWhenThen {
     val httpsPort = "9010"
 
     When("Config parser tries to extract it")
-    val cfg = fromConfig(
+    val cfg = MetronomeConfig.fromConfig(
       s"""
          | play.server.http.port="$httpPort"
          | play.server.https.port="$httpsPort"
@@ -31,7 +29,7 @@ class MetronomeConfigTest extends FunSuite with Matchers with GivenWhenThen {
     val httpsPort = "9010"
 
     When("Config parser tries to extract it")
-    val cfg = fromConfig(
+    val cfg = MetronomeConfig.fromConfig(
       s"""
          | play.server.http.port="$httpPort"
          | play.server.https.port="$httpsPort"
@@ -47,7 +45,7 @@ class MetronomeConfigTest extends FunSuite with Matchers with GivenWhenThen {
   test("feature gpu_resources is enabled when gpu_scheduling_behavior is set") {
 
     Given("A config with gpu_scheduling_behavior")
-    val cfg = fromConfig(
+    val cfg = MetronomeConfig.fromConfig(
       s"""
          | metronome.gpu_scheduling_behavior="restricted"
        """.stripMargin)
@@ -63,7 +61,7 @@ class MetronomeConfigTest extends FunSuite with Matchers with GivenWhenThen {
   test("feature gpu_resources is disabled when gpu_scheduling_behavior is not set") {
 
     Given("A config with gpu_scheduling_behavior")
-    val cfg = fromConfig("")
+    val cfg = MetronomeConfig.fromConfig("")
 
     When("enabled features are requested")
     val featues =

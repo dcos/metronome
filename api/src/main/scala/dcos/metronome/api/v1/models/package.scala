@@ -4,6 +4,7 @@ package api.v1
 import java.time.{ Instant, ZoneId }
 import java.time.format.DateTimeFormatter
 
+import com.typesafe.config.ConfigValue
 import dcos.metronome.api._
 import dcos.metronome.jobinfo.JobInfo
 import dcos.metronome.jobrun.StartedJobRun
@@ -319,7 +320,27 @@ package object models {
   implicit lazy val SemVerWrites: Writes[SemVer] = new Writes[SemVer] {
     override def writes(o: SemVer): JsValue = JsString(o.toString())
   }
-  implicit lazy val MetronomeInfoWrites: Writes[MetronomeInfo] = Json.writes[MetronomeInfo]
+
+  implicit lazy val ConfigValueWrites: Writes[ConfigValue] = new Writes[ConfigValue] {
+    override def writes(o: ConfigValue): JsValue = JsString(o.render())
+  }
+
+  implicit lazy val JobsConfigWrites: Writes[JobsConfig] = new Writes[JobsConfig] {
+    override def writes(o: JobsConfig): JsValue = {
+      o.configSet.foldLeft(Json.obj()) {
+        case (acc, (key, value)) => acc.+(key -> Json.toJson(value))
+      }
+    }
+  }
+
+  implicit lazy val MetronomeInfoWrites: Writes[MetronomeInfo] = new Writes[MetronomeInfo] {
+    override def writes(o: MetronomeInfo): JsValue = {
+      Json.obj(
+        "version" -> o.version,
+        "libVersion" -> o.libVersion,
+        "config" -> o.config)
+    }
+  }
 
   implicit lazy val TimestampWrites: Writes[Timestamp] = new Writes[Timestamp] {
     override def writes(timestamp: Timestamp): JsValue = {

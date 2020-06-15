@@ -1,5 +1,6 @@
 package dcos.metronome
 
+import com.typesafe.config.{ConfigFactory, ConfigRenderOptions, ConfigValue}
 import dcos.metronome.api.ApiConfig
 import dcos.metronome.repository.impl.kv.ZkConfig
 import mesosphere.marathon.AllConf
@@ -13,6 +14,8 @@ import scala.util.Try
 class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiConfig {
 
   import ConfigurationImplicits._
+
+  override val configSet: Set[(String, ConfigValue)] = configuration.entrySet
 
   lazy val frameworkName: String = configuration.getOptional[String]("metronome.framework.name").getOrElse("metronome")
   lazy val mesosMaster: String = configuration.getOptional[String]("metronome.mesos.master.url").getOrElse("localhost:5050")
@@ -145,6 +148,11 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   lazy val metricsHistogramReservoirResettingChunks: Option[Int] = configuration.getOptional[Int]("metronome.metrics.histogram.reservoir.reset.chucks")
 
   override def taskKillConfig: KillConfig = scallopConf
+}
+
+object MetronomeConfig {
+  def fromConfig(cfg: String): MetronomeConfig =
+    new MetronomeConfig(new Configuration(ConfigFactory.parseString(cfg)))
 }
 
 private[this] object ConfigurationImplicits {

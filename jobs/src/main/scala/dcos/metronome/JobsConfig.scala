@@ -1,5 +1,6 @@
 package dcos.metronome
 
+import com.typesafe.config.ConfigValue
 import dcos.metronome.history.JobHistoryConfig
 import dcos.metronome.jobrun.JobRunConfig
 import dcos.metronome.jobspec.JobSpecConfig
@@ -11,4 +12,5 @@ trait JobsConfig extends JobRunConfig with JobSpecConfig with JobHistoryConfig w
 
   def scallopConf: AllConf
 
+  val configSet: Set[(String, ConfigValue)]
 }
