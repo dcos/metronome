@@ -1,12 +1,13 @@
 package dcos.metronome
 
-import com.typesafe.config.{ConfigFactory, ConfigRenderOptions, ConfigValue}
+import com.typesafe.config.{ ConfigFactory, ConfigValue }
 import dcos.metronome.api.ApiConfig
 import dcos.metronome.repository.impl.kv.ZkConfig
 import mesosphere.marathon.AllConf
 import mesosphere.marathon.core.task.termination.KillConfig
 import play.api.Configuration
 
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.sys.SystemProperties
 import scala.util.Try
@@ -117,7 +118,13 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       "--metrics_histogram_reservoir_resetting_chunks" -> metricsHistogramReservoirResettingChunks.map(_.toString))
       .collect { case (name, Some(value)) => (name, value) }
       .flatMap { case (name, value) => Seq(name, value) }
-    new AllConf(options.to[Seq] ++ flags.flatten)
+
+    val marathonArgs: Seq[String] =
+      configuration.underlying.getConfig("marathon").entrySet().asScala.map { entry =>
+        Seq(s"--${entry.getKey}", entry.getValue.render())
+      }.flatten.to[Seq]
+
+    new AllConf(options.to[Seq] ++ flags.flatten ++ marathonArgs)
   }
 
   override lazy val reconciliationInterval: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.reconciliation.interval").getOrElse(15.minutes)
