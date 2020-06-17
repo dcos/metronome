@@ -3,13 +3,12 @@ package dcos.metronome.integrationtest
 import java.util.UUID
 
 import com.mesosphere.utils.AkkaUnitTest
-import com.mesosphere.utils.http.RestResult
+import com.mesosphere.utils.http.RestResultMatchers
 import com.mesosphere.utils.mesos.MesosClusterTest
 import com.typesafe.scalalogging.StrictLogging
 import dcos.metronome.integrationtest.utils.{ MetronomeFacade, MetronomeFramework }
 import org.apache.mesos.v1.Protos.FrameworkID
 import org.scalatest.Inside
-import org.scalatest.matchers.{ BeMatcher, MatchResult }
 
 import scala.concurrent.duration._
 
@@ -46,31 +45,4 @@ class MetronomeITBase extends AkkaUnitTest
     lazy val metronome: MetronomeFacade = metronomeFramework.facade
   }
 
-}
-
-// TODO: The matchers should be pulled from USI.
-
-/**
-  * Custom matcher for HTTP responses that print response body.
-  * @param status The expected status code.
-  */
-class RestResultMatcher(status: Int) extends BeMatcher[RestResult[_]] {
-  def apply(left: RestResult[_]) =
-    MatchResult(
-      left.code == status,
-      s"Response code was not $status but ${left.code} with body '${left.entityString}'",
-      s"Response code was $status with body '${left.entityString}'")
-}
-
-trait RestResultMatchers {
-  val OK = new RestResultMatcher(200)
-  val Created = new RestResultMatcher(201)
-  val Accepted = new RestResultMatcher(202)
-  val NoContent = new RestResultMatcher(204)
-  val Redirect = new RestResultMatcher(302)
-  val NotFound = new RestResultMatcher(404)
-  val Conflict = new RestResultMatcher(409)
-  val UnprocessableEntity = new RestResultMatcher(422)
-  val ServerError = new RestResultMatcher(500)
-  val BadGateway = new RestResultMatcher(502)
 }
