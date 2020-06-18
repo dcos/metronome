@@ -3,14 +3,15 @@ package dcos.metronome.integrationtest
 import java.io.File
 import java.net.URL
 
-import akka.actor.{ ActorSystem, Scheduler }
+import akka.actor.{ActorSystem, Scheduler}
 import akka.stream.Materializer
 import com.mesosphere.utils.AkkaUnitTest
+import com.mesosphere.utils.http.RestResultMatchers
 import com.mesosphere.utils.mesos.MesosClusterTest
 import com.typesafe.scalalogging.StrictLogging
 import dcos.metronome.Seq
 import dcos.metronome.integrationtest.utils.MetronomeFramework.MetronomeBase
-import dcos.metronome.integrationtest.utils.{ MetronomeFacade, MetronomeFramework }
+import dcos.metronome.integrationtest.utils.{MetronomeFacade, MetronomeFramework}
 import mesosphere.marathon.SemVer
 import mesosphere.marathon.io.IO
 import org.apache.commons.io.FileUtils
