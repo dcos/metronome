@@ -11,7 +11,7 @@ pipeline {
     stage("Verify author for PR") {
       // using shakedown node because it's a lightweight Alpine Docker image instead of full VM
       agent {
-        label "shakedown"
+        label "small"
       }
       when {
         beforeAgent true
