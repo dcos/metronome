@@ -26,8 +26,7 @@ pipeline {
       agent {
         docker {
           image 'mesosphere/scala-sbt:marathon'
-          //label 'python-dind' too few CPU cores.
-          label 'docker'
+          label 'large'
           args '-u root'
         }
       }
