@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# See http://mesos.apache.org/documentation/latest/port-mapping-isolator/
+# See https://mesos.readthedocs.io/en/latest/port-mapping-isolator/
 # and mesosphere.util.PortAllocator docs.
 echo "Ephemeral port range before: $(cat /proc/sys/net/ipv4/ip_local_port_range)"
 sysctl -w net.ipv4.ip_local_port_range="60001 61000"
