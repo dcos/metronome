@@ -169,8 +169,8 @@ object MetronomeFramework {
       val future = Retry(s"Waiting for Metronome on $port", maxAttempts = Int.MaxValue, minDelay = 1.milli, maxDelay = 5.seconds, maxDuration = 4.minutes) {
         logger.info(s"Waiting for Metronome on port $port")
         async {
-          val result = await(Http().singleRequest(Get(s"http://localhost:$port/ping")))
-          logger.info(s"Response is: ${result}")
+          val result = await(Http().singleRequest(Get(s"http://localhost:$port/leader")))
+          logger.info(s"Response is: $result")
           result.discardEntityBytes() // forget about the body
           if (result.status.isSuccess()) { // linter:ignore //async/await
             logger.info("Metronome is reachable.")

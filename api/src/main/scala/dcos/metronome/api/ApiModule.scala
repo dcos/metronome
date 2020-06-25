@@ -12,6 +12,7 @@ import dcos.metronome.queue.LaunchQueueService
 import mesosphere.marathon.MetricsModule
 import mesosphere.marathon.core.auth.AuthModule
 import mesosphere.marathon.core.base.ActorsModule
+import mesosphere.marathon.core.election.ElectionService
 import mesosphere.marathon.core.plugin.PluginManager
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
@@ -33,7 +34,8 @@ class ApiModule(
   pluginManager:        PluginManager,
   launchQueueService:   LaunchQueueService,
   actorsModule:         ActorsModule,
-  metricsModule:        MetricsModule)(implicit ec: ExecutionContext) {
+  metricsModule:        MetricsModule,
+  electionService:      ElectionService)(implicit ec: ExecutionContext) {
 
   lazy val authModule: AuthModule = new AuthModule(pluginManager)
 

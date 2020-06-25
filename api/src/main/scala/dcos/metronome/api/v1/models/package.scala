@@ -321,6 +321,8 @@ package object models {
   }
   implicit lazy val MetronomeInfoWrites: Writes[MetronomeInfo] = Json.writes[MetronomeInfo]
 
+  val LeaderInfoWrites: Writes[LeaderInfo] = Json.writes[LeaderInfo]
+
   implicit lazy val TimestampWrites: Writes[Timestamp] = new Writes[Timestamp] {
     override def writes(timestamp: Timestamp): JsValue = {
       JsString(timestamp.toString())

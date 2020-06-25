@@ -6,3 +6,4 @@ case class MetronomeInfo(
   version:    String,
   libVersion: SemVer)
 
+case class LeaderInfo(leader: String)
