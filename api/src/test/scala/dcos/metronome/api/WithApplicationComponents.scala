@@ -12,6 +12,7 @@ import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import dcos.metronome.queue.{ LaunchQueueService, QueueServiceFixture }
 import mesosphere.marathon.AllConf
 import mesosphere.marathon.core.base.ActorsModule
+import mesosphere.marathon.core.election.{ ElectionCandidate, ElectionService }
 import mesosphere.marathon.core.plugin.PluginManager
 import mesosphere.marathon.core.task.termination.KillConfig
 import mesosphere.marathon.metrics.dummy.DummyMetricsModule
@@ -113,6 +114,17 @@ class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(c
   lazy val jobInfoService: JobInfoService = wire[JobInfoServiceImpl]
   lazy val queueService: LaunchQueueService = QueueServiceFixture.simpleQueueService()
   lazy val metricsModule: DummyMetricsModule = new DummyMetricsModule()
+  lazy val electionService: ElectionService = {
+    val leader = "localhost:8080"
+    new ElectionService {
+      override def isLeader: Boolean = true
+      override def leaderHostPort: Option[String] = Some(leader)
+      override def localHostPort: String = ???
+      def offerLeadership(candidate: ElectionCandidate): Unit = ???
+      def abdicateLeadership(): Unit = ???
+      override def leadershipTransitionEvents = ???
+    }
+  }
 
   lazy val config = new JobsConfig with ApiConfig {
     override def leaderProxyTimeout: Duration = 30.seconds

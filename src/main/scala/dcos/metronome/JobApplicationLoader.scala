@@ -79,7 +79,8 @@ class JobComponents(context: Context) extends BuiltInComponentsFromContext(conte
     jobsModule.pluginManger,
     jobsModule.queueModule.launchQueueService,
     jobsModule.actorsModule,
-    metricsModule)
+    metricsModule,
+    jobsModule.schedulerModule.electionService)
 
   val wsClient: WSClient = {
     val parser = new WSConfigParser(configuration.underlying, environment.classLoader)

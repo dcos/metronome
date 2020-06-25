@@ -3,6 +3,7 @@ package dcos.metronome.integrationtest
 import java.util.UUID
 
 import com.mesosphere.utils.AkkaUnitTest
+import com.mesosphere.utils.http.RestResultMatchers
 import com.mesosphere.utils.mesos.MesosClusterTest
 import com.typesafe.scalalogging.StrictLogging
 import dcos.metronome.integrationtest.utils.{ MetronomeFacade, MetronomeFramework }
@@ -11,7 +12,11 @@ import org.scalatest.Inside
 
 import scala.concurrent.duration._
 
-class MetronomeITBase extends AkkaUnitTest with MesosClusterTest with Inside with StrictLogging {
+class MetronomeITBase extends AkkaUnitTest
+    with MesosClusterTest
+    with Inside
+    with RestResultMatchers
+    with StrictLogging {
 
   override lazy implicit val patienceConfig = PatienceConfig(180.seconds, interval = 1.second)
 
@@ -36,10 +41,8 @@ class MetronomeITBase extends AkkaUnitTest with MesosClusterTest with Inside wit
     logger.info("Starting metronome...")
     metronomeFramework.start().futureValue
 
-    val metronomeUrl = "http://localhost:" + metronomeFramework.httpPort
-    logger.info(s"Metronome started, reachable on: ${metronomeUrl}")
-
-    val metronome = new MetronomeFacade(metronomeUrl)
+    logger.info(s"Metronome started, reachable on: ${metronomeFramework.url}")
+    lazy val metronome: MetronomeFacade = metronomeFramework.facade
   }
 
 }

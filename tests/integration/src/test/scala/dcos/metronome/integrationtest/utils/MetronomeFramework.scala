@@ -7,23 +7,23 @@ import java.nio.file.Files
 import java.util.UUID
 
 import akka.Done
-import akka.actor.{ ActorSystem, Scheduler }
+import akka.actor.{ActorSystem, Scheduler}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.client.RequestBuilding.Get
+import akka.http.scaladsl.model.StatusCodes
 import akka.stream.Materializer
-import com.mesosphere.utils.{ PortAllocator, ProcessOutputToLogStream }
+import com.mesosphere.utils.{PortAllocator, ProcessOutputToLogStream}
 import com.typesafe.scalalogging.StrictLogging
 import dcos.metronome.Seq
 import mesosphere.marathon.Exception
 import mesosphere.marathon.util.Retry
 import org.apache.commons.io.FileUtils
 
-import scala.async.Async.{ async, await }
+import scala.async.Async.{async, await}
 import scala.collection.JavaConverters
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import scala.sys.process.Process
 import scala.util.Try
-
 import scala.concurrent.duration._
 
 object MetronomeFramework {
@@ -142,6 +142,9 @@ object MetronomeFramework {
         }
     }(collection.breakOut)
 
+    lazy val url = s"http://localhost:$httpPort"
+    lazy val facade = new MetronomeFacade(url)
+
     def activePids: Seq[String] = {
       val PIDRE = """^\s*(\d+)\s+(\S*)\s*(.*)$""".r
       Process("jps -lv").!!.split("\n").collect {
@@ -153,7 +156,7 @@ object MetronomeFramework {
 
     def create(): Process = {
       marathonProcess.getOrElse {
-        val process = processBuilder.run(ProcessOutputToLogStream(s"$suiteName-LocalMarathon-$httpPort"))
+        val process = processBuilder.run(ProcessOutputToLogStream(s"$suiteName-LocalMetronome-$httpPort"))
         marathonProcess = Some(process)
         process
       }
@@ -163,17 +166,22 @@ object MetronomeFramework {
       create()
 
       val port = conf.get("http_port").orElse(conf.get("https_port")).map(_.toInt).getOrElse(httpPort)
+      var request = Get(s"http://localhost:$port/leader")
       val future = Retry(s"Waiting for Metronome on $port", maxAttempts = Int.MaxValue, minDelay = 1.milli, maxDelay = 5.seconds, maxDuration = 4.minutes) {
         logger.info(s"Waiting for Metronome on port $port")
         async {
-          val result = await(Http().singleRequest(Get(s"http://localhost:$port/ping")))
-          logger.info(s"Response is: ${result}")
+          val result = await(Http().singleRequest(request))
+          logger.info(s"Response is: $result")
           result.discardEntityBytes() // forget about the body
           if (result.status.isSuccess()) { // linter:ignore //async/await
-            logger.info("It's a success!")
+            logger.info("Metronome is reachable.")
             Done
+          } else if(result.status == StatusCodes.NotFound) {
+            logger.warn("Did not find /leader. Falling back to /ping")
+            request = Get(s"http://localhost:$port/ping")
+            throw new Exception(s"Metronome on port=$port has no /leader, retrying with /ping...")
           } else {
-            throw new Exception(s"Metronome on port=$port hasn't started yet. Giving up waiting..")
+            throw new Exception(s"Metronome on port=$port hasn't started yet, retrying...")
           }
         }
       }

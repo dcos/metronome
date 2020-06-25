@@ -3,6 +3,7 @@
 # 0.6.x
 
 * Provide configuration in `/info`.
+* [D2IQ-69445](https://jira.d2iq.com/browse/D2IQ-69445) Introduce `/leader` endpoint to query the current Metronome leader address in HA mode.
 
 # 0.6.48
 

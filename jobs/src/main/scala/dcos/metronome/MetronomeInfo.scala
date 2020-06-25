@@ -7,6 +7,8 @@ case class MetronomeInfo(
   libVersion: SemVer,
   config:     JobsConfig)
 
+case class LeaderInfo(leader: String)
+
 object MetronomeInfo {
   def apply(config: JobsConfig): MetronomeInfo =
     MetronomeInfo(MetronomeBuildInfo.version, MetronomeBuildInfo.marathonVersion, config)
