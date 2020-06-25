@@ -21,31 +21,34 @@ import scala.concurrent.Future
   *    - clear everything
   */
 class EntityStoreCache[T <: MarathonState[_, T]](store: EntityStore[T])
-    extends EntityStore[T] with PrePostDriverCallback with VersionedEntry {
+    extends EntityStore[T]
+    with PrePostDriverCallback
+    with VersionedEntry {
 
   @volatile
   private[state] var cacheOpt: Option[TrieMap[String, Option[T]]] = None
   import scala.concurrent.ExecutionContext.Implicits.global
   private[this] val log = LoggerFactory.getLogger(getClass)
 
-  override def fetch(key: String): Future[Option[T]] = directOrCached(store.fetch(key)) { cache =>
-    if (noVersionKey(key)) {
-      Future.successful{
-        cache.get(key) match {
-          case Some(t) => t
-          case _       => None
+  override def fetch(key: String): Future[Option[T]] =
+    directOrCached(store.fetch(key)) { cache =>
+      if (noVersionKey(key)) {
+        Future.successful {
+          cache.get(key) match {
+            case Some(t) => t
+            case _ => None
+          }
+        }
+      } else {
+        //if we need to fetch a versioned entry, try if this is the latest version we have in the cache
+        //otherwise let the underlying store fetch that entry.
+        val id = idFromVersionKey(key)
+        cache.get(id) match {
+          case Some(Some(t)) if key == versionKey(id, t.version) => Future.successful(Some(t))
+          case _ => store.fetch(key)
         }
       }
-    } else {
-      //if we need to fetch a versioned entry, try if this is the latest version we have in the cache
-      //otherwise let the underlying store fetch that entry.
-      val id = idFromVersionKey(key)
-      cache.get(id) match {
-        case Some(Some(t)) if key == versionKey(id, t.version) => Future.successful(Some(t))
-        case _ => store.fetch(key)
-      }
     }
-  }
 
   override def modify(key: String, onSuccess: T => Unit = _ => ())(update: Update): Future[T] =
     directOrCached(store.modify(key, onSuccess)(update)) { cache =>
@@ -56,9 +59,10 @@ class EntityStoreCache[T <: MarathonState[_, T]](store: EntityStore[T])
       store.modify(key, onModified)(update)
     }
 
-  override def names(): Future[Seq[String]] = directOrCached(store.names()) { cache =>
-    Future.successful(cache.keySet.toSeq)
-  }
+  override def names(): Future[Seq[String]] =
+    directOrCached(store.names()) { cache =>
+      Future.successful(cache.keySet.toSeq)
+    }
 
   override def expunge(key: String, onSuccess: () => Unit = () => ()): Future[Boolean] =
     directOrCached(store.expunge(key, onSuccess)) { cache =>
@@ -78,7 +82,7 @@ class EntityStoreCache[T <: MarathonState[_, T]](store: EntityStore[T])
     def preloadEntry(nextName: String): Future[Unit] = {
       store.fetch(nextName).map {
         case Some(t) => cache.update(nextName, Some(t))
-        case None    => log.warn(s"Expected to find entry $nextName in store $store")
+        case None => log.warn(s"Expected to find entry $nextName in store $store")
       }
     }
 
@@ -117,7 +121,7 @@ class EntityStoreCache[T <: MarathonState[_, T]](store: EntityStore[T])
   private[this] def directOrCached[R](direct: => R)(cached: TrieMap[String, Option[T]] => R): R = {
     cacheOpt match {
       case Some(cache) => cached(cache)
-      case None        => direct
+      case None => direct
     }
   }
 }

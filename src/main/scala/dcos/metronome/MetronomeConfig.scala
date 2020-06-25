@@ -15,25 +15,37 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
   import ConfigurationImplicits._
 
   lazy val frameworkName: String = configuration.getOptional[String]("metronome.framework.name").getOrElse("metronome")
-  lazy val mesosMaster: String = configuration.getOptional[String]("metronome.mesos.master.url").getOrElse("localhost:5050")
-  override lazy val mesosLeaderUiUrl: Option[String] = configuration.getOptional[String]("metronome.mesos.leader.ui.url")
+  lazy val mesosMaster: String =
+    configuration.getOptional[String]("metronome.mesos.master.url").getOrElse("localhost:5050")
+  override lazy val mesosLeaderUiUrl: Option[String] =
+    configuration.getOptional[String]("metronome.mesos.leader.ui.url")
   lazy val mesosRole: Option[String] = configuration.getOptional[String]("metronome.mesos.role")
-  lazy val mesosUser: Option[String] = configuration.getOptional[String]("metronome.mesos.user").orElse(new SystemProperties().get("user.name"))
-  lazy val mesosExecutorDefault: String = configuration.getOptional[String]("metronome.mesos.executor.default").getOrElse("//cmd")
-  lazy val mesosFailoverTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.mesos.failover.timeout").getOrElse(7.days)
-  lazy val mesosAuthentication: Boolean = configuration.getOptional[Boolean]("metronome.mesos.authentication.enabled").getOrElse(false)
-  lazy val mesosAuthenticationPrincipal: Option[String] = configuration.getOptional[String]("metronome.mesos.authentication.principal")
-  lazy val mesosAuthenticationSecretsFile: Option[String] = configuration.getOptional[String]("metronome.mesos.authentication.secret.file")
+  lazy val mesosUser: Option[String] =
+    configuration.getOptional[String]("metronome.mesos.user").orElse(new SystemProperties().get("user.name"))
+  lazy val mesosExecutorDefault: String =
+    configuration.getOptional[String]("metronome.mesos.executor.default").getOrElse("//cmd")
+  lazy val mesosFailoverTimeout: FiniteDuration =
+    configuration.getFiniteDuration("metronome.mesos.failover.timeout").getOrElse(7.days)
+  lazy val mesosAuthentication: Boolean =
+    configuration.getOptional[Boolean]("metronome.mesos.authentication.enabled").getOrElse(false)
+  lazy val mesosAuthenticationPrincipal: Option[String] =
+    configuration.getOptional[String]("metronome.mesos.authentication.principal")
+  lazy val mesosAuthenticationSecretsFile: Option[String] =
+    configuration.getOptional[String]("metronome.mesos.authentication.secret.file")
 
-  lazy val suppressOffers: Boolean = configuration.getOptional[Boolean]("metronome.scheduler.suppressOffers").getOrElse(false)
+  lazy val suppressOffers: Boolean =
+    configuration.getOptional[Boolean]("metronome.scheduler.suppressOffers").getOrElse(false)
 
   lazy val enableFeatures: Option[String] = configuration.getOptional[String]("metronome.features.enable")
   lazy val pluginDir: Option[String] = configuration.getOptional[String]("metronome.plugin.dir")
   lazy val pluginConf: Option[String] = configuration.getOptional[String]("metronome.plugin.conf")
   override lazy val runHistoryCount: Int = configuration.getOptional[Int]("metronome.history.count").getOrElse(1000)
 
-  lazy val hostname: String = configuration.getOptional[String]("metronome.leader.election.hostname").getOrElse(java.net.InetAddress.getLocalHost.getHostName)
-  lazy val httpPort: Option[Int] = configuration.getOptional[String]("play.server.http.port").flatMap(intString => Try(intString.toInt).toOption)
+  lazy val hostname: String = configuration
+    .getOptional[String]("metronome.leader.election.hostname")
+    .getOrElse(java.net.InetAddress.getLocalHost.getHostName)
+  lazy val httpPort: Option[Int] =
+    configuration.getOptional[String]("play.server.http.port").flatMap(intString => Try(intString.toInt).toOption)
   lazy val httpsPort: Int = configuration.getOptional[Int]("play.server.https.port").getOrElse(9443)
   lazy val keyStorePath: Option[String] = configuration.getOptional[String]("play.server.https.keyStore.path")
   lazy val keyStorePassword: Option[String] = configuration.getOptional[String]("play.server.https.keyStore.password")
@@ -41,19 +53,29 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
 
   override lazy val hostnameWithPort: String = s"$hostname:$effectivePort"
 
-  override lazy val askTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.akka.ask.timeout").getOrElse(10.seconds)
+  override lazy val askTimeout: FiniteDuration =
+    configuration.getFiniteDuration("metronome.akka.ask.timeout").getOrElse(10.seconds)
 
-  override lazy val zkURL: String = configuration.getOptional[String]("metronome.zk.url").getOrElse(ZkConfig.DEFAULT_ZK_URL)
-  override lazy val zkSessionTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.zk.session_timeout").getOrElse(ZkConfig.DEFAULT_ZK_SESSION_TIMEOUT)
-  override lazy val zkTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.zk.timeout").getOrElse(ZkConfig.DEFAULT_ZK_TIMEOUT)
-  override lazy val zkCompressionEnabled: Boolean = configuration.getOptional[Boolean]("metronome.zk.compression.enabled").getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_ENABLED)
-  override lazy val zkCompressionThreshold: Long = configuration.getOptional[Long]("metronome.zk.compression.threshold").getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_THRESHOLD)
+  override lazy val zkURL: String =
+    configuration.getOptional[String]("metronome.zk.url").getOrElse(ZkConfig.DEFAULT_ZK_URL)
+  override lazy val zkSessionTimeout: FiniteDuration =
+    configuration.getFiniteDuration("metronome.zk.session_timeout").getOrElse(ZkConfig.DEFAULT_ZK_SESSION_TIMEOUT)
+  override lazy val zkTimeout: FiniteDuration =
+    configuration.getFiniteDuration("metronome.zk.timeout").getOrElse(ZkConfig.DEFAULT_ZK_TIMEOUT)
+  override lazy val zkCompressionEnabled: Boolean = configuration
+    .getOptional[Boolean]("metronome.zk.compression.enabled")
+    .getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_ENABLED)
+  override lazy val zkCompressionThreshold: Long = configuration
+    .getOptional[Long]("metronome.zk.compression.threshold")
+    .getOrElse(ZkConfig.DEFAULT_ZK_COMPRESSION_THRESHOLD)
 
   lazy val killChunkSize: Int = configuration.getOptional[Int]("metronome.killtask.kill_chunk_size").getOrElse(100)
-  lazy val killRetryTimeout: Long = configuration.getOptional[Long]("metronome.killtask.kill_retry_timeout").getOrElse(10.seconds.toMillis)
+  lazy val killRetryTimeout: Long =
+    configuration.getOptional[Long]("metronome.killtask.kill_retry_timeout").getOrElse(10.seconds.toMillis)
 
   lazy val httpScheme: String = httpPort.map(_ => "http").getOrElse("https")
-  lazy val webuiURL: String = configuration.getOptional[String]("metronome.web.ui.url").getOrElse(s"$httpScheme://$hostnameWithPort")
+  lazy val webuiURL: String =
+    configuration.getOptional[String]("metronome.web.ui.url").getOrElse(s"$httpScheme://$hostnameWithPort")
 
   lazy val gpuSchedulingBehavior = configuration.getOptional[String]("metronome.gpu_scheduling_behavior")
 
@@ -68,8 +90,10 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       if (zkCompressionEnabled) Some("--zk_compression") else None,
       if (metricsStatsDReporter) Some("--metrics_statsd") else None,
       if (mesosAuthentication) Some("--mesos_authentication") else None,
-      if (metricsHistogramReservoirResetPeriodically.isDefined) Some("--metrics_histogram_reservoir_reset_periodically") else None,
-      if (suppressOffers) Some("--suppress_offers") else Some("--disable_suppress_offers"))
+      if (metricsHistogramReservoirResetPeriodically.isDefined) Some("--metrics_histogram_reservoir_reset_periodically")
+      else None,
+      if (suppressOffers) Some("--suppress_offers") else Some("--disable_suppress_offers")
+    )
 
     val options = Map[String, Option[String]](
       "--framework_name" -> Some(frameworkName),
@@ -104,51 +128,71 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       "--task_lost_expunge_interval" -> Some(taskLostExpungeInterval.toMillis.toString),
       "--kill_chunk_size" -> Some(killChunkSize.toString),
       "--kill_retry_timeout" -> Some(killRetryTimeout.toString),
-
       "--metrics_name_prefix" -> Some(metricsNamePrefix),
       "--metrics_statsd_host" -> metricsStatsDHost.map(_.toString),
       "--metrics_statsd_port" -> metricsStatsDPort.map(_.toString),
       "--metrics_statsd_transmission_interval_ms" -> metricsStatsDTransmissionIntervalMs.map(_.toString),
       "--metrics_histogram_reservoir_significant_digits" -> metricsHistogramReservoirSignificantDigits.map(_.toString),
-      "--metrics_histogram_reservoir_resetting_interval_ms" -> metricsHistogramReservoirResettingIntervalMs.map(_.toString),
-      "--metrics_histogram_reservoir_resetting_chunks" -> metricsHistogramReservoirResettingChunks.map(_.toString))
-      .collect { case (name, Some(value)) => (name, value) }
-      .flatMap { case (name, value) => Seq(name, value) }
+      "--metrics_histogram_reservoir_resetting_interval_ms" -> metricsHistogramReservoirResettingIntervalMs.map(
+        _.toString
+      ),
+      "--metrics_histogram_reservoir_resetting_chunks" -> metricsHistogramReservoirResettingChunks.map(_.toString)
+    ).collect { case (name, Some(value)) => (name, value) }.flatMap { case (name, value) => Seq(name, value) }
     new AllConf(options.to[Seq] ++ flags.flatten)
   }
 
-  override lazy val reconciliationInterval: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.reconciliation.interval").getOrElse(15.minutes)
-  override lazy val reconciliationTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.reconciliation.timeout").getOrElse(1.minute)
-  override lazy val enableStoreCache: Boolean = configuration.getOptional[Boolean]("metronome.scheduler.store.cache").getOrElse(true)
-  lazy val taskLaunchTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.task.launch.timeout").getOrElse(5.minutes)
-  lazy val taskLaunchConfirmTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.task.launch.confirm.timeout").getOrElse(5.minutes)
-  lazy val taskEnvVarsPrefix: Option[String] = configuration.getOptional[String]("metronome.scheduler.task.env.vars.prefix")
-  lazy val taskLostExpungeGcTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.task.lost.expunge.gc").getOrElse(1.day)
-  lazy val taskLostExpungeInitialDelay: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.task.lost.expunge.initial.delay").getOrElse(5.minutes)
-  lazy val taskLostExpungeInterval: FiniteDuration = configuration.getFiniteDuration("metronome.scheduler.task.lost.expunge.interval").getOrElse(1.hour)
+  override lazy val reconciliationInterval: FiniteDuration =
+    configuration.getFiniteDuration("metronome.scheduler.reconciliation.interval").getOrElse(15.minutes)
+  override lazy val reconciliationTimeout: FiniteDuration =
+    configuration.getFiniteDuration("metronome.scheduler.reconciliation.timeout").getOrElse(1.minute)
+  override lazy val enableStoreCache: Boolean =
+    configuration.getOptional[Boolean]("metronome.scheduler.store.cache").getOrElse(true)
+  lazy val taskLaunchTimeout: FiniteDuration =
+    configuration.getFiniteDuration("metronome.scheduler.task.launch.timeout").getOrElse(5.minutes)
+  lazy val taskLaunchConfirmTimeout: FiniteDuration =
+    configuration.getFiniteDuration("metronome.scheduler.task.launch.confirm.timeout").getOrElse(5.minutes)
+  lazy val taskEnvVarsPrefix: Option[String] =
+    configuration.getOptional[String]("metronome.scheduler.task.env.vars.prefix")
+  lazy val taskLostExpungeGcTimeout: FiniteDuration =
+    configuration.getFiniteDuration("metronome.scheduler.task.lost.expunge.gc").getOrElse(1.day)
+  lazy val taskLostExpungeInitialDelay: FiniteDuration =
+    configuration.getFiniteDuration("metronome.scheduler.task.lost.expunge.initial.delay").getOrElse(5.minutes)
+  lazy val taskLostExpungeInterval: FiniteDuration =
+    configuration.getFiniteDuration("metronome.scheduler.task.lost.expunge.interval").getOrElse(1.hour)
 
-  override lazy val leaderPreparationTimeout: FiniteDuration = configuration.getFiniteDuration("metronome.leader.preparation.timeout").getOrElse(3.minutes)
-  override lazy val leaderProxyTimeout: Duration = configuration.getFiniteDuration("metronome.leader.proxy.timeout").getOrElse(30.seconds)
+  override lazy val leaderPreparationTimeout: FiniteDuration =
+    configuration.getFiniteDuration("metronome.leader.preparation.timeout").getOrElse(3.minutes)
+  override lazy val leaderProxyTimeout: Duration =
+    configuration.getFiniteDuration("metronome.leader.proxy.timeout").getOrElse(30.seconds)
 
-  override lazy val maxActorStartupTime: FiniteDuration = configuration.getFiniteDuration("metronome.akka.actor.startup.max").getOrElse(10.seconds)
+  override lazy val maxActorStartupTime: FiniteDuration =
+    configuration.getFiniteDuration("metronome.akka.actor.startup.max").getOrElse(10.seconds)
 
-  lazy val metricsNamePrefix: String = configuration.getOptional[String]("metronome.metrics.prefix").getOrElse("metronome")
+  lazy val metricsNamePrefix: String =
+    configuration.getOptional[String]("metronome.metrics.prefix").getOrElse("metronome")
 
-  lazy val metricsStatsDReporter: Boolean = configuration.getOptional[Boolean]("metronome.metrics.reporter.statsd").getOrElse(false)
+  lazy val metricsStatsDReporter: Boolean =
+    configuration.getOptional[Boolean]("metronome.metrics.reporter.statsd").getOrElse(false)
   lazy val metricsStatsDHost: Option[String] = configuration.getOptional[String]("metronome.metrics.statsd.host")
   lazy val metricsStatsDPort: Option[Int] = configuration.getOptional[Int]("metronome.metrics.statsd.port")
-  lazy val metricsStatsDTransmissionIntervalMs: Option[Long] = configuration.getOptional[Long]("metronome.metrics.statsd.transmission.interval.ms")
+  lazy val metricsStatsDTransmissionIntervalMs: Option[Long] =
+    configuration.getOptional[Long]("metronome.metrics.statsd.transmission.interval.ms")
 
-  lazy val metricsHistogramReservoirSignificantDigits: Option[Int] = configuration.getOptional[Int]("metronome.metrics.histogram.reservoir.significant.digits")
-  lazy val metricsHistogramReservoirResetPeriodically: Option[Boolean] = configuration.getOptional[Boolean]("metronome.metrics.histogram.reservoir.reset.periodically")
-  lazy val metricsHistogramReservoirResettingIntervalMs: Option[Long] = configuration.getOptional[Long]("metronome.metrics.histogram.reservoir.internal.ms")
-  lazy val metricsHistogramReservoirResettingChunks: Option[Int] = configuration.getOptional[Int]("metronome.metrics.histogram.reservoir.reset.chucks")
+  lazy val metricsHistogramReservoirSignificantDigits: Option[Int] =
+    configuration.getOptional[Int]("metronome.metrics.histogram.reservoir.significant.digits")
+  lazy val metricsHistogramReservoirResetPeriodically: Option[Boolean] =
+    configuration.getOptional[Boolean]("metronome.metrics.histogram.reservoir.reset.periodically")
+  lazy val metricsHistogramReservoirResettingIntervalMs: Option[Long] =
+    configuration.getOptional[Long]("metronome.metrics.histogram.reservoir.internal.ms")
+  lazy val metricsHistogramReservoirResettingChunks: Option[Int] =
+    configuration.getOptional[Int]("metronome.metrics.histogram.reservoir.reset.chucks")
 
   override def taskKillConfig: KillConfig = scallopConf
 }
 
 private[this] object ConfigurationImplicits {
   implicit class LongToFiniteDuration(val configuration: Configuration) extends AnyVal {
-    def getFiniteDuration(path: String): Option[FiniteDuration] = configuration.getOptional[Long](path).map(_.milliseconds)
+    def getFiniteDuration(path: String): Option[FiniteDuration] =
+      configuration.getOptional[Long](path).map(_.milliseconds)
   }
 }

@@ -1,10 +1,10 @@
 package dcos.metronome.jobspec.impl
 
-import java.time.{ Instant, ZoneId }
+import java.time.{Instant, ZoneId}
 
-import dcos.metronome.model.{ ConcurrencyPolicy, CronSpec, ScheduleSpec }
+import dcos.metronome.model.{ConcurrencyPolicy, CronSpec, ScheduleSpec}
 import dcos.metronome.utils.test.Mockito
-import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }
+import org.scalatest.{FunSuite, GivenWhenThen, Matchers}
 
 import scala.concurrent.duration._
 
@@ -28,7 +28,8 @@ class ScheduleSpecTest extends FunSuite with Matchers with Mockito with GivenWhe
       timeZone = ZoneId.of("Europe/Rome"),
       startingDeadline = 900.seconds,
       concurrencyPolicy = ConcurrencyPolicy.Allow,
-      enabled = true)
+      enabled = true
+    )
 
     Given("a schedule that was last run at 22:55")
     val lastScheduledAt = Instant.parse("2019-03-30T22:55:00.000Z")

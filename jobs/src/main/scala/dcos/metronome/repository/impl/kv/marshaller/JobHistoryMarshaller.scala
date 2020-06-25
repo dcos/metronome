@@ -3,7 +3,7 @@ package repository.impl.kv.marshaller
 
 import java.time.Instant
 
-import dcos.metronome.model.{ JobHistory, JobId, JobRunInfo }
+import dcos.metronome.model.{JobHistory, JobId, JobRunInfo}
 import dcos.metronome.repository.impl.kv.EntityMarshaller
 import mesosphere.marathon.core.task.Task
 import org.slf4j.LoggerFactory
@@ -48,7 +48,8 @@ object JobHistoryMarshaller extends EntityMarshaller[JobHistory] {
       lastSuccessAt = lastSuccessAt,
       lastFailureAt = lastFailureAt,
       successfulRuns = proto.getSuccessfulRunsList.asScala.toModel,
-      failedRuns = proto.getFailedRunsList.asScala.toModel)
+      failedRuns = proto.getFailedRunsList.asScala.toModel
+    )
   }
 }
 
@@ -57,27 +58,31 @@ object JobHistoryConversions {
   implicit class JobRunInfoToProto(val jobRunInfos: Seq[JobRunInfo]) extends AnyVal {
     import JobRunConversions.JobRunIdToProto
 
-    def toProto: Seq[Protos.JobHistory.JobRunInfo] = jobRunInfos.map { jobRunInfo =>
-      val proto = Protos.JobHistory.JobRunInfo.newBuilder()
-        .setJobRunId(jobRunInfo.id.toProto)
-        .setCreatedAt(jobRunInfo.createdAt.toEpochMilli)
-        .setFinishedAt(jobRunInfo.finishedAt.toEpochMilli)
+    def toProto: Seq[Protos.JobHistory.JobRunInfo] =
+      jobRunInfos.map { jobRunInfo =>
+        val proto = Protos.JobHistory.JobRunInfo
+          .newBuilder()
+          .setJobRunId(jobRunInfo.id.toProto)
+          .setCreatedAt(jobRunInfo.createdAt.toEpochMilli)
+          .setFinishedAt(jobRunInfo.finishedAt.toEpochMilli)
 
-      proto.addAllTasks(jobRunInfo.tasks.map(_.idString).asJava)
+        proto.addAllTasks(jobRunInfo.tasks.map(_.idString).asJava)
 
-      proto.build()
-    }
+        proto.build()
+      }
   }
 
   implicit class ProtoToJobRunInfo(val protos: mutable.Buffer[Protos.JobHistory.JobRunInfo]) extends AnyVal {
     import JobRunConversions.ProtoToJobRunId
 
-    def toModel: Seq[JobRunInfo] = protos.map { proto =>
-      JobRunInfo(
-        id = proto.getJobRunId.toModel,
-        createdAt = Instant.ofEpochMilli(proto.getCreatedAt),
-        finishedAt = Instant.ofEpochMilli(proto.getFinishedAt),
-        tasks = proto.getTasksList.asScala.map(Task.Id(_)).to[Seq])
-    }.toList
+    def toModel: Seq[JobRunInfo] =
+      protos.map { proto =>
+        JobRunInfo(
+          id = proto.getJobRunId.toModel,
+          createdAt = Instant.ofEpochMilli(proto.getCreatedAt),
+          finishedAt = Instant.ofEpochMilli(proto.getFinishedAt),
+          tasks = proto.getTasksList.asScala.map(Task.Id(_)).to[Seq]
+        )
+      }.toList
   }
 }

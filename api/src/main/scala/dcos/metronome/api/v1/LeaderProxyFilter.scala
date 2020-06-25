@@ -10,7 +10,9 @@ import play.api.libs.streams.Accumulator
 import play.api.libs.ws.WSClient
 import play.api.mvc._
 
-class LeaderProxyFilter(ws: WSClient, electionService: ElectionService, config: ApiConfig) extends EssentialFilter with Results {
+class LeaderProxyFilter(ws: WSClient, electionService: ElectionService, config: ApiConfig)
+    extends EssentialFilter
+    with Results {
 
   import LeaderProxyFilter._
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -19,22 +21,23 @@ class LeaderProxyFilter(ws: WSClient, electionService: ElectionService, config: 
   val localHostPort = config.hostnameWithPort
   val localRoutes = Set("/ping", "/v1/metrics")
 
-  override def apply(next: EssentialAction): EssentialAction = new EssentialAction {
-    override def apply(request: RequestHeader): Accumulator[ByteString, Result] = {
-      def isProxiedToSelf = request.headers.get(HEADER_VIA).contains(localHostPort)
-      def doNotProxy() = localRoutes(request.path)
-      if (electionService.isLeader || doNotProxy()) {
-        next(request)
-      } else if (isProxiedToSelf) {
-        Accumulator.done(BadRequest("Prevent proxying already proxied request"))
-      } else {
-        electionService.leaderHostPort match {
-          case Some(hostPort) => proxyRequest(request, hostPort)
-          case None           => Accumulator.done(ServiceUnavailable("No consistent leadership"))
+  override def apply(next: EssentialAction): EssentialAction =
+    new EssentialAction {
+      override def apply(request: RequestHeader): Accumulator[ByteString, Result] = {
+        def isProxiedToSelf = request.headers.get(HEADER_VIA).contains(localHostPort)
+        def doNotProxy() = localRoutes(request.path)
+        if (electionService.isLeader || doNotProxy()) {
+          next(request)
+        } else if (isProxiedToSelf) {
+          Accumulator.done(BadRequest("Prevent proxying already proxied request"))
+        } else {
+          electionService.leaderHostPort match {
+            case Some(hostPort) => proxyRequest(request, hostPort)
+            case None => Accumulator.done(ServiceUnavailable("No consistent leadership"))
+          }
         }
       }
     }
-  }
 
   def proxyRequest(request: RequestHeader, leaderHostPort: String): Accumulator[ByteString, Result] = {
     log.info(s"Proxy request ${request.path} to $leaderHostPort")

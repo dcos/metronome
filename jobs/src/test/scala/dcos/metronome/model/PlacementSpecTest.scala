@@ -1,6 +1,6 @@
 package dcos.metronome.model
 
-import org.scalatest.{ FunSuite, Matchers }
+import org.scalatest.{FunSuite, Matchers}
 
 class PlacementSpecTest extends FunSuite with Matchers {
   test("Operator unapply converts EQ to IS") {

@@ -1,7 +1,7 @@
 package dcos.metronome
 package api.v1.controllers
 
-import java.time.{ Clock, Instant, ZoneOffset }
+import java.time.{Clock, Instant, ZoneOffset}
 
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
@@ -9,17 +9,22 @@ import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import dcos.metronome.model._
 import mesosphere.marathon.core.plugin.PluginManager
-import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
+import org.scalatest.{BeforeAndAfter, GivenWhenThen}
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{ Millis, Seconds, Span }
-import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
+import org.scalatest.time.{Millis, Seconds, Span}
+import org.scalatest.{BeforeAndAfter, GivenWhenThen}
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context
 import play.api.libs.json._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
-class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with ScalaFutures with GivenWhenThen with BeforeAndAfter {
+class JobScheduleControllerTest
+    extends PlaySpec
+    with OneAppPerTestWithComponents[MockApiComponents]
+    with ScalaFutures
+    with GivenWhenThen
+    with BeforeAndAfter {
 
   "POST /jobs/{id}/schedules" should {
 
@@ -49,8 +54,11 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
                                       |    "startingDeadlineSeconds": 60,
                                       |    "timezone": "America/Chicago"
                                       |  }""".stripMargin)
-      val response = route(app, FakeRequest(POST, s"/v1/jobs/$specId/schedules")
-        .withJsonBody(scheduleJson)).get
+      val response = route(
+        app,
+        FakeRequest(POST, s"/v1/jobs/$specId/schedules")
+          .withJsonBody(scheduleJson)
+      ).get
 
       Then("The schedule is created")
       (contentAsJson(response) \ "timezone").as[String] mustBe "America/Chicago"
@@ -252,7 +260,8 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       When("The schedule is updated")
       val update = schedule1.copy(cron = cron2)
       val updateJson = Json.toJson(update)
-      val response = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/${update.id}").withJsonBody(updateJson)).get
+      val response =
+        route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/${update.id}").withJsonBody(updateJson)).get
 
       Then("The schedule is updated")
       status(response) mustBe OK
@@ -267,10 +276,13 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
 
       When("The schedule is updated")
       val sendJson = Json.toJson(schedule1.copy(id = "ignore.me", cron = cron2))
-      val response = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/${schedule1.id}").withJsonBody(sendJson)).get
+      val response =
+        route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/${schedule1.id}").withJsonBody(sendJson)).get
 
       Then("A validation problem is indicated")
-      status(response) mustBe UNPROCESSABLE_ENTITY //as long as we support only one schedule this will fail, update if we change this restriction
+      status(
+        response
+      ) mustBe UNPROCESSABLE_ENTITY //as long as we support only one schedule this will fail, update if we change this restriction
     }
 
     "give a 404 for a non existing schedule" in {
@@ -278,7 +290,8 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
       route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
 
       When("A non existing job us")
-      val response = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/notexistent").withJsonBody(schedule1Json)).get
+      val response =
+        route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/notexistent").withJsonBody(schedule1Json)).get
 
       Then("A 404 is sent")
       status(response) mustBe NOT_FOUND
@@ -293,7 +306,8 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
 
       When("A schesule is updated with invalid json")
       val invalid = schedule1Json.as[JsObject] ++ Json.obj("cron" -> "no valid cron")
-      val response = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/${schedule1.id}").withJsonBody(invalid)).get
+      val response =
+        route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/${schedule1.id}").withJsonBody(invalid)).get
 
       Then("A validation error is returned")
       status(response) mustBe UNPROCESSABLE_ENTITY
@@ -307,14 +321,16 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
 
       When("we do a request without authorization")
       auth.authorized = false
-      val forbidden = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/notexistent").withJsonBody(schedule1Json)).get
+      val forbidden =
+        route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/notexistent").withJsonBody(schedule1Json)).get
 
       Then("an unauthorized response is send")
       status(forbidden) mustBe UNAUTHORIZED
 
       When("we do a request without authentication")
       auth.authenticated = false
-      val unauthorized = route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/notexistent").withJsonBody(schedule1Json)).get
+      val unauthorized =
+        route(app, FakeRequest(PUT, s"/v1/jobs/$specId/schedules/notexistent").withJsonBody(schedule1Json)).get
 
       Then("a forbidden response is send")
       status(unauthorized) mustBe FORBIDDEN
@@ -368,7 +384,8 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
     }
   }
 
-  override implicit def patienceConfig: PatienceConfig = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
+  override implicit def patienceConfig: PatienceConfig =
+    PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
   val mockedClock = Clock.fixed(Instant.now, ZoneOffset.UTC)
 
@@ -380,7 +397,13 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
   val schedule2 = new ScheduleSpec("id2", cron2) {
     override def clock = mockedClock
   }
-  val scheduleForbid = new ScheduleSpec("id3", cron1, ScheduleSpec.DefaultTimeZone, ScheduleSpec.DefaultStartingDeadline, ConcurrencyPolicy.Forbid) {
+  val scheduleForbid = new ScheduleSpec(
+    "id3",
+    cron1,
+    ScheduleSpec.DefaultTimeZone,
+    ScheduleSpec.DefaultStartingDeadline,
+    ConcurrencyPolicy.Forbid
+  ) {
     override def clock = mockedClock
   }
   val schedule1Json = Json.toJson(schedule1)
@@ -396,8 +419,9 @@ class JobScheduleControllerTest extends PlaySpec with OneAppPerTestWithComponent
     auth.authenticated = true
   }
 
-  override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context) {
-    override lazy val pluginManager: PluginManager = auth.pluginManager
-    override lazy val jobSpecService: JobSpecService = JobSpecServiceFixture.simpleJobSpecService(mockedClock)
-  }
+  override def createComponents(context: Context): MockApiComponents =
+    new MockApiComponents(context) {
+      override lazy val pluginManager: PluginManager = auth.pluginManager
+      override lazy val jobSpecService: JobSpecService = JobSpecServiceFixture.simpleJobSpecService(mockedClock)
+    }
 }

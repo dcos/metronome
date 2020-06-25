@@ -4,8 +4,8 @@ package repository.impl.kv.marshaller
 import java.time.ZoneId
 
 import dcos.metronome.model._
-import org.scalacheck.{ Arbitrary, Gen }
-import org.scalatest.{ FunSuite, Matchers }
+import org.scalacheck.{Arbitrary, Gen}
+import org.scalatest.{FunSuite, Matchers}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.collection.immutable._
@@ -15,7 +15,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with ScalaCheckProper
 
   test("unmarshal with invalid proto data should return None") {
     val invalidBytes = "foobar".getBytes
-    JobSpecMarshaller.fromBytes(invalidBytes.to[IndexedSeq]) should be (None)
+    JobSpecMarshaller.fromBytes(invalidBytes.to[IndexedSeq]) should be(None)
   }
 
   val nonEmptyAlphaStrGen = Gen.nonEmptyListOf(Gen.alphaChar).map(_.mkString)
@@ -24,29 +24,30 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with ScalaCheckProper
     attribute <- nonEmptyAlphaStrGen
     operator <- Gen.oneOf(Operator.Is, Operator.Like, Operator.Unlike)
     value <- Gen.option(nonEmptyAlphaStrGen)
-  } yield ConstraintSpec(
-    attribute,
-    operator,
-    value)
+  } yield ConstraintSpec(attribute, operator, value)
 
   val placementGen = for {
     constraints <- Gen.listOf(constrantsSpecGen)
-  } yield PlacementSpec(
-    constraints)
+  } yield PlacementSpec(constraints)
 
   val booleanGen = Gen.oneOf(true, false)
 
   val durationGen = Gen.posNum[Long].map(l => FiniteDuration(l, "second"))
 
-  val dockerGen = Gen.option(Gen.zip(nonEmptyAlphaStrGen, booleanGen).map{ case (s, b) => DockerSpec(s, b) })
+  val dockerGen = Gen.option(Gen.zip(nonEmptyAlphaStrGen, booleanGen).map { case (s, b) => DockerSpec(s, b) })
 
-  val ucrGen = Gen.option(Gen.zip(nonEmptyAlphaStrGen, booleanGen).map{ case (id, fp) => UcrSpec(ImageSpec(id = id, forcePull = fp)) })
+  val ucrGen = Gen.option(
+    Gen.zip(nonEmptyAlphaStrGen, booleanGen).map { case (id, fp) => UcrSpec(ImageSpec(id = id, forcePull = fp)) }
+  )
 
   val dockerOrUcrGen: Gen[Option[Container]] = Gen.oneOf(dockerGen, ucrGen)
 
-  val hostVolumeGen = Gen.listOf(Gen.zip(nonEmptyAlphaStrGen, nonEmptyAlphaStrGen, Gen.oneOf(Mode.RO, Mode.RW)).map{ case (s1, s2, m) => HostVolume(s1, s2, m) })
+  val hostVolumeGen = Gen.listOf(Gen.zip(nonEmptyAlphaStrGen, nonEmptyAlphaStrGen, Gen.oneOf(Mode.RO, Mode.RW)).map {
+    case (s1, s2, m) => HostVolume(s1, s2, m)
+  })
 
-  val secretVolumeGen = Gen.listOf(Gen.zip(nonEmptyAlphaStrGen, nonEmptyAlphaStrGen).map{ case (s1, s2) => SecretVolume(s1, s2) })
+  val secretVolumeGen =
+    Gen.listOf(Gen.zip(nonEmptyAlphaStrGen, nonEmptyAlphaStrGen).map { case (s1, s2) => SecretVolume(s1, s2) })
 
   val volumeGen = Gen.oneOf(hostVolumeGen, secretVolumeGen)
 
@@ -68,14 +69,23 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with ScalaCheckProper
     cmd <- Gen.option(nonEmptyAlphaStrGen)
     args <- Gen.option(Gen.nonEmptyListOf(nonEmptyAlphaStrGen))
     user <- Gen.option(nonEmptyAlphaStrGen)
-    env <- Gen.mapOf(Gen.zip(nonEmptyAlphaStrGen, Gen.oneOf(nonEmptyAlphaStrGen.map(v => EnvVarValue(v)), nonEmptyAlphaStrGen.map(v => EnvVarSecret(v)))))
+    env <- Gen.mapOf(
+      Gen.zip(
+        nonEmptyAlphaStrGen,
+        Gen.oneOf(nonEmptyAlphaStrGen.map(v => EnvVarValue(v)), nonEmptyAlphaStrGen.map(v => EnvVarSecret(v)))
+      )
+    )
     placement <- placementGen
-    artifacts <- Gen.listOf(Gen.zip(nonEmptyAlphaStrGen, booleanGen, booleanGen, booleanGen).map { case (s, b1, b2, b3) => Artifact(s, b1, b2, b3) })
+    artifacts <- Gen.listOf(Gen.zip(nonEmptyAlphaStrGen, booleanGen, booleanGen, booleanGen).map {
+      case (s, b1, b2, b3) => Artifact(s, b1, b2, b3)
+    })
     maxLaunchDelay <- durationGen
     container <- dockerOrUcrGen
     volumes <- volumeGen
     networks <- networkGen
-    restart <- Gen.zip(Gen.oneOf(RestartPolicy.Never, RestartPolicy.OnFailure), Gen.option(durationGen)).map{ case (rp, d) => RestartSpec(rp, d) }
+    restart <- Gen.zip(Gen.oneOf(RestartPolicy.Never, RestartPolicy.OnFailure), Gen.option(durationGen)).map {
+      case (rp, d) => RestartSpec(rp, d)
+    }
     taskKillGracePeriodSeconds <- Gen.option(durationGen)
     secrets <- Gen.mapOf(Gen.zip(nonEmptyAlphaStrGen, nonEmptyAlphaStrGen.map(s => SecretDef(s))))
   } yield {
@@ -101,7 +111,8 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with ScalaCheckProper
       restart,
       taskKillGracePeriodSeconds,
       secrets,
-      Seq(networks))
+      Seq(networks)
+    )
   }
 
   val jobSpecGen = for {
@@ -133,7 +144,9 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with ScalaCheckProper
     // This asserts that jobSpecs stored with the EQ Operator are properly mapped to IS
     import Protos.JobSpec.RunSpec.PlacementSpec.Constraint
     import RunSpecConversions.ProtosToConstraintSpec
-    val converted = Seq(Constraint.newBuilder().setAttribute("field").setOperator(Constraint.Operator.EQ).setValue("value").build).toModel
+    val converted = Seq(
+      Constraint.newBuilder().setAttribute("field").setOperator(Constraint.Operator.EQ).setValue("value").build
+    ).toModel
     converted.head.operator.name shouldBe "IS"
   }
 }

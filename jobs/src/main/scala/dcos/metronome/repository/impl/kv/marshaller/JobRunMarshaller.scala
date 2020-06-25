@@ -35,7 +35,8 @@ object JobRunMarshaller extends EntityMarshaller[JobRun] {
 object JobRunConversions {
   implicit class JobRunIdToProto(val jobRunId: JobRunId) extends AnyVal {
     def toProto: Protos.JobRun.Id = {
-      Protos.JobRun.Id.newBuilder()
+      Protos.JobRun.Id
+        .newBuilder()
         .setJobId(jobRunId.jobId.toString)
         .setRunId(jobRunId.value)
         .build()
@@ -44,7 +45,8 @@ object JobRunConversions {
 
   implicit class JobRunTaskToProto(val task: JobRunTask) extends AnyVal {
     def toProto: Protos.JobRun.JobRunTask = {
-      val builder = Protos.JobRun.JobRunTask.newBuilder()
+      val builder = Protos.JobRun.JobRunTask
+        .newBuilder()
         .setId(task.id.idString)
         .setStartedAt(task.startedAt.toEpochMilli)
         .setStatus(task.status.toProto)
@@ -54,11 +56,13 @@ object JobRunConversions {
   }
 
   implicit class ProtoToJobRunTask(val proto: Protos.JobRun.JobRunTask) extends AnyVal {
-    def toModel: JobRunTask = JobRunTask(
-      Task.Id(proto.getId),
-      Instant.ofEpochMilli(proto.getStartedAt),
-      if (proto.hasCompletedAt) Some(Instant.ofEpochMilli(proto.getCompletedAt)) else None,
-      proto.getStatus.toModel)
+    def toModel: JobRunTask =
+      JobRunTask(
+        Task.Id(proto.getId),
+        Instant.ofEpochMilli(proto.getStartedAt),
+        if (proto.hasCompletedAt) Some(Instant.ofEpochMilli(proto.getCompletedAt)) else None,
+        proto.getStatus.toModel
+      )
   }
 
   implicit class ProtoToJobRunId(val proto: Protos.JobRun.Id) extends AnyVal {
@@ -69,7 +73,8 @@ object JobRunConversions {
     def toProto: Protos.JobRun = {
       import JobSpecConversions.JobSpecToProto
 
-      val builder = Protos.JobRun.newBuilder()
+      val builder = Protos.JobRun
+        .newBuilder()
         .setId(jobRun.id.toProto)
         .setJobSpec(jobRun.jobSpec.toProto)
         .setStatus(jobRun.status.toProto)
@@ -92,11 +97,13 @@ object JobRunConversions {
         status = proto.getStatus.toModel,
         createdAt = Instant.ofEpochMilli(proto.getCreatedAt),
         completedAt = if (proto.hasFinishedAt) Some(Instant.ofEpochMilli(proto.getFinishedAt)) else None,
-        startingDeadline = if (proto.hasStartingDeadlineSeconds)
-          Some(Duration(proto.getStartingDeadlineSeconds, TimeUnit.SECONDS))
-        else
-          None,
-        tasks = proto.getTasksList.asScala.map(_.toModel).map(task => task.id -> task).toMap)
+        startingDeadline =
+          if (proto.hasStartingDeadlineSeconds)
+            Some(Duration(proto.getStartingDeadlineSeconds, TimeUnit.SECONDS))
+          else
+            None,
+        tasks = proto.getTasksList.asScala.map(_.toModel).map(task => task.id -> task).toMap
+      )
     }
   }
 

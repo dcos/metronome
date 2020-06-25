@@ -1,33 +1,44 @@
 package dcos.metronome
 
-import dcos.metronome.model.{ Artifact, DockerSpec, EnvVarValueOrSecret, ImageSpec, JobRunSpec, Network, PlacementSpec, RestartSpec, SecretDef, UcrSpec, Volume }
+import dcos.metronome.model.{
+  Artifact,
+  DockerSpec,
+  EnvVarValueOrSecret,
+  ImageSpec,
+  JobRunSpec,
+  Network,
+  PlacementSpec,
+  RestartSpec,
+  SecretDef,
+  UcrSpec,
+  Volume
+}
 
-import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
 object Builders {
-  def newImage(id: String = "image", forcePull: Boolean = false): ImageSpec = ImageSpec(
-    id = id,
-    forcePull = forcePull)
+  def newImage(id: String = "image", forcePull: Boolean = false): ImageSpec = ImageSpec(id = id, forcePull = forcePull)
 
   object newJobRunSpec {
     def docker(
-      cpus:                       Double                           = JobRunSpec.DefaultCpus,
-      mem:                        Double                           = JobRunSpec.DefaultMem,
-      disk:                       Double                           = JobRunSpec.DefaultDisk,
-      gpus:                       Int                              = JobRunSpec.DefaultGpus,
-      cmd:                        Option[String]                   = JobRunSpec.DefaultCmd,
-      args:                       Option[Seq[String]]              = JobRunSpec.DefaultArgs,
-      user:                       Option[String]                   = JobRunSpec.DefaultUser,
-      env:                        Map[String, EnvVarValueOrSecret] = JobRunSpec.DefaultEnv,
-      placement:                  PlacementSpec                    = JobRunSpec.DefaultPlacement,
-      artifacts:                  Seq[Artifact]                    = JobRunSpec.DefaultArtifacts,
-      maxLaunchDelay:             Duration                         = JobRunSpec.DefaultMaxLaunchDelay,
-      docker:                     Option[DockerSpec]               = Some(newDockerSpec()),
-      volumes:                    Seq[Volume]                      = JobRunSpec.DefaultVolumes,
-      restart:                    RestartSpec                      = JobRunSpec.DefaultRestartSpec,
-      taskKillGracePeriodSeconds: Option[FiniteDuration]           = JobRunSpec.DefaultTaskKillGracePeriodSeconds,
-      secrets:                    Map[String, SecretDef]           = JobRunSpec.DefaultSecrets,
-      networks:                   Seq[Network]                     = JobRunSpec.DefaultNetworks): JobRunSpec = {
+        cpus: Double = JobRunSpec.DefaultCpus,
+        mem: Double = JobRunSpec.DefaultMem,
+        disk: Double = JobRunSpec.DefaultDisk,
+        gpus: Int = JobRunSpec.DefaultGpus,
+        cmd: Option[String] = JobRunSpec.DefaultCmd,
+        args: Option[Seq[String]] = JobRunSpec.DefaultArgs,
+        user: Option[String] = JobRunSpec.DefaultUser,
+        env: Map[String, EnvVarValueOrSecret] = JobRunSpec.DefaultEnv,
+        placement: PlacementSpec = JobRunSpec.DefaultPlacement,
+        artifacts: Seq[Artifact] = JobRunSpec.DefaultArtifacts,
+        maxLaunchDelay: Duration = JobRunSpec.DefaultMaxLaunchDelay,
+        docker: Option[DockerSpec] = Some(newDockerSpec()),
+        volumes: Seq[Volume] = JobRunSpec.DefaultVolumes,
+        restart: RestartSpec = JobRunSpec.DefaultRestartSpec,
+        taskKillGracePeriodSeconds: Option[FiniteDuration] = JobRunSpec.DefaultTaskKillGracePeriodSeconds,
+        secrets: Map[String, SecretDef] = JobRunSpec.DefaultSecrets,
+        networks: Seq[Network] = JobRunSpec.DefaultNetworks
+    ): JobRunSpec = {
       JobRunSpec(
         cpus = cpus,
         mem = mem,
@@ -46,27 +57,29 @@ object Builders {
         restart = restart,
         taskKillGracePeriodSeconds = taskKillGracePeriodSeconds,
         secrets = secrets,
-        networks = networks)
+        networks = networks
+      )
     }
 
     def ucr(
-      cpus:                       Double                           = JobRunSpec.DefaultCpus,
-      mem:                        Double                           = JobRunSpec.DefaultMem,
-      disk:                       Double                           = JobRunSpec.DefaultDisk,
-      gpus:                       Int                              = JobRunSpec.DefaultGpus,
-      cmd:                        Option[String]                   = JobRunSpec.DefaultCmd,
-      args:                       Option[Seq[String]]              = JobRunSpec.DefaultArgs,
-      user:                       Option[String]                   = JobRunSpec.DefaultUser,
-      env:                        Map[String, EnvVarValueOrSecret] = JobRunSpec.DefaultEnv,
-      placement:                  PlacementSpec                    = JobRunSpec.DefaultPlacement,
-      artifacts:                  Seq[Artifact]                    = JobRunSpec.DefaultArtifacts,
-      maxLaunchDelay:             Duration                         = JobRunSpec.DefaultMaxLaunchDelay,
-      ucr:                        Option[UcrSpec]                  = Some(newUcrSpec()),
-      volumes:                    Seq[Volume]                      = JobRunSpec.DefaultVolumes,
-      restart:                    RestartSpec                      = JobRunSpec.DefaultRestartSpec,
-      taskKillGracePeriodSeconds: Option[FiniteDuration]           = JobRunSpec.DefaultTaskKillGracePeriodSeconds,
-      secrets:                    Map[String, SecretDef]           = JobRunSpec.DefaultSecrets,
-      networks:                   Seq[Network]                     = JobRunSpec.DefaultNetworks): JobRunSpec = {
+        cpus: Double = JobRunSpec.DefaultCpus,
+        mem: Double = JobRunSpec.DefaultMem,
+        disk: Double = JobRunSpec.DefaultDisk,
+        gpus: Int = JobRunSpec.DefaultGpus,
+        cmd: Option[String] = JobRunSpec.DefaultCmd,
+        args: Option[Seq[String]] = JobRunSpec.DefaultArgs,
+        user: Option[String] = JobRunSpec.DefaultUser,
+        env: Map[String, EnvVarValueOrSecret] = JobRunSpec.DefaultEnv,
+        placement: PlacementSpec = JobRunSpec.DefaultPlacement,
+        artifacts: Seq[Artifact] = JobRunSpec.DefaultArtifacts,
+        maxLaunchDelay: Duration = JobRunSpec.DefaultMaxLaunchDelay,
+        ucr: Option[UcrSpec] = Some(newUcrSpec()),
+        volumes: Seq[Volume] = JobRunSpec.DefaultVolumes,
+        restart: RestartSpec = JobRunSpec.DefaultRestartSpec,
+        taskKillGracePeriodSeconds: Option[FiniteDuration] = JobRunSpec.DefaultTaskKillGracePeriodSeconds,
+        secrets: Map[String, SecretDef] = JobRunSpec.DefaultSecrets,
+        networks: Seq[Network] = JobRunSpec.DefaultNetworks
+    ): JobRunSpec = {
       JobRunSpec(
         cpus = cpus,
         mem = mem,
@@ -85,26 +98,28 @@ object Builders {
         restart = restart,
         taskKillGracePeriodSeconds = taskKillGracePeriodSeconds,
         secrets = secrets,
-        networks = networks)
+        networks = networks
+      )
     }
 
     def command(
-      cpus:                       Double                           = JobRunSpec.DefaultCpus,
-      mem:                        Double                           = JobRunSpec.DefaultMem,
-      disk:                       Double                           = JobRunSpec.DefaultDisk,
-      gpus:                       Int                              = JobRunSpec.DefaultGpus,
-      cmd:                        String                           = "sleep 3600",
-      args:                       Option[Seq[String]]              = JobRunSpec.DefaultArgs,
-      user:                       Option[String]                   = JobRunSpec.DefaultUser,
-      env:                        Map[String, EnvVarValueOrSecret] = JobRunSpec.DefaultEnv,
-      placement:                  PlacementSpec                    = JobRunSpec.DefaultPlacement,
-      artifacts:                  Seq[Artifact]                    = JobRunSpec.DefaultArtifacts,
-      maxLaunchDelay:             Duration                         = JobRunSpec.DefaultMaxLaunchDelay,
-      volumes:                    Seq[Volume]                      = JobRunSpec.DefaultVolumes,
-      restart:                    RestartSpec                      = JobRunSpec.DefaultRestartSpec,
-      taskKillGracePeriodSeconds: Option[FiniteDuration]           = JobRunSpec.DefaultTaskKillGracePeriodSeconds,
-      secrets:                    Map[String, SecretDef]           = JobRunSpec.DefaultSecrets,
-      networks:                   Seq[Network]                     = JobRunSpec.DefaultNetworks) = {
+        cpus: Double = JobRunSpec.DefaultCpus,
+        mem: Double = JobRunSpec.DefaultMem,
+        disk: Double = JobRunSpec.DefaultDisk,
+        gpus: Int = JobRunSpec.DefaultGpus,
+        cmd: String = "sleep 3600",
+        args: Option[Seq[String]] = JobRunSpec.DefaultArgs,
+        user: Option[String] = JobRunSpec.DefaultUser,
+        env: Map[String, EnvVarValueOrSecret] = JobRunSpec.DefaultEnv,
+        placement: PlacementSpec = JobRunSpec.DefaultPlacement,
+        artifacts: Seq[Artifact] = JobRunSpec.DefaultArtifacts,
+        maxLaunchDelay: Duration = JobRunSpec.DefaultMaxLaunchDelay,
+        volumes: Seq[Volume] = JobRunSpec.DefaultVolumes,
+        restart: RestartSpec = JobRunSpec.DefaultRestartSpec,
+        taskKillGracePeriodSeconds: Option[FiniteDuration] = JobRunSpec.DefaultTaskKillGracePeriodSeconds,
+        secrets: Map[String, SecretDef] = JobRunSpec.DefaultSecrets,
+        networks: Seq[Network] = JobRunSpec.DefaultNetworks
+    ) = {
       JobRunSpec(
         cpus = cpus,
         mem = mem,
@@ -123,12 +138,17 @@ object Builders {
         restart = restart,
         taskKillGracePeriodSeconds = taskKillGracePeriodSeconds,
         secrets = secrets,
-        networks = networks)
+        networks = networks
+      )
     }
   }
 
   object newNetwork {
-    def apply(name: Option[String] = None, mode: Network.NetworkMode = Network.NetworkMode.Host, labels: Map[String, String] = Map.empty): Network = {
+    def apply(
+        name: Option[String] = None,
+        mode: Network.NetworkMode = Network.NetworkMode.Host,
+        labels: Map[String, String] = Map.empty
+    ): Network = {
       Network(name, mode, labels)
     }
 

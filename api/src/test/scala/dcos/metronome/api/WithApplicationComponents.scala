@@ -2,19 +2,19 @@ package dcos.metronome
 package api
 
 import controllers.AssetsComponents
-import dcos.metronome.history.{ JobHistoryService, JobHistoryServiceFixture }
+import dcos.metronome.history.{JobHistoryService, JobHistoryServiceFixture}
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobinfo.impl.JobInfoServiceImpl
-import dcos.metronome.jobrun.{ JobRunService, JobRunServiceFixture }
+import dcos.metronome.jobrun.{JobRunService, JobRunServiceFixture}
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
-import dcos.metronome.queue.{ LaunchQueueService, QueueServiceFixture }
+import dcos.metronome.queue.{LaunchQueueService, QueueServiceFixture}
 import mesosphere.marathon.core.base.ActorsModule
-import mesosphere.marathon.core.election.{ ElectionCandidate, ElectionService }
+import mesosphere.marathon.core.election.{ElectionCandidate, ElectionService}
 import mesosphere.marathon.core.plugin.PluginManager
 import mesosphere.marathon.metrics.dummy.DummyMetricsModule
-import org.scalatest.{ TestData, TestSuite }
-import org.scalatestplus.play.guice.{ GuiceOneAppPerTest, GuiceOneServerPerSuite, GuiceOneServerPerTest }
+import org.scalatest.{TestData, TestSuite}
+import org.scalatestplus.play.guice.{GuiceOneAppPerTest, GuiceOneServerPerSuite, GuiceOneServerPerTest}
 import play.api.ApplicationLoader.Context
 import play.api.i18n.I18nComponents
 import play.api.routing.Router
@@ -70,9 +70,7 @@ trait WithApplicationComponents[C <: BuiltInComponents] {
   }
 }
 
-trait OneAppPerTestWithComponents[T <: BuiltInComponents]
-    extends GuiceOneAppPerTest
-    with WithApplicationComponents[T] {
+trait OneAppPerTestWithComponents[T <: BuiltInComponents] extends GuiceOneAppPerTest with WithApplicationComponents[T] {
   this: TestSuite =>
 
   override def newAppForTest(testData: TestData): Application = newApplication
@@ -94,7 +92,11 @@ trait OneServerPerSuiteWithComponents[T <: BuiltInComponents]
   override implicit lazy val app: Application = newApplication
 }
 
-class MockApiComponents(context: Context) extends BuiltInComponentsFromContext(context) with I18nComponents with AssetsComponents with HttpFiltersComponents {
+class MockApiComponents(context: Context)
+    extends BuiltInComponentsFromContext(context)
+    with I18nComponents
+    with AssetsComponents
+    with HttpFiltersComponents {
   import com.softwaremill.macwire._
   // set up logger
   LoggerConfigurator(context.environment.classLoader).foreach {

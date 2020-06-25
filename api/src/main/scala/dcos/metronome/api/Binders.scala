@@ -3,7 +3,7 @@ package api
 
 import dcos.metronome.jobinfo.JobInfo.Embed
 import dcos.metronome.model.JobId
-import play.api.mvc.{ QueryStringBindable, PathBindable }
+import play.api.mvc.{QueryStringBindable, PathBindable}
 import mesosphere.marathon.api.v2.Validation.validateOrThrow
 
 import scala.util.control.NonFatal
@@ -44,10 +44,14 @@ object Binders {
   }
 
   implicit val embedQueryBinder: QueryStringBindable[Set[Embed]] = new QueryStringBindable[Set[Embed]] {
-    override def bind(key: String, params: Map[String, scala.collection.Seq[String]]): Option[Either[String, Set[Embed]]] = {
+    override def bind(
+        key: String,
+        params: Map[String, scala.collection.Seq[String]]
+    ): Option[Either[String, Set[Embed]]] = {
       val embeds = params.getOrElse(key, Seq.empty).flatMap(_.split(","))
       val valid = embeds.flatMap(Embed.names.get)
-      if (valid.size != embeds.size) Some(Left(s"Unknown embed options. Valid options are: ${Embed.names.keys.mkString(", ")}"))
+      if (valid.size != embeds.size)
+        Some(Left(s"Unknown embed options. Valid options are: ${Embed.names.keys.mkString(", ")}"))
       else Some(Right(valid.toSet))
     }
     override def unbind(key: String, value: Set[Embed]): String = value.map(_.toString).mkString(",")

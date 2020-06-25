@@ -2,8 +2,8 @@ package dcos.metronome
 package api.v1.controllers
 
 import dcos.metronome.api.v1.models.QueuedJobRunMapWrites
-import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents, TestAuthFixture }
-import dcos.metronome.model.{ JobId, JobRunSpec, QueuedJobRunInfo }
+import dcos.metronome.api.{MockApiComponents, OneAppPerTestWithComponents, TestAuthFixture}
+import dcos.metronome.model.{JobId, JobRunSpec, QueuedJobRunInfo}
 import dcos.metronome.queue.LaunchQueueService
 import mesosphere.marathon.core.plugin.PluginManager
 import mesosphere.marathon.state.Timestamp
@@ -14,9 +14,14 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{ GET, route, _ }
+import play.api.test.Helpers.{GET, route, _}
 
-class LaunchQueueControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with ScalaFutures with MockitoSugar with BeforeAndAfter {
+class LaunchQueueControllerTest
+    extends PlaySpec
+    with OneAppPerTestWithComponents[MockApiComponents]
+    with ScalaFutures
+    with MockitoSugar
+    with BeforeAndAfter {
 
   private val queueServiceMock = mock[LaunchQueueService]
 
@@ -49,8 +54,9 @@ class LaunchQueueControllerTest extends PlaySpec with OneAppPerTestWithComponent
     auth.authenticated = true
   }
 
-  override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context) {
-    override lazy val queueService: LaunchQueueService = queueServiceMock
-    override lazy val pluginManager: PluginManager = auth.pluginManager
-  }
+  override def createComponents(context: Context): MockApiComponents =
+    new MockApiComponents(context) {
+      override lazy val queueService: LaunchQueueService = queueServiceMock
+      override lazy val pluginManager: PluginManager = auth.pluginManager
+    }
 }

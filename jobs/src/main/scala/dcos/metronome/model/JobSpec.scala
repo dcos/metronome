@@ -7,14 +7,15 @@ import dcos.metronome.model.JobRunSpec._
 import dcos.metronome.utils.glue.MarathonConversions
 import mesosphere.marathon.api.v2.Validation._
 import mesosphere.marathon
-import mesosphere.marathon.plugin.{ ApplicationSpec, NetworkSpec, Secret, VolumeSpec, VolumeMountSpec }
+import mesosphere.marathon.plugin.{ApplicationSpec, NetworkSpec, Secret, VolumeSpec, VolumeMountSpec}
 
 case class JobSpec(
-  id:          JobId,
-  description: Option[String]      = JobSpec.DefaultDescription,
-  labels:      Map[String, String] = JobSpec.DefaultLabels,
-  schedules:   Seq[ScheduleSpec]   = JobSpec.DefaultSchedule,
-  run:         JobRunSpec          = JobSpec.DefaultRunSpec) extends ApplicationSpec {
+    id: JobId,
+    description: Option[String] = JobSpec.DefaultDescription,
+    labels: Map[String, String] = JobSpec.DefaultLabels,
+    schedules: Seq[ScheduleSpec] = JobSpec.DefaultSchedule,
+    run: JobRunSpec = JobSpec.DefaultRunSpec
+) extends ApplicationSpec {
   def schedule(id: String): Option[ScheduleSpec] = schedules.find(_.id == id)
 
   override val user: Option[String] = run.user

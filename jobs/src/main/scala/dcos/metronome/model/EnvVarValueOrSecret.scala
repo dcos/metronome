@@ -33,7 +33,7 @@ object EnvVarValueOrSecret {
     }
     def writes(envOrSecret: EnvVarValueOrSecret): play.api.libs.json.JsValue = {
       envOrSecret match {
-        case envVarValue: EnvVarValue   => play.api.libs.json.Json.toJson(envVarValue)(EnvVarValue.playJsonFormat)
+        case envVarValue: EnvVarValue => play.api.libs.json.Json.toJson(envVarValue)(EnvVarValue.playJsonFormat)
         case envVarSecret: EnvVarSecret => play.api.libs.json.Json.toJson(envVarSecret)(EnvVarSecret.playJsonFormat)
       }
     }

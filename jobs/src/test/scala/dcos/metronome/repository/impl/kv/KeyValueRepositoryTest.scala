@@ -2,9 +2,9 @@ package dcos.metronome
 package repository.impl.kv
 
 import dcos.metronome.model.JobId
-import dcos.metronome.utils.state.{ PersistentEntity, PersistentStoreWithNestedPathsSupport }
+import dcos.metronome.utils.state.{PersistentEntity, PersistentStoreWithNestedPathsSupport}
 import dcos.metronome.utils.test.Mockito
-import org.scalatest.{ FunSuite, Matchers }
+import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.concurrent.ScalaFutures._
 import org.slf4j.Logger
 
@@ -41,7 +41,7 @@ class KeyValueRepositoryTest extends FunSuite with Matchers with Mockito {
     val f = new Fixture
     f.store.delete(f.pathResolver.toPath(f.id)).returns(Future.successful(true))
 
-    f.repository.delete(f.id).futureValue should be (true)
+    f.repository.delete(f.id).futureValue should be(true)
 
     verify(f.store).delete(f.modelPath)
     noMoreInteractions(f.store)
@@ -52,7 +52,7 @@ class KeyValueRepositoryTest extends FunSuite with Matchers with Mockito {
 
     f.store.create(any, any).returns(Future.successful(f.storeEntity))
 
-    f.repository.create(f.id, f.model).futureValue should be (f.model)
+    f.repository.create(f.id, f.model).futureValue should be(f.model)
 
     verify(f.store).create(f.modelPath, ModelMarshaller.toBytes(f.model))
     noMoreInteractions(f.store)

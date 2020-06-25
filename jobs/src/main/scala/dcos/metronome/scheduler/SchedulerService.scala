@@ -7,6 +7,7 @@ import scala.concurrent.Future
   * The Service that will run the scheduler driver.
   */
 trait SchedulerService {
+
   /**
     * Run the service and offer leadership. This will eventually start the driver when we are elected as leader.
     * This call will block until the service is shutdown.
@@ -24,6 +25,7 @@ trait SchedulerService {
   * start/stop events
   */
 trait PrePostDriverCallback {
+
   /**
     * Will get called _before_ the driver is running, but after migration.
     */

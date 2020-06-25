@@ -1,7 +1,7 @@
 package dcos.metronome
 package model
 
-import java.time.{ Clock, Instant, ZoneId, ZonedDateTime }
+import java.time.{Clock, Instant, ZoneId, ZonedDateTime}
 
 import com.wix.accord.Validator
 import com.wix.accord.dsl._
@@ -9,12 +9,13 @@ import com.wix.accord.dsl._
 import scala.concurrent.duration._
 
 case class ScheduleSpec(
-  id:                String,
-  cron:              CronSpec,
-  timeZone:          ZoneId            = ScheduleSpec.DefaultTimeZone,
-  startingDeadline:  Duration          = ScheduleSpec.DefaultStartingDeadline,
-  concurrencyPolicy: ConcurrencyPolicy = ScheduleSpec.DefaultConcurrencyPolicy,
-  enabled:           Boolean           = ScheduleSpec.DefaultEnabled) {
+    id: String,
+    cron: CronSpec,
+    timeZone: ZoneId = ScheduleSpec.DefaultTimeZone,
+    startingDeadline: Duration = ScheduleSpec.DefaultStartingDeadline,
+    concurrencyPolicy: ConcurrencyPolicy = ScheduleSpec.DefaultConcurrencyPolicy,
+    enabled: Boolean = ScheduleSpec.DefaultEnabled
+) {
   def clock: Clock = ScheduleSpec.DefaultClock
 
   def nextExecution(after: Instant): Instant = {

@@ -1,6 +1,6 @@
 package dcos.metronome
 
-import akka.actor.{ Cancellable, Scheduler }
+import akka.actor.{Cancellable, Scheduler}
 import java.util.concurrent.atomic.AtomicLong
 
 import scala.concurrent.ExecutionContext
@@ -34,43 +34,47 @@ class SimulatedScheduler(clock: SettableClock) extends Scheduler {
   clock.onChange { () => poll() }
 
   private[this] def doCancel(id: Long) = synchronized { scheduledTasks -= id }
-  private[this] def poll(): Unit = synchronized {
-    val now = clock.instant().toEpochMilli
-    scheduledTasks.values.foreach { task =>
-      if (task.time <= now) task.action()
+  private[this] def poll(): Unit =
+    synchronized {
+      val now = clock.instant().toEpochMilli
+      scheduledTasks.values.foreach { task =>
+        if (task.time <= now) task.action()
+      }
     }
-  }
 
-  override def scheduleOnce(
-    delay:    FiniteDuration,
-    runnable: Runnable)(implicit executor: ExecutionContext): Cancellable = synchronized {
-    val id = nextId.getAndIncrement
-    val cancellable = new ScheduledTaskCancellable(id)
-    scheduledTasks(id) = ScheduledTask(
-      time = clock.instant().plusMillis(delay.toMillis).toEpochMilli,
-      action = () => {
-        cancellable.cancel()
-        executor.execute(runnable)
-      })
-    poll()
-    cancellable
-  }
+  override def scheduleOnce(delay: FiniteDuration, runnable: Runnable)(implicit
+      executor: ExecutionContext
+  ): Cancellable =
+    synchronized {
+      val id = nextId.getAndIncrement
+      val cancellable = new ScheduledTaskCancellable(id)
+      scheduledTasks(id) = ScheduledTask(
+        time = clock.instant().plusMillis(delay.toMillis).toEpochMilli,
+        action = () => {
+          cancellable.cancel()
+          executor.execute(runnable)
+        }
+      )
+      poll()
+      cancellable
+    }
 
-  def schedule(
-    initialDelay: FiniteDuration,
-    interval:     FiniteDuration,
-    runnable:     Runnable)(implicit executor: ExecutionContext): Cancellable = synchronized {
-    val id = nextId.getAndIncrement
-    val cancellable = new ScheduledTaskCancellable(id)
-    scheduledTasks(id) = ScheduledTask(
-      time = clock.instant().toEpochMilli + initialDelay.toMillis,
-      action = () => {
-        scheduledTasks(id).time = clock.instant().toEpochMilli + interval.toMillis
-        executor.execute(runnable)
-      })
-    poll()
-    cancellable
-  }
+  def schedule(initialDelay: FiniteDuration, interval: FiniteDuration, runnable: Runnable)(implicit
+      executor: ExecutionContext
+  ): Cancellable =
+    synchronized {
+      val id = nextId.getAndIncrement
+      val cancellable = new ScheduledTaskCancellable(id)
+      scheduledTasks(id) = ScheduledTask(
+        time = clock.instant().toEpochMilli + initialDelay.toMillis,
+        action = () => {
+          scheduledTasks(id).time = clock.instant().toEpochMilli + interval.toMillis
+          executor.execute(runnable)
+        }
+      )
+      poll()
+      cancellable
+    }
 
   def taskCount = synchronized { scheduledTasks.size }
 }

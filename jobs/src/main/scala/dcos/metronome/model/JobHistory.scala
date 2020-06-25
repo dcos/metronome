@@ -1,16 +1,17 @@
 package dcos.metronome
 package model
 
-import java.time.{ Clock, Instant }
+import java.time.{Clock, Instant}
 
 import mesosphere.marathon.core.task.Task
 
 case class JobHistorySummary(
-  jobSpecId:     JobId,
-  successCount:  Long,
-  failureCount:  Long,
-  lastSuccessAt: Option[Instant],
-  lastFailureAt: Option[Instant])
+    jobSpecId: JobId,
+    successCount: Long,
+    failureCount: Long,
+    lastSuccessAt: Option[Instant],
+    lastFailureAt: Option[Instant]
+)
 object JobHistorySummary {
   def apply(h: JobHistory): JobHistorySummary = {
     JobHistorySummary(h.jobSpecId, h.successCount, h.failureCount, h.lastSuccessAt, h.lastFailureAt)
@@ -19,13 +20,14 @@ object JobHistorySummary {
 }
 
 case class JobHistory(
-  jobSpecId:      JobId,
-  successCount:   Long,
-  failureCount:   Long,
-  lastSuccessAt:  Option[Instant],
-  lastFailureAt:  Option[Instant],
-  successfulRuns: Seq[JobRunInfo],
-  failedRuns:     Seq[JobRunInfo])
+    jobSpecId: JobId,
+    successCount: Long,
+    failureCount: Long,
+    lastSuccessAt: Option[Instant],
+    lastFailureAt: Option[Instant],
+    successfulRuns: Seq[JobRunInfo],
+    failedRuns: Seq[JobRunInfo]
+)
 
 object JobHistory {
   def empty(id: JobId): JobHistory = JobHistory(id, 0, 0, None, None, Seq.empty, Seq.empty)

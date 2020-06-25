@@ -1,7 +1,7 @@
 package dcos.metronome
 
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }
+import org.scalatest.{FunSuite, GivenWhenThen, Matchers}
 import play.api.Configuration
 
 class MetronomeConfigTest extends FunSuite with Matchers with GivenWhenThen {
@@ -14,8 +14,7 @@ class MetronomeConfigTest extends FunSuite with Matchers with GivenWhenThen {
     val httpsPort = "9010"
 
     When("Config parser tries to extract it")
-    val cfg = fromConfig(
-      s"""
+    val cfg = fromConfig(s"""
          | play.server.http.port="$httpPort"
          | play.server.https.port="$httpsPort"
        """.stripMargin)
@@ -31,8 +30,7 @@ class MetronomeConfigTest extends FunSuite with Matchers with GivenWhenThen {
     val httpsPort = "9010"
 
     When("Config parser tries to extract it")
-    val cfg = fromConfig(
-      s"""
+    val cfg = fromConfig(s"""
          | play.server.http.port="$httpPort"
          | play.server.https.port="$httpsPort"
        """.stripMargin)
@@ -47,8 +45,7 @@ class MetronomeConfigTest extends FunSuite with Matchers with GivenWhenThen {
   test("feature gpu_resources is enabled when gpu_scheduling_behavior is set") {
 
     Given("A config with gpu_scheduling_behavior")
-    val cfg = fromConfig(
-      s"""
+    val cfg = fromConfig(s"""
          | metronome.gpu_scheduling_behavior="restricted"
        """.stripMargin)
 

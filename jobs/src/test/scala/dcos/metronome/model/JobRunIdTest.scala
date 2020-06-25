@@ -2,7 +2,7 @@ package dcos.metronome
 package model
 
 import dcos.metronome.utils.test.Mockito
-import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }
+import org.scalatest.{FunSuite, GivenWhenThen, Matchers}
 
 class JobRunIdTest extends FunSuite with Matchers with Mockito with GivenWhenThen {
   test("Convert simple appId into JobRunId") {

@@ -8,10 +8,7 @@ import org.scalatest.prop.TableDrivenPropertyChecks
 import play.api.libs.json._
 
 class JobSpecJsonSchemaTest extends UnitTest with Mockito with TableDrivenPropertyChecks {
-  val runTemplate = Json.obj(
-    "cpus" -> 1,
-    "disk" -> 0,
-    "mem" -> 32)
+  val runTemplate = Json.obj("cpus" -> 1, "disk" -> 0, "mem" -> 32)
 
   val jobSpecIds = Table(
     ("id", "valid"),
@@ -30,12 +27,11 @@ class JobSpecJsonSchemaTest extends UnitTest with Mockito with TableDrivenProper
     ("-a1.a", false),
     ("a1-.a", false),
     (".a1.a1", false),
-
     // invalid characters
     ("a?.a", false),
     ("a?a.a", false),
     ("a.a?", false),
-    ("a.a?a", false),
+    ("a.a?a", false)
   )
 
   val schemaValidator = SchemaValidator()
@@ -58,8 +54,10 @@ class JobSpecJsonSchemaTest extends UnitTest with Mockito with TableDrivenProper
 
   "network validation" should {
     "accept host networks" in {
-      val updated = Json.obj("id" -> "job",
-        "run" -> (runTemplate ++ Json.parse("""{"networks": [{"mode": "host"}]}""").as[JsObject]))
+      val updated = Json.obj(
+        "id" -> "job",
+        "run" -> (runTemplate ++ Json.parse("""{"networks": [{"mode": "host"}]}""").as[JsObject])
+      )
 
       checkJob(updated) { result =>
         result.isSuccess shouldBe true
@@ -67,8 +65,12 @@ class JobSpecJsonSchemaTest extends UnitTest with Mockito with TableDrivenProper
     }
 
     "accept container/bridge networks with labels" in {
-      val updated = Json.obj("id" -> "job",
-        "run" -> (runTemplate ++ Json.parse("""{"networks": [{"mode": "container/bridge", "labels": {"a": "b"}}]}""").as[JsObject]))
+      val updated = Json.obj(
+        "id" -> "job",
+        "run" -> (runTemplate ++ Json
+          .parse("""{"networks": [{"mode": "container/bridge", "labels": {"a": "b"}}]}""")
+          .as[JsObject])
+      )
 
       checkJob(updated) { result =>
         result.isSuccess shouldBe true
@@ -76,15 +78,16 @@ class JobSpecJsonSchemaTest extends UnitTest with Mockito with TableDrivenProper
     }
 
     "accept container networks with name and labels" in {
-      val updated = Json.obj("id" -> "job",
-        "run" -> (runTemplate ++ Json.parse(
-          """{
+      val updated = Json.obj(
+        "id" -> "job",
+        "run" -> (runTemplate ++ Json.parse("""{
             |  "networks": [{
             |    "name": "user",
             |    "mode": "container",
             |    "labels": {"a":"b"}
             |  }]
-            |}""".stripMargin).as[JsObject]))
+            |}""".stripMargin).as[JsObject])
+      )
 
       checkJob(updated) { result =>
         result.isSuccess shouldBe true
@@ -92,15 +95,16 @@ class JobSpecJsonSchemaTest extends UnitTest with Mockito with TableDrivenProper
     }
 
     "reject invalid modes" in {
-      val updated = Json.obj("id" -> "job",
-        "run" -> (runTemplate ++ Json.parse(
-          """{
+      val updated = Json.obj(
+        "id" -> "job",
+        "run" -> (runTemplate ++ Json.parse("""{
             |  "networks": [{
             |    "name": "user",
             |    "mode": "invalid",
             |    "labels": {"a":"b"}
             |  }]
-            |}""".stripMargin).as[JsObject]))
+            |}""".stripMargin).as[JsObject])
+      )
 
       checkJob(updated) { result =>
         result.isSuccess shouldBe false
@@ -108,14 +112,15 @@ class JobSpecJsonSchemaTest extends UnitTest with Mockito with TableDrivenProper
     }
 
     "reject invalid fields" in {
-      val updated = Json.obj("id" -> "job",
-        "run" -> (runTemplate ++ Json.parse(
-          """{
+      val updated = Json.obj(
+        "id" -> "job",
+        "run" -> (runTemplate ++ Json.parse("""{
             |  "networks": [{
             |    "invalid": "field",
             |    "mode": "host"
             |  }]
-            |}""".stripMargin).as[JsObject]))
+            |}""".stripMargin).as[JsObject])
+      )
 
       checkJob(updated) { result =>
         result.isSuccess shouldBe false
@@ -123,13 +128,14 @@ class JobSpecJsonSchemaTest extends UnitTest with Mockito with TableDrivenProper
     }
 
     "require mode to be specified" in {
-      val updated = Json.obj("id" -> "job",
-        "run" -> (runTemplate ++ Json.parse(
-          """{
+      val updated = Json.obj(
+        "id" -> "job",
+        "run" -> (runTemplate ++ Json.parse("""{
             |  "networks": [{
             |    "name": "user"
             |  }]
-            |}""".stripMargin).as[JsObject]))
+            |}""".stripMargin).as[JsObject])
+      )
 
       checkJob(updated) { result =>
         result.isSuccess shouldBe false
@@ -137,13 +143,14 @@ class JobSpecJsonSchemaTest extends UnitTest with Mockito with TableDrivenProper
     }
 
     "require labels to be strings" in {
-      val updated = Json.obj("id" -> "job",
-        "run" -> (runTemplate ++ Json.parse(
-          """{
+      val updated = Json.obj(
+        "id" -> "job",
+        "run" -> (runTemplate ++ Json.parse("""{
             |  "networks": [{
             |    "labels": {"a": []}
             |  }]
-            |}""".stripMargin).as[JsObject]))
+            |}""".stripMargin).as[JsObject])
+      )
 
       checkJob(updated) { result =>
         result.isSuccess shouldBe false

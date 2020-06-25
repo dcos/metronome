@@ -9,10 +9,9 @@ import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
-class MarathonStore[S <: MarathonState[_, S]](
-  store:    PersistentStore,
-  newState: () => S,
-  prefix:   String)(implicit ct: ClassTag[S]) extends EntityStore[S] {
+class MarathonStore[S <: MarathonState[_, S]](store: PersistentStore, newState: () => S, prefix: String)(implicit
+    ct: ClassTag[S]
+) extends EntityStore[S] {
 
   import scala.concurrent.ExecutionContext.Implicits.global
   private[this] val log = LoggerFactory.getLogger(getClass)
@@ -21,7 +20,8 @@ class MarathonStore[S <: MarathonState[_, S]](
 
   def fetch(key: String): Future[Option[S]] = {
     log.debug(s"Fetch $prefix$key")
-    store.load(prefix + key)
+    store
+      .load(prefix + key)
       .map {
         _.map { entity =>
           stateFromBytes(entity.bytes.toArray)
@@ -56,16 +56,21 @@ class MarathonStore[S <: MarathonState[_, S]](
     }
   }
 
-  def expunge(key: String, onSuccess: () => Unit = () => ()): Future[Boolean] = lockManager.executeSequentially(key) {
-    log.debug(s"Expunge $prefix$key")
-    store.delete(prefix + key).map { result =>
-      onSuccess()
-      result
-    }.recover(exceptionTransform(s"Could not expunge ${ct.runtimeClass.getSimpleName} with key: $key"))
-  }
+  def expunge(key: String, onSuccess: () => Unit = () => ()): Future[Boolean] =
+    lockManager.executeSequentially(key) {
+      log.debug(s"Expunge $prefix$key")
+      store
+        .delete(prefix + key)
+        .map { result =>
+          onSuccess()
+          result
+        }
+        .recover(exceptionTransform(s"Could not expunge ${ct.runtimeClass.getSimpleName} with key: $key"))
+    }
 
   def names(): Future[Seq[String]] = {
-    store.allIds()
+    store
+      .allIds()
       .map {
         _.collect {
           case name: String if name startsWith prefix => name.replaceFirst(prefix, "")

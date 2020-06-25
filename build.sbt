@@ -1,14 +1,11 @@
 
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.services.s3.model.Region
-import com.typesafe.sbt.SbtScalariform.ScalariformKeys
-import com.typesafe.sbt.SbtScalariform.autoImport._
 import com.typesafe.sbt.packager
 import play.sbt.routes.RoutesKeys
 import sbtprotobuf.{ProtobufPlugin => PB}
-import scalariform.formatter.preferences._
 
-lazy val projectSettings = baseSettings ++ formatSettings ++ publishSettings
+lazy val projectSettings = baseSettings ++ publishSettings
 
 lazy val writeVersion = taskKey[Unit]("Output version to target folder")
 
@@ -16,7 +13,7 @@ writeVersion := {
   val s = streams.value
   val file = (target in Compile).value / "version.txt"
   IO.write(file, version.value)
-  s.log.info(s"Wrote version ${version.value} to ${file}")
+  s.log.info(s"Wrote version ${version.value} to $file")
 }
 
 lazy val packagingSettings = Seq(
@@ -76,17 +73,6 @@ val excludeSlf4jLog4j12 =
 val excludeLog4j = ExclusionRule(organization = "log4j", name = "log4j")
 val excludeJCL =
   ExclusionRule(organization = "commons-logging", name = "commons-logging")
-
-lazy val formatSettings = Seq(
-  scalariformAutoformat := true,
-  ScalariformKeys.preferences := FormattingPreferences()
-    .setPreference(AlignParameters, true)
-    .setPreference(DoubleIndentClassDeclaration, true)
-    .setPreference(AlignSingleLineCaseStatements, true)
-    .setPreference(PreserveSpaceBeforeArguments, true)
-    .setPreference(SpacesAroundMultiImports, true)
-    .setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, true)
-)
 
 lazy val publishSettings = Seq(
   publishTo := Some(

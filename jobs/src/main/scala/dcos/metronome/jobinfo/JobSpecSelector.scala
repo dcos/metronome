@@ -11,9 +11,10 @@ trait JobSpecSelector {
 }
 
 object JobSpecSelector {
-  def apply(matchesFunc: JobSpec => Boolean): JobSpecSelector = new JobSpecSelector {
-    override def matches(jobSpec: JobSpec): Boolean = matchesFunc(jobSpec)
-  }
+  def apply(matchesFunc: JobSpec => Boolean): JobSpecSelector =
+    new JobSpecSelector {
+      override def matches(jobSpec: JobSpec): Boolean = matchesFunc(jobSpec)
+    }
 
   def all: JobSpecSelector = JobSpecSelector(_ => true)
 

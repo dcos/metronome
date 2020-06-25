@@ -6,7 +6,8 @@ import dcos.metronome.queue.impl.LaunchQueueServiceImpl
 
 object QueueServiceFixture {
 
-  def simpleQueueService(): LaunchQueueService = new LaunchQueueServiceImpl(null) {
-    override def list(): Seq[QueuedJobRunInfo] = List[QueuedJobRunInfo]()
-  }
+  def simpleQueueService(): LaunchQueueService =
+    new LaunchQueueServiceImpl(null) {
+      override def list(): Seq[QueuedJobRunInfo] = List[QueuedJobRunInfo]()
+    }
 }

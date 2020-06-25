@@ -5,16 +5,21 @@ import dcos.metronome.api.v1.models._
 import dcos.metronome.api._
 import dcos.metronome.model._
 import mesosphere.marathon.core.plugin.PluginManager
-import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
+import org.scalatest.{BeforeAndAfter, GivenWhenThen}
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{ Millis, Seconds, Span }
+import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context
 import play.api.libs.json._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
-class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with GivenWhenThen with ScalaFutures with BeforeAndAfter {
+class JobSpecControllerTest
+    extends PlaySpec
+    with OneAppPerTestWithComponents[MockApiComponents]
+    with GivenWhenThen
+    with ScalaFutures
+    with BeforeAndAfter {
 
   implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
@@ -69,7 +74,8 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
 
     "creates job when sending docker spec with forcePullImage property against v0" in {
       Given("Job spec with forcePullImage")
-      val specJson = """{"id":"spec1","run":{"cpus":1,"mem":128,"disk":0,"docker":{"image":"image","forcePullImage":true}}}"""
+      val specJson =
+        """{"id":"spec1","run":{"cpus":1,"mem":128,"disk":0,"docker":{"image":"image","forcePullImage":true}}}"""
 
       When("A job is created")
       val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(Json.parse(specJson))).get
@@ -81,7 +87,8 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
 
     "creates job when sending ucr spec with forcePullImage property against v0" in {
       Given("Job spec with forcePullImage")
-      val specJson = """{"id":"spec1","run":{"cpus":1,"mem":128,"disk":0,"ucr":{"image":{"id":"image", "forcePull": true}}}}"""
+      val specJson =
+        """{"id":"spec1","run":{"cpus":1,"mem":128,"disk":0,"ucr":{"image":{"id":"image", "forcePull": true}}}}"""
 
       When("A job is created")
       val response = route(app, FakeRequest(POST, s"/v0/scheduled-jobs").withJsonBody(Json.parse(specJson))).get
@@ -666,9 +673,24 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
 
   import scala.concurrent.duration._
 
-  def spec(id: String) = JobSpec(JobId(id), run = JobRunSpec(taskKillGracePeriodSeconds = Some(10 seconds), docker = Some(DockerSpec("image", forcePullImage = true))))
-  def ucrSpec(id: String) = JobSpec(JobId(id), run = JobRunSpec(taskKillGracePeriodSeconds = Some(10 seconds), ucr = Some(UcrSpec(ImageSpec(id = "image", forcePull = true)))))
-  def cmdSpec(id: String) = JobSpec(JobId(id), run = JobRunSpec(taskKillGracePeriodSeconds = Some(10 seconds), cmd = Some("sleep")))
+  def spec(id: String) =
+    JobSpec(
+      JobId(id),
+      run = JobRunSpec(
+        taskKillGracePeriodSeconds = Some(10 seconds),
+        docker = Some(DockerSpec("image", forcePullImage = true))
+      )
+    )
+  def ucrSpec(id: String) =
+    JobSpec(
+      JobId(id),
+      run = JobRunSpec(
+        taskKillGracePeriodSeconds = Some(10 seconds),
+        ucr = Some(UcrSpec(ImageSpec(id = "image", forcePull = true)))
+      )
+    )
+  def cmdSpec(id: String) =
+    JobSpec(JobId(id), run = JobRunSpec(taskKillGracePeriodSeconds = Some(10 seconds), cmd = Some("sleep")))
   val CronSpec(cron) = "* * * * *"
   val schedule1 = ScheduleSpec("id1", cron)
   val jobSpec1 = spec("spec1")
@@ -679,20 +701,29 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
   val jobSpec2Json = Json.toJson(jobSpec2)
   val jobSpecWithSecrets = {
     val jobSpec = spec("spec-with-secrets")
-    jobSpec.copy(run = jobSpec.run.copy(env = Map("secretVar" -> EnvVarSecret("secretId")), secrets = Map("secretId" -> SecretDef("source"))))
+    jobSpec.copy(run =
+      jobSpec.run
+        .copy(env = Map("secretVar" -> EnvVarSecret("secretId")), secrets = Map("secretId" -> SecretDef("source")))
+    )
   }
   val ucrJobSpecWithFileBasedSecrets = {
     val spec = ucrSpec(id = "ucr-fbs-spec1")
-    spec.copy(run = spec.run.copy(
-      secrets = Map("secretName" -> SecretDef("secretSource")),
-      volumes = Seq(SecretVolume("/var/secrets", "secretName"))))
+    spec.copy(run =
+      spec.run.copy(
+        secrets = Map("secretName" -> SecretDef("secretSource")),
+        volumes = Seq(SecretVolume("/var/secrets", "secretName"))
+      )
+    )
   }
   val ucrJobSpecWithFileBasedSecretsJson = Json.toJson(ucrJobSpecWithFileBasedSecrets)
   val dockerJobSpecWithFileBasedSecrets = {
     val jobSpec = spec(id = "ucr-fbs-spec1")
-    jobSpec.copy(run = jobSpec.run.copy(
-      secrets = Map("secretName" -> SecretDef("secretSource")),
-      volumes = Seq(SecretVolume("/var/secrets", "secretName"))))
+    jobSpec.copy(run =
+      jobSpec.run.copy(
+        secrets = Map("secretName" -> SecretDef("secretSource")),
+        volumes = Seq(SecretVolume("/var/secrets", "secretName"))
+      )
+    )
   }
   val dockerJobSpecWithFileBasedSecretsJson = Json.toJson(dockerJobSpecWithFileBasedSecrets)
   val jobSpecWithSecretVarsOnly = {
@@ -735,7 +766,8 @@ class JobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[Mo
     auth.authenticated = true
   }
 
-  override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context) {
-    override lazy val pluginManager: PluginManager = auth.pluginManager
-  }
+  override def createComponents(context: Context): MockApiComponents =
+    new MockApiComponents(context) {
+      override lazy val pluginManager: PluginManager = auth.pluginManager
+    }
 }
