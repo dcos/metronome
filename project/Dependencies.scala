@@ -14,12 +14,12 @@ object Dependencies {
     val PlayIteratees = "2.6.1"
     val CronUtils = "9.0.0"
     val WixAccord = "0.7.5"
-    val Akka = "2.6.3"
+    val Akka = "2.6.5"
     val Mockito = "2.21.0"
     val JsonValidate = "0.9.4"
     val MoultingYaml = "0.4.0"
     val Caffeine = "2.6.2"
-    val UsiTestUtils = "0.1.39"
+    val UsiTestUtils = "0.1.50"
     val AkkaHttp = "10.1.11"
   }
 

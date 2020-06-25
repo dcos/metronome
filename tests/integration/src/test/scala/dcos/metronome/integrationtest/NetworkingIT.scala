@@ -16,21 +16,21 @@ class NetworkingIT extends MetronomeITBase with Inside {
     def createJob(jobJson: String): Unit = {
       val hostResponse = (f.metronome.createJob(jobJson))
       Then("The response should be OK")
-      hostResponse.value.status.intValue() shouldBe 201 withClue (hostResponse.value.entity.toStrict(10.seconds).futureValue.data.utf8String)
+      hostResponse shouldBe Created
     }
 
     def runJob(jobId: String): Unit = {
       val startRunResp = f.metronome.startRun(jobId)
       Then("The response should be OK")
-      startRunResp.value.status.intValue() shouldBe 201
+      startRunResp shouldBe Created
     }
 
     def waitForActive(jobId: String): Unit = {
       eventually(timeout(30.seconds)) {
         val runsJson = f.metronome.getRuns(jobId)
-        runsJson.value.status.intValue() shouldBe 200
+        runsJson shouldBe OK
         val runs = runsJson.entityJson.as[JsArray]
-        runs.value.length shouldBe 1
+        runs.value should have size 1
 
         val run = runs.value.head.as[JsObject]
         val status = run.value("status").as[String]

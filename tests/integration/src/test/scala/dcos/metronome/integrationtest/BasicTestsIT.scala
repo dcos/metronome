@@ -38,7 +38,7 @@ class BasicTestsIT extends MetronomeITBase {
     val resp = f.metronome.createJob(jobDef)
 
     Then("The response should be OK")
-    resp.value.status.intValue() shouldBe 201
+    resp shouldBe Created
 
     When("The job spec is requested again")
     val jobJson = f.metronome.getJob("my-job")
