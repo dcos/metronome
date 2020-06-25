@@ -1,4 +1,3 @@
-
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.services.s3.model.Region
 import com.typesafe.sbt.packager
@@ -16,12 +15,11 @@ writeVersion := {
   s.log.info(s"Wrote version ${version.value} to $file")
 }
 
-lazy val packagingSettings = Seq(
-  (packageName in Universal) := {
-    import sys.process._
-    val shortCommit = ("./version commit" !!).trim
-    s"${packageName.value}-${version.value}-$shortCommit"
-  })
+lazy val packagingSettings = Seq((packageName in Universal) := {
+  import sys.process._
+  val shortCommit = ("./version commit" !!).trim
+  s"${packageName.value}-${version.value}-$shortCommit"
+})
 
 lazy val baseSettings = Seq(
   version := {
@@ -33,7 +31,7 @@ lazy val baseSettings = Seq(
   addCompilerPlugin(scalafixSemanticdb),
   crossScalaVersions := Seq(scalaVersion.value),
   scalacOptions ++= Seq(
-    "-Yrangepos",    // required by SemanticDB compiler plugin
+    "-Yrangepos", // required by SemanticDB compiler plugin
     "-Ywarn-unused", // required by `RemoveUnused` rule
     "-encoding",
     "UTF-8",
@@ -44,7 +42,7 @@ lazy val baseSettings = Seq(
     "-Xlog-reflective-calls",
     "-Xlint",
     "-Yno-adapted-args",
-    "-Ywarn-numeric-widen",
+    "-Ywarn-numeric-widen"
   ),
   scalacOptions in (Compile, doc) ++= Seq(
     "-no-link-warnings" // Suppresses problems with Scaladoc @throws links
@@ -80,7 +78,7 @@ lazy val publishSettings = Seq(
       .value("Mesosphere Public Repo (S3)", s3("downloads.mesosphere.io/maven"))
   ),
   s3credentials := DefaultAWSCredentialsProviderChain.getInstance(),
-  s3region :=  Region.US_Standard
+  s3region := Region.US_Standard
 )
 
 lazy val nativePackageSettings = Seq(
@@ -110,8 +108,7 @@ lazy val metronome = (project in file("."))
         Dependencies.macWireProxy,
         Dependencies.Test.scalatest,
         Dependencies.Test.usiTestUtils
-      )
-        .map(
+      ).map(
           _.excludeAll(excludeSlf4jLog4j12)
             .excludeAll(excludeLog4j)
             .excludeAll(excludeJCL)
@@ -130,34 +127,37 @@ lazy val api = (project in file("api"))
     RoutesKeys.routesImport ++= Seq("dcos.metronome.api.Binders._"),
     libraryDependencies ++=
       Dependencies.akkaHttp ++ Seq(
-      Dependencies.playJson,
-      Dependencies.playWS,
-      Dependencies.marathonPlugin,
-      Dependencies.macWireMacros,
-      Dependencies.macWireUtil,
-      Dependencies.macWireProxy,
-      Dependencies.yaml,
-      Dependencies.cronUtils,
-      Dependencies.jsonValidate,
-      Dependencies.iteratees,
-      Dependencies.playAhcWS,
-      Dependencies.Test.scalatest,
-      Dependencies.Test.scalaCheck,
-      Dependencies.Test.scalatestPlay,
-      Dependencies.Test.usiTestUtils,
-      "com.github.ghik" %% "silencer-lib" % silencerVersion % Provided
-    ).map(
-      _.excludeAll(excludeSlf4jLog4j12)
-        .excludeAll(excludeLog4j)
-        .excludeAll(excludeJCL)
-    )
+        Dependencies.playJson,
+        Dependencies.playWS,
+        Dependencies.marathonPlugin,
+        Dependencies.macWireMacros,
+        Dependencies.macWireUtil,
+        Dependencies.macWireProxy,
+        Dependencies.yaml,
+        Dependencies.cronUtils,
+        Dependencies.jsonValidate,
+        Dependencies.iteratees,
+        Dependencies.playAhcWS,
+        Dependencies.Test.scalatest,
+        Dependencies.Test.scalaCheck,
+        Dependencies.Test.scalatestPlay,
+        Dependencies.Test.usiTestUtils,
+        "com.github.ghik" %% "silencer-lib" % silencerVersion % Provided
+      ).map(
+        _.excludeAll(excludeSlf4jLog4j12)
+          .excludeAll(excludeLog4j)
+          .excludeAll(excludeJCL)
+      )
   )
 
 lazy val jobs = (project in file("jobs"))
-  .settings(version := {
-    import sys.process._
-    ("./version" !!).trim
-  }, projectSettings)
+  .settings(
+    version := {
+      import sys.process._
+      ("./version" !!).trim
+    },
+    projectSettings
+  )
   .settings(pbSettings)
   .settings(
     libraryDependencies ++= Seq(
@@ -187,16 +187,22 @@ lazy val jobs = (project in file("jobs"))
 
 lazy val integrationTestSettings = Seq(
   testListeners := Nil, // TODO(MARATHON-8215): Remove this line
-
   fork in Test := true,
   testOptions in Test := Seq(
     Tests.Argument(
-      "-u", "target/test-reports", // TODO(MARATHON-8215): Remove this line
-      "-o", "-eDFG",
-      "-y", "org.scalatest.WordSpec")),
+      "-u",
+      "target/test-reports", // TODO(MARATHON-8215): Remove this line
+      "-o",
+      "-eDFG",
+      "-y",
+      "org.scalatest.WordSpec"
+    )
+  ),
   parallelExecution in Test := true,
   testForkedParallel in Test := true,
-  concurrentRestrictions in Test := Seq(Tags.limitAll(math.max(1, java.lang.Runtime.getRuntime.availableProcessors() / 2))),
+  concurrentRestrictions in Test := Seq(
+    Tags.limitAll(math.max(1, java.lang.Runtime.getRuntime.availableProcessors() / 2))
+  ),
   javaOptions in (Test, test) ++= Seq(
     "-Dakka.actor.default-dispatcher.fork-join-executor.parallelism-min=2",
     "-Dakka.actor.default-dispatcher.fork-join-executor.factor=1",
@@ -204,11 +210,13 @@ lazy val integrationTestSettings = Seq(
     "-Dscala.concurrent.context.minThreads=2",
     "-Dscala.concurrent.context.maxThreads=32"
   ),
-  concurrentRestrictions in Test := Seq(Tags.limitAll(math.max(1, java.lang.Runtime.getRuntime.availableProcessors() / 2)))
+  concurrentRestrictions in Test := Seq(
+    Tags.limitAll(math.max(1, java.lang.Runtime.getRuntime.availableProcessors() / 2))
+  )
 )
 
 lazy val integration = (project in file("./tests/integration"))
-  .settings(integrationTestSettings : _*)
+  .settings(integrationTestSettings: _*)
   .settings(projectSettings: _*)
   .settings(
     cleanFiles += baseDirectory { base => base / "sandboxes" }.value
