@@ -2,7 +2,7 @@ package dcos.metronome
 package api.v1.models
 
 import dcos.metronome.api.JsonSchema
-import dcos.metronome.model.{ ScheduleSpec, JobSpec }
+import dcos.metronome.model.{ScheduleSpec, JobSpec}
 
 package object schema {
 

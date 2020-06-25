@@ -2,9 +2,9 @@ package dcos.metronome
 package utils.test
 
 import org.mockito.invocation.InvocationOnMock
-import org.mockito.stubbing.{ Answer, OngoingStubbing }
+import org.mockito.stubbing.{Answer, OngoingStubbing}
 import org.mockito.verification.VerificationMode
-import org.mockito.{ ArgumentMatchers, Mockito => M }
+import org.mockito.{ArgumentMatchers, Mockito => M}
 import org.scalatestplus.mockito.MockitoSugar
 
 /**
@@ -44,7 +44,7 @@ trait Mockito extends MockitoSugar {
   implicit class Stubbed[T](c: => T) {
     def returns(t: T, t2: T*): OngoingStubbing[T] = {
       if (t2.isEmpty) M.when(c).thenReturn(t)
-      else t2.foldLeft (M.when(c).thenReturn(t)) { (res, cur) => res.thenReturn(cur) }
+      else t2.foldLeft(M.when(c).thenReturn(t)) { (res, cur) => res.thenReturn(cur) }
     }
     def answers(function: Array[AnyRef] => T) = M.when(c).thenAnswer(new MockAnswer(function))
     def throws[E <: Throwable](e: E*): OngoingStubbing[T] = {

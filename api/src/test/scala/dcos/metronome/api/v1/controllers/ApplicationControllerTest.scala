@@ -1,7 +1,7 @@
 package dcos.metronome
 package api.v1.controllers
 
-import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents }
+import dcos.metronome.api.{MockApiComponents, OneAppPerTestWithComponents}
 import mesosphere.marathon.core.election.ElectionService
 import org.mockito.Mockito._
 import org.scalatestplus.play.PlaySpec
@@ -11,9 +11,7 @@ import play.api.ApplicationLoader.Context
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
-class ApplicationControllerTest extends PlaySpec
-    with OneAppPerTestWithComponents[MockApiComponents]
-    with MockitoSugar {
+class ApplicationControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with MockitoSugar {
 
   val electionServiceMock = mock[ElectionService]
 
@@ -62,7 +60,8 @@ class ApplicationControllerTest extends PlaySpec
     }
   }
 
-  override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context) {
-    override lazy val electionService = electionServiceMock
-  }
+  override def createComponents(context: Context): MockApiComponents =
+    new MockApiComponents(context) {
+      override lazy val electionService = electionServiceMock
+    }
 }

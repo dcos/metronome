@@ -3,7 +3,7 @@ package scheduler
 
 import dcos.metronome.utils.test.Mockito
 import mesosphere.marathon.core.condition.Condition
-import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }
+import org.scalatest.{FunSuite, GivenWhenThen, Matchers}
 import org.apache.mesos
 
 class TaskStateTest extends FunSuite with Mockito with Matchers with GivenWhenThen {
@@ -21,7 +21,8 @@ class TaskStateTest extends FunSuite with Mockito with Matchers with GivenWhenTh
   }
 
   def taskStatus(state: mesos.Protos.TaskState): mesos.Protos.TaskStatus = {
-    mesos.Protos.TaskStatus.newBuilder()
+    mesos.Protos.TaskStatus
+      .newBuilder()
       .setState(state)
       .buildPartial()
   }

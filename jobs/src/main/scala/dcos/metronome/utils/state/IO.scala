@@ -2,14 +2,14 @@ package dcos.metronome.utils.state
 
 import java.io._
 import java.math.BigInteger
-import java.nio.file.{ Files, Path, Paths }
-import java.security.{ DigestInputStream, MessageDigest }
-import java.util.zip.{ GZIPInputStream, GZIPOutputStream }
+import java.nio.file.{Files, Path, Paths}
+import java.security.{DigestInputStream, MessageDigest}
+import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 
 import com.google.common.io.ByteStreams
 
 import scala.annotation.tailrec
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 object IO {
 
@@ -60,10 +60,7 @@ object IO {
     file.delete()
   }
 
-  def mdSum(
-    in:     InputStream,
-    mdName: String       = "SHA-1",
-    out:    OutputStream = ByteStreams.nullOutputStream()): String = {
+  def mdSum(in: InputStream, mdName: String = "SHA-1", out: OutputStream = ByteStreams.nullOutputStream()): String = {
     val md = MessageDigest.getInstance(mdName)
     transfer(new DigestInputStream(in, md), out)
     //scalastyle:off magic.number
@@ -86,11 +83,7 @@ object IO {
     }
   }
 
-  def transfer(
-    in:       InputStream,
-    out:      OutputStream,
-    close:    Boolean      = true,
-    continue: => Boolean   = true) {
+  def transfer(in: InputStream, out: OutputStream, close: Boolean = true, continue: => Boolean = true) {
     try {
       val buffer = new Array[Byte](BufferSize)
       @tailrec def read() {
@@ -128,4 +121,3 @@ object IO {
     }
   }
 }
-

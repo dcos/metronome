@@ -1,12 +1,12 @@
 package dcos.metronome
 package jobspec.impl
 
-import java.time.{ Clock, Instant }
+import java.time.{Clock, Instant}
 import java.util.concurrent.TimeUnit
 
 import akka.actor._
 import dcos.metronome.jobrun.JobRunService
-import dcos.metronome.model.{ JobSpec, ScheduleSpec }
+import dcos.metronome.model.{JobSpec, ScheduleSpec}
 
 import scala.concurrent.duration._
 
@@ -14,10 +14,10 @@ import scala.concurrent.duration._
   * Manages one JobSpec.
   * If the JobSpec has a schedule, the schedule is triggered in this actor.
   */
-class JobSpecSchedulerActor(
-  initSpec:   JobSpec,
-  clock:      Clock,
-  runService: JobRunService) extends Actor with Stash with ActorLogging {
+class JobSpecSchedulerActor(initSpec: JobSpec, clock: Clock, runService: JobRunService)
+    extends Actor
+    with Stash
+    with ActorLogging {
 
   import JobSpecSchedulerActor._
   import context.dispatcher
@@ -35,7 +35,7 @@ class JobSpecSchedulerActor(
   }
 
   override def receive: Receive = {
-    case StartJob(schedule)     => runJob(schedule)
+    case StartJob(schedule) => runJob(schedule)
     case UpdateJobSpec(newSpec) => updateSpec(newSpec)
   }
 
@@ -63,7 +63,8 @@ class JobSpecSchedulerActor(
       scheduledAt = Some(nextTime)
       // 60 secs is the smallest unit of reschedule time for cron
       val inSeconds = Math.max(java.time.Duration.between(now, nextTime).getSeconds, 60)
-      nextSchedule = Some(context.system.scheduler.scheduleOnce(Duration(inSeconds, TimeUnit.SECONDS), self, StartJob(schedule)))
+      nextSchedule =
+        Some(context.system.scheduler.scheduleOnce(Duration(inSeconds, TimeUnit.SECONDS), self, StartJob(schedule)))
       log.info(s"Spec ${spec.id}: next run is scheduled for: $nextTime (in $inSeconds seconds)")
     }
   }

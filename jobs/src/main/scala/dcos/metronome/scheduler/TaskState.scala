@@ -3,6 +3,7 @@ package scheduler
 
 import mesosphere.marathon.core.condition.Condition
 import mesosphere.marathon.core.task.Task
+
 /**
   * Internal representation of mesos task states including tasks that have been created but are not yet confirmed.
   */
@@ -26,9 +27,10 @@ object TaskState {
     "TASK_RUNNING" -> Running,
     "TASK_FINISHED" -> Finished,
     "TASK_FAILED" -> Failed,
-    "TASK_KILLED" -> Killed)
+    "TASK_KILLED" -> Killed
+  )
 
-  val statusNames: Map[TaskState, String] = names.map{ case (a, b) => (b, a) }
+  val statusNames: Map[TaskState, String] = names.map { case (a, b) => (b, a) }
 
   def name(status: TaskState): String = statusNames(status)
   def unapply(name: String): Option[TaskState] = names.get(name)
@@ -44,16 +46,16 @@ object TaskState {
 
   def apply(condition: Condition): Option[TaskState] = {
     condition match {
-      case Condition.Error    => Some(TaskState.Failed)
-      case Condition.Failed   => Some(TaskState.Failed)
+      case Condition.Error => Some(TaskState.Failed)
+      case Condition.Failed => Some(TaskState.Failed)
       case Condition.Finished => Some(TaskState.Finished)
-      case Condition.Killed   => Some(TaskState.Killed)
-      case Condition.Killing  => Some(TaskState.Running)
-      case c if c.isLost      => Some(TaskState.Failed)
-      case Condition.Running  => Some(TaskState.Running)
-      case Condition.Staging  => Some(TaskState.Staging)
+      case Condition.Killed => Some(TaskState.Killed)
+      case Condition.Killing => Some(TaskState.Running)
+      case c if c.isLost => Some(TaskState.Failed)
+      case Condition.Running => Some(TaskState.Running)
+      case Condition.Staging => Some(TaskState.Staging)
       case Condition.Starting => Some(TaskState.Starting)
-      case _                  => None
+      case _ => None
     }
   }
 

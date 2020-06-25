@@ -10,7 +10,7 @@ import dcos.metronome.jobrun.JobRunServiceFixture
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import dcos.metronome.model._
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }
+import org.scalatest.{FunSuite, GivenWhenThen, Matchers}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -34,7 +34,8 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
     val f = new Fixture
 
     When("The job info is fetched")
-    val result1 = f.jobInfoService.selectJob(f.spec1.id, JobSpecSelector.all, Set(Embed.ActiveRuns, Embed.Schedules)).futureValue
+    val result1 =
+      f.jobInfoService.selectJob(f.spec1.id, JobSpecSelector.all, Set(Embed.ActiveRuns, Embed.Schedules)).futureValue
 
     Then("No Job is returned")
     result1 should be(defined)

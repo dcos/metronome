@@ -1,13 +1,13 @@
 package dcos.metronome
 
-import com.wix.accord.Descriptions.{ Generic, Path }
+import com.wix.accord.Descriptions.{Generic, Path}
 import com.wix.accord._
 import mesosphere.marathon.api.v2.Validation
 import mesosphere.marathon.api.v2.Validation.ConstraintViolation
-import mesosphere.marathon.{ Normalization, ValidationFailedException }
+import mesosphere.marathon.{Normalization, ValidationFailedException}
 import org.scalatest.Assertions
-import org.scalatest.matchers.{ BePropertyMatchResult, BePropertyMatcher, MatchResult, Matcher }
-import play.api.libs.json.{ Format, JsError, Json }
+import org.scalatest.matchers.{BePropertyMatchResult, BePropertyMatcher, MatchResult, Matcher}
+import play.api.libs.json.{Format, JsError, Json}
 
 import scala.collection.breakOut
 
@@ -20,41 +20,45 @@ import scala.collection.breakOut
 trait ValidationTestLike extends Validation {
   this: Assertions =>
 
-  private def jsErrorToFailure(error: JsError): Failure = Failure(
-    error.errors.flatMap {
+  private def jsErrorToFailure(error: JsError): Failure =
+    Failure(error.errors.flatMap {
       case (path, validationErrors) =>
         validationErrors.map { validationError =>
           RuleViolation(
             validationError.args.mkString(", "),
             validationError.message,
-            path = Path(path.toString.split("/").filter(_ != "").map(Generic(_)): _*))
+            path = Path(path.toString.split("/").filter(_ != "").map(Generic(_)): _*)
+          )
         }
     }(breakOut))
+
   /**
     * Validator which takes an object, serializes it to JSON, and then parses it back, allowing it to test validations
     * specified in our RAML layer
     */
-  def roundTripValidator[T](underlyingValidator: Option[Validator[T]])(implicit format: Format[T]) = new Validator[T] {
-    override def apply(obj: T) = {
-      Json.fromJson[T](Json.toJson(obj)) match {
-        case err: JsError =>
-          jsErrorToFailure(err)
-        case obj => underlyingValidator.map { _(obj.get) } getOrElse Success
+  def roundTripValidator[T](underlyingValidator: Option[Validator[T]])(implicit format: Format[T]) =
+    new Validator[T] {
+      override def apply(obj: T) = {
+        Json.fromJson[T](Json.toJson(obj)) match {
+          case err: JsError =>
+            jsErrorToFailure(err)
+          case obj => underlyingValidator.map { _(obj.get) } getOrElse Success
+        }
       }
     }
-  }
 
   protected implicit val normalizeResult: Normalization[Result] = Normalization {
     // normalize failures => human readable error messages
     case f: Failure => f
-    case x          => x
+    case x => x
   }
 
-  def withValidationClue[T](f: => T): T = scala.util.Try { f }.recover {
-    // handle RAML validation errors
-    case vfe: ValidationFailedException => fail(vfe.failure.violations.toString())
-    case th                             => throw th
-  }.get
+  def withValidationClue[T](f: => T): T =
+    scala.util.Try { f }.recover {
+      // handle RAML validation errors
+      case vfe: ValidationFailedException => fail(vfe.failure.violations.toString())
+      case th => throw th
+    }.get
 
   private def describeViolation(c: ConstraintViolation) =
     s"""- "${c.path}" -> "${c.constraint}""""
@@ -67,7 +71,8 @@ trait ValidationTestLike extends Validation {
           MatchResult(
             matches = false,
             "Validation succeeded, had no violations",
-            "" /* This MatchResult is explicitly false; negated failure does not apply */ )
+            "" /* This MatchResult is explicitly false; negated failure does not apply */
+          )
         case f: Failure =>
           val violations = Validation.allViolations(f)
           val matches = expectedConstraintViolations.forall { e => violations contains e }
@@ -84,7 +89,8 @@ trait ValidationTestLike extends Validation {
                |  ${expectedConstraintViolations.map(describeViolation).mkString("\n  ")}
                |  All violations:
                |  ${violations.map(describeViolation).mkString("\n  ")}
-               |""".stripMargin.trim)
+               |""".stripMargin.trim
+          )
       }
     }
   }
@@ -101,7 +107,8 @@ trait ValidationTestLike extends Validation {
             s"""Validation failed, but expected success
                |  All violations:
                |  ${violations.map(describeViolation).mkString("\n  ")}
-               |""".stripMargin.trim)
+               |""".stripMargin.trim
+          )
       }
     }
   }

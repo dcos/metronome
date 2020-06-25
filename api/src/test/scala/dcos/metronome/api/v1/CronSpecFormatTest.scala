@@ -1,12 +1,12 @@
 package dcos.metronome
 package api.v1
 
-import java.time.{ LocalDateTime, ZoneId, ZonedDateTime }
+import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
 
 import dcos.metronome.api.v1.models._
-import dcos.metronome.model.{ CronSpec, CronSpecValidation }
+import dcos.metronome.model.{CronSpec, CronSpecValidation}
 import dcos.metronome.utils.test.Mockito
-import org.scalatest.{ FunSuite, Matchers }
+import org.scalatest.{FunSuite, Matchers}
 import play.api.libs.json.Json
 
 class CronSpecFormatTest extends FunSuite with Mockito with Matchers {
@@ -142,7 +142,8 @@ class CronSpecFormatTest extends FunSuite with Mockito with Matchers {
   }
 
   test("A cron job should execute next Monday when day of week is 1") {
-    val date = (year: Int, month: Int, day: Int) => ZonedDateTime.of(LocalDateTime.of(year, month, day, 0, 0), ZoneId.of("UTC"))
+    val date =
+      (year: Int, month: Int, day: Int) => ZonedDateTime.of(LocalDateTime.of(year, month, day, 0, 0), ZoneId.of("UTC"))
 
     // With cronutils 4.1.0, the execution date is sometimes wrong if the
     // intended date falls on the first or last day of the month
@@ -152,7 +153,8 @@ class CronSpecFormatTest extends FunSuite with Mockito with Matchers {
       date(2017, 12, 27) -> date(2018, 1, 1),
       date(2018, 4, 29) -> date(2018, 4, 30),
       date(2018, 9, 30) -> date(2018, 10, 1),
-      date(2018, 12, 26) -> date(2018, 12, 31))
+      date(2018, 12, 26) -> date(2018, 12, 31)
+    )
     for ((fromDate, executionDate) <- expectations) {
       CronSpec.apply("* * * * 1").nextExecution(fromDate) shouldEqual executionDate
     }

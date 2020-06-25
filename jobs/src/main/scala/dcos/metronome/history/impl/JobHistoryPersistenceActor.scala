@@ -1,13 +1,13 @@
 package dcos.metronome
 package history.impl
 
-import akka.actor.{ ActorRef, Props }
-import dcos.metronome.model.{ JobHistory, JobId }
-import dcos.metronome.repository.{ NoConcurrentRepoChange, Repository }
+import akka.actor.{ActorRef, Props}
+import dcos.metronome.model.{JobHistory, JobId}
+import dcos.metronome.repository.{NoConcurrentRepoChange, Repository}
 import mesosphere.marathon.metrics.Metrics
 
-class JobHistoryPersistenceActor(
-  repo: Repository[JobId, JobHistory], metrics: Metrics) extends NoConcurrentRepoChange[JobId, JobHistory, Unit] {
+class JobHistoryPersistenceActor(repo: Repository[JobId, JobHistory], metrics: Metrics)
+    extends NoConcurrentRepoChange[JobId, JobHistory, Unit] {
   import JobHistoryPersistenceActor._
   import context.dispatcher
 
@@ -18,23 +18,26 @@ class JobHistoryPersistenceActor(
   override def receive: Receive = {
     case Create(id, jobRun) => create(id, jobRun)
     case Update(id, change) => update(id, change)
-    case Delete(id, orig)   => delete(id, orig)
+    case Delete(id, orig) => delete(id, orig)
   }
 
-  def create(id: JobId, jobRun: JobHistory): Unit = createHistoryTimeMetric.blocking {
-    log.debug(s"Create JobHistory ${jobRun.jobSpecId}")
-    repoChange(repo.create(jobRun.jobSpecId, jobRun), (), JobHistoryCreated, PersistFailed(_, id, _, _))
-  }
+  def create(id: JobId, jobRun: JobHistory): Unit =
+    createHistoryTimeMetric.blocking {
+      log.debug(s"Create JobHistory ${jobRun.jobSpecId}")
+      repoChange(repo.create(jobRun.jobSpecId, jobRun), (), JobHistoryCreated, PersistFailed(_, id, _, _))
+    }
 
-  def update(id: JobId, change: JobHistory => JobHistory): Unit = updateHistoryTimeMetric.blocking {
-    log.debug(s"Update JobHistory $id")
-    repoChange(repo.update(id, change), (), JobHistoryUpdated, PersistFailed(_, id, _, _))
-  }
+  def update(id: JobId, change: JobHistory => JobHistory): Unit =
+    updateHistoryTimeMetric.blocking {
+      log.debug(s"Update JobHistory $id")
+      repoChange(repo.update(id, change), (), JobHistoryUpdated, PersistFailed(_, id, _, _))
+    }
 
-  def delete(id: JobId, orig: JobHistory): Unit = deleteHistoryTimeMetric.blocking {
-    log.debug(s"Delete JobHistory $id")
-    repoChange(repo.delete(id).map(_ => orig), (), JobHistoryDeleted, PersistFailed(_, id, _, _))
-  }
+  def delete(id: JobId, orig: JobHistory): Unit =
+    deleteHistoryTimeMetric.blocking {
+      log.debug(s"Delete JobHistory $id")
+      repoChange(repo.delete(id).map(_ => orig), (), JobHistoryDeleted, PersistFailed(_, id, _, _))
+    }
 }
 
 object JobHistoryPersistenceActor {

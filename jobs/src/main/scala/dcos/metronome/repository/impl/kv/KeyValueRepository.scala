@@ -2,15 +2,16 @@ package dcos.metronome
 package repository.impl.kv
 
 import dcos.metronome.repository.Repository
-import dcos.metronome.utils.state.{ PersistentEntity, PersistentStoreWithNestedPathsSupport }
+import dcos.metronome.utils.state.{PersistentEntity, PersistentStoreWithNestedPathsSupport}
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 abstract class KeyValueRepository[Id, Model](
-  pathResolver:    PathResolver[Id],
-  marshaller:      EntityMarshaller[Model],
-  store:           PersistentStoreWithNestedPathsSupport,
-  implicit val ec: ExecutionContext) extends Repository[Id, Model] {
+    pathResolver: PathResolver[Id],
+    marshaller: EntityMarshaller[Model],
+    store: PersistentStoreWithNestedPathsSupport,
+    implicit val ec: ExecutionContext
+) extends Repository[Id, Model] {
 
   override def ids(): Future[Iterable[Id]] = {
     store.allIds(pathResolver.basePath).map(paths => paths.map(pathResolver.fromPath))
@@ -23,14 +24,14 @@ abstract class KeyValueRepository[Id, Model](
     def updateEntity(entity: PersistentEntity): Future[Model] = {
       val changed = marshaller.fromBytes(entity.bytes) match {
         case Some(model) => change(model)
-        case None        => throw PersistenceFailed(id.toString, "Entity could not be deserialized!")
+        case None => throw PersistenceFailed(id.toString, "Entity could not be deserialized!")
       }
       store.update(entity.withNewContent(marshaller.toBytes(changed))).map(_ => changed)
     }
 
     store.load(path).flatMap {
       case Some(entity) => updateEntity(entity)
-      case None         => Future.failed(PersistenceFailed(id.toString, "No entity with this Id!"))
+      case None => Future.failed(PersistenceFailed(id.toString, "No entity with this Id!"))
     }
   }
 

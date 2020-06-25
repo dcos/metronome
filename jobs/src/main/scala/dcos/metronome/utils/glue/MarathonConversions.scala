@@ -1,6 +1,6 @@
 package dcos.metronome.utils.glue
 
-import dcos.metronome.model.{ EnvVarSecret, EnvVarValue, EnvVarValueOrSecret, Network, SecretDef }
+import dcos.metronome.model.{EnvVarSecret, EnvVarValue, EnvVarValueOrSecret, Network, SecretDef}
 import mesosphere.marathon
 import mesosphere.marathon.plugin.NetworkSpec
 import mesosphere.marathon.core.pod
@@ -9,7 +9,7 @@ object MarathonConversions {
 
   def envVarToMarathon(envVars: Map[String, EnvVarValueOrSecret]): Map[String, marathon.state.EnvVarValue] = {
     envVars.mapValues {
-      case EnvVarValue(value)   => marathon.state.EnvVarString(value)
+      case EnvVarValue(value) => marathon.state.EnvVarString(value)
       case EnvVarSecret(secret) => marathon.state.EnvVarSecretRef(secret)
     }
   }

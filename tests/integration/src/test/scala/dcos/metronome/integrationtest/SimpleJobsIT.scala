@@ -1,6 +1,6 @@
 package dcos.metronome.integrationtest
 
-import play.api.libs.json.{ JsArray, JsObject }
+import play.api.libs.json.{JsArray, JsObject}
 
 import scala.concurrent.duration._
 

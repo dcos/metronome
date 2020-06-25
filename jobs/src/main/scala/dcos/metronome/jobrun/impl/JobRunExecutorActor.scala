@@ -4,23 +4,23 @@ package jobrun.impl
 import java.time.Clock
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{ Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Scheduler, Stash }
+import akka.actor.{Actor, ActorContext, ActorLogging, ActorRef, Cancellable, Props, Scheduler, Stash}
 import akka.pattern.pipe
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.model.{ JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy }
+import dcos.metronome.model.{JobResult, JobRun, JobRunId, JobRunStatus, JobRunTask, RestartPolicy}
 import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.instance.Instance
 import mesosphere.marathon.core.task.tracker.InstanceTracker
-import mesosphere.marathon.{ MarathonSchedulerDriverHolder, StoreCommandFailedException }
+import mesosphere.marathon.{MarathonSchedulerDriverHolder, StoreCommandFailedException}
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.state.PathId
 import org.apache.zookeeper.KeeperException.NodeExistsException
 
-import scala.async.Async.{ async, await }
-import scala.concurrent.duration.{ Duration, FiniteDuration }
-import scala.concurrent.{ Await, ExecutionContext, Future, Promise }
+import scala.async.Async.{async, await}
+import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.{Await, ExecutionContext, Future, Promise}
 
 /**
   * Handles one job run from start until the job either completes successful or failed.
@@ -28,13 +28,17 @@ import scala.concurrent.{ Await, ExecutionContext, Future, Promise }
   * @param run the related job run object.
   */
 class JobRunExecutorActor(
-  run:                        JobRun,
-  promise:                    Promise[JobResult],
-  persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
-  launchQueue:                LaunchQueue,
-  instanceTracker:            InstanceTracker,
-  driverHolder:               MarathonSchedulerDriverHolder,
-  clock:                      Clock)(implicit scheduler: Scheduler) extends Actor with Stash with ActorLogging {
+    run: JobRun,
+    promise: Promise[JobResult],
+    persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
+    launchQueue: LaunchQueue,
+    instanceTracker: InstanceTracker,
+    driverHolder: MarathonSchedulerDriverHolder,
+    clock: Clock
+)(implicit scheduler: Scheduler)
+    extends Actor
+    with Stash
+    with ActorLogging {
   import JobRunExecutorActor._
   import JobRunPersistenceActor._
   import TaskStates._
@@ -53,7 +57,9 @@ class JobRunExecutorActor(
 
     jobRun.status match {
       case JobRunStatus.Initial | JobRunStatus.Starting if startingDeadline.exists(d => d.toSeconds <= 0) =>
-        log.info(s"StartingDeadline timeout of ${jobRun.startingDeadline.get} expired for JobRun ${jobRun.id} created at ${jobRun.createdAt}")
+        log.info(
+          s"StartingDeadline timeout of ${jobRun.startingDeadline.get} expired for JobRun ${jobRun.id} created at ${jobRun.createdAt}"
+        )
         becomeAborting()
       case JobRunStatus.Initial =>
         becomeCreating()
@@ -63,7 +69,7 @@ class JobRunExecutorActor(
 
       case JobRunStatus.Success => becomeFinishing(jobRun)
 
-      case JobRunStatus.Failed  => becomeFailing(jobRun)
+      case JobRunStatus.Failed => becomeFailing(jobRun)
     }
   }
 
@@ -105,18 +111,19 @@ class JobRunExecutorActor(
     startingDeadlineTimer = Some(scheduler.scheduleOnce(timeout, self, StartTimeout))
   }
 
-  def addTaskToLaunchQueue(restart: Boolean = false): Unit = async {
-    val alreadyQueued = await(JobRunExecutorActor.existsInLaunchQueue(launchQueue, runSpecId))
-    if (!restart && alreadyQueued) {
-      // we have to handle a case when actor is restarted (e.g. because of exception) and it already put something into the queue
-      // during restart it is possible, that actor that was in state Starting will be restarted with state initial
-      log.info(s"Job run ${jobRun.id} already exists in LaunchQueue - not adding")
-    } else {
-      log.info("addTaskToLaunchQueue")
-      import dcos.metronome.utils.glue.MarathonImplicits._
-      launchQueue.add(jobRun.toRunSpec, count = 1)
+  def addTaskToLaunchQueue(restart: Boolean = false): Unit =
+    async {
+      val alreadyQueued = await(JobRunExecutorActor.existsInLaunchQueue(launchQueue, runSpecId))
+      if (!restart && alreadyQueued) {
+        // we have to handle a case when actor is restarted (e.g. because of exception) and it already put something into the queue
+        // during restart it is possible, that actor that was in state Starting will be restarted with state initial
+        log.info(s"Job run ${jobRun.id} already exists in LaunchQueue - not adding")
+      } else {
+        log.info("addTaskToLaunchQueue")
+        import dcos.metronome.utils.glue.MarathonImplicits._
+        launchQueue.add(jobRun.toRunSpec, count = 1)
+      }
     }
-  }
 
   def becomeActive(update: TaskStateChangedEvent): Unit = {
     cancelStartingDeadline()
@@ -138,17 +145,19 @@ class JobRunExecutorActor(
     // This will be fault tolerant and still add it, but startedAt and completedAt will be the same
     // in this case because we don't know the startedAt timestamp
     def completedAt = if (update.taskState == TaskState.Finished) Some(update.timestamp) else None
-    val updatedTask = jobRun.tasks.get(update.taskId).map { t =>
-      t.copy(
-        completedAt = completedAt,
-        status = update.taskState)
-    }.getOrElse {
-      JobRunTask(
-        id = update.taskId,
-        startedAt = update.timestamp,
-        completedAt = completedAt,
-        status = update.taskState)
-    }
+    val updatedTask = jobRun.tasks
+      .get(update.taskId)
+      .map { t =>
+        t.copy(completedAt = completedAt, status = update.taskState)
+      }
+      .getOrElse {
+        JobRunTask(
+          id = update.taskId,
+          startedAt = update.timestamp,
+          completedAt = completedAt,
+          status = update.taskState
+        )
+      }
 
     jobRun.tasks + (updatedTask.id -> updatedTask)
   }
@@ -164,9 +173,10 @@ class JobRunExecutorActor(
   }
 
   def continueOrBecomeFailing(update: TaskStateChangedEvent): Unit = {
-    def inTime: Boolean = jobRun.jobSpec.run.restart.activeDeadline.fold(true) { deadline =>
-      jobRun.createdAt.plusMillis(deadline.toMillis).isAfter(clock.instant())
-    }
+    def inTime: Boolean =
+      jobRun.jobSpec.run.restart.activeDeadline.fold(true) { deadline =>
+        jobRun.createdAt.plusMillis(deadline.toMillis).isAfter(clock.instant())
+      }
     jobRun.jobSpec.run.restart.policy match {
       case RestartPolicy.OnFailure if inTime =>
         log.info("still in time, launching another task")
@@ -176,10 +186,9 @@ class JobRunExecutorActor(
         addTaskToLaunchQueue(true)
 
       case _ =>
-        becomeFailing(jobRun.copy(
-          status = JobRunStatus.Failed,
-          tasks = updatedTasks(update),
-          completedAt = Some(clock.instant())))
+        becomeFailing(
+          jobRun.copy(status = JobRunStatus.Failed, tasks = updatedTasks(update), completedAt = Some(clock.instant()))
+        )
     }
   }
 
@@ -204,9 +213,7 @@ class JobRunExecutorActor(
     Await.result(launchQueue.purge(runSpecId), Duration.Inf) // there is already timeout enforced in Marathon
 
     // Abort the jobRun
-    jobRun = jobRun.copy(
-      status = JobRunStatus.Failed,
-      completedAt = Some(clock.instant()))
+    jobRun = jobRun.copy(status = JobRunStatus.Failed, completedAt = Some(clock.instant()))
     context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
     persistenceActor ! Delete(jobRun)
 
@@ -246,7 +253,9 @@ class JobRunExecutorActor(
 
   def receiveStartTimeout: Receive = {
     case StartTimeout =>
-      log.info(s"StartingDeadline timeout of ${jobRun.startingDeadline.get} expired for JobRun ${jobRun.id} created at ${jobRun.createdAt}")
+      log.info(
+        s"StartingDeadline timeout of ${jobRun.startingDeadline.get} expired for JobRun ${jobRun.id} created at ${jobRun.createdAt}"
+      )
       becomeAborting()
   }
 
@@ -261,7 +270,8 @@ class JobRunExecutorActor(
       case JobRunCreated(_, updatedJobRun, _) =>
         becomeStarting(updatedJobRun)
 
-      case PersistFailed(_, _, ex, _) if ex.isInstanceOf[StoreCommandFailedException] && ex.getCause.isInstanceOf[NodeExistsException] =>
+      case PersistFailed(_, _, ex, _)
+          if ex.isInstanceOf[StoreCommandFailedException] && ex.getCause.isInstanceOf[NodeExistsException] =>
         // we need to be able to handle restarted actor that already created the ZK node in the previous run
         becomeStarting(jobRun.copy(status = JobRunStatus.Starting))
 
@@ -276,10 +286,9 @@ class JobRunExecutorActor(
         becomeActive(update)
 
       case ForwardStatusUpdate(update) if isFinished(update.taskState) =>
-        becomeFinishing(jobRun.copy(
-          status = JobRunStatus.Success,
-          tasks = updatedTasks(update),
-          completedAt = Some(update.timestamp)))
+        becomeFinishing(
+          jobRun.copy(status = JobRunStatus.Success, tasks = updatedTasks(update), completedAt = Some(update.timestamp))
+        )
 
       case ForwardStatusUpdate(update) if isFailed(update.taskState) =>
         continueOrBecomeFailing(update)
@@ -299,17 +308,16 @@ class JobRunExecutorActor(
         persistenceActor ! Update(_ => jobRun)
         context.parent ! JobRunUpdate(StartedJobRun(jobRun, promise.future))
       case ForwardStatusUpdate(update) if isFinished(update.taskState) =>
-        becomeFinishing(jobRun.copy(
-          status = JobRunStatus.Success,
-          tasks = updatedTasks(update),
-          completedAt = Some(update.timestamp)))
+        becomeFinishing(
+          jobRun.copy(status = JobRunStatus.Success, tasks = updatedTasks(update), completedAt = Some(update.timestamp))
+        )
 
       case ForwardStatusUpdate(update) if isFailed(update.taskState) =>
         continueOrBecomeFailing(update)
 
       case JobRunUpdated(_, persisted, _) => log.debug(s"JobRun ${persisted.id} has been persisted")
 
-      case PersistFailed(_, id, ex, _)    => becomeAborting()
+      case PersistFailed(_, id, ex, _) => becomeAborting()
     }
   }
 
@@ -324,9 +332,7 @@ class JobRunExecutorActor(
 
       case PersistFailed(_, id, ex, _) =>
         log.info(s"Execution of JobRun ${jobRun.id} has been finished but deleting the jobRun failed")
-        jobRun = jobRun.copy(
-          status = JobRunStatus.Failed,
-          completedAt = Some(clock.instant()))
+        jobRun = jobRun.copy(status = JobRunStatus.Failed, completedAt = Some(clock.instant()))
         val result = JobResult(jobRun)
         context.parent ! JobRunExecutorActor.Aborted(result)
         promise.failure(JobRunFailed(result))
@@ -394,17 +400,29 @@ object JobRunExecutorActor {
   case class ForwardStatusUpdate(update: TaskStateChangedEvent) extends JobRunExecutorActorMessage
 
   def props(
-    run:                        JobRun,
-    promise:                    Promise[JobResult],
-    persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
-    launchQueue:                LaunchQueue,
-    instanceTracker:            InstanceTracker,
-    driverHolder:               MarathonSchedulerDriverHolder,
-    clock:                      Clock)(implicit scheduler: Scheduler): Props = Props(
-    new JobRunExecutorActor(run, promise, persistenceActorRefFactory,
-      launchQueue, instanceTracker, driverHolder, clock))
+      run: JobRun,
+      promise: Promise[JobResult],
+      persistenceActorRefFactory: (JobRunId, ActorContext) => ActorRef,
+      launchQueue: LaunchQueue,
+      instanceTracker: InstanceTracker,
+      driverHolder: MarathonSchedulerDriverHolder,
+      clock: Clock
+  )(implicit scheduler: Scheduler): Props =
+    Props(
+      new JobRunExecutorActor(
+        run,
+        promise,
+        persistenceActorRefFactory,
+        launchQueue,
+        instanceTracker,
+        driverHolder,
+        clock
+      )
+    )
 
-  def existsInLaunchQueue(launchQueue: LaunchQueue, runSpecId: PathId)(implicit ec: ExecutionContext): Future[Boolean] = {
+  def existsInLaunchQueue(launchQueue: LaunchQueue, runSpecId: PathId)(implicit
+      ec: ExecutionContext
+  ): Future[Boolean] = {
     launchQueue.get(runSpecId).map { _.exists(i => i.finalInstanceCount > 0) }
   }
 
@@ -420,13 +438,17 @@ object JobRunExecutorActor {
     * @param currentJobRunStatus The current status of the jobRun
     * @return
     */
-  private def decideNextStateDirective(jobRunInstancesFuture: Future[Seq[Instance]], existsInLaunchQueue: Future[Boolean], currentJobRunStatus: JobRunStatus)(implicit ec: ExecutionContext): Future[JobRunExecutorActorMessageTransition] = {
+  private def decideNextStateDirective(
+      jobRunInstancesFuture: Future[Seq[Instance]],
+      existsInLaunchQueue: Future[Boolean],
+      currentJobRunStatus: JobRunStatus
+  )(implicit ec: ExecutionContext): Future[JobRunExecutorActorMessageTransition] = {
     async {
       val existingTasks = await(jobRunInstancesFuture)
         .map(a => a.appTask)
         .collect {
           case task: Task => JobRunTask(task)
-          case task       => throw UnexpectedTaskState(task)
+          case task => throw UnexpectedTaskState(task)
         }
 
       val alreadyQueued = await(existsInLaunchQueue)

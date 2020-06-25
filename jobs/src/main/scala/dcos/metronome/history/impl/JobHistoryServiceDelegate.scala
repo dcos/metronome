@@ -4,8 +4,8 @@ package history.impl
 import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
-import dcos.metronome.history.{ JobHistoryConfig, JobHistoryService }
-import dcos.metronome.model.{ JobId, JobHistory }
+import dcos.metronome.history.{JobHistoryConfig, JobHistoryService}
+import dcos.metronome.model.{JobId, JobHistory}
 
 import scala.concurrent.Future
 

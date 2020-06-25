@@ -1,6 +1,6 @@
 package dcos.metronome
 
-import org.scalatest.{ Matchers, WordSpec }
+import org.scalatest.{Matchers, WordSpec}
 
 class MarathonBuildInfoTest extends WordSpec with Matchers {
 

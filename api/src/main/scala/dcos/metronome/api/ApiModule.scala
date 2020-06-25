@@ -15,7 +15,7 @@ import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.election.ElectionService
 import mesosphere.marathon.core.plugin.PluginManager
 import mesosphere.marathon.metrics.Metrics
-import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
+import mesosphere.marathon.plugin.auth.{Authenticator, Authorizer}
 import play.api.http.HttpErrorHandler
 import play.api.mvc.ControllerComponents
 import play.api.routing.Router
@@ -24,18 +24,19 @@ import router.Routes
 import scala.concurrent.ExecutionContext
 
 class ApiModule(
-  controllerComponents: ControllerComponents,
-  assets:               Assets,
-  httpErrorHandler:     HttpErrorHandler,
-  config:               ApiConfig,
-  jobSpecService:       JobSpecService,
-  jobRunService:        JobRunService,
-  jobInfoService:       JobInfoService,
-  pluginManager:        PluginManager,
-  launchQueueService:   LaunchQueueService,
-  actorsModule:         ActorsModule,
-  metricsModule:        MetricsModule,
-  electionService:      ElectionService)(implicit ec: ExecutionContext) {
+    controllerComponents: ControllerComponents,
+    assets: Assets,
+    httpErrorHandler: HttpErrorHandler,
+    config: ApiConfig,
+    jobSpecService: JobSpecService,
+    jobRunService: JobRunService,
+    jobInfoService: JobInfoService,
+    pluginManager: PluginManager,
+    launchQueueService: LaunchQueueService,
+    actorsModule: ActorsModule,
+    metricsModule: MetricsModule,
+    electionService: ElectionService
+)(implicit ec: ExecutionContext) {
 
   lazy val authModule: AuthModule = new AuthModule(pluginManager)
 

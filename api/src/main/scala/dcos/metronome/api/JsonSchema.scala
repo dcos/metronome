@@ -33,13 +33,14 @@ trait JsonSchema[Model] {
 object JsonSchema {
   def fromResource[T](fromClassPath: String)(implicit ct: ClassTag[T]): JsonSchema[T] = {
     IO.withResource(fromClassPath) { resource =>
-      val schema = Json.parse(resource).as[SchemaType]
-      new JsonSchema[T] {
-        override def classTag: ClassTag[T] = ct
-        override def schemaType: SchemaType = schema
-        //we serve the public directory: the resource path is the same as the schema location path
-        override def schemaLocation: String = fromClassPath
+        val schema = Json.parse(resource).as[SchemaType]
+        new JsonSchema[T] {
+          override def classTag: ClassTag[T] = ct
+          override def schemaType: SchemaType = schema
+          //we serve the public directory: the resource path is the same as the schema location path
+          override def schemaLocation: String = fromClassPath
+        }
       }
-    }.getOrElse(throw new IllegalArgumentException(s"Schema not found: $fromClassPath"))
+      .getOrElse(throw new IllegalArgumentException(s"Schema not found: $fromClassPath"))
   }
 }

@@ -1,27 +1,28 @@
 package dcos.metronome
 package repository
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Stash }
+import akka.actor.{Actor, ActorLogging, ActorRef, Stash}
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success}
 
 trait NoConcurrentRepoChange[Id, Model, Data] extends Actor with ActorLogging with Stash {
   import NoConcurrentRepoChange._
 
   final def repoChange(
-    change:    => Future[Model],
-    data:      Data,
-    onSuccess: (ActorRef, Model, Data) => Change,
-    onFailed:  (ActorRef, Throwable, Data) => Failed)(implicit ec: ExecutionContext): Unit = {
+      change: => Future[Model],
+      data: Data,
+      onSuccess: (ActorRef, Model, Data) => Change,
+      onFailed: (ActorRef, Throwable, Data) => Failed
+  )(implicit ec: ExecutionContext): Unit = {
     val from = sender()
     try {
       val changed = change //can throw an exception, so execute before we enter waiting state
       context.become(waitForPersisted, discardOld = false)
       changed.onComplete {
         case Success(result) => self ! onSuccess(from, result, data)
-        case Failure(ex)     => self ! onFailed(from, ex, data)
+        case Failure(ex) => self ! onFailed(from, ex, data)
       }
     } catch {
       case NonFatal(ex) =>

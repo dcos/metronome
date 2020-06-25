@@ -6,13 +6,14 @@ import com.mesosphere.utils.AkkaUnitTest
 import com.mesosphere.utils.http.RestResultMatchers
 import com.mesosphere.utils.mesos.MesosClusterTest
 import com.typesafe.scalalogging.StrictLogging
-import dcos.metronome.integrationtest.utils.{ MetronomeFacade, MetronomeFramework }
+import dcos.metronome.integrationtest.utils.{MetronomeFacade, MetronomeFramework}
 import org.apache.mesos.v1.Protos.FrameworkID
 import org.scalatest.Inside
 
 import scala.concurrent.duration._
 
-class MetronomeITBase extends AkkaUnitTest
+class MetronomeITBase
+    extends AkkaUnitTest
     with MesosClusterTest
     with Inside
     with RestResultMatchers

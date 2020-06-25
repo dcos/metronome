@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory
 import play.api.http.HttpErrorHandler
 import play.api.http.Status._
 import play.api.libs.json.Json
-import play.api.mvc.{ RequestHeader, Result, Results }
+import play.api.mvc.{RequestHeader, Result, Results}
 import play.twirl.api.HtmlFormat
 
 import scala.concurrent.Future
@@ -16,7 +16,8 @@ class ErrorHandler extends HttpErrorHandler {
 
   override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] = {
     log.debug(s"Client Error on path ${request.path}. Message: $message Status: $statusCode")
-    val outputMessage = if (statusCode == NOT_FOUND) { ErrorHandler.noRouteHandlerMessage } else { message }
+    val outputMessage = if (statusCode == NOT_FOUND) { ErrorHandler.noRouteHandlerMessage }
+    else { message }
     val json = Json.obj("message" -> escape(outputMessage), "requestPath" -> escape(request.path))
     Future.successful(Results.Status(statusCode)(json))
   }
@@ -32,8 +33,10 @@ class ErrorHandler extends HttpErrorHandler {
       detected below and the verbose stacktrace is not logged.
      */
     if (exception.getMessage.contains("not an SSL/TLS record")) {
-      log.info(s"Client trying to connect via TLS port, but the proxying only happen through plain HTTP port. " +
-        s"Please use plain HTTP or query the leader directly. Error serving ${request.path}.  Exception Msg: ${exception.getMessage}")
+      log.info(
+        s"Client trying to connect via TLS port, but the proxying only happen through plain HTTP port. " +
+          s"Please use plain HTTP or query the leader directly. Error serving ${request.path}.  Exception Msg: ${exception.getMessage}"
+      )
     } else {
       log.error(s"Error serving ${request.path}", exception)
     }

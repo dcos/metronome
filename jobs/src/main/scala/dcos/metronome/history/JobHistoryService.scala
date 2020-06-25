@@ -1,7 +1,7 @@
 package dcos.metronome
 package history
 
-import dcos.metronome.model.{ JobId, JobHistory }
+import dcos.metronome.model.{JobId, JobHistory}
 
 import scala.concurrent.Future
 

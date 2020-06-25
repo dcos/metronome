@@ -6,6 +6,7 @@ package repository.impl.kv
   * @tparam Id the type of Id this resolver can work with.
   */
 trait PathResolver[Id] {
+
   /**
     * Return the base path for the given entity
     * @return

@@ -3,18 +3,23 @@ package api.v1.controllers
 
 import dcos.metronome.api._
 import dcos.metronome.api.v1.models._
-import dcos.metronome.model.{ JobId, JobRunSpec, JobRunStatus, JobSpec }
+import dcos.metronome.model.{JobId, JobRunSpec, JobRunStatus, JobSpec}
 import mesosphere.marathon.core.plugin.PluginManager
-import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
+import org.scalatest.{BeforeAndAfter, GivenWhenThen}
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{ Millis, Seconds, Span }
+import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context
 import play.api.libs.json._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
-class JobRunControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with ScalaFutures with GivenWhenThen with BeforeAndAfter {
+class JobRunControllerTest
+    extends PlaySpec
+    with OneAppPerTestWithComponents[MockApiComponents]
+    with ScalaFutures
+    with GivenWhenThen
+    with BeforeAndAfter {
   implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
   "POST /jobs/{id}/runs" should {
@@ -248,7 +253,8 @@ class JobRunControllerTest extends PlaySpec with OneAppPerTestWithComponents[Moc
     auth.authenticated = true
   }
 
-  override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context) {
-    override lazy val pluginManager: PluginManager = auth.pluginManager
-  }
+  override def createComponents(context: Context): MockApiComponents =
+    new MockApiComponents(context) {
+      override lazy val pluginManager: PluginManager = auth.pluginManager
+    }
 }

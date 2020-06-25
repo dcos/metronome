@@ -6,20 +6,23 @@ import java.util.UUID
 
 import akka.util.CompactByteString
 import com.fasterxml.uuid.impl.UUIDUtil
-import com.google.protobuf.{ ByteString, InvalidProtocolBufferException }
+import com.google.protobuf.{ByteString, InvalidProtocolBufferException}
 import com.typesafe.scalalogging.StrictLogging
-import mesosphere.marathon.core.storage.store.impl.zk.{ ExistsResult, RichCuratorFramework }
-import mesosphere.marathon.{ Protos, StoreCommandFailedException }
+import mesosphere.marathon.core.storage.store.impl.zk.{ExistsResult, RichCuratorFramework}
+import mesosphere.marathon.{Protos, StoreCommandFailedException}
 import org.apache.zookeeper.KeeperException
 import org.apache.zookeeper.KeeperException.NoNodeException
 import org.apache.zookeeper.server.ByteBufferInputStream
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 case class CompressionConf(enabled: Boolean, sizeLimit: Long)
 
-class ZKStore(val richCurator: RichCuratorFramework, rootPath: String, compressionConf: CompressionConf) extends PersistentStore
-    with PersistentStoreManagement with PersistentStoreWithNestedPathsSupport with StrictLogging {
+class ZKStore(val richCurator: RichCuratorFramework, rootPath: String, compressionConf: CompressionConf)
+    extends PersistentStore
+    with PersistentStoreManagement
+    with PersistentStoreWithNestedPathsSupport
+    with StrictLogging {
 
   private[this] implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
 
@@ -36,7 +39,7 @@ class ZKStore(val richCurator: RichCuratorFramework, rootPath: String, compressi
     val path = fullPath(key)
     richCurator
       .data(path)
-      .map{ node =>
+      .map { node =>
         val zkData = ZKData(node.data.asByteBuffer)
         Some(ZKEntity(node.path, zkData, Some(node.stat.getVersion)))
       }
@@ -50,7 +53,7 @@ class ZKStore(val richCurator: RichCuratorFramework, rootPath: String, compressi
     val dataArray = CompactByteString(data.toProto(compressionConf).toByteArray)
     richCurator
       .create(path, Some(dataArray))
-      .map{ path => ZKEntity(path, data, Some(0)) }
+      .map { path => ZKEntity(path, data, Some(0)) }
       .recover(exceptionTransform(s"Can not create entity $path"))
   }
 
@@ -62,14 +65,15 @@ class ZKStore(val richCurator: RichCuratorFramework, rootPath: String, compressi
     */
   override def update(entity: PersistentEntity): Future[ZKEntity] = {
     val zk = zkEntity(entity)
-    val version = zk.version.getOrElse (
-      throw new StoreCommandFailedException(s"Can not store entity $entity, since there is no version!"))
+    val version = zk.version.getOrElse(
+      throw new StoreCommandFailedException(s"Can not store entity $entity, since there is no version!")
+    )
 
     val dataArray = CompactByteString(zk.data.toProto(compressionConf).toByteArray)
 
     richCurator
       .setData(zk.id, dataArray, false, Some(version))
-      .map{ node => zk.copy(version = Some(node.stat.getVersion)) }
+      .map { node => zk.copy(version = Some(node.stat.getVersion)) }
       .recover(exceptionTransform(s"Can not update entity $entity"))
   }
 
@@ -107,7 +111,7 @@ class ZKStore(val richCurator: RichCuratorFramework, rootPath: String, compressi
   private[this] def zkEntity(entity: PersistentEntity): ZKEntity = {
     entity match {
       case zk: ZKEntity => zk
-      case _            => throw new IllegalArgumentException(s"Can not handle this kind of entity: ${entity.getClass}")
+      case _ => throw new IllegalArgumentException(s"Can not handle this kind of entity: ${entity.getClass}")
     }
   }
 
@@ -116,7 +120,7 @@ class ZKStore(val richCurator: RichCuratorFramework, rootPath: String, compressi
     richCurator
       .exists(path)
       .recover { case _: NoNodeException => ExistsResult(path, null) }
-      .flatMap{ res =>
+      .flatMap { res =>
         if (res.stat == null) {
           logger.debug(s"Path ${path} does not exist, create now")
           richCurator
@@ -152,7 +156,8 @@ case class ZKData(name: String, uuid: UUID, bytes: IndexedSeq[Byte] = Vector.emp
     val (data, compressed) =
       if (compression.enabled && bytes.length > compression.sizeLimit) (IO.gzipCompress(bytes.toArray), true)
       else (bytes.toArray, false)
-    Protos.ZKStoreEntry.newBuilder()
+    Protos.ZKStoreEntry
+      .newBuilder()
       .setName(name)
       .setUuid(ByteString.copyFromUtf8(uuid.toString))
       .setCompressed(compressed)
@@ -161,7 +166,7 @@ case class ZKData(name: String, uuid: UUID, bytes: IndexedSeq[Byte] = Vector.emp
   }
 }
 object ZKData {
-  import IO.{ gzipUncompress => uncompress }
+  import IO.{gzipUncompress => uncompress}
 
   def apply(bytes: ByteBuffer): ZKData = {
     try {
@@ -187,6 +192,4 @@ object ZKData {
   }
 }
 
-object ZKStore {
-
-}
+object ZKStore {}

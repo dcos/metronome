@@ -3,18 +3,26 @@ package jobspec.impl
 
 import java.util.concurrent.LinkedBlockingDeque
 
-import akka.actor.{ ActorSystem, Props, Status }
+import akka.actor.{ActorSystem, Props, Status}
 import akka.testkit._
 import akka.pattern.ask
 import akka.util.Timeout
-import dcos.metronome.model.{ CronSpec, JobId, JobSpec, ScheduleSpec }
+import dcos.metronome.model.{CronSpec, JobId, JobSpec, ScheduleSpec}
 import dcos.metronome.repository.impl.InMemoryRepository
-import org.scalatest.concurrent.{ Eventually, ScalaFutures }
-import org.scalatest.{ BeforeAndAfterAll, FunSuiteLike, GivenWhenThen, Matchers }
+import org.scalatest.concurrent.{Eventually, ScalaFutures}
+import org.scalatest.{BeforeAndAfterAll, FunSuiteLike, GivenWhenThen, Matchers}
 
 import scala.concurrent.duration._
 
-class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteLike with BeforeAndAfterAll with GivenWhenThen with ScalaFutures with Matchers with Eventually with ImplicitSender {
+class JobSpecServiceActorTest
+    extends TestKit(ActorSystem("test"))
+    with FunSuiteLike
+    with BeforeAndAfterAll
+    with GivenWhenThen
+    with ScalaFutures
+    with Matchers
+    with Eventually
+    with ImplicitSender {
 
   import JobSpecServiceActor._
   import JobSpecPersistenceActor._
@@ -72,7 +80,7 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     Then("The jobSpec is available")
     expectMsg(f.jobSpec)
     service.underlyingActor.allJobs should have size 1
-    service.underlyingActor.allJobs(f.jobSpec.id) should be (f.jobSpec)
+    service.underlyingActor.allJobs(f.jobSpec.id) should be(f.jobSpec)
     service.underlyingActor.inFlightChanges should have size 0
   }
 
@@ -122,7 +130,7 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     Then("The jobSpec is updated")
     expectMsg(changed)
     service.underlyingActor.allJobs should have size 1
-    service.underlyingActor.allJobs(f.jobSpec.id) should be (changed)
+    service.underlyingActor.allJobs(f.jobSpec.id) should be(changed)
     service.underlyingActor.inFlightChanges should have size 0
   }
 
@@ -238,7 +246,10 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
   test("A disabled jobSpec will not be started") {
     Given("A disabled jobSpec")
     val f = new Fixture
-    val disabledJobSpec = JobSpec(JobId("disabled"), schedules = Seq(ScheduleSpec(id = "minutely", cron = CronSpec("*/1 * * * *"), enabled = false)))
+    val disabledJobSpec = JobSpec(
+      JobId("disabled"),
+      schedules = Seq(ScheduleSpec(id = "minutely", cron = CronSpec("*/1 * * * *"), enabled = false))
+    )
     val service = f.jobSpecService
 
     When("A disabled job is added")
@@ -259,6 +270,7 @@ class JobSpecServiceActorTest extends TestKit(ActorSystem("test")) with FunSuite
     val dummyQueue = new LinkedBlockingDeque[TestActor.Message]()
     val dummyProp = Props(new TestActor(dummyQueue))
     val jobSpec = JobSpec(JobId("test"))
-    val jobSpecService = TestActorRef[JobSpecServiceActor](JobSpecServiceActor.props(repository, (_: JobId) => dummyProp, _ => dummyProp))
+    val jobSpecService =
+      TestActorRef[JobSpecServiceActor](JobSpecServiceActor.props(repository, (_: JobId) => dummyProp, _ => dummyProp))
   }
 }

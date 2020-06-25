@@ -11,14 +11,16 @@ class PeriodicOperationsImpl extends PeriodicOperations {
   private[this] var timer = newTimer()
 
   /** Initialize timers for periodic operations (triggered when we gain leadership) */
-  override def schedule(): Unit = synchronized {
-    timer = newTimer()
+  override def schedule(): Unit =
+    synchronized {
+      timer = newTimer()
 
-    // schedule any periodic operations here ...
-  }
+      // schedule any periodic operations here ...
+    }
 
   /** Cancel periodic scheduling of operations (triggered if we loose leadership or shutdown) */
-  override def cancel(): Unit = synchronized {
-    timer.cancel()
-  }
+  override def cancel(): Unit =
+    synchronized {
+      timer.cancel()
+    }
 }

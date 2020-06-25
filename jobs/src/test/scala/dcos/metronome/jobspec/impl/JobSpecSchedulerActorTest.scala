@@ -1,17 +1,26 @@
 package dcos.metronome
 package jobspec.impl
 
-import java.time.{ Clock, LocalDateTime, ZoneId, ZoneOffset }
+import java.time.{Clock, LocalDateTime, ZoneId, ZoneOffset}
 
 import akka.actor.ActorSystem
-import akka.testkit.{ ImplicitSender, TestActorRef, TestKit }
+import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.model._
 import dcos.metronome.utils.test.Mockito
 import org.scalatest._
-import org.scalatest.concurrent.{ Eventually, ScalaFutures }
+import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
-class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSuiteLike with BeforeAndAfterAll with GivenWhenThen with ScalaFutures with Matchers with Eventually with ImplicitSender with Mockito {
+class JobSpecSchedulerActorTest
+    extends TestKit(ActorSystem("test"))
+    with FunSuiteLike
+    with BeforeAndAfterAll
+    with GivenWhenThen
+    with ScalaFutures
+    with Matchers
+    with Eventually
+    with ImplicitSender
+    with Mockito {
 
   import JobSpecSchedulerActor._
 
@@ -25,7 +34,7 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
 
     Then("The next run is scheduled")
     eventually(actor.underlyingActor.scheduledAt should be(Some(nextRun)))
-    actor.underlyingActor.nextSchedule should be (defined)
+    actor.underlyingActor.nextSchedule should be(defined)
     system.stop(actor)
   }
 
@@ -43,9 +52,9 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
 
     Then("The next run is rescheduled")
     eventually(actor.underlyingActor.scheduledAt should be(Some(nextRun)))
-    actor.underlyingActor.nextSchedule should be (defined)
-    actor.underlyingActor.spec should be (update)
-    cancelable.isCancelled should be (true)
+    actor.underlyingActor.nextSchedule should be(defined)
+    actor.underlyingActor.spec should be(update)
+    cancelable.isCancelled should be(true)
     system.stop(actor)
   }
 
@@ -60,11 +69,13 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
 
     Then("The next run is rescheduled")
     eventually(actor.underlyingActor.scheduledAt should be(Some(nextRun)))
-    actor.underlyingActor.nextSchedule should be (defined)
+    actor.underlyingActor.nextSchedule should be(defined)
     system.stop(actor)
   }
 
-  test("If the next scheduled time has reached AND FORBID, a new job run is NOT triggered however a new time is scheduled") {
+  test(
+    "If the next scheduled time has reached AND FORBID, a new job run is NOT triggered however a new time is scheduled"
+  ) {
     Given("A job scheduling actor")
     val f = new Fixture
     val actor = f.scheduleActor
@@ -75,7 +86,7 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
 
     Then("The next run is rescheduled")
     eventually(actor.underlyingActor.scheduledAt should be(Some(nextRun)))
-    actor.underlyingActor.nextSchedule should be (defined)
+    actor.underlyingActor.nextSchedule should be(defined)
     system.stop(actor)
   }
 
@@ -91,7 +102,7 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
 
     Then("The next run is rescheduled")
     eventually(actor.underlyingActor.scheduledAt should be(Some(nextRun)))
-    actor.underlyingActor.nextSchedule should be (defined)
+    actor.underlyingActor.nextSchedule should be(defined)
     system.stop(actor)
   }
 
@@ -103,10 +114,15 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
     val CronSpec(everyMinute) = "* * * * *"
     val CronSpec(everyHourHalfPast) = "30 * * * *"
     val id = JobId("/test")
-    val jobSpec = JobSpec(id).copy(schedules = Seq(
-      ScheduleSpec("every_minute", cron = everyMinute),
-      ScheduleSpec("minutely", cron = everyMinute, concurrencyPolicy = ConcurrencyPolicy.Forbid)))
-    val clock = new SettableClock(Clock.fixed(LocalDateTime.parse("2016-06-01T08:50:12.000").toInstant(ZoneOffset.UTC), ZoneOffset.UTC))
+    val jobSpec = JobSpec(id).copy(schedules =
+      Seq(
+        ScheduleSpec("every_minute", cron = everyMinute),
+        ScheduleSpec("minutely", cron = everyMinute, concurrencyPolicy = ConcurrencyPolicy.Forbid)
+      )
+    )
+    val clock = new SettableClock(
+      Clock.fixed(LocalDateTime.parse("2016-06-01T08:50:12.000").toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
+    )
     val jobRunService = mock[JobRunService]
     def scheduleActor = TestActorRef[JobSpecSchedulerActor](JobSpecSchedulerActor.props(jobSpec, clock, jobRunService))
   }
@@ -114,9 +130,12 @@ class JobSpecSchedulerActorTest extends TestKit(ActorSystem("test")) with FunSui
   class DaylightSavingFixture {
     val CronSpec(everyMinute) = "* * * * *"
     val id = JobId("/daylight")
-    val jobSpec = JobSpec(id).copy(schedules = Seq(ScheduleSpec("every_minute", cron = everyMinute, timeZone = ZoneId.of("Pacific/Fiji"))))
+    val jobSpec = JobSpec(id)
+      .copy(schedules = Seq(ScheduleSpec("every_minute", cron = everyMinute, timeZone = ZoneId.of("Pacific/Fiji"))))
     // 01:59am CDT 2017-11-05 was end of daylight saving time
-    val clock = new SettableClock(Clock.fixed(LocalDateTime.parse("2018-01-13T13:59").toInstant(ZoneOffset.UTC), ZoneOffset.UTC))
+    val clock = new SettableClock(
+      Clock.fixed(LocalDateTime.parse("2018-01-13T13:59").toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
+    )
     val jobRunService = mock[JobRunService]
     def scheduleActor = TestActorRef[JobSpecSchedulerActor](JobSpecSchedulerActor.props(jobSpec, clock, jobRunService))
   }

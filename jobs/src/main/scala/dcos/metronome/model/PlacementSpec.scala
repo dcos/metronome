@@ -1,8 +1,7 @@
 package dcos.metronome
 package model
 
-case class PlacementSpec(
-  constraints: Seq[ConstraintSpec] = PlacementSpec.DefaultConstraints)
+case class PlacementSpec(constraints: Seq[ConstraintSpec] = PlacementSpec.DefaultConstraints)
 object PlacementSpec {
   val DefaultConstraints = Seq.empty[ConstraintSpec]
 }
@@ -16,6 +15,7 @@ object Operator {
   case object Unlike extends Operator { val name = "UNLIKE" }
 
   val all = Seq(Is, Like, Unlike)
+
   /**
     * For backwards compatibility, we map EQ to Is
     */
