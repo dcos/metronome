@@ -1,6 +1,6 @@
 package dcos.metronome
 
-import java.time.{ Clock, Instant, LocalDateTime, ZoneOffset, ZoneId, Duration }
+import java.time.{Clock, Instant, LocalDateTime, ZoneOffset, ZoneId, Duration}
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -13,9 +13,10 @@ object SettableClock {
 
 class SettableClock(private[this] var clock: Clock = SettableClock.defaultJavaClock) extends Clock {
   private[this] var subscribers: List[() => Unit] = Nil
-  def onChange(fn: () => Unit): Unit = synchronized {
-    subscribers = fn :: subscribers
-  }
+  def onChange(fn: () => Unit): Unit =
+    synchronized {
+      subscribers = fn :: subscribers
+    }
 
   override def getZone: ZoneId = clock.getZone
 

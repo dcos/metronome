@@ -1,7 +1,7 @@
 package dcos.metronome
 package scheduler.impl
 
-import akka.actor.{ FSM, Props }
+import akka.actor.{FSM, Props}
 import dcos.metronome.model.Event.ReconciliationFinished
 import dcos.metronome.scheduler.SchedulerConfig
 import dcos.metronome.scheduler.impl.ReconciliationActor._
@@ -12,9 +12,10 @@ import mesosphere.marathon.core.task.tracker.InstanceTracker
 import scala.util.control.NonFatal
 
 class ReconciliationActor(
-  driverHolder:    MarathonSchedulerDriverHolder,
-  instanceTracker: InstanceTracker,
-  config:          SchedulerConfig) extends FSM[State, Data] {
+    driverHolder: MarathonSchedulerDriverHolder,
+    instanceTracker: InstanceTracker,
+    config: SchedulerConfig
+) extends FSM[State, Data] {
 
   startWith(init(), NoData)
 
@@ -103,10 +104,11 @@ class ReconciliationActor(
     }
   }
 
-  private[this] def reconcileImplicitly(): Unit = driverHolder.driver.foreach {
-    log.info("Performing implicit reconciliation")
-    _.reconcileTasks(java.util.Arrays.asList())
-  }
+  private[this] def reconcileImplicitly(): Unit =
+    driverHolder.driver.foreach {
+      log.info("Performing implicit reconciliation")
+      _.reconcileTasks(java.util.Arrays.asList())
+    }
 
 }
 
@@ -125,8 +127,9 @@ object ReconciliationActor {
   case class ReconciliationData(tasks: Iterable[Task]) extends Data
 
   def props(
-    driverHolder:    MarathonSchedulerDriverHolder,
-    instanceTracker: InstanceTracker,
-    config:          SchedulerConfig): Props =
+      driverHolder: MarathonSchedulerDriverHolder,
+      instanceTracker: InstanceTracker,
+      config: SchedulerConfig
+  ): Props =
     Props(new ReconciliationActor(driverHolder, instanceTracker, config))
 }

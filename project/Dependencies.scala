@@ -26,33 +26,37 @@ object Dependencies {
   val asyncAwait = "org.scala-lang.modules" %% "scala-async" % V.AsyncAwait
   val iteratees = "com.typesafe.play" %% "play-iteratees" % V.PlayIteratees
   val playWS = "com.typesafe.play" %% "play-ws" % V.Play
-  val playAhcWS   = "com.typesafe.play" %% "play-ahc-ws" % V.Play
+  val playAhcWS = "com.typesafe.play" %% "play-ahc-ws" % V.Play
   val playJson = "com.typesafe.play" %% "play-json" % V.PlayJson
   val yaml = "net.jcazevedo" %% "moultingyaml" % V.MoultingYaml
   val macWireMacros = "com.softwaremill.macwire" %% "macros" % V.MacWire % "provided"
   val macWireUtil = "com.softwaremill.macwire" %% "util" % V.MacWire
   val macWireProxy = "com.softwaremill.macwire" %% "proxy" % V.MacWire
-  val marathon = "mesosphere.marathon" %% "marathon" % V.Marathon exclude("com.typesafe.play", "*") exclude("mesosphere.marathon", "ui") exclude("mesosphere", "chaos") exclude("org.apache.hadoop", "hadoop-hdfs") exclude("org.apache.hadoop", "hadoop-common") exclude("mesosphere.marathon", "plugin-interface_2.12")
+  val marathon =
+    "mesosphere.marathon" %% "marathon" % V.Marathon exclude ("com.typesafe.play", "*") exclude ("mesosphere.marathon", "ui") exclude ("mesosphere", "chaos") exclude ("org.apache.hadoop", "hadoop-hdfs") exclude ("org.apache.hadoop", "hadoop-common") exclude ("mesosphere.marathon", "plugin-interface_2.12")
   val marathonPlugin = "mesosphere.marathon" %% "plugin-interface" % V.MarathonPluginInterface
-  val cronUtils = "com.cronutils" % "cron-utils" % V.CronUtils exclude("org.threeten", "threetenbp")
+  val cronUtils = "com.cronutils" % "cron-utils" % V.CronUtils exclude ("org.threeten", "threetenbp")
   val wixAccord = "com.wix" %% "accord-core" % V.WixAccord
-  val akka = "com.typesafe.akka" %%  "akka-actor" % V.Akka
-  val akkaSlf4j = "com.typesafe.akka" %%  "akka-slf4j" % V.Akka
+  val akka = "com.typesafe.akka" %% "akka-actor" % V.Akka
+  val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % V.Akka
   val jsonValidate = "com.eclipsesource" %% "play-json-schema-validator" % V.JsonValidate
-  val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % V.Caffeine // we need to override caffeine version because of dependency in dcos plugins
+  val caffeine =
+    "com.github.ben-manes.caffeine" % "caffeine" % V.Caffeine // we need to override caffeine version because of dependency in dcos plugins
   val akkaHttp = Seq(
     "com.typesafe.akka" %% "akka-http" % V.AkkaHttp,
     "com.typesafe.akka" %% "akka-http-xml" % V.AkkaHttp,
-    "de.heikoseeberger" %% "akka-http-play-json" % "1.31.0")
+    "de.heikoseeberger" %% "akka-http-play-json" % "1.31.0"
+  )
 
   object Test {
     val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"
     val scalaCheck = "org.scalacheck" %% "scalacheck" % V.ScalaCheck % "test"
     val scalatestPlay = "org.scalatestplus.play" %% "scalatestplus-play" % V.ScalaTestPlusPlay % "test"
-    val akkaTestKit = "com.typesafe.akka" %%  "akka-testkit" % V.Akka % "test"
+    val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % V.Akka % "test"
     val mockito = "org.mockito" % "mockito-core" % V.Mockito % "test"
 
-    val usiTestUtils = "com.mesosphere.usi" %% "test-utils" % V.UsiTestUtils % "test" exclude("org.apache.zookeeper", "zookeeper")
+    val usiTestUtils =
+      "com.mesosphere.usi" %% "test-utils" % V.UsiTestUtils % "test" exclude ("org.apache.zookeeper", "zookeeper")
 
   }
 }

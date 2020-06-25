@@ -9,19 +9,16 @@ import mesosphere.marathon.core.task.Task
 import scala.concurrent.duration.Duration
 
 case class JobRun(
-  id:               JobRunId,
-  jobSpec:          JobSpec,
-  status:           JobRunStatus,
-  createdAt:        Instant,
-  completedAt:      Option[Instant],
-  startingDeadline: Option[Duration],
-  tasks:            Map[Task.Id, JobRunTask])
+    id: JobRunId,
+    jobSpec: JobSpec,
+    status: JobRunStatus,
+    createdAt: Instant,
+    completedAt: Option[Instant],
+    startingDeadline: Option[Duration],
+    tasks: Map[Task.Id, JobRunTask]
+)
 
-case class JobRunTask(
-  id:          Task.Id,
-  startedAt:   Instant,
-  completedAt: Option[Instant],
-  status:      TaskState)
+case class JobRunTask(id: Task.Id, startedAt: Instant, completedAt: Option[Instant], status: TaskState)
 
 object JobRunTask {
   def apply(task: Task): JobRunTask = {
@@ -31,12 +28,14 @@ object JobRunTask {
       id = task.taskId,
       startedAt = Instant.ofEpochMilli(task.status.stagedAt.millis),
       completedAt = None,
-      status = TaskState(task))
+      status = TaskState(task)
+    )
   }
 }
 
 sealed trait JobRunStatus
 object JobRunStatus {
+
   /** Initial state of a JobRun to indicate it hasn't been persisted yet */
   case object Initial extends JobRunStatus
 
@@ -52,13 +51,9 @@ object JobRunStatus {
   /** no task has been reported finished and we cannot launch another task */
   case object Failed extends JobRunStatus
 
-  val names: Map[String, JobRunStatus] = Map(
-    "INITIAL" -> Initial,
-    "STARTING" -> Starting,
-    "ACTIVE" -> Active,
-    "SUCCESS" -> Success,
-    "FAILED" -> Failed)
-  val statusNames: Map[JobRunStatus, String] = names.map{ case (a, b) => (b, a) }
+  val names: Map[String, JobRunStatus] =
+    Map("INITIAL" -> Initial, "STARTING" -> Starting, "ACTIVE" -> Active, "SUCCESS" -> Success, "FAILED" -> Failed)
+  val statusNames: Map[JobRunStatus, String] = names.map { case (a, b) => (b, a) }
 
   def name(status: JobRunStatus): String = statusNames(status)
   def unapply(name: String): Option[JobRunStatus] = names.get(name)

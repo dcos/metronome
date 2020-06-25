@@ -2,8 +2,8 @@ package dcos.metronome
 package jobspec.impl
 
 import akka.actor._
-import dcos.metronome.model.{ Event, JobId, JobSpec }
-import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
+import dcos.metronome.model.{Event, JobId, JobSpec}
+import dcos.metronome.repository.{LoadContentOnStartup, Repository}
 
 import scala.collection.concurrent.TrieMap
 
@@ -12,9 +12,10 @@ import scala.collection.concurrent.TrieMap
   */
 //noinspection AccessorLikeMethodIsUnit
 class JobSpecServiceActor(
-  val repo:                Repository[JobId, JobSpec],
-  persistenceActorFactory: JobId => Props,
-  schedulerActorFactory:   JobSpec => Props) extends LoadContentOnStartup[JobId, JobSpec] {
+    val repo: Repository[JobId, JobSpec],
+    persistenceActorFactory: JobId => Props,
+    schedulerActorFactory: JobSpec => Props
+) extends LoadContentOnStartup[JobId, JobSpec] {
   import JobSpecPersistenceActor._
   import JobSpecServiceActor._
 
@@ -25,20 +26,20 @@ class JobSpecServiceActor(
 
   override def receive: Receive = {
     // crud messages
-    case CreateJobSpec(jobSpec)             => createJobSpec(jobSpec)
-    case UpdateJobSpec(id, change)          => updateJobSpec(id, change)
-    case DeleteJobSpec(id)                  => deleteJobSpec(id)
-    case GetJobSpec(id)                     => getJobSpec(id)
-    case ListJobSpecs(filter)               => listJobSpecs(filter)
+    case CreateJobSpec(jobSpec) => createJobSpec(jobSpec)
+    case UpdateJobSpec(id, change) => updateJobSpec(id, change)
+    case DeleteJobSpec(id) => deleteJobSpec(id)
+    case GetJobSpec(id) => getJobSpec(id)
+    case ListJobSpecs(filter) => listJobSpecs(filter)
 
     // persistence ack messages
-    case Created(_, jobSpec, delegate)      => jobSpecCreated(jobSpec, delegate)
-    case Updated(_, jobSpec, delegate)      => jobSpecUpdated(jobSpec, delegate)
-    case Deleted(_, jobSpec, delegate)      => jobSpecDeleted(jobSpec, delegate)
+    case Created(_, jobSpec, delegate) => jobSpecCreated(jobSpec, delegate)
+    case Updated(_, jobSpec, delegate) => jobSpecUpdated(jobSpec, delegate)
+    case Deleted(_, jobSpec, delegate) => jobSpecDeleted(jobSpec, delegate)
     case PersistFailed(_, id, ex, delegate) => jobChangeFailed(id, ex, delegate)
 
     // lifetime messages
-    case Terminated(ref)                    => handleTerminated(ref)
+    case Terminated(ref) => handleTerminated(ref)
   }
 
   def getJobSpec(id: JobId): Unit = {
@@ -80,13 +81,15 @@ class JobSpecServiceActor(
   }
 
   def noSpecWithId(jobSpec: JobSpec)(change: => Unit): Unit = {
-    if (allJobs.contains(jobSpec.id)) sender() ! Status.Failure(JobSpecAlreadyExists(jobSpec.id)) else {
+    if (allJobs.contains(jobSpec.id)) sender() ! Status.Failure(JobSpecAlreadyExists(jobSpec.id))
+    else {
       change
     }
   }
 
   def noChangeInFlight[T](jobSpec: JobSpec)(change: => Unit): Unit = {
-    if (inFlightChanges.contains(jobSpec.id)) sender() ! Status.Failure(JobSpecChangeInFlight(jobSpec.id)) else {
+    if (inFlightChanges.contains(jobSpec.id)) sender() ! Status.Failure(JobSpecChangeInFlight(jobSpec.id))
+    else {
       inFlightChanges += jobSpec.id
       change
     }
@@ -123,10 +126,11 @@ class JobSpecServiceActor(
   }
 
   def jobSpecDeleted(jobSpec: JobSpec, delegate: ActorRef): Unit = {
-    def removeFrom(map: TrieMap[JobId, ActorRef]) = map.remove(jobSpec.id).foreach { actorRef =>
-      context.unwatch(actorRef)
-      context.stop(actorRef)
-    }
+    def removeFrom(map: TrieMap[JobId, ActorRef]) =
+      map.remove(jobSpec.id).foreach { actorRef =>
+        context.unwatch(actorRef)
+        context.stop(actorRef)
+      }
     allJobs -= jobSpec.id
     inFlightChanges -= jobSpec.id
     removeFrom(persistenceActors)
@@ -157,15 +161,16 @@ class JobSpecServiceActor(
 
   def scheduleActor(jobSpec: JobSpec): Option[ActorRef] = {
     //TODO: create actors for every schedule, not only head option
-    def newActor: Option[ActorRef] = jobSpec.schedules.headOption match {
-      case Some(schedule) if schedule.enabled =>
-        val ref = context.actorOf(schedulerActorFactory(jobSpec), s"scheduler:${jobSpec.id.safePath}")
-        context.watch(ref)
-        scheduleActors += jobSpec.id -> ref
-        Some(ref)
-      case _ => // Nothing to do since the schedule is disabled
-        None
-    }
+    def newActor: Option[ActorRef] =
+      jobSpec.schedules.headOption match {
+        case Some(schedule) if schedule.enabled =>
+          val ref = context.actorOf(schedulerActorFactory(jobSpec), s"scheduler:${jobSpec.id.safePath}")
+          context.watch(ref)
+          scheduleActors += jobSpec.id -> ref
+          Some(ref)
+        case _ => // Nothing to do since the schedule is disabled
+          None
+      }
     scheduleActors.get(jobSpec.id) orElse newActor
   }
 
@@ -185,7 +190,8 @@ object JobSpecServiceActor {
   case class DeleteJobSpec(id: JobId)
 
   def props(
-    repo:                    Repository[JobId, JobSpec],
-    persistenceActorFactory: JobId => Props,
-    schedulerActorFactory:   JobSpec => Props): Props = Props(new JobSpecServiceActor(repo, persistenceActorFactory, schedulerActorFactory))
+      repo: Repository[JobId, JobSpec],
+      persistenceActorFactory: JobId => Props,
+      schedulerActorFactory: JobSpec => Props
+  ): Props = Props(new JobSpecServiceActor(repo, persistenceActorFactory, schedulerActorFactory))
 }

@@ -27,6 +27,7 @@ import scala.util.Try
 import scala.concurrent.duration._
 
 object MetronomeFramework {
+
   /**
     * Runs a metronome server for the given test suite
     * @param suiteName The test suite that owns this marathon
@@ -36,15 +37,13 @@ object MetronomeFramework {
     * @param mainClass The main class
     */
   case class LocalMetronome(
-    suiteName: String,
-    masterUrl: String,
-    zkUrl:     String,
-    conf:      Map[String, String] = Map.empty,
-    mainClass: String              = "play.core.server.ProdServerStart")(implicit
-    val system: ActorSystem,
-                                                                         val mat:       Materializer,
-                                                                         val ctx:       ExecutionContext,
-                                                                         val scheduler: Scheduler) extends MetronomeBase {
+      suiteName: String,
+      masterUrl: String,
+      zkUrl: String,
+      conf: Map[String, String] = Map.empty,
+      mainClass: String = "play.core.server.ProdServerStart"
+  )(implicit val system: ActorSystem, val mat: Materializer, val ctx: ExecutionContext, val scheduler: Scheduler)
+      extends MetronomeBase {
 
     // it'd be great to be able to execute in memory, but we can't due to GuiceFilter using a static :(
     val processBuilder = {
@@ -57,7 +56,18 @@ object MetronomeFramework {
 
       val cmd = Seq(java, "-Xmx1024m", "-Xms256m", "-XX:+UseConcMarkSweepGC", "-XX:ConcGCThreads=2") ++
         runtimeArguments ++ akkaJvmArgs ++
-        Seq(s"-DmarathonUUID=$uuid -DtestSuite=$suiteName", s"-Dmetronome.zk.url=$zkUrl", s"-Dmetronome.mesos.master.url=$masterUrl", s"-Dmetronome.framework.name=metronome-$uuid", s"-Dplay.server.http.port=$httpPort", s"-Dplay.server.https.port=$httpsPort", "-classpath", cp, "-client", mainClass) // ++ args
+        Seq(
+          s"-DmarathonUUID=$uuid -DtestSuite=$suiteName",
+          s"-Dmetronome.zk.url=$zkUrl",
+          s"-Dmetronome.mesos.master.url=$masterUrl",
+          s"-Dmetronome.framework.name=metronome-$uuid",
+          s"-Dplay.server.http.port=$httpPort",
+          s"-Dplay.server.https.port=$httpsPort",
+          "-classpath",
+          cp,
+          "-client",
+          mainClass
+        ) // ++ args
 
       logger.info(s"Starting process in ${workDir}, Cmd is ${cmd}")
 
@@ -95,7 +105,8 @@ object MetronomeFramework {
       "-Dakka.actor.default-dispatcher.fork-join-executor.factor=1",
       "-Dakka.actor.default-dispatcher.fork-join-executor.parallelism-max=4",
       "-Dscala.concurrent.context.minThreads=2",
-      "-Dscala.concurrent.context.maxThreads=32")
+      "-Dscala.concurrent.context.maxThreads=32"
+    )
 
     val workDir = {
       val f = Files.createTempDirectory(s"metronome-$httpPort").toFile
@@ -167,7 +178,13 @@ object MetronomeFramework {
 
       val port = conf.get("http_port").orElse(conf.get("https_port")).map(_.toInt).getOrElse(httpPort)
       var request = Get(s"http://localhost:$port/leader")
-      val future = Retry(s"Waiting for Metronome on $port", maxAttempts = Int.MaxValue, minDelay = 1.milli, maxDelay = 5.seconds, maxDuration = 4.minutes) {
+      val future = Retry(
+        s"Waiting for Metronome on $port",
+        maxAttempts = Int.MaxValue,
+        minDelay = 1.milli,
+        maxDelay = 5.seconds,
+        maxDuration = 4.minutes
+      ) {
         logger.info(s"Waiting for Metronome on port $port")
         async {
           val result = await(Http().singleRequest(request))
@@ -176,7 +193,7 @@ object MetronomeFramework {
           if (result.status.isSuccess()) { // linter:ignore //async/await
             logger.info("Metronome is reachable.")
             Done
-          } else if(result.status == StatusCodes.NotFound) {
+          } else if (result.status == StatusCodes.NotFound) {
             logger.warn("Did not find /leader. Falling back to /ping")
             request = Get(s"http://localhost:$port/ping")
             throw new Exception(s"Metronome on port=$port has no /leader, retrying with /ping...")
@@ -194,15 +211,17 @@ object MetronomeFramework {
     def exitValue(): Option[Int] = marathonProcess.map(_.exitValue())
 
     def stop(): Future[Done] = {
-      marathonProcess.fold(Future.successful(Done)){ p =>
-        logger.info(s"Shutdown Metronome Framework ${suiteName}")
-        p.destroy()
-        p.exitValue()
-        Future.successful(Done)
-      }.andThen {
-        case _ =>
-          marathonProcess = Option.empty[Process]
-      }
+      marathonProcess
+        .fold(Future.successful(Done)) { p =>
+          logger.info(s"Shutdown Metronome Framework ${suiteName}")
+          p.destroy()
+          p.exitValue()
+          Future.successful(Done)
+        }
+        .andThen {
+          case _ =>
+            marathonProcess = Option.empty[Process]
+        }
     }
 
     def restart(): Future[Done] = {

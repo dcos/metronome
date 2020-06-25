@@ -4,10 +4,10 @@ package model
 import java.time.ZonedDateTime
 
 import com.cronutils.model.Cron
-import com.cronutils.model.definition.{ CronConstraint, CronDefinition, CronDefinitionBuilder }
-import com.cronutils.model.field.expression.{ Between, On }
+import com.cronutils.model.definition.{CronConstraint, CronDefinition, CronDefinitionBuilder}
+import com.cronutils.model.field.expression.{Between, On}
 import com.cronutils.model.field.value.IntegerFieldValue
-import com.cronutils.model.field.{ CronField, CronFieldName }
+import com.cronutils.model.field.{CronField, CronFieldName}
 import com.cronutils.model.time.ExecutionTime
 import com.cronutils.parser.CronParser
 
@@ -27,25 +27,41 @@ class CronSpec(val cron: Cron) {
 
   override def hashCode(): Int = cron.hashCode()
 
-  override def equals(obj: scala.Any): Boolean = obj match {
-    case other: CronSpec => other.cron.asString() == cron.asString()
-    case _               => false
-  }
+  override def equals(obj: scala.Any): Boolean =
+    obj match {
+      case other: CronSpec => other.cron.asString() == cron.asString()
+      case _ => false
+    }
 
   override def toString: String = cron.asString()
 }
 
 object CronSpec {
   val cronDefinition: CronDefinition =
-    CronDefinitionBuilder.defineCron()
-      .withMinutes().and()
-      .withHours().and()
+    CronDefinitionBuilder
+      .defineCron()
+      .withMinutes()
+      .and()
+      .withHours()
+      .and()
       .withDayOfMonth()
-      .supportsHash().supportsL().supportsW().and()
-      .withMonth().and()
-      .withDayOfWeek().withValidRange(0, 7).withMondayDoWValue(1).withIntMapping(7, 0) //we support non-standard non-zero-based numbers!
-      .supportsHash().supportsL().supportsW().and()
-      .withYear().optional().and()
+      .supportsHash()
+      .supportsL()
+      .supportsW()
+      .and()
+      .withMonth()
+      .and()
+      .withDayOfWeek()
+      .withValidRange(0, 7)
+      .withMondayDoWValue(1)
+      .withIntMapping(7, 0) //we support non-standard non-zero-based numbers!
+      .supportsHash()
+      .supportsL()
+      .supportsW()
+      .and()
+      .withYear()
+      .optional()
+      .and()
       .matchDayOfWeekAndDayOfMonth() // the regular UNIX cron definition permits matching either DoW or DoM
       .withCronValidation(new CronDaysInMonthValidation)
       .instance()
@@ -66,7 +82,8 @@ object CronSpec {
 }
 
 object CronSpecValidation {
-  val validDayOfMonth = "Day of the month must exist in the provided month (e.g. February has only <= 29 days so running cron on Feb 30 is invalid)"
+  val validDayOfMonth =
+    "Day of the month must exist in the provided month (e.g. February has only <= 29 days so running cron on Feb 30 is invalid)"
 }
 
 /**
@@ -82,15 +99,16 @@ class CronDaysInMonthValidation extends CronConstraint(CronSpecValidation.validD
     day <= maxDaysOfMonth(month - 1)
   }
 
-  def getValuesFromCron(field: CronField): Seq[Int] = field.getExpression match {
-    case fieldValue: On => Seq(fieldValue.getTime.getValue)
-    case fieldValue: Between =>
-      (fieldValue.getFrom, fieldValue.getTo) match {
-        case (f: IntegerFieldValue, t: IntegerFieldValue) => Array.range(f.getValue, t.getValue).to[Seq]
-        case _ => Seq.empty
-      }
-    case _ => Seq.empty
-  }
+  def getValuesFromCron(field: CronField): Seq[Int] =
+    field.getExpression match {
+      case fieldValue: On => Seq(fieldValue.getTime.getValue)
+      case fieldValue: Between =>
+        (fieldValue.getFrom, fieldValue.getTo) match {
+          case (f: IntegerFieldValue, t: IntegerFieldValue) => Array.range(f.getValue, t.getValue).to[Seq]
+          case _ => Seq.empty
+        }
+      case _ => Seq.empty
+    }
 
   override def validate(cron: Cron): Boolean = {
     val maybeDay = Option(cron.retrieve(CronFieldName.DAY_OF_MONTH))

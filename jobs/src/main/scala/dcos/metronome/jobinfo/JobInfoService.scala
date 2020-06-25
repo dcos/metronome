@@ -4,7 +4,7 @@ package jobinfo
 import dcos.metronome.jobinfo.JobInfo.Embed
 import dcos.metronome.model.JobId
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Queries for extended information about JobSpecs.
@@ -20,7 +20,9 @@ trait JobInfoService {
     * @param ec the execution context to run on.
     * @return Some(JobInfo) if the id exists and can be selected otherwise false.
     */
-  def selectJob(jobSpecId: JobId, selector: JobSpecSelector, embed: Set[Embed])(implicit ec: ExecutionContext): Future[Option[JobInfo]]
+  def selectJob(jobSpecId: JobId, selector: JobSpecSelector, embed: Set[Embed])(implicit
+      ec: ExecutionContext
+  ): Future[Option[JobInfo]]
 
   /**
     * Select all jobs based on the given selector.

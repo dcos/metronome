@@ -7,7 +7,8 @@ import dcos.metronome.scheduler.TaskState
 import mesosphere.marathon.core.task.Task
 
 case class TaskStateChangedEvent(
-  taskId:    Task.Id,
-  taskState: TaskState,
-  timestamp: Instant,
-  eventType: String    = "task_changed_event")
+    taskId: Task.Id,
+    taskState: TaskState,
+    timestamp: Instant,
+    eventType: String = "task_changed_event"
+)

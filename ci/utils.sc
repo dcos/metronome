@@ -56,28 +56,28 @@ def printStageTitle(name: String): Unit = {
 }
 
 case class BuildException(val cmd: String, val exitValue: Int, private val cause: Throwable = None.orNull)
-  extends Exception(s"'$cmd' exited with $exitValue", cause)
+    extends Exception(s"'$cmd' exited with $exitValue", cause)
 case class StageException(private val message: String = "", private val cause: Throwable = None.orNull)
-  extends Exception(message, cause)
+    extends Exception(message, cause)
 def stage[T](name: String)(block: => T): T = {
   printStageTitle(name)
 
   try {
     block
-  }
-  catch { case NonFatal(e) =>
-    throw new StageException(s"Stage $name failed.", e)
+  } catch {
+    case NonFatal(e) =>
+      throw new StageException(s"Stage $name failed.", e)
   }
 }
 
 /**
- * Run a process with given commands and time out it runs too long.
- *
+  * Run a process with given commands and time out it runs too long.
+  *
  * @param timeout The maximum time to wait.
- * @param logFileName Name of file which collects all logs.
- * @param commands The commands that are executed in a process. E.g. "sbt",
- *  "compile".
- */
+  * @param logFileName Name of file which collects all logs.
+  * @param commands The commands that are executed in a process. E.g. "sbt",
+  *  "compile".
+  */
 def runWithTimeout(timeout: FiniteDuration, logFileName: String)(commands: Seq[String]): Unit = {
 
   val builder = new java.lang.ProcessBuilder()
@@ -87,20 +87,20 @@ def runWithTimeout(timeout: FiniteDuration, logFileName: String)(commands: Seq[S
     .inheritIO()
     .start()
 
-    val exited = buildProcess.waitFor(timeout.length, timeout.unit)
+  val exited = buildProcess.waitFor(timeout.length, timeout.unit)
 
-    if (exited) {
-      val exitValue = buildProcess.exitValue
-      if(buildProcess.exitValue != 0) {
-        val cmd = commands.mkString(" ")
-        throw new utils.BuildException(cmd, exitValue)
-      }
-    } else {
-      // The process timed out. Try to kill it.
-      buildProcess.destroyForcibly().waitFor()
+  if (exited) {
+    val exitValue = buildProcess.exitValue
+    if (buildProcess.exitValue != 0) {
       val cmd = commands.mkString(" ")
-      throw new java.util.concurrent.TimeoutException(s"'$cmd' timed out after $timeout.")
+      throw new utils.BuildException(cmd, exitValue)
     }
+  } else {
+    // The process timed out. Try to kill it.
+    buildProcess.destroyForcibly().waitFor()
+    val cmd = commands.mkString(" ")
+    throw new java.util.concurrent.TimeoutException(s"'$cmd' timed out after $timeout.")
+  }
 }
 
 def withCleanUp[T](block: => T): T = {
@@ -109,15 +109,15 @@ def withCleanUp[T](block: => T): T = {
 }
 
 /**
- * @return True if build is on master build.
- */
+  * @return True if build is on master build.
+  */
 def isMasterBuild(): Boolean = {
   sys.env.get("JOB_NAME").contains("marathon-pipelines/master")
 }
 
 /**
- * @return True if build is for pull request.
- */
+  * @return True if build is for pull request.
+  */
 def isPullRequest(): Boolean = {
   val pr = """Metronome/metronome-pipelines/PR-(\d+)""".r
   sys.env.get("JOB_NAME").collect { case pr(_) => true }.getOrElse(false)
@@ -151,4 +151,3 @@ object SemVer {
         throw new IllegalArgumentException(s"Could not parse version $version.")
     }
 }
-

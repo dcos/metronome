@@ -1,20 +1,25 @@
 package dcos.metronome
 package api.v0.controllers
 
-import dcos.metronome.api.v1.models.{ JobSpecFormat => _, _ }
-import dcos.metronome.api.{ MockApiComponents, OneAppPerTestWithComponents, TestAuthFixture, UnknownJob }
+import dcos.metronome.api.v1.models.{JobSpecFormat => _, _}
+import dcos.metronome.api.{MockApiComponents, OneAppPerTestWithComponents, TestAuthFixture, UnknownJob}
 import dcos.metronome.model._
 import mesosphere.marathon.core.plugin.PluginManager
-import org.scalatest.{ BeforeAndAfter, GivenWhenThen }
+import org.scalatest.{BeforeAndAfter, GivenWhenThen}
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{ Millis, Seconds, Span }
+import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.play.PlaySpec
 import play.api.ApplicationLoader.Context
 import play.api.libs.json._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
-class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComponents[MockApiComponents] with GivenWhenThen with ScalaFutures with BeforeAndAfter {
+class ScheduledJobSpecControllerTest
+    extends PlaySpec
+    with OneAppPerTestWithComponents[MockApiComponents]
+    with GivenWhenThen
+    with ScalaFutures
+    with BeforeAndAfter {
 
   import ScheduledJobSpecController._
   implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
@@ -170,8 +175,7 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
 
   "Artifacts and user are correctly deserialized" in {
     Given("a json with artifacts")
-    val json = Json.parse(
-      """
+    val json = Json.parse("""
         |{
         |  "id": "test-user-override",
         |  "run": {
@@ -213,7 +217,8 @@ class ScheduledJobSpecControllerTest extends PlaySpec with OneAppPerTestWithComp
     auth.authenticated = true
   }
 
-  override def createComponents(context: Context): MockApiComponents = new MockApiComponents(context) {
-    override lazy val pluginManager: PluginManager = auth.pluginManager
-  }
+  override def createComponents(context: Context): MockApiComponents =
+    new MockApiComponents(context) {
+      override lazy val pluginManager: PluginManager = auth.pluginManager
+    }
 }

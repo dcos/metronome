@@ -1,7 +1,7 @@
 package dcos.metronome.integrationtest
 
-import org.scalatest.time.{ Minutes, Span }
-import play.api.libs.json.{ JsArray, JsObject }
+import org.scalatest.time.{Minutes, Span}
+import play.api.libs.json.{JsArray, JsObject}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._

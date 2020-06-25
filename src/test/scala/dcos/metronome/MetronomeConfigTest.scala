@@ -1,7 +1,7 @@
 package dcos.metronome
 
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{ FunSuite, GivenWhenThen, Matchers }
+import org.scalatest.{FunSuite, GivenWhenThen, Matchers}
 import play.api.Configuration
 
 class MetronomeConfigTest extends FunSuite with Matchers with GivenWhenThen {

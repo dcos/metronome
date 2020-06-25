@@ -1,20 +1,19 @@
-#!/usr/bin/env amm
+#!/ usr / bin / env amm
 
 import ammonite.ops._
 import ammonite.ops.ImplicitWd._
 import scala.util.control.NonFatal
 
 /**
- * Finds the version of the Mesos Debian package in "project/Dependencies.scala"
- * and installs it.
- */
+  * Finds the version of the Mesos Debian package in "project/Dependencies.scala"
+  * and installs it.
+  */
 @main
 def installMesos(): Unit = {
   // Find Mesos version
   val versionPattern = """.*MesosDebian = "(.*)"""".r
   val maybeVersion =
-      read.lines(pwd/'project/"Dependencies.scala")
-          .collectFirst { case versionPattern(v) => v }
+    read.lines(pwd / 'project / "Dependencies.scala").collectFirst { case versionPattern(v) => v }
 
   // Install Mesos
   def install_mesos(version: String): Unit = {
@@ -42,8 +41,8 @@ def installMesos(): Unit = {
 }
 
 /**
- * Kill stale processes from previous pipeline runs.
- */
+  * Kill stale processes from previous pipeline runs.
+  */
 @main
 def killStaleTestProcesses(): Unit = {
   def protectedProcess(proc: String): Boolean =
@@ -52,9 +51,10 @@ def killStaleTestProcesses(): Unit = {
   def eligibleProcess(proc: String): Boolean =
     Vector("app_mock", "mesos", "java").exists(proc.contains)
 
-  def processesToKill() = %%('ps, 'aux).out.lines.filter { proc =>
-    eligibleProcess(proc) && !protectedProcess(proc)
-  }
+  def processesToKill() =
+    %%('ps, 'aux).out.lines.filter { proc =>
+      eligibleProcess(proc) && !protectedProcess(proc)
+    }
 
   val leaks = processesToKill()
 
@@ -63,7 +63,7 @@ def killStaleTestProcesses(): Unit = {
   } else {
     println("This requires root permissions. If you run this on a workstation it'll kill more than you expect.\n")
     println(s"Will kill:")
-    leaks.foreach( p => println(s"  $p"))
+    leaks.foreach(p => println(s"  $p"))
 
     val pidPattern = """([^\s]+)\s+([^\s]+)\s+.*""".r
 
@@ -81,7 +81,7 @@ def killStaleTestProcesses(): Unit = {
     val undead = processesToKill()
     if (undead.nonEmpty) {
       println("Couldn't kill some leaked processes:")
-      undead.foreach( p => println(s"  $p"))
+      undead.foreach(p => println(s"  $p"))
     }
   }
 }

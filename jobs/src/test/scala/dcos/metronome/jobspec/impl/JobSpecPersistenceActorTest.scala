@@ -3,17 +3,26 @@ package jobspec.impl
 
 import akka.actor.ActorSystem
 import akka.testkit._
-import dcos.metronome.model.{ JobId, JobSpec }
+import dcos.metronome.model.{JobId, JobSpec}
 import dcos.metronome.repository.Repository
 import dcos.metronome.utils.test.Mockito
 import mesosphere.marathon.metrics.dummy.DummyMetrics
 import org.scalatest._
-import org.scalatest.concurrent.{ Eventually, ScalaFutures }
+import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
-class JobSpecPersistenceActorTest extends TestKit(ActorSystem("test")) with FunSuiteLike with BeforeAndAfterAll with GivenWhenThen with ScalaFutures with Matchers with Eventually with ImplicitSender with Mockito {
+class JobSpecPersistenceActorTest
+    extends TestKit(ActorSystem("test"))
+    with FunSuiteLike
+    with BeforeAndAfterAll
+    with GivenWhenThen
+    with ScalaFutures
+    with Matchers
+    with Eventually
+    with ImplicitSender
+    with Mockito {
 
   import JobSpecPersistenceActor._
   import system.dispatcher

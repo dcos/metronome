@@ -5,7 +5,7 @@ import akka.Done
 import akka.event.EventStream
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.scheduler.TaskState
-import mesosphere.marathon.core.instance.update.{ InstanceChange, InstanceChangeHandler }
+import mesosphere.marathon.core.instance.update.{InstanceChange, InstanceChangeHandler}
 import java.time.Clock
 
 import scala.concurrent.Future
@@ -19,7 +19,8 @@ class NotifyOfTaskStateOperationStep(eventBus: EventStream, clock: Clock) extend
       val event = TaskStateChangedEvent(
         taskId = instanceChange.instance.appTask.taskId,
         taskState = state,
-        timestamp = clock.instant())
+        timestamp = clock.instant()
+      )
       eventBus.publish(event)
     }
 

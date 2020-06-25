@@ -8,14 +8,15 @@ import dcos.metronome.model._
   * This class represents a JobSpec with optional enriched data.
   */
 case class JobInfo(
-  id:             JobId,
-  description:    Option[String],
-  labels:         Map[String, String],
-  run:            JobRunSpec,
-  schedules:      Option[Seq[ScheduleSpec]],
-  activeRuns:     Option[Iterable[StartedJobRun]],
-  history:        Option[JobHistory],
-  historySummary: Option[JobHistorySummary])
+    id: JobId,
+    description: Option[String],
+    labels: Map[String, String],
+    run: JobRunSpec,
+    schedules: Option[Seq[ScheduleSpec]],
+    activeRuns: Option[Iterable[StartedJobRun]],
+    history: Option[JobHistory],
+    historySummary: Option[JobHistorySummary]
+)
 
 object JobInfo {
   sealed trait Embed
@@ -24,7 +25,8 @@ object JobInfo {
       "activeRuns" -> ActiveRuns,
       "schedules" -> Schedules,
       "history" -> History,
-      "historySummary" -> HistorySummary)
+      "historySummary" -> HistorySummary
+    )
     case object Schedules extends Embed
     case object ActiveRuns extends Embed
     case object History extends Embed
@@ -32,11 +34,12 @@ object JobInfo {
   }
 
   def apply(
-    spec:      JobSpec,
-    schedules: Option[Seq[ScheduleSpec]],
-    runs:      Option[Iterable[StartedJobRun]],
-    history:   Option[JobHistory],
-    summary:   Option[JobHistorySummary]): JobInfo = {
+      spec: JobSpec,
+      schedules: Option[Seq[ScheduleSpec]],
+      runs: Option[Iterable[StartedJobRun]],
+      history: Option[JobHistory],
+      summary: Option[JobHistorySummary]
+  ): JobInfo = {
     JobInfo(spec.id, spec.description, spec.labels, spec.run, schedules, runs, history, summary)
   }
 }

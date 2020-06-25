@@ -1,4 +1,4 @@
-#!/usr/bin/env amm
+#!/ usr / bin / env amm
 
 import ammonite.ops._
 import ammonite.ops.ImplicitWd._
@@ -11,18 +11,19 @@ import scalaj.http._
 import upickle._
 
 /**
- * Makes a POST request to GitHub's API with path and body.
- * E.g. "repos/dcos/metronome/pulls/5513/reviews" would post the body as a
- * comment.
- *
+  * Makes a POST request to GitHub's API with path and body.
+  * E.g. "repos/dcos/metronome/pulls/5513/reviews" would post the body as a
+  * comment.
+  *
  * @param path The API path. See path in
- *   https://developer.github.com/v3/pulls/reviews/#create-a-pull-request-review
- *   for an example.
- * @param body The body of the post request.
- */
-def execute(path:String, body: String): Unit = {
+  *   https://developer.github.com/v3/pulls/reviews/#create-a-pull-request-review
+  *   for an example.
+  * @param body The body of the post request.
+  */
+def execute(path: String, body: String): Unit = {
   val GITHUB_API_TOKEN =
-    sys.env.getOrElse("GIT_PASSWORD", throw new IllegalArgumentException("GIT_PASSWORD enviroment variable was not set."))
+    sys.env
+      .getOrElse("GIT_PASSWORD", throw new IllegalArgumentException("GIT_PASSWORD enviroment variable was not set."))
   val GITHUB_API_USER =
     sys.env.getOrElse("GIT_USER", throw new IllegalArgumentException("GIT_USER enviroment variable was not set."))
 
@@ -35,46 +36,44 @@ def execute(path:String, body: String): Unit = {
 }
 
 /**
- * Comment with msg on pull request with pullNumber.
- */
+  * Comment with msg on pull request with pullNumber.
+  */
 def comment(pullNumber: String, msg: String, event: String = "COMMENT"): Unit = {
   val request = Js.Obj(
-    "body"  -> Js.Str(msg),
+    "body" -> Js.Str(msg),
     "event" -> Js.Str(event)
-    )
+  )
   val path = s"repos/dcos/metronome/pulls/$pullNumber/reviews"
   execute(path, request.toString)
 }
 
 /**
- * Reject pull request with pullNumber.
- */
-def reject(
-  pullNumber: String,
-  buildUrl: String,
-  buildTag: String): Unit = {
+  * Reject pull request with pullNumber.
+  */
+def reject(pullNumber: String, buildUrl: String, buildTag: String): Unit = {
   val msg = s"I'm building your change at [$buildTag]($buildUrl)."
 
   comment(pullNumber, msg, "REQUEST_CHANGES")
 }
 
 /**
- * Collect test results.
- *
+  * Collect test results.
+  *
  * @return the parsed test results.
- */
+  */
 @main
 def collectTestResults(): Js.Arr = {
 
   try {
     // Join all results
-    val testResults = ls! pwd / 'target / "phabricator-test-reports" |? ( _.ext == "json")
-    val joinedTestResults: Js.Arr = testResults.view.map(read!)
+    val testResults = ls ! pwd / 'target / "phabricator-test-reports" |? (_.ext == "json")
+    val joinedTestResults: Js.Arr = testResults.view
+      .map(read !)
       .map(upickle.json.read)
       .collect { case a: Js.Arr => a }
       .reduce { (l: Js.Arr, r: Js.Arr) =>
         val n = l.arr ++ r.arr
-        Js.Arr(n :_*)
+        Js.Arr(n: _*)
       }
 
     joinedTestResults
@@ -86,29 +85,29 @@ def collectTestResults(): Js.Arr = {
 }
 
 /**
- * Report success of diff build back to GitHub.
- *
+  * Report success of diff build back to GitHub.
+  *
  * @param pullNumber The pull request of the build.
- * @param buildUrl A link back to the build on Jenkins.
- * @param buildTag Identifies build.
- * @param maybeArtifact A description of the Metronome binary that has been uploaded.
- *    It's None when now package was uploaded.
- */
+  * @param buildUrl A link back to the build on Jenkins.
+  * @param buildTag Identifies build.
+  * @param maybeArtifact A description of the Metronome binary that has been uploaded.
+  *    It's None when now package was uploaded.
+  */
 def reportSuccess(
-  pullNumber: String,
-  buildUrl: String,
-  buildTag: String,
-  maybeArtifact: Option[awsClient.Artifact]): Unit = {
+    pullNumber: String,
+    buildUrl: String,
+    buildTag: String,
+    maybeArtifact: Option[awsClient.Artifact]
+): Unit = {
 
   val testResults = collectTestResults()
 
   // Collect unsound, i.e. canceled, tests
-  val unsoundTests = testResults.value
-    .collect { case test: Js.Obj if test("result").value == "unsound" => test  }
+  val unsoundTests = testResults.value.collect { case test: Js.Obj if test("result").value == "unsound" => test }
   val hasUnsoundTests = unsoundTests.nonEmpty
 
   // Construct message
-  val buildinfoDiff = maybeArtifact.fold(""){ artifact =>
+  val buildinfoDiff = maybeArtifact.fold("") { artifact =>
     s"""
       |```json
       |"url": "${artifact.downloadUrl}",
@@ -132,7 +131,7 @@ def reportSuccess(
   if (!hasUnsoundTests) {
     msg += "**＼\\ ٩( ᐛ )و /／**"
   } else {
-    val unsoundTestsList: String = unsoundTests.foldLeft("") { (msg:String, test: Js.Obj) =>
+    val unsoundTestsList: String = unsoundTests.foldLeft("") { (msg: String, test: Js.Obj) =>
       msg + s"""\n- `${test("name").value}`"""
     }
 
@@ -146,22 +145,18 @@ def reportSuccess(
     |""".stripMargin
   }
 
-  comment(pullNumber, msg, event="APPROVE")
+  comment(pullNumber, msg, event = "APPROVE")
 }
 
 /**
- * Report failure of build back to GitHub.
- *
+  * Report failure of build back to GitHub.
+  *
  * @param pullNumber The pull request of the build.
- * @param buildUrl A link back to the build on Jenkins.
- * @param buildTag Identifies build.
- * @param msg The error message for the failure.
- */
-def reportFailure(
-  pullNumber: String,
-  buildUrl: String,
-  buildTag: String,
-  msg: String) : Unit = {
+  * @param buildUrl A link back to the build on Jenkins.
+  * @param buildTag Identifies build.
+  * @param msg The error message for the failure.
+  */
+def reportFailure(pullNumber: String, buildUrl: String, buildTag: String, msg: String): Unit = {
 
   val body = s"""
     |**\u2717 Build of #$pullNumber failed.**
@@ -174,5 +169,5 @@ def reportFailure(
     |**(๑′°︿°๑)**
     |""".stripMargin
 
-  comment(pullNumber, body, event="REQUEST_CHANGES")
+  comment(pullNumber, body, event = "REQUEST_CHANGES")
 }

@@ -1,13 +1,13 @@
 package dcos.metronome
 package jobrun.impl
 
-import java.time.{ Clock, LocalDateTime, ZoneOffset }
+import java.time.{Clock, LocalDateTime, ZoneOffset}
 import java.util.concurrent.LinkedBlockingDeque
 
-import akka.actor.{ ActorSystem, Props }
+import akka.actor.{ActorSystem, Props}
 import akka.testkit._
 import dcos.metronome.jobrun.StartedJobRun
-import dcos.metronome.jobrun.impl.JobRunExecutorActor.{ Aborted, Finished }
+import dcos.metronome.jobrun.impl.JobRunExecutorActor.{Aborted, Finished}
 import dcos.metronome.jobrun.impl.JobRunServiceActor._
 import dcos.metronome.model._
 import dcos.metronome.repository.impl.InMemoryRepository
@@ -15,12 +15,20 @@ import dcos.metronome.utils.test.Mockito
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.metrics.dummy.DummyMetrics
 import org.scalatest._
-import org.scalatest.concurrent.{ Eventually, ScalaFutures }
+import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
-import scala.concurrent.{ Future, Promise }
+import scala.concurrent.{Future, Promise}
 
-class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteLike with BeforeAndAfterAll
-    with GivenWhenThen with ScalaFutures with Matchers with Eventually with ImplicitSender with Mockito {
+class JobRunServiceActorTest
+    extends TestKit(ActorSystem("test"))
+    with FunSuiteLike
+    with BeforeAndAfterAll
+    with GivenWhenThen
+    with ScalaFutures
+    with Matchers
+    with Eventually
+    with ImplicitSender
+    with Mockito {
 
   test("List runs will list all running services") {
     Given("A service with 2 jobRuns")
@@ -208,12 +216,28 @@ class JobRunServiceActorTest extends TestKit(ActorSystem("test")) with FunSuiteL
   class Fixture {
     val id = JobId("test")
     val jobSpec = JobSpec(id)
-    val forbidSchedule = ScheduleSpec("schedule", CronSpec("* * * * *"), ScheduleSpec.DefaultTimeZone, ScheduleSpec.DefaultStartingDeadline, ConcurrencyPolicy.Forbid)
+    val forbidSchedule = ScheduleSpec(
+      "schedule",
+      CronSpec("* * * * *"),
+      ScheduleSpec.DefaultTimeZone,
+      ScheduleSpec.DefaultStartingDeadline,
+      ConcurrencyPolicy.Forbid
+    )
 
-    val clock = new SettableClock(Clock.fixed(LocalDateTime.parse("2016-06-01T08:50:12.000").toInstant(ZoneOffset.UTC), ZoneOffset.UTC))
+    val clock = new SettableClock(
+      Clock.fixed(LocalDateTime.parse("2016-06-01T08:50:12.000").toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
+    )
 
     def run() = {
-      val jobRun = JobRun(JobRunId(jobSpec), jobSpec, JobRunStatus.Active, clock.instant(), None, None, Map.empty[Task.Id, JobRunTask])
+      val jobRun = JobRun(
+        JobRunId(jobSpec),
+        jobSpec,
+        JobRunStatus.Active,
+        clock.instant(),
+        None,
+        None,
+        Map.empty[Task.Id, JobRunTask]
+      )
       StartedJobRun(jobRun, Future.successful(JobResult(jobRun)))
     }
     val run1 = run()

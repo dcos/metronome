@@ -33,6 +33,7 @@ pipeline {
       steps {
         ansiColor('xterm') {
           sh 'sbt test'
+          sh 'sbt "scalafmtCheck" "test:scalafmtCheck"'
         }
       }
       post {

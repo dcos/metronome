@@ -2,7 +2,7 @@ package dcos.metronome.integrationtest
 
 import com.mesosphere.utils.mesos.MesosAgentConfig
 import org.scalatest.Inside
-import play.api.libs.json.{ JsArray, JsObject, Json }
+import play.api.libs.json.{JsArray, JsObject, Json}
 
 import scala.concurrent.duration._
 

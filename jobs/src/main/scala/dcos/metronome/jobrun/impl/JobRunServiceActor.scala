@@ -7,7 +7,7 @@ import akka.actor._
 import dcos.metronome.eventbus.TaskStateChangedEvent
 import dcos.metronome.jobrun.StartedJobRun
 import dcos.metronome.model._
-import dcos.metronome.repository.{ LoadContentOnStartup, Repository }
+import dcos.metronome.repository.{LoadContentOnStartup, Repository}
 import mesosphere.marathon.metrics.Metrics
 
 import scala.collection.concurrent.TrieMap
@@ -18,10 +18,13 @@ import scala.concurrent.duration.Duration
   * Knows and manages all active JobRunExecutors.
   */
 class JobRunServiceActor(
-  clock:           Clock,
-  executorFactory: (JobRun, Promise[JobResult]) => Props,
-  val repo:        Repository[JobRunId, JobRun],
-  metrics:         Metrics) extends Actor with LoadContentOnStartup[JobRunId, JobRun] with Stash {
+    clock: Clock,
+    executorFactory: (JobRun, Promise[JobResult]) => Props,
+    val repo: Repository[JobRunId, JobRun],
+    metrics: Metrics
+) extends Actor
+    with LoadContentOnStartup[JobRunId, JobRun]
+    with Stash {
 
   import JobRunExecutorActor._
   import JobRunServiceActor._
@@ -46,19 +49,19 @@ class JobRunServiceActor(
 
   override def receive: Receive = {
     // api messages
-    case ListRuns(filter)              => sender() ! allJobRuns.values.filter(startedJobRun => filter(startedJobRun.jobRun))
-    case GetJobRun(id)                 => sender() ! allJobRuns.get(id)
-    case GetActiveJobRuns(specId)      => sender() ! runsForJob(specId)
-    case KillJobRun(id)                => killJobRun(id)
+    case ListRuns(filter) => sender() ! allJobRuns.values.filter(startedJobRun => filter(startedJobRun.jobRun))
+    case GetJobRun(id) => sender() ! allJobRuns.get(id)
+    case GetActiveJobRuns(specId) => sender() ! runsForJob(specId)
+    case KillJobRun(id) => killJobRun(id)
 
     // trigger messages
     case TriggerJobRun(spec, schedule) => triggerJobRun(spec, schedule)
 
     // executor messages
-    case JobRunUpdate(started)         => updateJobRun(started)
-    case Finished(result)              => jobRunFinished(result)
-    case Aborted(result)               => jobRunFailed(result)
-    case Failed(result)                => jobRunFailed(result)
+    case JobRunUpdate(started) => updateJobRun(started)
+    case Finished(result) => jobRunFinished(result)
+    case Aborted(result) => jobRunFailed(result)
+    case Failed(result) => jobRunFailed(result)
 
     //event stream events
     case update: TaskStateChangedEvent => forwardStatusUpdate(update)
@@ -69,12 +72,15 @@ class JobRunServiceActor(
   def triggerJobRun(spec: JobSpec, schedule: Option[ScheduleSpec]): Unit = {
     log.info(s"Trigger new JobRun for JobSpec: $spec")
 
-    val skipRun = schedule.exists(schedule => schedule.concurrencyPolicy == ConcurrencyPolicy.Forbid && runsForJob(spec.id).nonEmpty)
+    val skipRun = schedule.exists(schedule =>
+      schedule.concurrencyPolicy == ConcurrencyPolicy.Forbid && runsForJob(spec.id).nonEmpty
+    )
     if (skipRun) {
       log.info(s"Skipping scheduled run for ${spec.id} based on concurrency policy")
     } else {
       val startingDeadline: Option[Duration] = schedule.map(_.startingDeadline)
-      val jobRun = JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.instant(), None, startingDeadline, Map.empty)
+      val jobRun =
+        JobRun(JobRunId(spec), spec, JobRunStatus.Initial, clock.instant(), None, startingDeadline, Map.empty)
       val startedJobRun = startJobRun(jobRun)
       sender() ! startedJobRun
     }
@@ -178,9 +184,10 @@ object JobRunServiceActor {
   case class TriggerJobRun(jobSpec: JobSpec, schedule: Option[ScheduleSpec])
 
   def props(
-    clock:           Clock,
-    executorFactory: (JobRun, Promise[JobResult]) => Props,
-    repo:            Repository[JobRunId, JobRun],
-    metrics:         Metrics): Props = Props(new JobRunServiceActor(clock, executorFactory, repo, metrics))
+      clock: Clock,
+      executorFactory: (JobRun, Promise[JobResult]) => Props,
+      repo: Repository[JobRunId, JobRun],
+      metrics: Metrics
+  ): Props = Props(new JobRunServiceActor(clock, executorFactory, repo, metrics))
 
 }

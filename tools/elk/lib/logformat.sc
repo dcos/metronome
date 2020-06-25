@@ -18,11 +18,7 @@ object DcosLogFormat extends (String => Option[LogFormat]) {
 
   override def apply(s: String): Option[LogFormat] =
     if (regex.findFirstMatchIn(s).nonEmpty)
-      Some(
-        LogFormat(
-          codec = codec,
-          example = example,
-          unframe = unframe))
+      Some(LogFormat(codec = codec, example = example, unframe = unframe))
     else
       None
 
@@ -45,10 +41,10 @@ object DcosLogFormat extends (String => Option[LogFormat]) {
 }
 
 case class LogFormat(
-  codec: String,
-  example: String,
-  unframe: String,
-  host: Option[String] = None
+    codec: String,
+    example: String,
+    unframe: String,
+    host: Option[String] = None
 )
 
 object LogFormat {

@@ -4,30 +4,39 @@ package repository
 import akka.actor.ActorSystem
 import dcos.metronome.migration.Migration
 import dcos.metronome.migration.impl.MigrationImpl
-import dcos.metronome.model.{ JobHistory, JobId, JobRun, JobRunId, JobSpec }
-import dcos.metronome.repository.impl.kv.{ ZkJobHistoryRepository, ZkJobRunRepository, ZkJobSpecRepository }
+import dcos.metronome.model.{JobHistory, JobId, JobRun, JobRunId, JobSpec}
+import dcos.metronome.repository.impl.kv.{ZkJobHistoryRepository, ZkJobRunRepository, ZkJobSpecRepository}
 import dcos.metronome.scheduler.SchedulerConfig
-import dcos.metronome.utils.state.{ CompressionConf, ZKStore }
-import mesosphere.marathon.core.base.{ ActorsModule, CrashStrategy, LifecycleState }
+import dcos.metronome.utils.state.{CompressionConf, ZKStore}
+import mesosphere.marathon.core.base.{ActorsModule, CrashStrategy, LifecycleState}
 import mesosphere.marathon.core.storage.store.impl.zk.RichCuratorFramework
 import mesosphere.marathon.metrics.Metrics
-import mesosphere.marathon.storage.repository.{ FrameworkIdRepository, GroupRepository, InstanceRepository }
-import mesosphere.marathon.storage.{ StorageConfig, StorageModule }
+import mesosphere.marathon.storage.repository.{FrameworkIdRepository, GroupRepository, InstanceRepository}
+import mesosphere.marathon.storage.{StorageConfig, StorageModule}
 
 import scala.concurrent.ExecutionContext
 
-class SchedulerRepositoriesModule(metrics: Metrics, config: SchedulerConfig, lifecycleState: LifecycleState, actorsModule: ActorsModule, actorSystem: ActorSystem, crashStrategy: CrashStrategy) {
+class SchedulerRepositoriesModule(
+    metrics: Metrics,
+    config: SchedulerConfig,
+    lifecycleState: LifecycleState,
+    actorsModule: ActorsModule,
+    actorSystem: ActorSystem,
+    crashStrategy: CrashStrategy
+) {
 
   private[this] val ec = ExecutionContext.global
 
   private[this] val zkRootPath = config.zkStatePath
 
-  lazy val curatorFramework: Option[RichCuratorFramework] = StorageConfig.curatorFramework(config.scallopConf, crashStrategy, lifecycleState)
+  lazy val curatorFramework: Option[RichCuratorFramework] =
+    StorageConfig.curatorFramework(config.scallopConf, crashStrategy, lifecycleState)
 
   val zkStore: ZKStore = new ZKStore(
     curatorFramework.get,
     zkRootPath,
-    CompressionConf(config.zkCompressionEnabled, config.zkCompressionThreshold))
+    CompressionConf(config.zkCompressionEnabled, config.zkCompressionThreshold)
+  )
 
   def jobSpecRepository: Repository[JobId, JobSpec] = new ZkJobSpecRepository(zkStore, ec)
 
@@ -36,7 +45,12 @@ class SchedulerRepositoriesModule(metrics: Metrics, config: SchedulerConfig, lif
   def jobHistoryRepository: Repository[JobId, JobHistory] = new ZkJobHistoryRepository(zkStore, ec)
 
   lazy val storageConfig = StorageConfig(config.scallopConf, curatorFramework)
-  lazy val storageModule: StorageModule = StorageModule(metrics, storageConfig, config.scallopConf.mesosBridgeName())(actorsModule.materializer, ExecutionContext.global, actorSystem.scheduler, actorSystem)
+  lazy val storageModule: StorageModule = StorageModule(metrics, storageConfig, config.scallopConf.mesosBridgeName())(
+    actorsModule.materializer,
+    ExecutionContext.global,
+    actorSystem.scheduler,
+    actorSystem
+  )
 
   lazy val instanceRepository: InstanceRepository = storageModule.instanceRepository
   lazy val groupRepository: GroupRepository = storageModule.groupRepository
@@ -47,6 +61,4 @@ class SchedulerRepositoriesModule(metrics: Metrics, config: SchedulerConfig, lif
 
 }
 
-object SchedulerRepositoriesModule {
-
-}
+object SchedulerRepositoriesModule {}

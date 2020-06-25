@@ -4,30 +4,31 @@ package scheduler.impl
 import java.util.concurrent.CountDownLatch
 
 import dcos.metronome.migration.Migration
-import dcos.metronome.scheduler.{ PeriodicOperations, PrePostDriverCallback, SchedulerConfig, SchedulerService }
-import mesosphere.marathon.core.election.{ ElectionCandidate, ElectionService }
+import dcos.metronome.scheduler.{PeriodicOperations, PrePostDriverCallback, SchedulerConfig, SchedulerService}
+import mesosphere.marathon.core.election.{ElectionCandidate, ElectionService}
 import mesosphere.marathon.core.leadership.LeadershipCoordinator
 import mesosphere.marathon.SchedulerDriverFactory
 import mesosphere.marathon.core.storage.store.PersistenceStore
 import org.apache.mesos.SchedulerDriver
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.{Await, Future}
 import scala.util.Failure
 
 /**
   * Wrapper class for the scheduler
   */
 class SchedulerServiceImpl(
-  persistenceStore:       PersistenceStore[_, _, _],
-  leadershipCoordinator:  LeadershipCoordinator,
-  config:                 SchedulerConfig,
-  electionService:        ElectionService,
-  prePostDriverCallbacks: Seq[PrePostDriverCallback],
-  driverFactory:          SchedulerDriverFactory,
-  migration:              Migration,
-  periodicOperations:     PeriodicOperations)
-    extends SchedulerService with ElectionCandidate {
+    persistenceStore: PersistenceStore[_, _, _],
+    leadershipCoordinator: LeadershipCoordinator,
+    config: SchedulerConfig,
+    electionService: ElectionService,
+    prePostDriverCallbacks: Seq[PrePostDriverCallback],
+    driverFactory: SchedulerDriverFactory,
+    migration: Migration,
+    periodicOperations: PeriodicOperations
+) extends SchedulerService
+    with ElectionCandidate {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -55,95 +56,97 @@ class SchedulerServiceImpl(
     }
   }
 
-  override def shutdown(): Unit = synchronized {
-    log.info("Shutdown triggered")
+  override def shutdown(): Unit =
+    synchronized {
+      log.info("Shutdown triggered")
 
-    log.info("Stopping Driver")
-    stopDriver()
+      log.info("Stopping Driver")
+      stopDriver()
 
-    log.info("Cancelling periodic operations")
-    periodicOperations.cancel()
+      log.info("Cancelling periodic operations")
+      periodicOperations.cancel()
 
-    // The countdown latch blocks run() from exiting. Counting down the latch removes the block.
-    log.debug("Removing the blocking of run()")
-    isRunningLatch.countDown()
-  }
+      // The countdown latch blocks run() from exiting. Counting down the latch removes the block.
+      log.debug("Removing the blocking of run()")
+      isRunningLatch.countDown()
+    }
 
-  private[this] def stopDriver(): Unit = synchronized {
-    // Stopping the driver will cause the driver run() method to return.
-    driver.foreach(_.stop(true)) // failover = true
-    driver = None
-  }
+  private[this] def stopDriver(): Unit =
+    synchronized {
+      // Stopping the driver will cause the driver run() method to return.
+      driver.foreach(_.stop(true)) // failover = true
+      driver = None
+    }
 
   //End Service interface
 
   //Begin ElectionCandidate interface
 
-  def startLeadership(): Unit = synchronized {
-    log.info("As new leader running the driver")
+  def startLeadership(): Unit =
+    synchronized {
+      log.info("As new leader running the driver")
 
-    // allow interactions with the persistence store
-    persistenceStore.markOpen()
+      // allow interactions with the persistence store
+      persistenceStore.markOpen()
 
-    // execute tasks, only the leader is allowed to
-    migration.migrate()
+      // execute tasks, only the leader is allowed to
+      migration.migrate()
 
-    log.info(s"""Call preDriverStarts callbacks on ${prePostDriverCallbacks.mkString(", ")}""")
-    Await.result(
-      Future.sequence(prePostDriverCallbacks.map(_.preDriverStarts)),
-      config.leaderPreparationTimeout)
-    log.info("Finished preDriverStarts callbacks")
+      log.info(s"""Call preDriverStarts callbacks on ${prePostDriverCallbacks.mkString(", ")}""")
+      Await.result(Future.sequence(prePostDriverCallbacks.map(_.preDriverStarts)), config.leaderPreparationTimeout)
+      log.info("Finished preDriverStarts callbacks")
 
-    // start all leadership coordination actors
-    Await.result(leadershipCoordinator.prepareForStart(), config.maxActorStartupTime)
+      // start all leadership coordination actors
+      Await.result(leadershipCoordinator.prepareForStart(), config.maxActorStartupTime)
 
-    log.info("Creating new driver")
-    driver = Some(driverFactory.createDriver())
+      log.info("Creating new driver")
+      driver = Some(driverFactory.createDriver())
 
-    log.info("Schedule periodic operations")
-    periodicOperations.schedule()
+      log.info("Schedule periodic operations")
+      periodicOperations.schedule()
 
-    // The following block asynchronously runs the driver. Note that driver.run()
-    // blocks until the driver has been stopped (or aborted).
-    Future {
-      scala.concurrent.blocking {
-        driver.foreach(_.run())
-      }
-    } onComplete { result =>
-      synchronized {
-        driver = None
-
-        log.info(s"Driver future completed with result=$result.")
-        result match {
-          case Failure(t) => log.error("Exception while running driver", t)
-          case _          =>
+      // The following block asynchronously runs the driver. Note that driver.run()
+      // blocks until the driver has been stopped (or aborted).
+      Future {
+        scala.concurrent.blocking {
+          driver.foreach(_.run())
         }
+      } onComplete { result =>
+        synchronized {
+          driver = None
 
-        // tell leader election that we step back, but want to be re-elected if isRunning is true.
-        electionService.abdicateLeadership()
+          log.info(s"Driver future completed with result=$result.")
+          result match {
+            case Failure(t) => log.error("Exception while running driver", t)
+            case _ =>
+          }
 
-        log.info(s"Call postDriverRuns callbacks on ${prePostDriverCallbacks.mkString(", ")}")
-        Await.result(Future.sequence(prePostDriverCallbacks.map(_.postDriverTerminates)), zkTimeout)
-        log.info(s"Finished postDriverRuns callbacks")
+          // tell leader election that we step back, but want to be re-elected if isRunning is true.
+          electionService.abdicateLeadership()
+
+          log.info(s"Call postDriverRuns callbacks on ${prePostDriverCallbacks.mkString(", ")}")
+          Await.result(Future.sequence(prePostDriverCallbacks.map(_.postDriverTerminates)), zkTimeout)
+          log.info(s"Finished postDriverRuns callbacks")
+        }
       }
     }
-  }
 
-  def stopLeadership(): Unit = synchronized {
-    log.info("Lost leadership")
+  def stopLeadership(): Unit =
+    synchronized {
+      log.info("Lost leadership")
 
-    leadershipCoordinator.stop()
-    periodicOperations.cancel()
+      leadershipCoordinator.stop()
+      periodicOperations.cancel()
 
-    if (driver.isDefined) {
-      // Our leadership has been defeated. Thus, stop the driver.
-      // Note that abdication command will be ran upon driver shutdown which
-      // will then offer leadership again.
-      stopDriver()
-    } else {
-      electionService.offerLeadership(this)
+      if (driver.isDefined) {
+        // Our leadership has been defeated. Thus, stop the driver.
+        // Note that abdication command will be ran upon driver shutdown which
+        // will then offer leadership again.
+        stopDriver()
+      } else {
+        electionService.offerLeadership(this)
+      }
     }
-  }
 
   //End ElectionCandidate interface
 }

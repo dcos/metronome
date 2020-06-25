@@ -26,7 +26,8 @@ import scala.sys.process.Process
   * This integration test starts older Marathon versions one after another and finishes this upgrade procedure with the
   * current build. In each step we verify that all apps are still up and running.
   */
-class UpgradeIntegrationTest extends AkkaUnitTest
+class UpgradeIntegrationTest
+    extends AkkaUnitTest
     with MesosClusterTest
     with Inside
     with RestResultMatchers
@@ -55,7 +56,9 @@ class UpgradeIntegrationTest extends AkkaUnitTest
     val tarballName = s"metronome-$version.tgz"
     val tarball = new File(targetFolder, tarballName)
 
-    val downloadURL: URL = new URL(s"https://downloads.mesosphere.io/metronome/${releasePath}/${version}/metronome-${version}.tgz")
+    val downloadURL: URL = new URL(
+      s"https://downloads.mesosphere.io/metronome/${releasePath}/${version}/metronome-${version}.tgz"
+    )
 
     val metronomeBaseFolder = new File(targetFolder, s"metronome-${version}")
 
@@ -72,17 +75,36 @@ class UpgradeIntegrationTest extends AkkaUnitTest
     }
   }
 
-  case class PackagedMetronome(metronomeBaseFolder: File, suiteName: String, masterUrl: String, zkUrl: String, conf: Map[String, String] = Map.empty)(
-    implicit
-    val system: ActorSystem, val mat: Materializer, val ctx: ExecutionContext, val scheduler: Scheduler) extends MetronomeBase {
+  case class PackagedMetronome(
+      metronomeBaseFolder: File,
+      suiteName: String,
+      masterUrl: String,
+      zkUrl: String,
+      conf: Map[String, String] = Map.empty
+  )(implicit val system: ActorSystem, val mat: Materializer, val ctx: ExecutionContext, val scheduler: Scheduler)
+      extends MetronomeBase {
 
     override val mainClass: String = "play.core.server.ProdServerStart"
 
     override val processBuilder = {
       val bin = new File(metronomeBaseFolder, "bin/metronome").getCanonicalPath
 
-      val cmd = Seq("bash", bin, "-J-Xmx1024m", "-J-Xms256m", "-J-XX:+UseConcMarkSweepGC", "-J-XX:ConcGCThreads=2") ++ akkaJvmArgs ++
-        Seq(s"-DmarathonUUID=$uuid -DtestSuite=$suiteName", s"-Dmetronome.zk.url=$zkUrl", s"-Dmetronome.mesos.master.url=$masterUrl", s"-Dmetronome.framework.name=metronome-$uuid", s"-Dplay.server.http.port=$httpPort", s"-Dplay.server.https.port=$httpsPort")
+      val cmd = Seq(
+        "bash",
+        bin,
+        "-J-Xmx1024m",
+        "-J-Xms256m",
+        "-J-XX:+UseConcMarkSweepGC",
+        "-J-XX:ConcGCThreads=2"
+      ) ++ akkaJvmArgs ++
+        Seq(
+          s"-DmarathonUUID=$uuid -DtestSuite=$suiteName",
+          s"-Dmetronome.zk.url=$zkUrl",
+          s"-Dmetronome.mesos.master.url=$masterUrl",
+          s"-Dmetronome.framework.name=metronome-$uuid",
+          s"-Dplay.server.http.port=$httpPort",
+          s"-Dplay.server.https.port=$httpsPort"
+        )
 
       logger.info(s"Starting process in ${workDir}, Cmd is ${cmd}")
 
@@ -100,7 +122,8 @@ class UpgradeIntegrationTest extends AkkaUnitTest
   }
 
   def startedMetronome(metronomeArtifact: MetronomeArtifact, zkUrl: String, name: String): PackagedMetronome = {
-    val metronomeFramework = PackagedMetronome(metronomeArtifact.metronomeBaseFolder, suiteName = s"$suiteName-$name", mesosMasterZkUrl, zkUrl)
+    val metronomeFramework =
+      PackagedMetronome(metronomeArtifact.metronomeBaseFolder, suiteName = s"$suiteName-$name", mesosMasterZkUrl, zkUrl)
     startMetronome(metronomeFramework)
     logger.info(s"Metronome ${name} started, reachable on: ${metronomeFramework.httpUrl}")
     metronomeFramework
@@ -110,11 +133,8 @@ class UpgradeIntegrationTest extends AkkaUnitTest
     val jobDef = Json.obj(
       "id" -> jobId,
       "description" -> description,
-      "run" -> Json.obj(
-        "cmd" -> "sleep 60",
-        "cpus" -> 0.01,
-        "mem" -> 32,
-        "disk" -> 0))
+      "run" -> Json.obj("cmd" -> "sleep 60", "cpus" -> 0.01, "mem" -> 32, "disk" -> 0)
+    )
 
     val resp = metronome.createJob(jobDef.toString())
 

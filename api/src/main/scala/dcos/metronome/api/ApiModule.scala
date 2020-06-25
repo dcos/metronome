@@ -15,7 +15,7 @@ import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.election.ElectionService
 import mesosphere.marathon.core.plugin.PluginManager
 import mesosphere.marathon.metrics.Metrics
-import mesosphere.marathon.plugin.auth.{ Authenticator, Authorizer }
+import mesosphere.marathon.plugin.auth.{Authenticator, Authorizer}
 import play.api.http.HttpErrorHandler
 import play.api.mvc.ControllerComponents
 import play.api.routing.Router

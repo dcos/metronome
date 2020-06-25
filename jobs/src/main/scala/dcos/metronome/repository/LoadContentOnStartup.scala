@@ -1,13 +1,13 @@
 package dcos.metronome
 package repository
 
-import akka.actor.{ Actor, ActorLogging, Stash }
+import akka.actor.{Actor, ActorLogging, Stash}
 import mesosphere.marathon.StoreCommandFailedException
 import org.apache.zookeeper.KeeperException.NoNodeException
 
 import scala.concurrent.Future
 import scala.util.control.NonFatal
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success}
 
 trait LoadContentOnStartup[Id, Model] extends Actor with Stash with ActorLogging {
   import LoadContentOnStartup._
@@ -50,10 +50,13 @@ trait LoadContentOnStartup[Id, Model] extends Actor with Stash with ActorLogging
       case ex: StoreCommandFailedException =>
         ex.getCause match {
           case cause: NoNodeException =>
-            log.error(s"ID $id or job-specs znode missing. Zk will need to be manually repaired.  Exception message: ${cause.getMessage}")
+            log.error(
+              s"ID $id or job-specs znode missing. Zk will need to be manually repaired.  Exception message: ${cause.getMessage}"
+            )
             Future.successful(None)
           case NonFatal(cause) =>
-            log.error(s"Unexpected exception occurred in reading zk at startup.  Exception message: ${cause.getMessage}")
+            log
+              .error(s"Unexpected exception occurred in reading zk at startup.  Exception message: ${cause.getMessage}")
             // We need crash strategy similar to marathon, for now we can NOT continue with such a zk failure.
             System.exit(-1)
             Future.failed(cause)
