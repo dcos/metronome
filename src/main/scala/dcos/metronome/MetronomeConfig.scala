@@ -1,6 +1,6 @@
 package dcos.metronome
 
-import com.typesafe.config.{ ConfigFactory, ConfigValue }
+import com.typesafe.config.{ConfigFactory, ConfigValue}
 import dcos.metronome.api.ApiConfig
 import dcos.metronome.repository.impl.kv.ZkConfig
 import mesosphere.marathon.AllConf
@@ -137,15 +137,22 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       "--metrics_statsd_port" -> metricsStatsDPort.map(_.toString),
       "--metrics_statsd_transmission_interval_ms" -> metricsStatsDTransmissionIntervalMs.map(_.toString),
       "--metrics_histogram_reservoir_significant_digits" -> metricsHistogramReservoirSignificantDigits.map(_.toString),
-      "--metrics_histogram_reservoir_resetting_interval_ms" -> metricsHistogramReservoirResettingIntervalMs.map(_.toString),
-      "--metrics_histogram_reservoir_resetting_chunks" -> metricsHistogramReservoirResettingChunks.map(_.toString))
-      .collect { case (name, Some(value)) => (name, value) }
-      .flatMap { case (name, value) => Seq(name, value) }
+      "--metrics_histogram_reservoir_resetting_interval_ms" -> metricsHistogramReservoirResettingIntervalMs.map(
+        _.toString
+      ),
+      "--metrics_histogram_reservoir_resetting_chunks" -> metricsHistogramReservoirResettingChunks.map(_.toString)
+    ).collect { case (name, Some(value)) => (name, value) }.flatMap { case (name, value) => Seq(name, value) }
 
+    // Load all options in metronome.marathon and convert them to CLI arguments.
     val marathonArgs: Seq[String] =
-      configuration.underlying.getConfig("marathon").entrySet().asScala.map { entry =>
-        Seq(s"--${entry.getKey}", entry.getValue.render())
-      }.flatten.to[Seq]
+      configuration.getOptional[Configuration]("metronome.marathon").map { marathonConf =>
+        val seqBuilder = Seq.newBuilder[String]
+        marathonConf.entrySet.foreach { case (key, value)=>
+          seqBuilder + s"--$key"
+          seqBuilder + value.toString
+        }
+        seqBuilder.result()
+      }.getOrElse(Seq.empty)
 
     new AllConf(options.to[Seq] ++ flags.flatten ++ marathonArgs)
   }

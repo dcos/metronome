@@ -376,10 +376,7 @@ package object models {
 
   implicit lazy val MetronomeInfoWrites: Writes[MetronomeInfo] = new Writes[MetronomeInfo] {
     override def writes(o: MetronomeInfo): JsValue = {
-      Json.obj(
-        "version" -> o.version,
-        "libVersion" -> o.libVersion,
-        "config" -> o.config)
+      Json.obj("version" -> o.version, "libVersion" -> o.libVersion, "config" -> o.config)
     }
   }
 

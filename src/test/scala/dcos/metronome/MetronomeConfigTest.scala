@@ -12,8 +12,7 @@ class MetronomeConfigTest extends FunSuite with Matchers with GivenWhenThen {
     val httpsPort = "9010"
 
     When("Config parser tries to extract it")
-    val cfg = MetronomeConfig.fromConfig(
-      s"""
+    val cfg = MetronomeConfig.fromConfig(s"""
          | play.server.http.port="$httpPort"
          | play.server.https.port="$httpsPort"
        """.stripMargin)
@@ -23,14 +22,13 @@ class MetronomeConfigTest extends FunSuite with Matchers with GivenWhenThen {
     cfg.httpsPort shouldEqual 9010
   }
 
-  test("Http overriden with `disabled`") {
+  test("Http overridden with `disabled`") {
     Given("http Port is `disabled`")
     val httpPort = "disabled"
     val httpsPort = "9010"
 
     When("Config parser tries to extract it")
-    val cfg = MetronomeConfig.fromConfig(
-      s"""
+    val cfg = MetronomeConfig.fromConfig(s"""
          | play.server.http.port="$httpPort"
          | play.server.https.port="$httpsPort"
        """.stripMargin)
@@ -45,8 +43,7 @@ class MetronomeConfigTest extends FunSuite with Matchers with GivenWhenThen {
   test("feature gpu_resources is enabled when gpu_scheduling_behavior is set") {
 
     Given("A config with gpu_scheduling_behavior")
-    val cfg = MetronomeConfig.fromConfig(
-      s"""
+    val cfg = MetronomeConfig.fromConfig(s"""
          | metronome.gpu_scheduling_behavior="restricted"
        """.stripMargin)
 

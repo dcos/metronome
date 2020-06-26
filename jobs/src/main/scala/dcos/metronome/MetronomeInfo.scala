@@ -2,10 +2,7 @@ package dcos.metronome
 
 import mesosphere.marathon.SemVer
 
-case class MetronomeInfo(
-  version:    String,
-  libVersion: SemVer,
-  config:     JobsConfig)
+case class MetronomeInfo(version: String, libVersion: SemVer, config: JobsConfig)
 
 case class LeaderInfo(leader: String)
 

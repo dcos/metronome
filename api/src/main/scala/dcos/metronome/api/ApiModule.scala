@@ -24,18 +24,19 @@ import router.Routes
 import scala.concurrent.ExecutionContext
 
 class ApiModule(
-  controllerComponents: ControllerComponents,
-  assets:               Assets,
-  httpErrorHandler:     HttpErrorHandler,
-  config:               JobsConfig with ApiConfig,
-  jobSpecService:       JobSpecService,
-  jobRunService:        JobRunService,
-  jobInfoService:       JobInfoService,
-  pluginManager:        PluginManager,
-  launchQueueService:   LaunchQueueService,
-  actorsModule:         ActorsModule,
-  metricsModule:        MetricsModule,
-  electionService:      ElectionService)(implicit ec: ExecutionContext) {
+    controllerComponents: ControllerComponents,
+    assets: Assets,
+    httpErrorHandler: HttpErrorHandler,
+    config: JobsConfig with ApiConfig,
+    jobSpecService: JobSpecService,
+    jobRunService: JobRunService,
+    jobInfoService: JobInfoService,
+    pluginManager: PluginManager,
+    launchQueueService: LaunchQueueService,
+    actorsModule: ActorsModule,
+    metricsModule: MetricsModule,
+    electionService: ElectionService
+)(implicit ec: ExecutionContext) {
 
   lazy val authModule: AuthModule = new AuthModule(pluginManager)
 

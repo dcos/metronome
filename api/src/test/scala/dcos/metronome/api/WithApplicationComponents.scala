@@ -9,7 +9,7 @@ import dcos.metronome.jobinfo.impl.JobInfoServiceImpl
 import dcos.metronome.jobrun.{JobRunService, JobRunServiceFixture}
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
-import dcos.metronome.queue.{ LaunchQueueService, QueueServiceFixture }
+import dcos.metronome.queue.{LaunchQueueService, QueueServiceFixture}
 import mesosphere.marathon.AllConf
 import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.election.{ElectionCandidate, ElectionService}
