@@ -145,14 +145,18 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
 
     // Load all options in metronome.marathon and convert them to CLI arguments.
     val marathonArgs: Seq[String] =
-      configuration.getOptional[Configuration]("metronome.marathon").map { marathonConf =>
-        val seqBuilder = Seq.newBuilder[String]
-        marathonConf.entrySet.foreach { case (key, value)=>
-          seqBuilder + s"--$key"
-          seqBuilder + value.toString
+      configuration
+        .getOptional[Configuration]("metronome.marathon")
+        .map { marathonConf =>
+          val seqBuilder = Seq.newBuilder[String]
+          marathonConf.entrySet.foreach {
+            case (key, value) =>
+              seqBuilder + s"--$key"
+              seqBuilder + value.toString
+          }
+          seqBuilder.result()
         }
-        seqBuilder.result()
-      }.getOrElse(Seq.empty)
+        .getOrElse(Seq.empty)
 
     new AllConf(options.to[Seq] ++ flags.flatten ++ marathonArgs)
   }
