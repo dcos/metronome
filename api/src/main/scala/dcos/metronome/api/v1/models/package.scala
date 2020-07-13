@@ -268,6 +268,7 @@ package object models {
   implicit lazy val JobSpecFormat: Format[JobSpec] = ((__ \ "id").format[JobId] ~
     (__ \ "description").formatNullable[String] ~
     (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty) ~
+    (__ \ "schedules").formatNullable[Seq[ScheduleSpec]].withDefault(Seq.empty) ~
     (__ \ "run").format[JobRunSpec])(JobSpec.apply(_, _, _, Seq.empty, _), s => (s.id, s.description, s.labels, s.run))
 
   implicit lazy val TaskIdFormat: Format[Task.Id] = Format(
