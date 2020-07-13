@@ -1,5 +1,7 @@
 # Next
 
+* [DCOS_OSS-5970](https://jira.d2iq.com/browse/DCOS_OSS-5970) Schedules can be defined with job spec creation. They are always returned. `èmbed=schedules` has been deprecated.
+
 # 0.6.x
 
 * [D2IQ-69445](https://jira.d2iq.com/browse/D2IQ-69445) Introduce `/leader` endpoint to query the current Metronome leader address in HA mode.
