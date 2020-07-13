@@ -27,10 +27,7 @@
       }
     },
     "schedules": {
-      "type": "array",
-      "items": {
-        "$ref": "schedulespec.schema.json"
-      }
+      "type": "array"
     },
     "run": {
       "type": "object",

@@ -137,18 +137,17 @@ class JobSpecControllerTest
       contentType(response) mustBe Some("application/json")
     }
 
-    "ignore given schedules when sending a valid job spec with schedules" in {
+    "*not* ignore given schedules when sending a valid job spec with schedules" in {
       Given("No job")
 
       When("A job spec with schedules is sent")
       val jobSpecWithSchedule = Json.toJson(jobSpec2.copy(schedules = Seq(schedule1)))
 
-      Then("The schedules get ignored")
+      Then("The schedules are added")
       val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpecWithSchedule)).get
-      println(s"Content: ${contentAsString(response)}")
       status(response) mustBe CREATED
       contentType(response) mustBe Some("application/json")
-      contentAsJson(response) mustBe jobSpec2Json
+      contentAsJson(response) mustBe jobSpecWithSchedule
     }
 
     "indicate a problem when sending invalid json" in {
