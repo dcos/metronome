@@ -1,11 +1,13 @@
 package dcos.metronome
 
+import com.typesafe.config.{ConfigFactory, ConfigValue}
 import dcos.metronome.api.ApiConfig
 import dcos.metronome.repository.impl.kv.ZkConfig
 import mesosphere.marathon.AllConf
 import mesosphere.marathon.core.task.termination.KillConfig
 import play.api.Configuration
 
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.sys.SystemProperties
 import scala.util.Try
@@ -13,6 +15,8 @@ import scala.util.Try
 class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiConfig {
 
   import ConfigurationImplicits._
+
+  override val configSet: Set[(String, ConfigValue)] = configuration.entrySet
 
   lazy val frameworkName: String = configuration.getOptional[String]("metronome.framework.name").getOrElse("metronome")
   lazy val mesosMaster: String =
@@ -138,7 +142,23 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
       ),
       "--metrics_histogram_reservoir_resetting_chunks" -> metricsHistogramReservoirResettingChunks.map(_.toString)
     ).collect { case (name, Some(value)) => (name, value) }.flatMap { case (name, value) => Seq(name, value) }
-    new AllConf(options.to[Seq] ++ flags.flatten)
+
+    // Load all options in metronome.marathon and convert them to CLI arguments.
+    val marathonArgs: Seq[String] =
+      configuration
+        .getOptional[Configuration]("metronome.marathon")
+        .map { marathonConf =>
+          val seqBuilder = Seq.newBuilder[String]
+          marathonConf.entrySet.foreach {
+            case (key, value) =>
+              seqBuilder + s"--$key"
+              seqBuilder + value.toString
+          }
+          seqBuilder.result()
+        }
+        .getOrElse(Seq.empty)
+
+    new AllConf(options.to[Seq] ++ flags.flatten ++ marathonArgs)
   }
 
   override lazy val reconciliationInterval: FiniteDuration =
@@ -188,6 +208,11 @@ class MetronomeConfig(configuration: Configuration) extends JobsConfig with ApiC
     configuration.getOptional[Int]("metronome.metrics.histogram.reservoir.reset.chucks")
 
   override def taskKillConfig: KillConfig = scallopConf
+}
+
+object MetronomeConfig {
+  def fromConfig(cfg: String): MetronomeConfig =
+    new MetronomeConfig(new Configuration(ConfigFactory.parseString(cfg)))
 }
 
 private[this] object ConfigurationImplicits {

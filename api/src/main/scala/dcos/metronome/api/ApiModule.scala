@@ -27,7 +27,7 @@ class ApiModule(
     controllerComponents: ControllerComponents,
     assets: Assets,
     httpErrorHandler: HttpErrorHandler,
-    config: ApiConfig,
+    config: JobsConfig with ApiConfig,
     jobSpecService: JobSpecService,
     jobRunService: JobRunService,
     jobInfoService: JobInfoService,

@@ -1,6 +1,7 @@
 package dcos.metronome
 package api
 
+import com.typesafe.config.ConfigValue
 import controllers.AssetsComponents
 import dcos.metronome.history.{JobHistoryService, JobHistoryServiceFixture}
 import dcos.metronome.jobinfo.JobInfoService
@@ -9,9 +10,11 @@ import dcos.metronome.jobrun.{JobRunService, JobRunServiceFixture}
 import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.jobspec.impl.JobSpecServiceFixture
 import dcos.metronome.queue.{LaunchQueueService, QueueServiceFixture}
+import mesosphere.marathon.AllConf
 import mesosphere.marathon.core.base.ActorsModule
 import mesosphere.marathon.core.election.{ElectionCandidate, ElectionService}
 import mesosphere.marathon.core.plugin.PluginManager
+import mesosphere.marathon.core.task.termination.KillConfig
 import mesosphere.marathon.metrics.dummy.DummyMetricsModule
 import org.scalatest.{TestData, TestSuite}
 import org.scalatestplus.play.guice.{GuiceOneAppPerTest, GuiceOneServerPerSuite, GuiceOneServerPerTest}
@@ -125,11 +128,29 @@ class MockApiComponents(context: Context)
     }
   }
 
-  lazy val config: ApiConfig = new ApiConfig {
+  lazy val config = new JobsConfig with ApiConfig {
     override def leaderProxyTimeout: Duration = 30.seconds
     override def hostnameWithPort: String = s"$hostname:$effectivePort"
     override def hostname: String = "localhost"
     override def effectivePort: Int = 9000
+
+    override def scallopConf: AllConf = ???
+    override val configSet: Set[(String, ConfigValue)] = Set.empty
+    override def runHistoryCount: Int = ???
+    override def askTimeout: FiniteDuration = ???
+    override def taskKillConfig: KillConfig = ???
+    override def leaderPreparationTimeout: FiniteDuration = ???
+    override def zkTimeout: FiniteDuration = ???
+    override def mesosLeaderUiUrl: Option[String] = ???
+    override def reconciliationInterval: FiniteDuration = ???
+    override def reconciliationTimeout: FiniteDuration = ???
+    override def maxActorStartupTime: FiniteDuration = ???
+    override def enableStoreCache: Boolean = ???
+    override def mesosExecutorDefault: String = ???
+    override def zkURL: String = ???
+    override def zkSessionTimeout: FiniteDuration = ???
+    override def zkCompressionEnabled: Boolean = ???
+    override def zkCompressionThreshold: Long = ???
   }
 
   lazy val apiModule: ApiModule = wire[ApiModule]
