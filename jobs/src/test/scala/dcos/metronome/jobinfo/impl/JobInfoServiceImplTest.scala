@@ -35,11 +35,10 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
 
     When("The job info is fetched")
     val result1 =
-      f.jobInfoService.selectJob(f.spec1.id, JobSpecSelector.all, Set(Embed.ActiveRuns, Embed.Schedules)).futureValue
+      f.jobInfoService.selectJob(f.spec1.id, JobSpecSelector.all, Set(Embed.ActiveRuns)).futureValue
 
     Then("No Job is returned")
     result1 should be(defined)
-    result1.get.schedules should be(defined)
     result1.get.activeRuns should be(defined)
   }
 
@@ -85,11 +84,11 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
     val f = new Fixture
 
     When("The job info is fetched")
-    val result1 = f.jobInfoService.selectJobs(JobSpecSelector.all, Set(Embed.Schedules)).futureValue
+    val result1 = f.jobInfoService.selectJobs(JobSpecSelector.all, Set.empty).futureValue
 
     Then("The extended info is rendered for active runs")
     result1 should have size 2
-    result1.foreach(_.schedules.get should have size 2)
+    result1.foreach(_.schedules should have size 2)
     result1.foreach(_.activeRuns should be(empty))
   }
 
