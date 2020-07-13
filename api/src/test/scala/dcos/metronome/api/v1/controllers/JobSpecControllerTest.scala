@@ -145,6 +145,7 @@ class JobSpecControllerTest
 
       Then("The schedules get ignored")
       val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpecWithSchedule)).get
+      println(s"Content: ${contentAsString(response)}")
       status(response) mustBe CREATED
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe jobSpec2Json
