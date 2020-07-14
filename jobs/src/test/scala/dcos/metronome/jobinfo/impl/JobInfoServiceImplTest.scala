@@ -51,7 +51,7 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
 
     Then("The extended info is empty")
     result1 should have size 2
-    result1.foreach(_.schedules should not be(empty))
+    result1.foreach(_.schedules should not be (empty))
     result1.foreach(_.activeRuns should be(empty))
   }
 
