@@ -26,6 +26,8 @@ class ScheduledJobSpecController(
 
   import ScheduledJobSpecController._
 
+  implicit val jobSpecValidator = JobSpec.validJobSpec(jobSpecService)
+
   def createJob =
     AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
       request.authorizedAsync(CreateRunSpec) { jobSpec =>
@@ -51,6 +53,7 @@ class ScheduledJobSpecController(
 object ScheduledJobSpecController {
   implicit lazy val JobSpecWithScheduleFormat: Format[JobSpec] = ((__ \ "id").format[JobId] ~
     (__ \ "description").formatNullable[String] ~
+    (__ \ "dependencies" \\ "id").formatNullable[Seq[JobId]] ~
     (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty) ~
     (__ \ "schedules").formatNullable[Seq[ScheduleSpec]].withDefault(Seq.empty) ~
     (__ \ "run").format[JobRunSpec])(JobSpec.apply, unlift(JobSpec.unapply))

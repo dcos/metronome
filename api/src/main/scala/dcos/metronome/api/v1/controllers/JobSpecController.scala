@@ -28,6 +28,8 @@ class JobSpecController(
 )(implicit ec: ExecutionContext)
     extends Authorization(cc, metrics, authenticator, authorizer, config) {
 
+  implicit val jobSpecValidator = JobSpec.validJobSpec(jobSpecService)
+
   def createJob =
     measured {
       AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
