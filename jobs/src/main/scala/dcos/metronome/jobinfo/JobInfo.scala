@@ -10,6 +10,7 @@ import dcos.metronome.model._
 case class JobInfo(
     id: JobId,
     description: Option[String],
+    dependencies: Seq[JobId],
     labels: Map[String, String],
     run: JobRunSpec,
     schedules: Seq[ScheduleSpec],
@@ -40,6 +41,6 @@ object JobInfo {
       history: Option[JobHistory],
       summary: Option[JobHistorySummary]
   ): JobInfo = {
-    JobInfo(spec.id, spec.description, spec.labels, spec.run, schedules, runs, history, summary)
+    JobInfo(spec.id, spec.description, spec.dependencies, spec.labels, spec.run, schedules, runs, history, summary)
   }
 }

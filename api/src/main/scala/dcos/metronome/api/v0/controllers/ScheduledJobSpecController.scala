@@ -53,7 +53,9 @@ class ScheduledJobSpecController(
 object ScheduledJobSpecController {
   implicit lazy val JobSpecWithScheduleFormat: Format[JobSpec] = ((__ \ "id").format[JobId] ~
     (__ \ "description").formatNullable[String] ~
-    (__ \ "dependencies" \\ "id").formatNullable[Seq[JobId]].withDefault(JobSpec.DefaultDependencies) ~
+    (__ \ "dependencies")
+      .formatNullable[Seq[JobId]](api.v1.models.DependencyFormat)
+      .withDefault(JobSpec.DefaultDependencies) ~
     (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty) ~
     (__ \ "schedules").formatNullable[Seq[ScheduleSpec]].withDefault(Seq.empty) ~
     (__ \ "run").format[JobRunSpec])(JobSpec.apply, unlift(JobSpec.unapply))

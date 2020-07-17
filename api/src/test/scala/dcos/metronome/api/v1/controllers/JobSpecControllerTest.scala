@@ -441,7 +441,7 @@ class JobSpecControllerTest
       contentType(response) mustBe Some("application/json")
     }
 
-    "creates a job with dependencies" in {
+    "create a job with dependencies" in {
       Given("Job A")
       route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobAJson)).get.futureValue
 

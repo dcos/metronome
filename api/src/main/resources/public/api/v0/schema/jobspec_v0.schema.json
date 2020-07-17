@@ -18,6 +18,17 @@
       "type": "string",
       "description": "A description of this job."
     },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/pathType"
+          }
+        }
+      }
+    },
     "labels": {
       "type": "object",
       "description": "Attaching metadata to jobs can be useful to expose additional information to other services, so we added the ability to place labels on jobs (for example, you could label jobs staging and production to mark services by their position in the pipeline).",

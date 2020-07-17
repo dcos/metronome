@@ -17,7 +17,7 @@ case class JobSpec(
     description: Option[String] = JobSpec.DefaultDescription,
     dependencies: Seq[JobId] = JobSpec.DefaultDependencies,
     labels: Map[String, String] = JobSpec.DefaultLabels,
-    schedules: Seq[ScheduleSpec] = JobSpec.DefaultSchedule,
+    schedules: Seq[ScheduleSpec] = JobSpec.DefaultSchedules,
     run: JobRunSpec = JobSpec.DefaultRunSpec
 ) extends ApplicationSpec {
   def schedule(id: String): Option[ScheduleSpec] = schedules.find(_.id == id)
@@ -35,7 +35,7 @@ object JobSpec {
   val DefaultDescription = None
   val DefaultDependencies = Seq.empty[JobId]
   val DefaultLabels = Map.empty[String, String]
-  val DefaultSchedule = Seq.empty[ScheduleSpec]
+  val DefaultSchedules = Seq.empty[ScheduleSpec]
   val DefaultRunSpec = JobRunSpec()
 
   import com.wix.accord.ViolationBuilder._

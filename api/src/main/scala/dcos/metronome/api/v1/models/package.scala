@@ -267,7 +267,7 @@ package object models {
         .withDefault(JobRunSpec.DefaultNetworks))(JobRunSpec.apply, unlift(JobRunSpec.unapply))
 
   // A format for JobId that writes and object {"id": value} instead of a plain string.
-  private val DependencyFormat: Format[Seq[JobId]] = Format(
+  val DependencyFormat: Format[Seq[JobId]] = Format(
     Reads.seq((__ \ "id").read[JobId]).map(_.toVector),
     Writes.iterableWrites[JobId, Seq]((__ \ "id").write[JobId])
   )
@@ -276,7 +276,7 @@ package object models {
     (__ \ "description").formatNullable[String] ~
     (__ \ "dependencies").formatNullable[Seq[JobId]](DependencyFormat).withDefault(JobSpec.DefaultDependencies) ~
     (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty) ~
-    (__ \ "schedules").formatNullable[Seq[ScheduleSpec]].withDefault(Seq.empty) ~
+    (__ \ "schedules").formatNullable[Seq[ScheduleSpec]].withDefault(JobSpec.DefaultSchedules) ~
     (__ \ "run")
       .format[JobRunSpec])(JobSpec.apply, unlift(JobSpec.unapply))
 
