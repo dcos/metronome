@@ -46,7 +46,7 @@ object JobSpec {
       failure = _ -> s"has double entries"
     )
 
-  def validJobSpec(jobSpecService: JobSpecService): Validator[JobSpec] =
+  implicit val validJobSpec: Validator[JobSpec] =
     validator[JobSpec] { jobSpec =>
       jobSpec.id is valid
       jobSpec.schedules is every(valid)
@@ -54,4 +54,20 @@ object JobSpec {
       jobSpec.schedules has size <= 1 // FIXME: we will support only one schedule in v1
       jobSpec.dependencies is unique[JobId]
     }
+
+  final case class ValidationError(errorMsg: String) extends Exception(errorMsg, null)
+
+  def validateDependencies(jobSpec: JobSpec, allSpecs: Seq[JobSpec]): Unit = {
+    val index = allSpecs.map(_.id).toSet
+
+    // Validate that all dependencies are known.
+    val directDependencies = jobSpec.dependencies.filter(index.contains)
+    val unknownDependencies = jobSpec.dependencies.toSet -- directDependencies
+    if (unknownDependencies.nonEmpty) {
+      throw ValidationError(
+        s"Dependencies contain unknown jobs. unknown=[${unknownDependencies.mkString(", ")}]"
+      )
+    }
+    // TODO: check if dependencies have cycles
+  }
 }

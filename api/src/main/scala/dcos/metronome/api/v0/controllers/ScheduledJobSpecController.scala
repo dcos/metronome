@@ -26,8 +26,6 @@ class ScheduledJobSpecController(
 
   import ScheduledJobSpecController._
 
-  implicit val jobSpecValidator = JobSpec.validJobSpec(jobSpecService)
-
   def createJob =
     AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
       request.authorizedAsync(CreateRunSpec) { jobSpec =>

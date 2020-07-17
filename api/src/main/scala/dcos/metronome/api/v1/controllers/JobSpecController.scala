@@ -29,30 +29,17 @@ class JobSpecController(
 )(implicit ec: ExecutionContext)
     extends Authorization(cc, metrics, authenticator, authorizer, config) {
 
-  implicit val jobSpecValidator = JobSpec.validJobSpec(jobSpecService)
-
   def createJob =
     measured {
       AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
         request.authorizedAsync(CreateRunSpec) { jobSpec =>
           jobSpecService.transaction { jobSpecs =>
-            // TODO: check if dependencies have cycles
-
-            val index = jobSpecs.map(_.id).toSet
-
-            // Validate that all dependencies are known.
-            val directDependencies = jobSpec.dependencies.filter(index.contains)
-            val unknownDependencies = jobSpec.dependencies.toSet -- directDependencies
-            if (unknownDependencies.nonEmpty) {
-              throw validate.ValidationError(
-                s"Dependencies contain unknown jobs. unknown=[${unknownDependencies.mkString(", ")}]"
-              )
-            }
+            JobSpec.validateDependencies(jobSpec, jobSpecs)
 
             Some(CreateJobSpec(jobSpec))
           }.map(Created(_)).recover {
             case JobSpecAlreadyExists(_) => Conflict(ErrorDetail("Job with this id already exists"))
-            case validate.ValidationError(msg) => UnprocessableEntity(ErrorDetail(msg))
+            case JobSpec.ValidationError(msg) => UnprocessableEntity(ErrorDetail(msg))
           }
         }
       }

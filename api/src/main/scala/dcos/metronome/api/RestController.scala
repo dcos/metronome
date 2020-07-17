@@ -21,8 +21,6 @@ class RestController(cc: ControllerComponents) extends AbstractController(cc) {
 
     val schemaValidator = SchemaValidator()
 
-    final case class ValidationError(errorMsg: String) extends Exception(errorMsg, null)
-
     def json[A](implicit reader: Reads[A], schema: JsonSchema[A], validator: Validator[A]): BodyParser[A] = {
       jsonWith[A](identity)
     }
