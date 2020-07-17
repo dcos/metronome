@@ -183,11 +183,13 @@ class JobSpecServiceActor(
 object JobSpecServiceActor {
 
   //crud messages
+  sealed trait Message
+  sealed trait Modification extends Message
   case class ListJobSpecs(filter: JobSpec => Boolean)
   case class GetJobSpec(id: JobId)
-  case class CreateJobSpec(jobSpec: JobSpec)
-  case class UpdateJobSpec(id: JobId, change: JobSpec => JobSpec)
-  case class DeleteJobSpec(id: JobId)
+  case class CreateJobSpec(jobSpec: JobSpec) extends Modification
+  case class UpdateJobSpec(id: JobId, change: JobSpec => JobSpec) extends Modification
+  case class DeleteJobSpec(id: JobId) extends Modification
 
   def props(
       repo: Repository[JobId, JobSpec],

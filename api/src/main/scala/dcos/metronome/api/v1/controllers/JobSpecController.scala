@@ -8,6 +8,7 @@ import dcos.metronome.jobinfo.JobInfo.Embed
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
+import dcos.metronome.jobspec.impl.JobSpecServiceActor.CreateJobSpec
 import dcos.metronome.model.{JobId, JobSpec}
 import mesosphere.marathon.plugin.auth._
 import mesosphere.marathon.metrics.Metrics
@@ -34,12 +35,23 @@ class JobSpecController(
     measured {
       AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
         request.authorizedAsync(CreateRunSpec) { jobSpec =>
-          jobSpecService
-            .createJobSpec(jobSpec)
-            .map(Created(_))
-            .recover {
-              case JobSpecAlreadyExists(_) => Conflict(ErrorDetail("Job with this id already exists"))
-            }
+          jobSpecService.transaction { jobSpecs =>
+            // TODO: check if dependencies have cycles
+
+            val index = jobSpecs.map(_.id).toSet
+
+            // Validate that all dependencies are known.
+            val directDependencies = jobSpec.dependencies.filter(index.contains)
+            val unknownDependencies = jobSpec.dependencies.toSet -- directDependencies
+            require(
+              unknownDependencies.isEmpty,
+              s"Dependencies contain unknown jobs. unknown=[${unknownDependencies.mkString(", ")}]"
+            )
+
+            Some(CreateJobSpec(jobSpec))
+          }.map(Created(_)).recover {
+            case JobSpecAlreadyExists(_) => Conflict(ErrorDetail("Job with this id already exists"))
+          }
         }
       }
     }

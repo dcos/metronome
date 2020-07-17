@@ -151,6 +151,7 @@ lazy val api = (project in file("api"))
   )
 
 lazy val jobs = (project in file("jobs"))
+  .enablePlugins(PB)
   .settings(
     version := {
       import sys.process._

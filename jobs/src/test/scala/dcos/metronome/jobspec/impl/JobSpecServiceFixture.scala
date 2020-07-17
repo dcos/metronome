@@ -63,5 +63,7 @@ object JobSpecServiceFixture {
           case None => failed(JobSpecDoesNotExist(id))
         }
       }
+
+      override def transaction(updater: Seq[JobSpec] => Option[JobSpecServiceActor.Modification]): Future[JobSpec] = ???
     }
 }

@@ -440,6 +440,19 @@ class JobSpecControllerTest
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
     }
+
+    "creates a job with dependencies" in {
+      Given("Job A")
+      route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobAJson)).get.futureValue
+
+      When("A job B with dependency on job A is posted")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobBWithDependencyJson)).get
+
+      Then("The job is created")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+      contentAsJson(response) mustBe jobBWithDependency
+    }
   }
 
   "GET /jobs" should {
@@ -660,7 +673,7 @@ class JobSpecControllerTest
       status(unauthorized) mustBe FORBIDDEN
     }
 
-    "fail for invalid jobspec" in {
+    "fail for invalid job spec" in {
       Given("An invalid job spec")
       val jobSpecJson = Json.toJson(JobSpec(JobId("spec1"), run = JobRunSpec()))
       val failed = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpecJson)).get
@@ -760,6 +773,11 @@ class JobSpecControllerTest
     s.copy(run = s.run.copy(gpus = 4))
   }
   val cmdGpuJobJson = Json.toJson(cmdGpuJob)
+
+  val jobA = spec("A")
+  val jobAJson = Json.toJson(jobA)
+  val jobBWithDependency = spec("B").copy(dependencies = Seq(jobA.id))
+  val jobBWithDependencyJson = Json.toJson(jobBWithDependency)
 
   before {
     auth.authorized = true

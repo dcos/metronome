@@ -45,4 +45,6 @@ class JobSpecServiceDelegate(config: JobSpecConfig, actorRef: ActorRef, metrics:
     deleteJobSpecTimeMetric {
       actorRef.ask(DeleteJobSpec(id)).mapTo[JobSpec]
     }
+
+  override def transaction(updater: Seq[JobSpec] => Option[Modification]): Future[JobSpec] = ???
 }

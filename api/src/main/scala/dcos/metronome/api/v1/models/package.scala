@@ -266,9 +266,15 @@ package object models {
         .formatNullable[Seq[Network]]
         .withDefault(JobRunSpec.DefaultNetworks))(JobRunSpec.apply, unlift(JobRunSpec.unapply))
 
+  // A format for JobId that writes and object {"id": value} instead of a plain string.
+  private val DependencyFormat: Format[Seq[JobId]] = Format(
+    Reads.seq((__ \ "id").read[JobId]).map(_.toVector),
+    Writes.iterableWrites[JobId, Seq]((__ \ "id").write[JobId])
+  )
+
   implicit lazy val JobSpecFormat: Format[JobSpec] = ((__ \ "id").format[JobId] ~
     (__ \ "description").formatNullable[String] ~
-    (__ \ "dependencies" \\ "id").formatNullable[Seq[JobId]] ~
+    (__ \ "dependencies").formatNullable[Seq[JobId]](DependencyFormat).withDefault(JobSpec.DefaultDependencies) ~
     (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty) ~
     (__ \ "run").format[JobRunSpec])(
     JobSpec.apply(_, _, _, _, Seq.empty, _),
