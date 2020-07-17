@@ -5,7 +5,7 @@ import dcos.metronome.api.v1.models._
 import dcos.metronome.api._
 import dcos.metronome.model._
 import mesosphere.marathon.core.plugin.PluginManager
-import org.scalatest.{BeforeAndAfter, GivenWhenThen}
+import org.scalatest.{AppendedClues, BeforeAndAfter, GivenWhenThen}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.play.PlaySpec
@@ -17,6 +17,7 @@ import play.api.test.Helpers._
 class JobSpecControllerTest
     extends PlaySpec
     with OneAppPerTestWithComponents[MockApiComponents]
+    with AppendedClues
     with GivenWhenThen
     with ScalaFutures
     with BeforeAndAfter {
@@ -451,7 +452,7 @@ class JobSpecControllerTest
       Then("The job is created")
       status(response) mustBe CREATED
       contentType(response) mustBe Some("application/json")
-      contentAsJson(response) mustBe jobBWithDependency
+      contentAsJson(response) mustBe jobBWithDependencyJson
     }
   }
 
@@ -774,9 +775,9 @@ class JobSpecControllerTest
   }
   val cmdGpuJobJson = Json.toJson(cmdGpuJob)
 
-  val jobA = spec("A")
+  val jobA = spec("a")
   val jobAJson = Json.toJson(jobA)
-  val jobBWithDependency = spec("B").copy(dependencies = Seq(jobA.id))
+  val jobBWithDependency = spec("b").copy(dependencies = Seq(jobA.id))
   val jobBWithDependencyJson = Json.toJson(jobBWithDependency)
 
   before {
