@@ -55,7 +55,7 @@ trait JobSpecService {
     * Process a modification in a transaction. No other operation can be performed during the this transaction.
     *
     * @param updater The update method.
-    * @return the resulting job specification of the update.
+    * @return the resulting job specification of the update or none if no update was applied.
     */
-  def transaction(updater: Seq[JobSpec] => Option[Modification]): Future[JobSpec]
+  def transaction(updater: Seq[JobSpec] => Option[Modification]): Future[Option[JobSpec]]
 }

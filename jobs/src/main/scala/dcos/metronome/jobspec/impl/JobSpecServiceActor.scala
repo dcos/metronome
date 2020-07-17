@@ -20,7 +20,10 @@ class JobSpecServiceActor(
   import JobSpecServiceActor._
 
   private[impl] val allJobs = TrieMap.empty[JobId, JobSpec]
+
+  // TODO: we might not need in flight changes with transactions
   private[impl] var inFlightChanges = Set.empty[JobId]
+
   private[impl] val scheduleActors = TrieMap.empty[JobId, ActorRef]
   private[impl] val persistenceActors = TrieMap.empty[JobId, ActorRef]
 
@@ -31,6 +34,7 @@ class JobSpecServiceActor(
     case DeleteJobSpec(id) => deleteJobSpec(id)
     case GetJobSpec(id) => getJobSpec(id)
     case ListJobSpecs(filter) => listJobSpecs(filter)
+    case Transaction(updater) => jobTransaction(updater)
 
     // persistence ack messages
     case Created(_, jobSpec, delegate) => jobSpecCreated(jobSpec, delegate)
@@ -71,6 +75,18 @@ class JobSpecServiceActor(
       noChangeInFlight(old) {
         persistenceActor(id) ! JobSpecPersistenceActor.Delete(old, sender())
       }
+    }
+  }
+
+  def jobTransaction(updater: Seq[JobSpec] => Option[Modification]): Unit = {
+    val originalSender = sender()
+    try {
+      updater(allJobs.values.toVector) match {
+        case None => originalSender ! None
+        case Some(modification) => self.tell(modification, originalSender)
+      }
+    } catch {
+      case ex: Throwable => originalSender ! Status.Failure(ex)
     }
   }
 
@@ -190,6 +206,7 @@ object JobSpecServiceActor {
   case class CreateJobSpec(jobSpec: JobSpec) extends Modification
   case class UpdateJobSpec(id: JobId, change: JobSpec => JobSpec) extends Modification
   case class DeleteJobSpec(id: JobId) extends Modification
+  case class Transaction(updater: Seq[JobSpec] => Option[Modification])
 
   def props(
       repo: Repository[JobId, JobSpec],

@@ -12,6 +12,8 @@ import scala.util.control.NonFatal
 
 object JobSpecServiceFixture {
 
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   def simpleJobSpecService(testClock: Clock = Clock.systemUTC()): JobSpecService =
     new JobSpecService {
       val specs = TrieMap.empty[JobId, JobSpec]
@@ -64,6 +66,19 @@ object JobSpecServiceFixture {
         }
       }
 
-      override def transaction(updater: Seq[JobSpec] => Option[JobSpecServiceActor.Modification]): Future[JobSpec] = ???
+      override def transaction(updater: Seq[JobSpec] => Option[JobSpecServiceActor.Modification]): Future[Option[JobSpec]] = {
+        try {
+          updater(specs.values.toVector) match {
+            case None => successful(None)
+            case Some(modification) => modification match {
+              case JobSpecServiceActor.CreateJobSpec(jobSpec) => createJobSpec(jobSpec).map(Option.apply)
+              case JobSpecServiceActor.UpdateJobSpec(id, change) => updateJobSpec(id, change).map(Option.apply)
+              case JobSpecServiceActor.DeleteJobSpec(id) => deleteJobSpec(id).map(Option.apply)
+            }
+          }
+          } catch {
+            case ex: Throwable => failed(ex)
+          }
+      }
     }
 }
