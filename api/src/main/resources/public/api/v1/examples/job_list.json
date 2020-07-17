@@ -3,6 +3,7 @@
     "description": "Send summary every day",
     "id": "prod.email.summary",
     "labels": {},
+    "schedules": [],
     "run": {
       "artifacts": [],
       "cmd": "sendSummary",

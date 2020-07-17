@@ -12,7 +12,7 @@ case class JobInfo(
     description: Option[String],
     labels: Map[String, String],
     run: JobRunSpec,
-    schedules: Option[Seq[ScheduleSpec]],
+    schedules: Seq[ScheduleSpec],
     activeRuns: Option[Iterable[StartedJobRun]],
     history: Option[JobHistory],
     historySummary: Option[JobHistorySummary]
@@ -35,7 +35,7 @@ object JobInfo {
 
   def apply(
       spec: JobSpec,
-      schedules: Option[Seq[ScheduleSpec]],
+      schedules: Seq[ScheduleSpec],
       runs: Option[Iterable[StartedJobRun]],
       history: Option[JobHistory],
       summary: Option[JobHistorySummary]

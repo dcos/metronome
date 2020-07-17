@@ -29,7 +29,7 @@ class JobInfoServiceImpl(
       val historyOption = if (embed(Embed.History)) historyData else None
       val summaryOption = if (embed(Embed.HistorySummary)) historyData.map(JobHistorySummary.apply) else None
       await(jobSpecService.getJobSpec(jobSpecId)).filter(selector.matches).map { jobSpec =>
-        JobInfo(jobSpec, schedulesOption(jobSpec, embed), runOption, historyOption, summaryOption)
+        JobInfo(jobSpec, jobSpec.schedules, runOption, historyOption, summaryOption)
       }
     }
   }
@@ -62,11 +62,8 @@ class JobInfoServiceImpl(
       def summary(id: JobId): Option[JobHistorySummary] =
         if (embed(Embed.HistorySummary)) summaries.get(id).orElse(Some(JobHistorySummary.empty(id))) else None
       specs.map { spec =>
-        JobInfo(spec, schedulesOption(spec, embed), runs.get(spec.id), history(spec.id), summary(spec.id))
+        JobInfo(spec, spec.schedules, runs.get(spec.id), history(spec.id), summary(spec.id))
       }
     }
-  }
-  private[this] def schedulesOption(spec: JobSpec, embed: Set[Embed]) = {
-    if (embed(Embed.Schedules)) Some(spec.schedules) else None
   }
 }

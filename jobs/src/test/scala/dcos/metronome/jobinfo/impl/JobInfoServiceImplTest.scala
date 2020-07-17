@@ -25,7 +25,7 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
 
     Then("No Job is returned")
     result1 should be(defined)
-    result1.get.schedules should be(empty)
+    result1.get.schedules should have size 2
     result1.get.activeRuns should be(empty)
   }
 
@@ -35,15 +35,14 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
 
     When("The job info is fetched")
     val result1 =
-      f.jobInfoService.selectJob(f.spec1.id, JobSpecSelector.all, Set(Embed.ActiveRuns, Embed.Schedules)).futureValue
+      f.jobInfoService.selectJob(f.spec1.id, JobSpecSelector.all, Set(Embed.ActiveRuns)).futureValue
 
     Then("No Job is returned")
     result1 should be(defined)
-    result1.get.schedules should be(defined)
     result1.get.activeRuns should be(defined)
   }
 
-  test("Empty embed options will not render embedded info") {
+  test("Empty embed options will only render schedules") {
     Given("A repo with 2 specs and 2 runs")
     val f = new Fixture
 
@@ -52,7 +51,7 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
 
     Then("The extended info is empty")
     result1 should have size 2
-    result1.foreach(_.schedules should be(empty))
+    result1.foreach(_.schedules should not be (empty))
     result1.foreach(_.activeRuns should be(empty))
   }
 
@@ -76,7 +75,7 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
 
     Then("The extended info is rendered for active runs")
     result1 should have size 2
-    result1.foreach(_.schedules should be(empty))
+    result1.foreach(_.schedules should have size 2)
     result1.foreach(_.activeRuns.get should have size 1)
   }
 
@@ -85,11 +84,11 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
     val f = new Fixture
 
     When("The job info is fetched")
-    val result1 = f.jobInfoService.selectJobs(JobSpecSelector.all, Set(Embed.Schedules)).futureValue
+    val result1 = f.jobInfoService.selectJobs(JobSpecSelector.all, Set.empty).futureValue
 
     Then("The extended info is rendered for active runs")
     result1 should have size 2
-    result1.foreach(_.schedules.get should have size 2)
+    result1.foreach(_.schedules should have size 2)
     result1.foreach(_.activeRuns should be(empty))
   }
 
@@ -102,7 +101,7 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
 
     Then("The extended info is rendered for active runs")
     result should have size 2
-    result.foreach(_.schedules should be(empty))
+    result.foreach(_.schedules should have size 2)
     result.foreach(_.activeRuns should be(empty))
     result.map(_.history.get).toSet should be(Set(f.history1, f.history2))
   }
@@ -116,7 +115,7 @@ class JobInfoServiceImplTest extends FunSuite with GivenWhenThen with ScalaFutur
 
     Then("The extended info is rendered for active runs")
     result should have size 2
-    result.foreach(_.schedules should be(empty))
+    result.foreach(_.schedules should have size 2)
     result.foreach(_.activeRuns should be(empty))
     result.map(_.historySummary.get).toSet should be(Set(f.historySummary1, f.historySummary2))
   }
