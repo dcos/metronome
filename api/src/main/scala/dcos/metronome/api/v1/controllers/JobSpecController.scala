@@ -43,14 +43,16 @@ class JobSpecController(
             // Validate that all dependencies are known.
             val directDependencies = jobSpec.dependencies.filter(index.contains)
             val unknownDependencies = jobSpec.dependencies.toSet -- directDependencies
-            require(
-              unknownDependencies.isEmpty,
-              s"Dependencies contain unknown jobs. unknown=[${unknownDependencies.mkString(", ")}]"
-            )
+            if (unknownDependencies.nonEmpty) {
+              throw validate.ValidationError(
+                s"Dependencies contain unknown jobs. unknown=[${unknownDependencies.mkString(", ")}]"
+              )
+            }
 
             Some(CreateJobSpec(jobSpec))
           }.map(Created(_)).recover {
             case JobSpecAlreadyExists(_) => Conflict(ErrorDetail("Job with this id already exists"))
+            case validate.ValidationError(msg) => UnprocessableEntity(ErrorDetail(msg))
           }
         }
       }

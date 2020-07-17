@@ -454,6 +454,18 @@ class JobSpecControllerTest
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe jobBWithDependencyJson
     }
+
+    "fail with a job with unknown dependency" in {
+      Given("Job A does not exist")
+
+      When("A job B with dependency on job A is posted")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobBWithDependencyJson)).get
+
+      Then("The job is created")
+      status(response) mustBe UNPROCESSABLE_ENTITY
+      contentType(response) mustBe Some("application/json")
+      contentAsJson(response) \ "message" mustBe JsDefined(JsString("Dependencies contain unknown jobs. unknown=[a]"))
+    }
   }
 
   "GET /jobs" should {
