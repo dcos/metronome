@@ -49,7 +49,6 @@ object Binders {
         params: Map[String, scala.collection.Seq[String]]
     ): Option[Either[String, Set[Embed]]] = {
       val embeds = params.getOrElse(key, Seq.empty).flatMap(_.split(","))
-      // TODO: marks schedules as deprecated.
       val valid = embeds.flatMap(Embed.names.get)
       if (valid.size != embeds.size)
         Some(Left(s"Unknown embed options. Valid options are: ${Embed.names.keys.mkString(", ")}"))
