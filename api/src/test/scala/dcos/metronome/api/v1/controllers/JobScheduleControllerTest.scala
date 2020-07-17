@@ -39,6 +39,10 @@ class JobScheduleControllerTest
       status(response) mustBe CREATED
       contentType(response) mustBe Some("application/json")
       contentAsJson(response) mustBe schedule1Json
+
+      And("The spec must include the new schedule")
+      val fetchedSpec = route(app, FakeRequest(GET, s"/v1/jobs/$specId")).get
+      (contentAsJson(fetchedSpec) \ "schedules" \ 0).get mustBe schedule1Json
     }
 
     "create a job schedule with timezone" in {
@@ -77,7 +81,7 @@ class JobScheduleControllerTest
       contentAsJson(response) mustBe schedule3Json
     }
 
-    "can not create a job schedule with the same id" in {
+    "cannot create a job schedule with the same id" in {
       Given("A job")
       route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
       route(app, FakeRequest(POST, s"/v1/jobs/$specId/schedules").withJsonBody(schedule1Json)).get.futureValue
@@ -91,7 +95,7 @@ class JobScheduleControllerTest
       contentAsString(response) must include("A schedule with id id1 already exists")
     }
 
-    "can not create more than one job schedule per job (only temporary limitation)" in {
+    "cannot create more than one job schedule per job (only temporary limitation)" in {
       Given("A job")
       route(app, FakeRequest(POST, "/v1/jobs").withJsonBody(jobSpecJson)).get.futureValue
       route(app, FakeRequest(POST, s"/v1/jobs/$specId/schedules").withJsonBody(schedule1Json)).get.futureValue
