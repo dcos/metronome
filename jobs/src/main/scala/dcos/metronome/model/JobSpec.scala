@@ -58,7 +58,7 @@ object JobSpec {
   final case class ValidationError(errorMsg: String) extends Exception(errorMsg, null)
 
   def validateDependencies(jobSpec: JobSpec, allSpecs: Seq[JobSpec]): Unit = {
-    val index = allSpecs.map(_.id).toSet
+    val index = allSpecs.map(s => s.id -> s).toMap
 
     // Validate that all dependencies are known.
     val directDependencies = jobSpec.dependencies.filter(index.contains)
@@ -68,6 +68,39 @@ object JobSpec {
         s"Dependencies contain unknown jobs. unknown=[${unknownDependencies.mkString(", ")}]"
       )
     }
-    // TODO: check if dependencies have cycles
+
+    // Validate that graph is acyclic
+
+    /* Assumption: The current state allSpecs has now cycles.
+     Thus:
+        - if job spec A is new we cannot create a DAG with cycles since A has no incoming vertices.
+        - if job spec A is updated we check if we can find a path from one of A's dependencies to A.
+     */
+    if (index.contains(jobSpec.id)) {
+      if (jobSpec.dependencies.exists(parent => findPath(index, parent, jobSpec))) {
+        throw ValidationError(
+          s"Dependencies have a cycle."
+        )
+      }
+    }
+  }
+
+  /**
+    * Finds whether there is a path from `start` to `end`.
+    *
+    * This algorithm is a very crude DFS. It does visit nodes multiple times.
+    *
+    * @param specs an index of job specifications.
+    * @param start the job spec id where we start.
+    * @param end the job spec we want to find the path to.
+    * @return true if there is a path, false if not.
+    */
+  def findPath(specs: Map[JobId, JobSpec], start: JobId, end: JobSpec): Boolean = {
+    if (start == end.id) {
+      true
+    } else {
+      val parentSpec = specs(start)
+      parentSpec.dependencies.exists(findPath(specs, _, end))
+    }
   }
 }
