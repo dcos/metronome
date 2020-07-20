@@ -120,7 +120,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with ScalaCheckProper
   val jobSpecGen = for {
     id <- jobIdGen
     description <- Gen.option(nonEmptyAlphaStrGen)
-    //dependencies <- Gen.listOf(jobIdGen)
+    dependencies <- Gen.listOf(jobIdGen)
     labels <- Gen.mapOf(Gen.zip(nonEmptyAlphaStrGen, nonEmptyAlphaStrGen))
     schedules <- Gen.listOf(for {
       id <- nonEmptyAlphaStrGen
@@ -131,7 +131,7 @@ class JobSpecMarshallerTest extends FunSuite with Matchers with ScalaCheckProper
       enabled <- booleanGen
     } yield ScheduleSpec(id, cron, timeZone, startingDeadline, concurrencyPolicy, enabled))
     run <- jobRunSpecGen
-  } yield JobSpec(id, description, Seq.empty, labels, schedules, run) // TODO: serialize dependencies
+  } yield JobSpec(id, description, dependencies, labels, schedules, run) // TODO: serialize dependencies
 
   implicit val jobSpecArbitrary = Arbitrary(jobSpecGen)
 

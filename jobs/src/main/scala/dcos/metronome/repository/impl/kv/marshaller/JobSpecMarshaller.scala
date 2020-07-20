@@ -44,6 +44,7 @@ object JobSpecConversions {
         .addAllLabels(jobSpec.labels.toProto.asJava)
         .setRun(jobSpec.run.toProto)
         .addAllSchedules(jobSpec.schedules.toProto.asJava)
+        .addAllDependencies(jobSpec.dependencies.toProto.asJava)
 
       jobSpec.description.foreach(builder.setDescription)
 
@@ -60,6 +61,7 @@ object JobSpecConversions {
       JobSpec(
         id = JobId(proto.getId),
         description = description,
+        dependencies = proto.getDependenciesList.asScala.toModel,
         labels = proto.getLabelsList.asScala.toModel,
         schedules = proto.getSchedulesList.asScala.toModel,
         run = proto.getRun.toModel
@@ -118,6 +120,21 @@ object JobSpecConversions {
         )
       }.toList
     }
+  }
+
+  implicit class DependenciesToProto(val dependencies: Seq[JobId]) extends AnyVal {
+    def toProto: Seq[Protos.JobSpec.Dependency] =
+      dependencies.map { dependency =>
+        Protos.JobSpec.Dependency
+          .newBuilder()
+          .setId(dependency.toString)
+          .build
+      }
+  }
+
+  implicit class ProtoToDependencies(val dependencies: mutable.Buffer[Protos.JobSpec.Dependency]) extends AnyVal {
+    def toModel: Seq[JobId] =
+      dependencies.map { dependency => JobId(dependency.getId) }.toVector
   }
 }
 
