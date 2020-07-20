@@ -19,7 +19,7 @@ object Dependencies {
     val JsonValidate = "0.9.4"
     val MoultingYaml = "0.4.0"
     val Caffeine = "2.6.2"
-    val UsiTestUtils = "0.1.50"
+    val Usi = "0.1.54"
     val AkkaHttp = "10.1.11"
   }
 
@@ -47,6 +47,7 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-http-xml" % V.AkkaHttp,
     "de.heikoseeberger" %% "akka-http-play-json" % "1.31.0"
   )
+  val usiCommons = "com.mesosphere.usi" %% "commons" % V.Usi
 
   object Test {
     val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest % "test"
@@ -56,7 +57,7 @@ object Dependencies {
     val mockito = "org.mockito" % "mockito-core" % V.Mockito % "test"
 
     val usiTestUtils =
-      "com.mesosphere.usi" %% "test-utils" % V.UsiTestUtils % "test" exclude ("org.apache.zookeeper", "zookeeper")
+      "com.mesosphere.usi" %% "test-utils" % V.Usi % "test" exclude ("org.apache.zookeeper", "zookeeper")
 
   }
 }

@@ -173,6 +173,7 @@ lazy val jobs = (project in file("jobs"))
       Dependencies.akka,
       Dependencies.akkaSlf4j,
       Dependencies.caffeine,
+      Dependencies.usiCommons,
       Dependencies.Test.scalatest,
       Dependencies.Test.akkaTestKit,
       Dependencies.Test.mockito,
