@@ -71,7 +71,7 @@ object JobSpec {
 
     // Validate that graph is acyclic
 
-    /* Assumption: The current state allSpecs has now cycles.
+    /* Assumption: The current state allSpecs have no cycles.
      Thus:
         - if job spec A is new we cannot create a DAG with cycles since A has no incoming vertices.
         - if job spec A is updated we check if we can find a path from one of A's dependencies to A.
