@@ -21,7 +21,6 @@ class JobSpecServiceActor(
 
   private[impl] val allJobs = TrieMap.empty[JobId, JobSpec]
 
-  // TODO: we might not need in flight changes with transactions
   private[impl] var inFlightChanges = Set.empty[JobId]
 
   private[impl] val scheduleActors = TrieMap.empty[JobId, ActorRef]
@@ -79,14 +78,18 @@ class JobSpecServiceActor(
   }
 
   def jobTransaction(updater: Seq[JobSpec] => Option[Modification]): Unit = {
-    val originalSender = sender()
     try {
       updater(allJobs.values.toVector) match {
-        case None => originalSender ! None
-        case Some(modification) => self.tell(modification, originalSender)
+        case None => sender() ! null // Is mapped back to None in JobSpecServiceDelegate#transaction.
+        case Some(modification) =>
+          modification match {
+            case CreateJobSpec(jobSpec) => createJobSpec(jobSpec)
+            case UpdateJobSpec(id, change) => updateJobSpec(id, change)
+            case DeleteJobSpec(id) => deleteJobSpec(id)
+          }
       }
     } catch {
-      case ex: Throwable => originalSender ! Status.Failure(ex)
+      case ex: Throwable => sender() ! Status.Failure(ex)
     }
   }
 
