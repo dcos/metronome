@@ -3,14 +3,11 @@ package model
 
 import com.wix.accord.{NullSafeValidator, Validator}
 import com.wix.accord.dsl._
-import dcos.metronome.jobspec.JobSpecService
 import dcos.metronome.model.JobRunSpec._
 import dcos.metronome.utils.glue.MarathonConversions
 import mesosphere.marathon.api.v2.Validation._
 import mesosphere.marathon
 import mesosphere.marathon.plugin.{ApplicationSpec, NetworkSpec, Secret, VolumeMountSpec, VolumeSpec}
-
-import scala.concurrent.Await
 
 case class JobSpec(
     id: JobId,
@@ -112,7 +109,7 @@ object JobSpec {
   def validateSafeDelete(jobId: JobId, allSpecs: Seq[JobSpec]): Unit = {
     // Validate deleted job spec is not a dependency.
     if (allSpecs.exists(_.dependencies.contains(jobId))) {
-      val children = allSpecs.filter(_.dependencies.contains(jobId))
+      val children = allSpecs.filter(_.dependencies.contains(jobId)).map(_.id)
       throw DependencyConflict(s"There are jobs with a dependency on $jobId. children=[${children.mkString(", ")}]")
     }
   }

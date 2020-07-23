@@ -4,7 +4,6 @@ package jobspec.impl
 import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
-import com.mesosphere.usi.async.ExecutionContexts
 import dcos.metronome.jobspec.impl.JobSpecServiceActor._
 import dcos.metronome.jobspec.{JobSpecConfig, JobSpecService}
 import dcos.metronome.model.{JobId, JobSpec}
@@ -45,10 +44,5 @@ class JobSpecServiceDelegate(config: JobSpecConfig, actorRef: ActorRef, metrics:
   override def deleteJobSpec(id: JobId): Future[JobSpec] =
     deleteJobSpecTimeMetric {
       actorRef.ask(DeleteJobSpec(id)).mapTo[JobSpec]
-    }
-
-  override def transaction(updater: Seq[JobSpec] => Option[Modification]): Future[Option[JobSpec]] =
-    updateJobSpecTimeMetric {
-      actorRef.ask(Transaction(updater)).mapTo[JobSpec].map(Option.apply)(ExecutionContexts.callerThread)
     }
 }

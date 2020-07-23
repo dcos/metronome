@@ -1,7 +1,6 @@
 package dcos.metronome
 package jobspec
 
-import dcos.metronome.jobspec.impl.JobSpecServiceActor.Modification
 import dcos.metronome.model.{JobId, JobSpec}
 
 import scala.concurrent.Future
@@ -50,12 +49,4 @@ trait JobSpecService {
     * @return all available job specifications
     */
   def listJobSpecs(filter: JobSpec => Boolean): Future[Iterable[JobSpec]]
-
-  /**
-    * Process a modification in a transaction. No other operation can be performed during the this transaction.
-    *
-    * @param updater The update method.
-    * @return the resulting job specification of the update or none if no update was applied.
-    */
-  def transaction(updater: Seq[JobSpec] => Option[Modification]): Future[Option[JobSpec]]
 }
