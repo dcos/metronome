@@ -56,6 +56,7 @@ object JobSpec {
     }
 
   final case class ValidationError(errorMsg: String) extends Exception(errorMsg, null)
+  final case class DependencyConflict(errorMsg: String) extends Exception(errorMsg, null)
 
   def validateDependencies(jobSpec: JobSpec, allSpecs: Seq[JobSpec]): Unit = {
     val index = allSpecs.map(s => s.id -> s).toMap
@@ -101,6 +102,18 @@ object JobSpec {
     } else {
       val parentSpec = specs(start)
       parentSpec.dependencies.exists(findPath(specs, _, end))
+    }
+  }
+
+  /**
+    * Validates that job spec with given id can be safely deleted.
+    * @throws DependencyConflict if another job depends on the deleted
+    */
+  def validateSafeDelete(jobId: JobId, allSpecs: Seq[JobSpec]): Unit = {
+    // Validate deleted job spec is not a dependency.
+    if (allSpecs.exists(_.dependencies.contains(jobId))) {
+      val children = allSpecs.filter(_.dependencies.contains(jobId))
+      throw DependencyConflict(s"There are jobs with a dependency on $jobId. children=[${children.mkString(", ")}]")
     }
   }
 }

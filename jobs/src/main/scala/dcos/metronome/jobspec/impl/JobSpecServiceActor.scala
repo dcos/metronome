@@ -72,7 +72,9 @@ class JobSpecServiceActor(
   def deleteJobSpec(id: JobId): Unit = {
     withJob(id) { old =>
       noChangeInFlight(old) {
-        persistenceActor(id) ! JobSpecPersistenceActor.Delete(old, sender())
+        noDependency(old) {
+          persistenceActor(id) ! JobSpecPersistenceActor.Delete(old, sender())
+        }
       }
     }
   }
@@ -106,11 +108,20 @@ class JobSpecServiceActor(
     }
   }
 
-  def noChangeInFlight[T](jobSpec: JobSpec)(change: => Unit): Unit = {
+  def noChangeInFlight(jobSpec: JobSpec)(change: => Unit): Unit = {
     if (inFlightChanges.contains(jobSpec.id)) sender() ! Status.Failure(JobSpecChangeInFlight(jobSpec.id))
     else {
       inFlightChanges += jobSpec.id
       change
+    }
+  }
+
+  def noDependency(jobSpec: JobSpec)(change: => Unit): Unit = {
+    try {
+      JobSpec.validateSafeDelete(jobSpec.id, allJobs.values.toVector)
+      change
+    } catch {
+      case ex: JobSpec.DependencyConflict => sender() ! Status.Failure(ex)
     }
   }
 
