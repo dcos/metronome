@@ -240,6 +240,11 @@ message JobSpec {
   }
 
   optional RunSpec run = 6;
+
+  message Dependency {
+    optional string id = 1;
+  }
+  repeated Dependency dependencies = 20;
 }
 
 message NetworkDefinition {

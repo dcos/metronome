@@ -266,12 +266,19 @@ package object models {
         .formatNullable[Seq[Network]]
         .withDefault(JobRunSpec.DefaultNetworks))(JobRunSpec.apply, unlift(JobRunSpec.unapply))
 
+  // A format for JobId that writes and object {"id": value} instead of a plain string.
+  val DependencyFormat: Format[Seq[JobId]] = Format(
+    Reads.seq((__ \ "id").read[JobId]).map(_.toVector),
+    Writes.iterableWrites[JobId, Seq]((__ \ "id").write[JobId])
+  )
+
   implicit lazy val JobSpecFormat: Format[JobSpec] = ((__ \ "id").format[JobId] ~
     (__ \ "description").formatNullable[String] ~
+    (__ \ "dependencies").formatNullable[Seq[JobId]](DependencyFormat).withDefault(JobSpec.DefaultDependencies) ~
     (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty) ~
-    (__ \ "schedules").formatNullable[Seq[ScheduleSpec]].withDefault(Seq.empty) ~
+    (__ \ "schedules").formatNullable[Seq[ScheduleSpec]].withDefault(JobSpec.DefaultSchedules) ~
     (__ \ "run")
-      .format[JobRunSpec])(JobSpec.apply(_, _, _, _, _), s => (s.id, s.description, s.labels, s.schedules, s.run))
+      .format[JobRunSpec])(JobSpec.apply, unlift(JobSpec.unapply))
 
   implicit lazy val TaskIdFormat: Format[Task.Id] = Format(
     Reads.of[String](Reads.minLength[String](3)).map(Task.Id(_)),

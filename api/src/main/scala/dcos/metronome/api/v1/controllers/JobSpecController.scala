@@ -8,6 +8,7 @@ import dcos.metronome.jobinfo.JobInfo.Embed
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
+import dcos.metronome.jobspec.impl.JobSpecServiceActor.CreateJobSpec
 import dcos.metronome.model.{JobId, JobSpec}
 import mesosphere.marathon.plugin.auth._
 import mesosphere.marathon.metrics.Metrics
@@ -32,12 +33,14 @@ class JobSpecController(
     measured {
       AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
         request.authorizedAsync(CreateRunSpec) { jobSpec =>
-          jobSpecService
-            .createJobSpec(jobSpec)
-            .map(Created(_))
-            .recover {
-              case JobSpecAlreadyExists(_) => Conflict(ErrorDetail("Job with this id already exists"))
-            }
+          jobSpecService.transaction { jobSpecs =>
+            JobSpec.validateDependencies(jobSpec, jobSpecs)
+
+            Some(CreateJobSpec(jobSpec))
+          }.map(Created(_)).recover {
+            case JobSpecAlreadyExists(_) => Conflict(ErrorDetail("Job with this id already exists"))
+            case JobSpec.ValidationError(msg) => UnprocessableEntity(ErrorDetail(msg))
+          }
         }
       }
     }

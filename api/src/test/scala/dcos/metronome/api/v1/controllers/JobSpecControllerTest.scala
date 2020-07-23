@@ -5,7 +5,7 @@ import dcos.metronome.api.v1.models._
 import dcos.metronome.api._
 import dcos.metronome.model._
 import mesosphere.marathon.core.plugin.PluginManager
-import org.scalatest.{BeforeAndAfter, GivenWhenThen}
+import org.scalatest.{AppendedClues, BeforeAndAfter, GivenWhenThen}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.play.PlaySpec
@@ -17,6 +17,7 @@ import play.api.test.Helpers._
 class JobSpecControllerTest
     extends PlaySpec
     with OneAppPerTestWithComponents[MockApiComponents]
+    with AppendedClues
     with GivenWhenThen
     with ScalaFutures
     with BeforeAndAfter {
@@ -440,6 +441,31 @@ class JobSpecControllerTest
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("application/json")
     }
+
+    "create a job with dependencies" in {
+      Given("Job A")
+      route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobAJson)).get.futureValue
+
+      When("A job B with dependency on job A is posted")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobBWithDependencyJson)).get
+
+      Then("The job is created")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Some("application/json")
+      contentAsJson(response) mustBe jobBWithDependencyJson
+    }
+
+    "fail with a job with unknown dependency" in {
+      Given("Job A does not exist")
+
+      When("A job B with dependency on job A is posted")
+      val response = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobBWithDependencyJson)).get
+
+      Then("The job is created")
+      status(response) mustBe UNPROCESSABLE_ENTITY
+      contentType(response) mustBe Some("application/json")
+      contentAsJson(response) \ "message" mustBe JsDefined(JsString("Dependencies contain unknown jobs. unknown=[a]"))
+    }
   }
 
   "GET /jobs" should {
@@ -660,7 +686,7 @@ class JobSpecControllerTest
       status(unauthorized) mustBe FORBIDDEN
     }
 
-    "fail for invalid jobspec" in {
+    "fail for invalid job spec" in {
       Given("An invalid job spec")
       val jobSpecJson = Json.toJson(JobSpec(JobId("spec1"), run = JobRunSpec()))
       val failed = route(app, FakeRequest(POST, s"/v1/jobs").withJsonBody(jobSpecJson)).get
@@ -760,6 +786,11 @@ class JobSpecControllerTest
     s.copy(run = s.run.copy(gpus = 4))
   }
   val cmdGpuJobJson = Json.toJson(cmdGpuJob)
+
+  val jobA = spec("a")
+  val jobAJson = Json.toJson(jobA)
+  val jobBWithDependency = spec("b").copy(dependencies = Seq(jobA.id))
+  val jobBWithDependencyJson = Json.toJson(jobBWithDependency)
 
   before {
     auth.authorized = true

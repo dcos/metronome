@@ -20,7 +20,9 @@ class JobSpecServiceActor(
   import JobSpecServiceActor._
 
   private[impl] val allJobs = TrieMap.empty[JobId, JobSpec]
+
   private[impl] var inFlightChanges = Set.empty[JobId]
+
   private[impl] val scheduleActors = TrieMap.empty[JobId, ActorRef]
   private[impl] val persistenceActors = TrieMap.empty[JobId, ActorRef]
 
@@ -31,6 +33,7 @@ class JobSpecServiceActor(
     case DeleteJobSpec(id) => deleteJobSpec(id)
     case GetJobSpec(id) => getJobSpec(id)
     case ListJobSpecs(filter) => listJobSpecs(filter)
+    case Transaction(updater) => jobTransaction(updater)
 
     // persistence ack messages
     case Created(_, jobSpec, delegate) => jobSpecCreated(jobSpec, delegate)
@@ -71,6 +74,22 @@ class JobSpecServiceActor(
       noChangeInFlight(old) {
         persistenceActor(id) ! JobSpecPersistenceActor.Delete(old, sender())
       }
+    }
+  }
+
+  def jobTransaction(updater: Seq[JobSpec] => Option[Modification]): Unit = {
+    try {
+      updater(allJobs.values.toVector) match {
+        case None => sender() ! null // Is mapped back to None in JobSpecServiceDelegate#transaction.
+        case Some(modification) =>
+          modification match {
+            case CreateJobSpec(jobSpec) => createJobSpec(jobSpec)
+            case UpdateJobSpec(id, change) => updateJobSpec(id, change)
+            case DeleteJobSpec(id) => deleteJobSpec(id)
+          }
+      }
+    } catch {
+      case ex: Throwable => sender() ! Status.Failure(ex)
     }
   }
 
@@ -183,11 +202,14 @@ class JobSpecServiceActor(
 object JobSpecServiceActor {
 
   //crud messages
+  sealed trait Message
+  sealed trait Modification extends Message
   case class ListJobSpecs(filter: JobSpec => Boolean)
   case class GetJobSpec(id: JobId)
-  case class CreateJobSpec(jobSpec: JobSpec)
-  case class UpdateJobSpec(id: JobId, change: JobSpec => JobSpec)
-  case class DeleteJobSpec(id: JobId)
+  case class CreateJobSpec(jobSpec: JobSpec) extends Modification
+  case class UpdateJobSpec(id: JobId, change: JobSpec => JobSpec) extends Modification
+  case class DeleteJobSpec(id: JobId) extends Modification
+  case class Transaction(updater: Seq[JobSpec] => Option[Modification])
 
   def props(
       repo: Repository[JobId, JobSpec],
