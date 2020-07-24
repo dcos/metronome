@@ -98,7 +98,19 @@ class JobSpecServiceActorTest
     eventually(service.underlyingActor.inFlightChanges should have size 0)
   }
 
-  test("A jobSpec can not be created, if the repository fails") {
+  test("A jobSpec cannot be created, if its dependencies are unknown") {
+    Given("A service with no job")
+    val f = new Fixture
+    val service = f.jobSpecService
+
+    When("A jobSpec with an unknown dependency is created")
+    service ! CreateJobSpec(f.jobSpec.copy(dependencies = Seq(JobId("spec.unknown"))))
+
+    Then("An exception will be thrown")
+    expectMsg(Status.Failure(JobSpec.ValidationError("Dependencies contain unknown jobs. unknown=[spec.unknown]")))
+  }
+
+  test("A jobSpec cannot be created, if the repository fails") {
     Given("A service with one job")
     val f = new Fixture
     val service = f.jobSpecService
@@ -134,7 +146,7 @@ class JobSpecServiceActorTest
     service.underlyingActor.inFlightChanges should have size 0
   }
 
-  test("A jobSpec can not be updated, if it exists in the actor") {
+  test("A jobSpec cannot be updated, if it exists in the actor") {
     Given("A service with one job")
     val f = new Fixture
     val service = f.jobSpecService
@@ -147,7 +159,7 @@ class JobSpecServiceActorTest
     eventually(service.underlyingActor.inFlightChanges should have size 0)
   }
 
-  test("A jobSpec can not be updated, if there is a change in flight") {
+  test("A jobSpec cannot be updated, if there is a change in flight") {
     Given("A service with one job")
     val f = new Fixture
     val service = f.jobSpecService
@@ -162,7 +174,7 @@ class JobSpecServiceActorTest
     eventually(service.underlyingActor.inFlightChanges should have size 1)
   }
 
-  test("A jobSpec can not be updated, if the repository fails") {
+  test("A jobSpec cannot be updated, if the repository fails") {
     Given("A service with one job")
     val f = new Fixture
     val service = f.jobSpecService
@@ -197,7 +209,7 @@ class JobSpecServiceActorTest
     service.underlyingActor.inFlightChanges should have size 0
   }
 
-  test("A jobSpec can not be deleted, if it does not exist") {
+  test("A jobSpec cannot be deleted, if it does not exist") {
     Given("A service with one job")
     val f = new Fixture
     val service = f.jobSpecService
@@ -210,7 +222,7 @@ class JobSpecServiceActorTest
     eventually(service.underlyingActor.inFlightChanges should have size 0)
   }
 
-  test("A jobSpec can not be deleted, if there is a change in flight") {
+  test("A jobSpec cannot be deleted, if there is a change in flight") {
     Given("A service with one job")
     val f = new Fixture
     val service = f.jobSpecService
@@ -225,7 +237,7 @@ class JobSpecServiceActorTest
     eventually(service.underlyingActor.inFlightChanges should have size 1)
   }
 
-  test("A jobSpec can not be deleted, if the repository fails") {
+  test("A jobSpec cannot be deleted, if the repository fails") {
     Given("A service with one job")
     val f = new Fixture
     val service = f.jobSpecService
@@ -241,6 +253,20 @@ class JobSpecServiceActorTest
     expectMsg(Status.Failure(exception))
     eventually(service.underlyingActor.inFlightChanges should have size 0)
     service.underlyingActor.allJobs should have size 1
+  }
+
+  test("A jobSpec cannot be deleted, if other jobs depend on it") {
+    Given("A service with one job and another that depends on it")
+    val f = new Fixture
+    val service = f.jobSpecService
+    service.underlyingActor.addJobSpec(f.jobSpec)
+    service.underlyingActor.addJobSpec(f.jobSpec.copy(id = JobId("b"), dependencies = Seq(f.jobSpec.id)))
+
+    When("A the job should be deleted")
+    service ! DeleteJobSpec(f.jobSpec.id)
+
+    Then("An exception will be thrown")
+    expectMsg(Status.Failure(JobSpec.DependencyConflict("There are jobs with a dependency on test. children=[b]")))
   }
 
   test("A disabled jobSpec will not be started") {

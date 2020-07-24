@@ -33,7 +33,6 @@ class JobSpecServiceActor(
     case DeleteJobSpec(id) => deleteJobSpec(id)
     case GetJobSpec(id) => getJobSpec(id)
     case ListJobSpecs(filter) => listJobSpecs(filter)
-    case Transaction(updater) => jobTransaction(updater)
 
     // persistence ack messages
     case Created(_, jobSpec, delegate) => jobSpecCreated(jobSpec, delegate)
@@ -54,9 +53,11 @@ class JobSpecServiceActor(
   }
 
   def createJobSpec(jobSpec: JobSpec): Unit = {
-    noSpecWithId(jobSpec) {
-      noChangeInFlight(jobSpec) {
-        persistenceActor(jobSpec.id) ! JobSpecPersistenceActor.Create(jobSpec, sender())
+    validJobSpec(jobSpec) {
+      noSpecWithId(jobSpec) {
+        noChangeInFlight(jobSpec) {
+          persistenceActor(jobSpec.id) ! JobSpecPersistenceActor.Create(jobSpec, sender())
+        }
       }
     }
   }
@@ -64,7 +65,9 @@ class JobSpecServiceActor(
   def updateJobSpec(id: JobId, change: JobSpec => JobSpec): Unit = {
     withJob(id) { old =>
       noChangeInFlight(old) {
-        persistenceActor(id) ! JobSpecPersistenceActor.Update(change, sender())
+        validJobSpec(old) { // TODO: this must be the job spec after the update. See https://jira.d2iq.com/browse/D2IQ-70391
+          persistenceActor(id) ! JobSpecPersistenceActor.Update(change, sender())
+        }
       }
     }
   }
@@ -72,24 +75,10 @@ class JobSpecServiceActor(
   def deleteJobSpec(id: JobId): Unit = {
     withJob(id) { old =>
       noChangeInFlight(old) {
-        persistenceActor(id) ! JobSpecPersistenceActor.Delete(old, sender())
+        noDependency(old) {
+          persistenceActor(id) ! JobSpecPersistenceActor.Delete(old, sender())
+        }
       }
-    }
-  }
-
-  def jobTransaction(updater: Seq[JobSpec] => Option[Modification]): Unit = {
-    try {
-      updater(allJobs.values.toVector) match {
-        case None => sender() ! null // Is mapped back to None in JobSpecServiceDelegate#transaction.
-        case Some(modification) =>
-          modification match {
-            case CreateJobSpec(jobSpec) => createJobSpec(jobSpec)
-            case UpdateJobSpec(id, change) => updateJobSpec(id, change)
-            case DeleteJobSpec(id) => deleteJobSpec(id)
-          }
-      }
-    } catch {
-      case ex: Throwable => sender() ! Status.Failure(ex)
     }
   }
 
@@ -106,11 +95,29 @@ class JobSpecServiceActor(
     }
   }
 
-  def noChangeInFlight[T](jobSpec: JobSpec)(change: => Unit): Unit = {
+  def noChangeInFlight(jobSpec: JobSpec)(change: => Unit): Unit = {
     if (inFlightChanges.contains(jobSpec.id)) sender() ! Status.Failure(JobSpecChangeInFlight(jobSpec.id))
     else {
       inFlightChanges += jobSpec.id
       change
+    }
+  }
+
+  def noDependency(jobSpec: JobSpec)(change: => Unit): Unit = {
+    try {
+      JobSpec.validateSafeDelete(jobSpec.id, allJobs.values.toVector)
+      change
+    } catch {
+      case ex: JobSpec.DependencyConflict => sender() ! Status.Failure(ex)
+    }
+  }
+
+  def validJobSpec(spec: JobSpec)(change: => Unit): Unit = {
+    try {
+      JobSpec.validateDependencies(spec, allJobs.values.toVector)
+      change
+    } catch {
+      case ex: JobSpec.ValidationError => sender() ! Status.Failure(ex)
     }
   }
 
@@ -209,7 +216,6 @@ object JobSpecServiceActor {
   case class CreateJobSpec(jobSpec: JobSpec) extends Modification
   case class UpdateJobSpec(id: JobId, change: JobSpec => JobSpec) extends Modification
   case class DeleteJobSpec(id: JobId) extends Modification
-  case class Transaction(updater: Seq[JobSpec] => Option[Modification])
 
   def props(
       repo: Repository[JobId, JobSpec],

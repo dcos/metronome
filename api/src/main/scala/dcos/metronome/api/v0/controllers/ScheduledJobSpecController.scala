@@ -34,6 +34,7 @@ class ScheduledJobSpecController(
           .map(Created(_))
           .recover {
             case JobSpecAlreadyExists(_) => Conflict(ErrorDetail("Job with this id already exists"))
+            case JobSpec.ValidationError(msg) => UnprocessableEntity(ErrorDetail(msg))
           }
       }
     }

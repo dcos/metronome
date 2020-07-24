@@ -12,8 +12,6 @@ import scala.util.control.NonFatal
 
 object JobSpecServiceFixture {
 
-  import scala.concurrent.ExecutionContext.Implicits.global
-
   def simpleJobSpecService(testClock: Clock = Clock.systemUTC()): JobSpecService =
     new JobSpecService {
       val specs = TrieMap.empty[JobId, JobSpec]
@@ -25,8 +23,13 @@ object JobSpecServiceFixture {
           case Some(_) =>
             failed(JobSpecAlreadyExists(jobSpec.id))
           case None =>
-            specs += jobSpec.id -> jobSpecWithMockedTime(jobSpec)
-            successful(jobSpec)
+            try {
+              JobSpec.validateDependencies(jobSpec, specs.values.toVector)
+              specs += jobSpec.id -> jobSpecWithMockedTime(jobSpec)
+              successful(jobSpec)
+            } catch {
+              case ex: Throwable => failed(ex)
+            }
         }
       }
 
@@ -60,27 +63,14 @@ object JobSpecServiceFixture {
       override def deleteJobSpec(id: JobId): Future[JobSpec] = {
         specs.get(id) match {
           case Some(spec) =>
-            specs -= id
-            successful(spec)
+            try {
+              JobSpec.validateSafeDelete(id, specs.values.toVector)
+              specs -= id
+              successful(spec)
+            } catch {
+              case ex: Throwable => failed(ex)
+            }
           case None => failed(JobSpecDoesNotExist(id))
-        }
-      }
-
-      override def transaction(
-          updater: Seq[JobSpec] => Option[JobSpecServiceActor.Modification]
-      ): Future[Option[JobSpec]] = {
-        try {
-          updater(specs.values.toVector) match {
-            case None => successful(None)
-            case Some(modification) =>
-              modification match {
-                case JobSpecServiceActor.CreateJobSpec(jobSpec) => createJobSpec(jobSpec).map(Option.apply)
-                case JobSpecServiceActor.UpdateJobSpec(id, change) => updateJobSpec(id, change).map(Option.apply)
-                case JobSpecServiceActor.DeleteJobSpec(id) => deleteJobSpec(id).map(Option.apply)
-              }
-          }
-        } catch {
-          case ex: Throwable => failed(ex)
         }
       }
     }

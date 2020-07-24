@@ -8,7 +8,6 @@ import dcos.metronome.jobinfo.JobInfo.Embed
 import dcos.metronome.jobinfo.JobInfoService
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.jobspec.impl.JobSpecServiceActor.CreateJobSpec
 import dcos.metronome.model.{JobId, JobSpec}
 import mesosphere.marathon.plugin.auth._
 import mesosphere.marathon.metrics.Metrics
@@ -33,14 +32,13 @@ class JobSpecController(
     measured {
       AuthorizedAction.async(validate.json[JobSpec]) { implicit request =>
         request.authorizedAsync(CreateRunSpec) { jobSpec =>
-          jobSpecService.transaction { jobSpecs =>
-            JobSpec.validateDependencies(jobSpec, jobSpecs)
-
-            Some(CreateJobSpec(jobSpec))
-          }.map(Created(_)).recover {
-            case JobSpecAlreadyExists(_) => Conflict(ErrorDetail("Job with this id already exists"))
-            case JobSpec.ValidationError(msg) => UnprocessableEntity(ErrorDetail(msg))
-          }
+          jobSpecService
+            .createJobSpec(jobSpec)
+            .map(Created(_))
+            .recover {
+              case JobSpecAlreadyExists(_) => Conflict(ErrorDetail("Job with this id already exists"))
+              case JobSpec.ValidationError(msg) => UnprocessableEntity(ErrorDetail(msg))
+            }
         }
       }
     }
@@ -69,6 +67,7 @@ class JobSpecController(
           def updateJob(job: JobSpec): JobSpec = jobSpec.copy(schedules = job.schedules)
           jobSpecService.updateJobSpec(id, updateJob).map(Ok(_)).recover {
             case _: JobSpecDoesNotExist => NotFound(UnknownJob(id))
+            case JobSpec.ValidationError(msg) => UnprocessableEntity(ErrorDetail(msg))
           }
         }
       }
@@ -90,6 +89,7 @@ class JobSpecController(
 
               f.recover {
                 case JobSpecDoesNotExist(_) => NotFound(UnknownJob(id))
+                case JobSpec.DependencyConflict(msg) => Conflict(ErrorDetail(msg))
               }
           }
         }
