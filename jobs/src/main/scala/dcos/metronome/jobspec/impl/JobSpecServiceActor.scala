@@ -65,7 +65,7 @@ class JobSpecServiceActor(
   def updateJobSpec(id: JobId, change: JobSpec => JobSpec): Unit = {
     withJob(id) { old =>
       noChangeInFlight(old) {
-        validJobSpec(old) { // TODO: this must be the job spec after the update. See https://jira.d2iq.com/browse/D2IQ-70391
+        validJobSpec(change(old)) {
           persistenceActor(id) ! JobSpecPersistenceActor.Update(change, sender())
         }
       }

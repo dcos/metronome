@@ -89,7 +89,7 @@ class JobSpecController(
 
               f.recover {
                 case JobSpecDoesNotExist(_) => NotFound(UnknownJob(id))
-                case JobSpec.DependencyConflict(msg) => Conflict(ErrorDetail(msg))
+                case ex: JobSpec.DependencyConflict => Conflict(ErrorDetail(ex.getMessage))
               }
           }
         }
