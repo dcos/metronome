@@ -192,6 +192,22 @@ class JobSpecServiceActorTest
     service.underlyingActor.allJobs should have size 1
   }
 
+  test("A jobSpec cannot be updated, if the update introduces a cycle") {
+    Given("A service with two dependent jobs")
+    val f = new Fixture
+    val service = f.jobSpecService
+    val jobA = f.jobSpec
+    val jobB = f.jobSpec.copy(id = JobId("b"), dependencies = Seq(jobA.id))
+    service.underlyingActor.addJobSpec(jobA)
+    service.underlyingActor.addJobSpec(jobB)
+
+    When("An existing jobSpec is updated and introduces a cycle")
+    service ! UpdateJobSpec(jobA.id, job => job.copy(dependencies = Seq(jobB.id)))
+
+    Then("An exception will be thrown")
+    expectMsg(Status.Failure(JobSpec.ValidationError("Dependencies have a cycle.")))
+  }
+
   test("A jobSpec can be deleted") {
     Given("A service with one job")
     val f = new Fixture
@@ -266,7 +282,7 @@ class JobSpecServiceActorTest
     service ! DeleteJobSpec(f.jobSpec.id)
 
     Then("An exception will be thrown")
-    expectMsg(Status.Failure(JobSpec.DependencyConflict("There are jobs with a dependency on test. children=[b]")))
+    expectMsg(Status.Failure(JobSpec.DependencyConflict(f.jobSpec.id, Seq(JobId("b")))))
   }
 
   test("A disabled jobSpec will not be started") {
