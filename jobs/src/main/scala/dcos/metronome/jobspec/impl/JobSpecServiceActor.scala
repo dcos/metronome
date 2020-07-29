@@ -14,7 +14,8 @@ import scala.collection.concurrent.TrieMap
 class JobSpecServiceActor(
     val repo: Repository[JobId, JobSpec],
     persistenceActorFactory: JobId => Props,
-    schedulerActorFactory: JobSpec => Props
+    schedulerActorFactory: JobSpec => Props,
+    dependencyActorFactory: JobSpec => Props
 ) extends LoadContentOnStartup[JobId, JobSpec] {
   import JobSpecPersistenceActor._
   import JobSpecServiceActor._
@@ -24,6 +25,7 @@ class JobSpecServiceActor(
   private[impl] var inFlightChanges = Set.empty[JobId]
 
   private[impl] val scheduleActors = TrieMap.empty[JobId, ActorRef]
+  private[impl] val dependencyActors = TrieMap.empty[JobId, ActorRef]
   private[impl] val persistenceActors = TrieMap.empty[JobId, ActorRef]
 
   override def receive: Receive = {
@@ -125,6 +127,7 @@ class JobSpecServiceActor(
     allJobs += jobSpec.id -> jobSpec
     inFlightChanges -= jobSpec.id
     scheduleActor(jobSpec)
+    dependencyActor(jobSpec)
   }
 
   def jobSpecCreated(jobSpec: JobSpec, delegate: ActorRef): Unit = {
@@ -200,6 +203,23 @@ class JobSpecServiceActor(
     scheduleActors.get(jobSpec.id) orElse newActor
   }
 
+  /**
+    * Launches or retrieves a dependency actor that executes the job if its dependency finished.
+    * @param jobSpec The job spec that should be managed.
+    * @return The dependency actor or none if no dependencies are declared.
+    */
+  def dependencyActor(jobSpec: JobSpec): Option[ActorRef] = {
+    def newActor: Option[ActorRef] =
+      if (jobSpec.dependencies.nonEmpty) {
+        val ref = context.actorOf(dependencyActorFactory(jobSpec), s"dependency:${jobSpec.id.safePath}")
+        context.watch(ref)
+        dependencyActors += jobSpec.id -> ref
+        Some(ref)
+      } else None
+
+    dependencyActors.get(jobSpec.id) orElse newActor
+  }
+
   def initialize(jobs: List[JobSpec]): Unit = {
     log.info(s"Loaded JobSpecs: $jobs")
     jobs.foreach(addJobSpec)
@@ -220,6 +240,8 @@ object JobSpecServiceActor {
   def props(
       repo: Repository[JobId, JobSpec],
       persistenceActorFactory: JobId => Props,
-      schedulerActorFactory: JobSpec => Props
-  ): Props = Props(new JobSpecServiceActor(repo, persistenceActorFactory, schedulerActorFactory))
+      schedulerActorFactory: JobSpec => Props,
+      dependencyActorFactory: JobSpec => Props
+  ): Props =
+    Props(new JobSpecServiceActor(repo, persistenceActorFactory, schedulerActorFactory, dependencyActorFactory))
 }
