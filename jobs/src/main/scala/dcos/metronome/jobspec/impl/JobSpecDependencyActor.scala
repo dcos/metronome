@@ -1,8 +1,13 @@
 package dcos.metronome.jobspec.impl
 
+import java.time.Instant
+
 import akka.actor.{Actor, ActorLogging, Props, Stash}
 import dcos.metronome.jobrun.JobRunService
-import dcos.metronome.model.{Event, JobSpec}
+import dcos.metronome.jobspec.impl.JobSpecDependencyActor.{DependenciesState, UpdateJobSpec}
+import dcos.metronome.model.{Event, JobId, JobRun, JobRunStatus, JobSpec}
+
+import scala.collection.mutable
 
 /**
   * Manages one JobSpec.
@@ -15,11 +20,13 @@ import dcos.metronome.model.{Event, JobSpec}
   */
 class JobSpecDependencyActor(initSpec: JobSpec, runService: JobRunService) extends Actor with Stash with ActorLogging {
 
-  val dependencyIndex = initSpec.dependencies.toSet
+  private[impl] var spec = initSpec
+  private[impl] var lastSuccessfulRun: Instant = Instant.MIN
+  val dependenciesState = DependenciesState(initSpec.dependencies.toSet)
 
   override def preStart(): Unit = {
     super.preStart()
-    context.system.eventStream.subscribe(self, classOf[Event.JobRunFinished])
+    context.system.eventStream.subscribe(self, classOf[Event.JobRunEvent])
   }
 
   override def postStop(): Unit = {
@@ -28,19 +35,64 @@ class JobSpecDependencyActor(initSpec: JobSpec, runService: JobRunService) exten
   }
 
   override def receive: Receive = {
-    case Event.JobRunFinished(jobRun, _, _) if dependencyIndex.contains(jobRun.jobSpec.id) =>
-      // TODO: account for all dependencies. Also make sure that the finished job run is from the same frame.
-      runService.startJobRun(initSpec)
+    case Event.JobRunFinished(jobRun, _, _) if jobRun.jobSpec.id == initSpec.id =>
+      lastSuccessfulRun = jobRun.completedAt.getOrElse(Instant.MIN)
 
-    case Event.JobRunFailed(jobRun, _, _) if dependencyIndex.contains(jobRun.jobSpec.id) =>
-      ???
+    case Event.JobRunFailed(jobRun, _, _) if jobRun.jobSpec.id == initSpec.id =>
+      lastSuccessfulRun = Instant.MIN
 
-    case Event.JobRunStarted(jobRun, _, _) if dependencyIndex.contains(jobRun.jobSpec.id) =>
-      ???
+    case ev: Event.JobRunEvent =>
+      dependenciesState.update(ev.jobRun)
+      if (dependenciesState.shouldTriggerJob(lastSuccessfulRun)) {
+        runService.startJobRun(initSpec)
+      }
+
+    case UpdateJobSpec(newJobSpec) =>
+      require(newJobSpec.id == spec.id)
+      spec = newJobSpec
+      dependenciesState.updateJobSpec(newJobSpec)
+
   }
 }
 
 object JobSpecDependencyActor {
+
+  case class UpdateJobSpec(newSpec: JobSpec)
+
+  case class DependenciesState(dependencies: Set[JobId]) {
+
+    // An index of all parents
+    private[impl] var dependencyIndex: Set[JobId] = dependencies
+
+    // State of all successful parents runs.
+    val lastSuccessfulRunDependencies: mutable.Map[JobId, Instant] = mutable.Map.empty
+
+    def update(jobRun: JobRun): Unit = {
+      if (dependencyIndex.contains(jobRun.jobSpec.id)) {
+        if (jobRun.status == JobRunStatus.Success) {
+          lastSuccessfulRunDependencies.update(jobRun.jobSpec.id, jobRun.completedAt.get)
+        } else if (jobRun.status == JobRunStatus.Failed) {
+          lastSuccessfulRunDependencies.remove(jobRun.jobSpec.id)
+        }
+      }
+    }
+
+    /**
+      * @return true if the last successful run of the child is older than all parent runs.
+      */
+    def shouldTriggerJob(lastSuccessfulRun: Instant): Boolean = {
+      lastSuccessfulRunDependencies.keySet.diff(dependencyIndex).isEmpty && lastSuccessfulRunDependencies.values.forall(
+        _.isAfter(lastSuccessfulRun)
+      )
+    }
+
+    def updateJobSpec(newJobSpec: JobSpec): Unit = {
+      dependencyIndex = newJobSpec.dependencies.toSet
+
+      // Remove dependencies from last successful runs
+      lastSuccessfulRunDependencies.keySet.diff(dependencyIndex).foreach(lastSuccessfulRunDependencies.remove)
+    }
+  }
 
   def props(spec: JobSpec, runService: JobRunService): Props = {
     Props(new JobSpecDependencyActor(spec, runService))

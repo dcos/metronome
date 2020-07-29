@@ -29,7 +29,9 @@ object Event {
       timestamp: Instant = Clock.systemUTC().instant()
   ) extends JobSpecEvent
 
-  trait JobRunEvent extends Event
+  trait JobRunEvent extends Event {
+    val jobRun: JobRun
+  }
   case class JobRunStarted(
       jobRun: JobRun,
       eventType: String = "job_run_started",

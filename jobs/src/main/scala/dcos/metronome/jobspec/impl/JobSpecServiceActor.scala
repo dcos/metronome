@@ -150,6 +150,16 @@ class JobSpecServiceActor(
           scheduleActors -= jobSpec.id
       }
     }
+    dependencyActor(jobSpec).foreach { actor =>
+      if (jobSpec.dependencies.nonEmpty) {
+        actor ! JobSpecDependencyActor.UpdateJobSpec(jobSpec)
+      } else {
+        //the updated spec does not have any dependencies
+        context.unwatch(actor)
+        context.stop(actor)
+        dependencyActors -= jobSpec.id
+      }
+    }
     context.system.eventStream.publish(Event.JobSpecUpdated(jobSpec))
     delegate ! jobSpec
   }
