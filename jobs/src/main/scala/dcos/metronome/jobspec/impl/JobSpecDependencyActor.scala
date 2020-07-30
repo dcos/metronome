@@ -3,13 +3,15 @@ package jobspec.impl
 
 import java.time.Instant
 
-import akka.actor.{Actor, ActorLogging, Props, Stash}
+import akka.actor.{Actor, ActorLogging, Props, Stash, Status}
+import akka.pattern.pipe
 import com.typesafe.scalalogging.StrictLogging
-import dcos.metronome.jobrun.JobRunService
+import dcos.metronome.jobrun.{JobRunService, StartedJobRun}
 import dcos.metronome.jobspec.impl.JobSpecDependencyActor.{DependenciesState, UpdateJobSpec}
 import dcos.metronome.model.{Event, JobId, JobRun, JobRunStatus, JobSpec}
 
 import scala.collection.mutable
+import scala.concurrent.ExecutionContext
 
 /**
   * Manages one JobSpec.
@@ -26,6 +28,8 @@ class JobSpecDependencyActor(initSpec: JobSpec, runService: JobRunService) exten
   private[impl] var lastSuccessfulRun: Instant = Instant.MIN
   val dependenciesState = DependenciesState(initSpec.dependencies.toSet)
 
+  implicit val ec: ExecutionContext = context.dispatcher
+
   override def preStart(): Unit = {
     super.preStart()
     context.system.eventStream.subscribe(self, classOf[Event.JobRunEvent])
@@ -36,17 +40,14 @@ class JobSpecDependencyActor(initSpec: JobSpec, runService: JobRunService) exten
     super.postStop()
   }
 
-  override def receive: Receive = {
-    case Event.JobRunFinished(jobRun, _, _) if jobRun.id.jobId == initSpec.id =>
-      lastSuccessfulRun = jobRun.completedAt.getOrElse(Instant.MIN)
+  override def receive: Receive = idling
 
-    case Event.JobRunFailed(jobRun, _, _) if jobRun.id.jobId == initSpec.id =>
-      lastSuccessfulRun = Instant.MIN
-
+  def idling: Receive = {
     case ev: Event.JobRunEvent =>
       dependenciesState.update(ev.jobRun)
       if (dependenciesState.shouldTriggerJob(lastSuccessfulRun)) {
-        runService.startJobRun(initSpec)
+        runService.startJobRun(initSpec).pipeTo(self)
+        context.become(running)
       }
 
     case UpdateJobSpec(newJobSpec) =>
@@ -54,7 +55,32 @@ class JobSpecDependencyActor(initSpec: JobSpec, runService: JobRunService) exten
       require(newJobSpec.id == spec.id)
       spec = newJobSpec
       dependenciesState.updateJobSpec(newJobSpec)
+  }
 
+  /**
+    * State when the job was triggered. All messages are stashed until the job either finishes or fails.
+    * This means we cannot have concurrent job runs of this job.
+    */
+  def running: Receive = {
+    case StartedJobRun => ()
+
+    case Status.Failure(cause) =>
+      // escalate this failure
+      throw new IllegalStateException("while loading tasks", cause)
+
+    case Event.JobRunFinished(jobRun, _, _) if jobRun.id.jobId == initSpec.id =>
+      lastSuccessfulRun = jobRun.completedAt.getOrElse(Instant.MIN)
+      context.become(idling)
+      unstashAll()
+
+    case Event.JobRunFailed(jobRun, _, _) if jobRun.id.jobId == initSpec.id =>
+      lastSuccessfulRun = Instant.MIN
+      context.become(idling)
+      unstashAll()
+
+    case other =>
+      log.debug(s"Stashing $other")
+      stash()
   }
 }
 
