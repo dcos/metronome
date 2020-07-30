@@ -313,6 +313,8 @@ class JobSpecServiceActorTest
     val dummyProp = Props(new TestActor(dummyQueue))
     val jobSpec = JobSpec(JobId("test"))
     val jobSpecService =
-      TestActorRef[JobSpecServiceActor](JobSpecServiceActor.props(repository, (_: JobId) => dummyProp, _ => dummyProp))
+      TestActorRef[JobSpecServiceActor](
+        JobSpecServiceActor.props(repository, (_: JobId) => dummyProp, _ => dummyProp, _ => dummyProp)
+      )
   }
 }
