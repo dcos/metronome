@@ -46,6 +46,7 @@ class JobSpecDependencyActor(initSpec: JobSpec, runService: JobRunService) exten
     case ev: Event.JobRunEvent =>
       dependenciesState.update(ev.jobRun)
       if (dependenciesState.shouldTriggerJob(lastSuccessfulRun)) {
+        log.info(s"Start next run of job ${spec.id}, all parents finished successfully")
         runService.startJobRun(initSpec).pipeTo(self)
         context.become(running)
       }
@@ -113,9 +114,10 @@ object JobSpecDependencyActor {
       logger.debug(
         s"Should trigger: lastRun=$lastSuccessfulRun index=$dependencyIndex lastDependencyRuns=$lastSuccessfulRunDependencies"
       )
-      lastSuccessfulRunDependencies.keySet == dependencyIndex && lastSuccessfulRunDependencies.values.forall(
-        _.isAfter(lastSuccessfulRun)
-      )
+      val allParentsSuccessful = lastSuccessfulRunDependencies.keySet == dependencyIndex
+      val lastSuccessfulRunAfterParents = lastSuccessfulRunDependencies.values.forall(_.isAfter(lastSuccessfulRun))
+
+      allParentsSuccessful && lastSuccessfulRunAfterParents
     }
 
     def updateJobSpec(newJobSpec: JobSpec): Unit = {

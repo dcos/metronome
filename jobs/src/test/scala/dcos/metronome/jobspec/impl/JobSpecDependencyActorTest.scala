@@ -12,7 +12,7 @@ import org.scalatest.{BeforeAndAfterAll, FunSuiteLike, GivenWhenThen, Matchers}
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
 class JobSpecDependencyActorTest
-    extends TestKit(ActorSystem("test"))
+    extends TestKit(ActorSystem("job-dependency-test"))
     with FunSuiteLike
     with BeforeAndAfterAll
     with GivenWhenThen
