@@ -115,9 +115,9 @@ object JobSpecDependencyActor {
         s"Should trigger: lastRun=$lastSuccessfulRun index=$dependencyIndex lastDependencyRuns=$lastSuccessfulRunDependencies"
       )
       val allParentsSuccessful = lastSuccessfulRunDependencies.keySet == dependencyIndex
-      val lastSuccessfulRunAfterParents = lastSuccessfulRunDependencies.values.forall(_.isAfter(lastSuccessfulRun))
+      val lastSuccessfulRunOlderThanParents = lastSuccessfulRunDependencies.values.forall(_.isAfter(lastSuccessfulRun))
 
-      allParentsSuccessful && lastSuccessfulRunAfterParents
+      allParentsSuccessful && lastSuccessfulRunOlderThanParents
     }
 
     def updateJobSpec(newJobSpec: JobSpec): Unit = {
