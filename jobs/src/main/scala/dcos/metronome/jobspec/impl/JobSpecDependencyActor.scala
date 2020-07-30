@@ -67,7 +67,7 @@ class JobSpecDependencyActor(initSpec: JobSpec, runService: JobRunService) exten
 
     case Status.Failure(cause) =>
       // escalate this failure
-      throw new IllegalStateException("while loading tasks", cause)
+      throw new IllegalStateException(s"while starting job ${spec.id}", cause)
 
     case Event.JobRunFinished(jobRun, _, _) if jobRun.id.jobId == initSpec.id =>
       lastSuccessfulRun = jobRun.completedAt.getOrElse(Instant.MIN)
