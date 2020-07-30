@@ -4,6 +4,7 @@ package jobspec.impl
 import java.time.Instant
 
 import akka.actor.{Actor, ActorLogging, Props, Stash}
+import com.typesafe.scalalogging.StrictLogging
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.impl.JobSpecDependencyActor.{DependenciesState, UpdateJobSpec}
 import dcos.metronome.model.{Event, JobId, JobRun, JobRunStatus, JobSpec}
@@ -36,10 +37,10 @@ class JobSpecDependencyActor(initSpec: JobSpec, runService: JobRunService) exten
   }
 
   override def receive: Receive = {
-    case Event.JobRunFinished(jobRun, _, _) if jobRun.jobSpec.id == initSpec.id =>
+    case Event.JobRunFinished(jobRun, _, _) if jobRun.id.jobId == initSpec.id =>
       lastSuccessfulRun = jobRun.completedAt.getOrElse(Instant.MIN)
 
-    case Event.JobRunFailed(jobRun, _, _) if jobRun.jobSpec.id == initSpec.id =>
+    case Event.JobRunFailed(jobRun, _, _) if jobRun.id.jobId == initSpec.id =>
       lastSuccessfulRun = Instant.MIN
 
     case ev: Event.JobRunEvent =>
@@ -49,6 +50,7 @@ class JobSpecDependencyActor(initSpec: JobSpec, runService: JobRunService) exten
       }
 
     case UpdateJobSpec(newJobSpec) =>
+      log.debug(s"Update job spec. id=${newJobSpec.id}")
       require(newJobSpec.id == spec.id)
       spec = newJobSpec
       dependenciesState.updateJobSpec(newJobSpec)
@@ -60,7 +62,7 @@ object JobSpecDependencyActor {
 
   case class UpdateJobSpec(newSpec: JobSpec)
 
-  case class DependenciesState(dependencies: Set[JobId]) {
+  case class DependenciesState(dependencies: Set[JobId]) extends StrictLogging {
 
     // An index of all parents
     private[impl] var dependencyIndex: Set[JobId] = dependencies
@@ -69,9 +71,9 @@ object JobSpecDependencyActor {
     val lastSuccessfulRunDependencies: mutable.Map[JobId, Instant] = mutable.Map.empty
 
     def update(jobRun: JobRun): Unit = {
-      if (dependencyIndex.contains(jobRun.jobSpec.id)) {
+      if (dependencyIndex.contains(jobRun.id.jobId)) {
         if (jobRun.status == JobRunStatus.Success) {
-          lastSuccessfulRunDependencies.update(jobRun.jobSpec.id, jobRun.completedAt.get)
+          lastSuccessfulRunDependencies.update(jobRun.id.jobId, jobRun.completedAt.get)
         } else if (jobRun.status == JobRunStatus.Failed) {
           lastSuccessfulRunDependencies.remove(jobRun.jobSpec.id)
         }
@@ -82,7 +84,10 @@ object JobSpecDependencyActor {
       * @return true if the last successful run of the child is older than all parent runs.
       */
     def shouldTriggerJob(lastSuccessfulRun: Instant): Boolean = {
-      lastSuccessfulRunDependencies.keySet.diff(dependencyIndex).isEmpty && lastSuccessfulRunDependencies.values.forall(
+      logger.debug(
+        s"Should trigger: lastRun=$lastSuccessfulRun index=$dependencyIndex lastDependencyRuns=$lastSuccessfulRunDependencies"
+      )
+      lastSuccessfulRunDependencies.keySet == dependencyIndex && lastSuccessfulRunDependencies.values.forall(
         _.isAfter(lastSuccessfulRun)
       )
     }
