@@ -5,11 +5,13 @@ import java.time.{Clock, LocalDateTime, ZoneOffset}
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import dcos.metronome.{Seq, SettableClock}
-import dcos.metronome.jobrun.JobRunService
+import dcos.metronome.jobrun.{JobRunService, StartedJobRun}
 import dcos.metronome.model.{Event, JobId, JobRun, JobRunId, JobRunStatus, JobSpec}
 import dcos.metronome.utils.test.Mockito
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike, GivenWhenThen, Matchers}
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
+
+import scala.concurrent.Future
 
 class JobSpecDependencyActorTest
     extends TestKit(ActorSystem("job-dependency-test"))
@@ -121,6 +123,9 @@ class JobSpecDependencyActorTest
     val jobB = JobSpec(JobId("b"))
     val jobC = JobSpec(JobId("c"), dependencies = Seq(jobA.id, jobB.id))
     val jobRunService = mock[JobRunService]
+
+    jobRunService.listRuns(any) returns Future.successful(Iterable.empty[StartedJobRun])
+
     def dependencyActor = TestActorRef[JobSpecDependencyActor](JobSpecDependencyActor.props(jobC, jobRunService))
   }
 }
