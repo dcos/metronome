@@ -6,6 +6,7 @@ import java.time.Clock
 import akka.actor.ActorSystem
 import dcos.metronome.jobrun.JobRunService
 import dcos.metronome.jobspec.impl.{
+  JobSpecDependencyActor,
   JobSpecPersistenceActor,
   JobSpecSchedulerActor,
   JobSpecServiceActor,
@@ -28,9 +29,10 @@ class JobSpecModule(
 
   private[this] def persistenceActor(id: JobId) = JobSpecPersistenceActor.props(id, jobSpecRepository, metrics)
   private[this] def scheduleActor(jobSpec: JobSpec) = JobSpecSchedulerActor.props(jobSpec, clock, runService)
+  private[this] def dependencyActor(jobSpec: JobSpec) = JobSpecDependencyActor.props(jobSpec, runService)
 
   val serviceActor = leadershipModule.startWhenLeader(
-    JobSpecServiceActor.props(jobSpecRepository, persistenceActor, scheduleActor),
+    JobSpecServiceActor.props(jobSpecRepository, persistenceActor, scheduleActor, dependencyActor),
     "JobSpecServiceActor"
   )
 
