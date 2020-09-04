@@ -52,6 +52,9 @@ pipeline {
       steps {
         ansiColor('xterm') {
           sh 'sudo ci/set_port_range.sh'
+          // First call to `docker --version` can take up to 30s. This sometimes leads to Mesos agent
+          // failing to start when checking for the docker version. So we do it here (successive calls will be faster).
+          sh 'sudo docker --version'
           sh 'sudo sbt integration/test || true'
         }
       }
