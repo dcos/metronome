@@ -17,6 +17,7 @@ case class JobInfo(
     activeRuns: Option[Iterable[StartedJobRun]],
     history: Option[JobHistory],
     historySummary: Option[JobHistorySummary]
+    // adding a field here? Make sure you update JobInfoWrites!
 )
 
 object JobInfo {
