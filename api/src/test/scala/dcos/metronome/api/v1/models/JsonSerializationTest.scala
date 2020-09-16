@@ -2,6 +2,7 @@ package dcos.metronome
 package api.v1.models
 
 import com.mesosphere.utils.UnitTest
+import dcos.metronome.jobinfo.JobInfo
 import dcos.metronome.model.{JobId, JobSpec, Network}
 import play.api.libs.json._
 
@@ -17,10 +18,23 @@ class JsonSerializationTest extends UnitTest {
       Json.toJson(network) shouldBe Json.obj("mode" -> "host")
     }
 
-    "it parses job dependencies properly back and forth" in {
-      val jobSpec = JobSpec(id = JobId("a"), dependencies = Seq(JobId("b")))
-      val reparsed = Json.toJson(jobSpec).as[JobSpec]
-      reparsed.dependencies shouldBe Seq(JobId("b"))
+    "jobSpec formatting" should {
+      val jobSpec = JobSpec(id = JobId("b"), dependencies = Seq(JobId("a")))
+
+      "parse job dependencies properly back and forth" in {
+        val jobJson = Json.toJson(jobSpec)
+        (jobJson \ "dependencies").get shouldBe Json.arr(Json.obj("id" -> "a"))
+        val reparsed = jobJson.as[JobSpec]
+        reparsed.dependencies shouldBe Seq(JobId("a"))
+      }
+
+      "parse a serialized JobInfo" in {
+        val jobInfo = JobInfo(jobSpec, Nil, None, None, None)
+        val jobInfoJson = Json.toJson(jobInfo)
+        val reparsed = jobInfoJson.as[JobSpec]
+        reparsed.dependencies shouldBe Seq(JobId("a"))
+      }
+
     }
   }
 }
