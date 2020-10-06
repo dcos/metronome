@@ -76,10 +76,8 @@ object JobSpec {
         - if job spec A is updated we check if we can find a path from one of A's dependencies to A.
      */
     if (index.contains(jobSpec.id)) {
-      if (jobSpec.dependencies.exists(parent => findPath(index, parent, jobSpec))) {
-        throw ValidationError(
-          s"Dependencies have a cycle."
-        )
+      if (jobSpec.dependencies.exists(findPath(index, _, jobSpec))) {
+        throw ValidationError(s"Dependencies have a cycle.")
       }
     }
   }
@@ -87,19 +85,19 @@ object JobSpec {
   /**
     * Finds whether there is a path from `start` to `end`.
     *
-    * This algorithm is a very crude DFS. It does visit nodes multiple times.
-    *
     * @param specs an index of job specifications.
     * @param start the job spec id where we start.
     * @param end the job spec we want to find the path to.
+    * @param visited job spec ids that have already been visited on our tour through the graph.
     * @return true if there is a path, false if not.
     */
-  def findPath(specs: Map[JobId, JobSpec], start: JobId, end: JobSpec): Boolean = {
+  def findPath(specs: Map[JobId, JobSpec], start: JobId, end: JobSpec, visited: Seq[JobId] = Seq()): Boolean = {
     if (start == end.id) {
       true
     } else {
-      val parentSpec = specs(start)
-      parentSpec.dependencies.exists(findPath(specs, _, end))
+      specs(start).dependencies
+        .filter(d => !(visited.contains(d)))
+        .exists(findPath(specs, _, end, visited ++ Seq(start)))
     }
   }
 
