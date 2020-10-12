@@ -92,13 +92,10 @@ object JobSpec {
     * @return true if there is a path, false if not.
     */
   def findPath(specs: Map[JobId, JobSpec], start: JobId, end: JobSpec, visited: Seq[JobId] = Seq()): Boolean = {
-    if (start == end.id) {
-      true
-    } else {
-      specs(start).dependencies
-        .filter(d => !(visited.contains(d)))
-        .exists(findPath(specs, _, end, visited ++ Seq(start)))
-    }
+    if (start == end.id) return true
+    specs(start).dependencies
+      .filter(d => !(visited.contains(d)))
+      .exists(findPath(specs, _, end, visited ++ Seq(start)))
   }
 
   /**
