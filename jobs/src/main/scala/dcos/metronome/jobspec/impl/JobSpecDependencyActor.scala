@@ -34,6 +34,8 @@ class JobSpecDependencyActor(initSpec: JobSpec, runService: JobRunService) exten
   // An index of all parents
   private[impl] var dependencyIndex: Set[JobId] = spec.dependencies.toSet
 
+  private[impl] var currentSpec: JobSpec = initSpec
+
   // State of latest parents' runs.
   val lastParentRuns: mutable.Map[JobId, JobRun] = mutable.Map.empty
 
@@ -42,6 +44,7 @@ class JobSpecDependencyActor(initSpec: JobSpec, runService: JobRunService) exten
   override def preStart(): Unit = {
     super.preStart()
     context.system.eventStream.subscribe(self, classOf[Event.JobRunEvent])
+    context.system.eventStream.subscribe(self, classOf[Event.JobSpecUpdated])
 
     // Get active run for this job.
     // TODO: load history
@@ -78,9 +81,12 @@ class JobSpecDependencyActor(initSpec: JobSpec, runService: JobRunService) exten
         log.info(
           s"Start next run of job ${spec.id}, all parents finished successfully lastParentRuns=${lastParentRuns.values}"
         )
-        runService.startJobRun(initSpec).pipeTo(self)
+        runService.startJobRun(currentSpec).pipeTo(self)
         context.become(starting)
       }
+
+    case ev: Event.JobSpecUpdated =>
+      currentSpec = ev.job
 
     case UpdateJobSpec(newJobSpec) =>
       log.debug(s"Update job spec. id=${newJobSpec.id}")
