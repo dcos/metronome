@@ -101,7 +101,11 @@ class JobSpecServiceActor(
     if (inFlightChanges.contains(jobSpec.id)) sender() ! Status.Failure(JobSpecChangeInFlight(jobSpec.id))
     else {
       inFlightChanges += jobSpec.id
-      change
+      try {
+        change
+      } catch {
+        case _ => inFlightChanges -= jobSpec.id
+      }
     }
   }
 
