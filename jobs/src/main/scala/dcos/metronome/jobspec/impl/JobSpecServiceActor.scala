@@ -114,7 +114,11 @@ class JobSpecServiceActor(
       JobSpec.validateSafeDelete(jobSpec.id, allJobs.values.toVector)
       change
     } catch {
-      case ex: JobSpec.DependencyConflict => sender() ! Status.Failure(ex)
+      case ex: JobSpec.DependencyConflict => {
+        inFlightChanges -= jobSpec.id
+        sender() ! Status.Failure(ex)
+      }
+      case e: Exception => throw e
     }
   }
 
