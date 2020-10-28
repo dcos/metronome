@@ -5,7 +5,7 @@ import dcos.metronome.model.JobSpec.ValidationError
 import dcos.metronome.utils.test.Mockito
 import org.scalatest.{FunSuite, GivenWhenThen, Matchers}
 
-class JobSpecTest extends FunSuite with Matchers with Mockito with GivenWhenThen {
+class JobSpecTest extends FunSuite with Matchers with Mockito with GivenWhenThen with ValidationTestLike {
 
   test("Job spec with no dependencies is valid") {
     val f = Fixture()
@@ -43,7 +43,22 @@ class JobSpecTest extends FunSuite with Matchers with Mockito with GivenWhenThen
     } should have message "Dependencies have a cycle."
   }
 
+  test("a job with dependencies and a schedule is invalid") {
+    val f = Fixture()
+    val jobSpecA = JobSpec(id = JobId("a"), run = f.runSpec)
+    val jobSpecB = JobSpec(
+      id = JobId("b"),
+      run = f.runSpec,
+      dependencies = Seq(jobSpecA.id),
+      schedules = Seq(Builders.newScheduleSpec())
+    )
+
+    JobSpec.validJobSpec(jobSpecB) should haveViolations(
+      "/" -> "Jobs may not have both dependencies and schedules specified"
+    )
+  }
+
   case class Fixture() {
-    val runSpec = JobRunSpec(cmd = Some("sleep 1000"))
+    val runSpec = Builders.newJobRunSpec.command()
   }
 }

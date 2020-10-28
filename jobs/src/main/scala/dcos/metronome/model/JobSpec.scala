@@ -50,6 +50,9 @@ object JobSpec {
       jobSpec.run is valid
       jobSpec.schedules has size <= 1 // FIXME: we will support only one schedule in v1
       jobSpec.dependencies is unique[JobId]
+      jobSpec is isTrue("Jobs may not have both dependencies and schedules specified") { jobSpec =>
+        jobSpec.schedules.isEmpty || jobSpec.dependencies.isEmpty
+      }
     }
 
   final case class ValidationError(errorMsg: String) extends Exception(errorMsg, null)

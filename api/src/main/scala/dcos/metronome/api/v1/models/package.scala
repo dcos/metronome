@@ -356,17 +356,20 @@ package object models {
   implicit lazy val JobResultWrites: Writes[JobResult] = Json.writes[JobResult]
 
   implicit lazy val JobInfoWrites: Writes[JobInfo] = { jobInfo: JobInfo =>
-    val fields = Json.obj(
-      "id" -> jobInfo.id,
-      "description" -> jobInfo.description,
-      "dependencies" -> DependencyFormat.writes(jobInfo.dependencies),
-      "labels" -> jobInfo.labels,
-      "run" -> jobInfo.run,
-      "schedules" -> jobInfo.schedules,
-      "activeRuns" -> jobInfo.activeRuns,
-      "history" -> jobInfo.history,
-      "historySummary" -> jobInfo.historySummary
-    ).fields.filterNot(_._2 == JsNull)
+    val fields = Json
+      .obj(
+        "id" -> jobInfo.id,
+        "description" -> jobInfo.description,
+        "dependencies" -> DependencyFormat.writes(jobInfo.dependencies),
+        "labels" -> jobInfo.labels,
+        "run" -> jobInfo.run,
+        "schedules" -> jobInfo.schedules,
+        "activeRuns" -> jobInfo.activeRuns,
+        "history" -> jobInfo.history,
+        "historySummary" -> jobInfo.historySummary
+      )
+      .fields
+      .filterNot(_._2 == JsNull)
 
     JsObject(fields)
   }

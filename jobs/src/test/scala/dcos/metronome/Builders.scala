@@ -2,6 +2,7 @@ package dcos.metronome
 
 import dcos.metronome.model.{
   Artifact,
+  CronSpec,
   DockerSpec,
   EnvVarValueOrSecret,
   ImageSpec,
@@ -9,10 +10,12 @@ import dcos.metronome.model.{
   Network,
   PlacementSpec,
   RestartSpec,
+  ScheduleSpec,
   SecretDef,
   UcrSpec,
   Volume
 }
+import org.apache.mesos.v1.maintenance.Protos.Schedule
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
@@ -170,4 +173,12 @@ object Builders {
 
   def newDockerSpec(image: String = "image"): DockerSpec =
     DockerSpec(image)
+
+  object newCronSpec {
+    def minutely = CronSpec("* * * * *")
+  }
+
+  def newScheduleSpec(id: String = "schedule", cronSpec: CronSpec = newCronSpec.minutely): ScheduleSpec = {
+    ScheduleSpec(id, cron = cronSpec)
+  }
 }

@@ -6,7 +6,7 @@ import dcos.metronome.jobinfo.JobInfo.Embed
 import dcos.metronome.jobinfo.{JobInfo, JobSpecSelector, JobInfoService}
 import dcos.metronome.jobrun.{StartedJobRun, JobRunService}
 import dcos.metronome.jobspec.JobSpecService
-import dcos.metronome.model.{JobHistorySummary, JobId, JobSpec, JobHistory}
+import dcos.metronome.model.{JobHistorySummary, JobId, JobHistory}
 
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
